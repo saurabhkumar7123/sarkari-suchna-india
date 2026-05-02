@@ -1,0 +1,105 @@
+.sarkari-about{
+  max-width:100%;
+  margin:0 auto;
+  padding:45px;
+  background:#ffffff;
+  border-radius:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.06);
+  font-family:'Segoe UI', Arial, sans-serif;
+  line-height:1.9;
+  color:#444;
+  box-sizing:border-box;
+}
+
+/* Main Heading */
+
+.sarkari-about h2{
+  font-size:30px;
+  font-weight:700;
+  margin-bottom:25px;
+  color:#1e2a38;
+  border-left:5px solid #5B5FEF;
+  padding-left:12px;
+}
+
+/* Sub Heading */
+
+.sarkari-about h3{
+  margin-top:40px;
+  margin-bottom:15px;
+  font-size:21px;
+  color:#2f4df5;
+  font-weight:600;
+}
+
+/* Paragraph */
+
+.sarkari-about p{
+  font-size:15.5px;
+  margin-bottom:16px;
+  color:#444;
+}
+
+/* Lists */
+
+.sarkari-about ul,
+.sarkari-about ol{
+  padding-left:22px;
+  margin-bottom:22px;
+}
+
+.sarkari-about li{
+  margin-bottom:9px;
+  font-size:15.5px;
+}
+
+/* Highlight Quote */
+
+.sarkari-about blockquote{
+  margin:30px 0;
+  padding:22px;
+  background:linear-gradient(120deg,#5B5FEF,#2BB6B0);
+  color:#ffffff;
+  border-radius:14px;
+  font-weight:600;
+  text-align:center;
+  font-size:16px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* Links inside content */
+
+.sarkari-about a{
+  color:#2f4df5;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.sarkari-about a:hover{
+  text-decoration:underline;
+}
+
+/* Mobile Responsive */
+
+@media(max-width:768px){
+
+  .sarkari-about{
+    padding:28px;
+    margin:0 auto;
+    border-radius:16px;
+  }
+
+  .sarkari-about h2{
+    font-size:24px;
+  }
+
+  .sarkari-about h3{
+    font-size:19px;
+  }
+
+  .sarkari-about p,
+  .sarkari-about li{
+    font-size:15px;
+  }
+
+}

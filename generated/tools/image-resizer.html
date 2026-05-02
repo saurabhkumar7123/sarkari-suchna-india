@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Resizer | Sarkari Suchna India</title>
+<meta name="description" content="Use the image resizer tool to resize, crop, rotate, compress and download images for forms, uploads and documents.">
+<link rel="canonical" href="/tools/image-resizer">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/base/reset.css">
+<link rel="stylesheet" href="/css/base/base.css">
+<link rel="stylesheet" href="/css/pages/image-resizer.css">
+</head>
+<body>
+
+<div class="main-container image-tool-main">
+  <section class="img-tool" id="imgTool">
+    <section class="img-tool__preview" id="previewContainer">
+      <div class="img-tool__canvas-wrap" id="canvasWrap">
+        <canvas id="previewCanvas"></canvas>
+        <div class="img-tool__viewport-grid" aria-hidden="true"></div>
+        <div class="img-tool__loading hidden" id="loadingState">Loading preview...</div>
+      </div>
+    </section>
+
+    <aside class="img-tool__controls">
+      <h2>Image Resizer Pro</h2>
+      <p class="img-tool__subtitle">Resize, crop, rotate, flip, compress, and export instantly.</p>
+
+      <label class="img-tool__dropzone" id="dropZone" for="upload">
+        <input type="file" id="upload" accept="image/jpeg,image/png,image/webp" hidden>
+        <strong>Drag & drop image here</strong>
+        <span>or click to upload (JPG, PNG, WEBP)</span>
+      </label>
+
+      <div class="img-tool__meta" id="metaInfo">No image selected</div>
+
+      <div class="img-tool__group">
+        <div class="img-tool__group-title">Zoom & Viewport Crop</div>
+        <label>Zoom <input type="range" id="zoomSlider" min="50" max="350" value="100"></label>
+        <div class="img-tool__meta" id="zoomInfo">Zoom: 100%</div>
+        <div class="img-tool__row">
+          <label>Aspect
+            <select id="cropPreset">
+              <option value="free">Free</option>
+              <option value="1:1">1:1</option>
+              <option value="16:9">16:9</option>
+              <option value="4:3">4:3</option>
+            </select>
+          </label>
+          <button type="button" id="resetViewBtn">Reset View</button>
+        </div>
+      </div>
+
+      <div class="img-tool__group">
+        <div class="img-tool__group-title">Resize Output</div>
+        <div class="img-tool__row">
+          <label>Width <input type="number" id="widthInput" min="1"></label>
+          <label>Height <input type="number" id="heightInput" min="1"></label>
+        </div>
+        <div class="img-tool__row">
+          <label>Percent <input type="number" id="percentInput" min="1" max="500" value="100"></label>
+          <label class="img-tool__checkbox"><input type="checkbox" id="lockAspect" checked> Maintain ratio</label>
+        </div>
+        <div class="img-tool__row">
+          <button type="button" class="img-tool__pct-btn" data-percent="25">25%</button>
+          <button type="button" class="img-tool__pct-btn" data-percent="50">50%</button>
+          <button type="button" class="img-tool__pct-btn" data-percent="75">75%</button>
+          <button type="button" class="img-tool__pct-btn" data-percent="100">100%</button>
+        </div>
+        <button type="button" id="applyResizeBtn">Apply Resize</button>
+      </div>
+
+      <div class="img-tool__group">
+        <div class="img-tool__group-title">Transform</div>
+        <div class="img-tool__row">
+          <button type="button" id="rotateLeftBtn">Rotate Left</button>
+          <button type="button" id="rotateRightBtn">Rotate Right</button>
+        </div>
+        <div class="img-tool__row">
+          <button type="button" id="flipHBtn">Flip Horizontal</button>
+          <button type="button" id="flipVBtn">Flip Vertical</button>
+        </div>
+      </div>
+
+      <div class="img-tool__group">
+        <div class="img-tool__group-title">Target Size & Export</div>
+        <div class="img-tool__row">
+          <label>Target Size <input type="number" id="targetSizeInput" min="1" placeholder="e.g. 120"></label>
+          <label>Unit
+            <select id="targetUnitSelect">
+              <option value="KB">KB</option>
+              <option value="MB">MB</option>
+            </select>
+          </label>
+        </div>
+        <div class="img-tool__row">
+          <label>Format
+            <select id="formatSelect">
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </label>
+          <label>Background
+            <select id="bgSelect">
+              <option value="transparent">Transparent</option>
+              <option value="#ffffff">White</option>
+              <option value="#000000">Black</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+        </div>
+        <div class="img-tool__row">
+          <label class="img-tool__grow">Custom Color <input type="color" id="bgColor" value="#ffffff"></label>
+        </div>
+        <label>Quality <input type="range" id="qualityRange" min="10" max="100" value="90"></label>
+        <label>Compression % <input type="range" id="compressionRange" min="10" max="100" value="90"></label>
+        <div class="img-tool__meta" id="estimateInfo">Estimated file size: --</div>
+      </div>
+
+      <div class="img-tool__row">
+        <button type="button" id="undoBtn">Undo</button>
+        <button type="button" id="resetBtn">Reset</button>
+      </div>
+      <button type="button" id="downloadBtn">Download Processed Image</button>
+    </aside>
+  </section>
+</div>
+
+<script src="/js/image-resizer.js"></script>
+</body>
+</html>

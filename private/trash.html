@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Trash Pages</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">    
+
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/trash.css">
+
+</head>
+<body>
+    <header class="admin-header">
+  <div class="admin-left">
+    <h1>Welcome, Saurabh 👋</h1>
+    <p>Trash Management Console</p>
+  </div>
+  <div class="admin-right">
+    <span class="admin-badge">ADMIN</span>
+    <button type="button" class="header-action" id="trashRefreshBtn">Refresh</button>
+  </div>
+</header>
+
+<div class="main-container">
+<div class="page-heading">
+  <h2>Trash Pages</h2>
+  <p>Manage deleted pages, restore or permanently delete.</p>
+</div>
+<div id="trashFeedback" class="trash-feedback" aria-live="polite"></div>
+<div id="trashList"></div>
+</div>
+
+<script src="/assets/js/vendor/dompurify.min.js"></script>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/trash.js"></script>
+
+</body>
+</html>

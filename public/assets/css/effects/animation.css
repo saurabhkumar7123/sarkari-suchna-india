@@ -1,0 +1,13 @@
+/* Page transitions — opacity only (no transform on body: fixes position:fixed modals/overlays) */
+body {
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.page-active {
+  opacity: 1;
+}
+
+body.page-exit {
+  opacity: 0;
+}

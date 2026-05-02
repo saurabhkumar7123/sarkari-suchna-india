@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Sessions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css">
+</head>
+<body>
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+  <div class="nav-group-title">Admin</div>
+  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
+  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
+  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
+  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
+  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
+  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
+  <div class="nav-group-title">Content</div>
+  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
+  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
+  <div class="nav-group-title">System</div>
+  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
+  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-title">🧭 Session Management</div>
+    <div class="admin-header-actions">
+      <button type="button" class="header-action-btn" id="refreshSessionsBtn">Refresh</button>
+      <button type="button" class="header-action-btn" id="revokeAllBtn">Logout All Devices</button>
+    </div>
+  </div>
+  <section class="monitoring-section">
+    <div class="manager-header">
+      <h1 class="manager-title">Active Sessions</h1>
+      <p class="manager-hint">Review and revoke active admin sessions.</p>
+    </div>
+    <div id="sessionsMessage" class="monitoring-message" role="status" aria-live="polite"></div>
+    <div id="sessionsTable" class="sites-table-host"></div>
+  </section>
+</div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-sessions.js"></script>
+</body>
+</html>

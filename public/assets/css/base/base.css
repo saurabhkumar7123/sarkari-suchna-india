@@ -1,0 +1,42 @@
+body {
+  font-family: var(--site-font, "Segoe UI", system-ui, sans-serif);
+  background: var(--site-bg-page, #ffffff);
+  color: var(--site-text, #0f172a);
+}
+
+a {
+  color: var(--site-link);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--site-link-hover);
+}
+
+a:visited {
+  color: var(--site-link);
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--space-4) var(--site-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

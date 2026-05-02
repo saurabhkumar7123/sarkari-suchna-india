@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+  <link rel="stylesheet" href="/css/base/tokens.css">
+  <link rel="stylesheet" href="/css/admin/generator.css">
+</head>
+
+<body>
+  <div class="admin-header">
+  <div class="admin-left">
+    <h1>Welcome, Saurabh 👋</h1>
+    <p>Admin Dashboard</p>
+  </div>
+  <div class="admin-right">
+    <span class="admin-badge">🛡 ADMIN</span>
+  </div>
+</div>
+
+<div class="main-container">
+
+<h2>🧾 Page Generator</h2>
+<p class="page-subtitle">Create, preview, and publish pages with structured metadata.</p>
+<div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create Mode - URL editable</div>
+
+<div class="form-grid">
+  <div class="basic-group-label">Basic Fields</div>
+  <section class="generator-card">
+    <h3 class="card-title">Basic Info</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Search Existing Page (edit)</label>
+        <div class="search-select">
+          <span class="search-input-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="pageSearch" placeholder="Search page..." autocomplete="off">
+          <div id="pageSuggestions" class="suggestions"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Page Title</label>
+        <input type="text" id="title" placeholder="UP Police Constable Recruitment 2026" autocomplete="off">
+        <p class="field-error" id="titleError" aria-live="polite"></p>
+        <p class="slug-preview">URL slug preview: <code id="slugPreview">—</code></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="generator-card">
+    <h3 class="card-title">Post Details</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Post Name</label>
+        <input type="text" id="post_name" name="post_name" placeholder="e.g. Constable, SI, Clerk" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label>Total Posts</label>
+        <input type="text" id="total_posts" name="total_posts" inputmode="numeric" placeholder="e.g. 35260" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <details class="form-accordion" open>
+    <summary>Advanced (Optional)</summary>
+    <div class="accordion-grid">
+
+  <section class="generator-card">
+    <h3 class="card-title">Visibility / Display Settings</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Show this page in</label>
+        <select id="status" onchange="if (this.value !== '__custom__') document.getElementById('customStatus').value=''">
+          <option value="">-- Select Section --</option>
+          <option value="new form">New Form</option>
+          <option value="admit card">Admit Card</option>
+          <option value="result">Result</option>
+          <option value="answer key">Answer Key</option>
+          <option value="document">Document</option>
+          <option value="admission">Admission</option>
+          <option value="syllabus">Syllabus</option>
+          <option value="__custom__">Custom</option>
+        </select>
+        <input type="text" id="customStatus" maxlength="64"
+          oninput="document.getElementById('status').value='__custom__'"
+          placeholder="Custom section (when Custom is selected or override)">
+      </div>
+      <div class="field-group">
+        <label>Normal</label>
+        <select id="position">
+          <option value="normal">Normal</option>
+          <option value="small">Small Box</option>
+        </select>
+      </div>
+      <div class="field-group inline-checkbox-group">
+        <label class="inline-checkbox-label">
+          <input type="checkbox" id="breaking"> Show in Breaking News
+        </label>
+      </div>
+      <div class="field-group" id="breakingOrderGroup">
+        <label>Breaking Order</label>
+        <input type="number" id="breakingOrder" placeholder="1,2,3...">
+      </div>
+    </div>
+  </section>
+
+  <section class="generator-card">
+    <h3 class="card-title">Timing</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Event Time</label>
+        <input type="datetime-local" id="eventTime">
+      </div>
+      <div class="field-group">
+        <label>Last Date</label>
+        <input type="date" id="lastDate" name="lastDate">
+        <p class="field-error" id="lastDateError" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="generator-card">
+    <h3 class="card-title">SEO &amp; URL</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Tags</label>
+        <div class="tag-wrapper">
+          <div class="tag-chip-box" id="tagChipBox">
+            <div id="tagChips" class="tag-chips"></div>
+            <input type="text" id="categoryTagInput" placeholder="Type tag and press Enter">
+          </div>
+          <input type="hidden" id="category">
+          <div id="tagSuggestions" class="tag-suggestions"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Page URL</label>
+        <input type="text" id="pageUrl" placeholder="/pages/example.html">
+        <p class="field-error" id="pageUrlError" aria-live="polite"></p>
+        <p id="urlModeHint" class="mode-hint">Create mode: URL can be edited before first save.</p>
+        <input type="hidden" id="pageId">
+        <input type="hidden" id="oldSlug">
+      </div>
+    </div>
+  </section>
+
+  <section class="generator-card">
+    <h3 class="card-title">Filter</h3>
+    <div class="card-fields">
+      <div class="field-group">
+        <label>Structured Filters</label>
+        <select id="structuredQualification">
+          <option value="">Qualification (optional)</option>
+          <option value="10th">10th</option>
+          <option value="12th">12th</option>
+          <option value="diploma">Diploma</option>
+          <option value="graduation">Graduation</option>
+          <option value="post graduation">Post Graduation</option>
+        </select>
+        <select id="structuredState">
+          <option value="">State (optional)</option>
+          <option value="all india">All India</option>
+          <option value="uttar pradesh">Uttar Pradesh</option>
+          <option value="bihar">Bihar</option>
+          <option value="madhya pradesh">Madhya Pradesh</option>
+          <option value="rajasthan">Rajasthan</option>
+          <option value="other">Other</option>
+        </select>
+        <select id="structuredDepartment">
+          <option value="">Department (optional)</option>
+          <option value="police">Police</option>
+          <option value="railway">Railway</option>
+          <option value="bank">Bank</option>
+          <option value="ssc">SSC</option>
+          <option value="upsc">UPSC</option>
+          <option value="teaching">Teaching</option>
+          <option value="defence">Defence</option>
+          <option value="health">Health</option>
+        </select>
+      </div>
+    </div>
+  </section>
+    </div>
+  </details>
+</div>
+   
+    <div class="content-wrapper">
+  <section class="editor-panel">
+    <div class="panel-head">
+      <h3>Page Content</h3>
+      <div class="editor-stats">
+        <span id="wordCount">0 words</span>
+        <span id="charCount">0 chars</span>
+      </div>
+    </div>
+    <div class="editor-toolbar">
+      <span>Structured editor</span>
+      <span>Auto-saves draft</span>
+    </div>
+    <textarea
+      id="data"
+      class="content-editor"
+      placeholder="Write ShortInfo, Sections, and FAQs here"></textarea>
+  </section>
+
+  <section class="preview-panel">
+    <div class="panel-head">
+      <h3>Live Preview</h3>
+      <span class="preview-hint">Rendered output</span>
+    </div>
+    <iframe id="previewFrame"></iframe>
+  </section>
+</div>
+
+<div class="action-bar">
+  <div class="action-group action-group-secondary">
+    <button type="button" id="previewBtn" class="btn btn-preview btn-secondary">👁 Preview</button>
+    <button type="button" id="aiConvertBtn" class="btn btn-ai btn-secondary">✨ Convert with AI</button>
+    <button type="button" id="deleteBtn" class="btn delete-btn btn-secondary" style="display:none;">🗑 Delete Page</button>
+  </div>
+  <div class="action-group action-group-primary">
+    <button type="button" id="savePageBtn" class="btn btn-save btn-primary">🚀 Save / Update Page</button>
+  </div>
+</div>
+
+<div id="result"></div>
+
+<section class="pdf-upload-card">
+  <div class="pdf-upload-header">
+    <h3>PDF Extract Upload</h3>
+    <p>Upload recruitment PDF to auto-fill page content</p>
+  </div>
+  <form id="pdfExtractForm" class="pdf-extract-form" action="#" autocomplete="off">
+    <input type="file" id="pdfFile" accept="application/pdf" hidden>
+    <label for="pdfFile" id="pdfDropZone" class="pdf-drop-zone">
+      <div class="pdf-drop-icon" aria-hidden="true">📄</div>
+      <p class="pdf-drop-title">Click to upload PDF</p>
+      <p class="pdf-drop-subtitle">or drag &amp; drop here</p>
+    </label>
+    <div class="pdf-upload-meta">
+      <span id="pdfSelectedName" class="pdf-file-name">No file selected</span>
+      <span id="pdfUploadStatus" class="pdf-upload-status" aria-live="polite"></span>
+    </div>
+    <button type="button" id="pdfUploadBtn" class="pdf-upload-btn">Upload PDF</button>
+  </form>
+</section>
+
+</div>
+
+<script src="/assets/js/vendor/dompurify.min.js"></script>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/jobSectionStructure.js"></script>
+<script src="/js/generator.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+.breadcrumb {
+  font-size: 14px;
+  margin: 10px 0 15px;
+  color: #000000;
+}
+
+.breadcrumb a {
+  text-decoration: none;
+  color: #ea2222;
+  font-weight: 600;
+}
+
+.breadcrumb a:hover {
+  color: #2522ed;
+}
+
+.breadcrumb span {
+  color: #000000;
+  margin-left: 5px;
+}

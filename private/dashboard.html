@@ -1,0 +1,286 @@
+
+ <!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css">
+</head>
+
+<body>
+
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+
+<div class="sidebar" id="sidebar">
+<div class="sidebar-top">
+<h2>Admin Panel</h2>
+<button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+</div>
+<div class="nav-group-title">Content</div>
+<a href="/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+<a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+<a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
+<div class="nav-group-title">Operations</div>
+<a href="/upload"><span class="nav-ico">📄</span><span class="nav-text">Upload PDF</span></a>
+<a href="/notification"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
+<div class="nav-group-title">System</div>
+<button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
+<a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+</div>
+
+
+<div class="main">
+    <div class="admin-header">
+<div class="admin-title">👋 Welcome, Admin SAURABH</div>
+<div class="admin-header-actions">
+  <button type="button" class="header-action-btn" id="dashboardRefreshBtn">Refresh Pages</button>
+</div>
+</div>
+
+<h1 class="page-heading">Dashboard</h1>
+<p class="page-sub">Overview, insights, and content management</p>
+
+<!-- Stats -->
+  <section class="stats-section" aria-label="Statistics">
+  <h2 class="section-heading">Overview</h2>
+  <div class="cards stats-cards">
+
+<div class="card card-blue">
+<h3><span class="card-icon">📄</span> Total Pages</h3>
+<p id="totalPages">0</p>
+</div>
+
+<div class="card card-purple">
+<h3><span class="card-icon">📑</span> Small Pages</h3>
+<p id="smallPages">0</p>
+</div>
+
+<div class="card card-red">
+<h3><span class="card-icon">🗑</span> Trash</h3>
+<p id="trashPages">0</p>
+</div>
+
+<div class="card card-green">
+<h3><span class="card-icon">👁</span> Total Views</h3>
+<p id="totalViews">0</p>
+</div>
+
+<div class="card card-orange">
+<h3><span class="card-icon">📊</span> Today Views</h3>
+<p id="todayViews">0</p>
+</div>
+
+<div class="card card-indigo">
+<h3><span class="card-icon">📂</span> Total Categories</h3>
+<p id="totalCategories">0</p>
+</div>
+
+<div class="card card-teal">
+<h3><span class="card-icon">🟢</span> Live Visitors</h3>
+<p id="liveVisitors">0</p>
+</div>
+
+<div class="card card-blue">
+<h3><span class="card-icon">✅</span> Successful Publishes</h3>
+<p id="successfulPublishes">0</p>
+</div>
+
+<div class="card card-red">
+<h3><span class="card-icon">⚠️</span> Failed Actions</h3>
+<p id="failedActions">0</p>
+</div>
+
+<div class="card card-purple">
+<h3><span class="card-icon">📝</span> Pending Drafts</h3>
+<p id="pendingDrafts">0</p>
+</div>
+
+</div>
+  </section>
+
+<!-- Charts -->
+<section class="charts-section" aria-label="Charts">
+<div class="chart-card">
+  <h3 class="chart-block-title">Pages by status</h3>
+  <div class="chart-wrap"><canvas id="statusChart" height="100"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3 class="chart-block-title">Top viewed pages</h3>
+  <div class="chart-wrap"><canvas id="viewsChart" height="100"></canvas></div>
+</div>
+<div class="chart-card">
+  <h3 class="chart-block-title">Live traffic (24h)</h3>
+  <div class="chart-wrap"><canvas id="trafficChart" height="100"></canvas></div>
+</div>
+</section>
+
+<!-- Activity + Latest -->
+
+<div class="dashboard-grid">
+
+<div class="recent">
+<h3>Recent Activity</h3>
+<div id="activityLog"></div>
+</div>
+
+<div class="recent">
+<h3>Latest Pages</h3>
+<div id="latestPages"></div>
+</div>
+
+</div>
+
+<!-- Widgets -->
+
+<div class="widgets-grid">
+
+<div class="recent">
+<h3>Server Status</h3>
+
+<div class="page-item">
+<span>Server</span>
+<strong id="healthServer">…</strong>
+</div>
+
+<div class="page-item">
+<span>Database</span>
+<strong id="healthDb">…</strong>
+</div>
+
+<div class="page-item">
+<span>API</span>
+<strong id="healthApi">…</strong>
+</div>
+
+</div>
+
+<div class="recent">
+<h3>Most Viewed Page</h3>
+<div id="topPage"></div>
+</div>
+
+<div class="recent">
+<h3>🔥 Trending Pages</h3>
+<div id="trendingPages"></div>
+</div>
+
+ <div class="recent">
+<h3>🔥 Trending Keywords</h3>
+<div id="trendingKeywords"></div>
+</div>
+
+ <div class="recent">
+<h3>🔥 Top Pages Today</h3>
+<div id="topTodayPages"></div>
+</div>
+
+</div>
+
+<!-- Monitoring panel -->
+<section class="monitoring-section" aria-label="Monitoring panel">
+<div class="manager-header">
+<h2 class="manager-title">📊 Monitoring Panel</h2>
+<p class="manager-hint">Manage monitored sites, run checks, and track site health.</p>
+</div>
+
+<div class="monitoring-grid">
+<div class="card card-indigo">
+<h3><span class="card-icon">🌐</span> Total Sites</h3>
+<p id="totalSites">0</p>
+</div>
+<div class="card card-green">
+<h3><span class="card-icon">✅</span> Active Sites</h3>
+<p id="activeSites">0</p>
+</div>
+<div class="card card-red">
+<h3><span class="card-icon">⚠️</span> Broken Sites</h3>
+<p id="brokenSites">0</p>
+</div>
+</div>
+
+<div class="monitoring-grid">
+<div class="card card-blue">
+<h3><span class="card-icon">📥</span> Queue Waiting</h3>
+<p id="queueWaiting">0</p>
+</div>
+<div class="card card-teal">
+<h3><span class="card-icon">⚙️</span> Queue Active</h3>
+<p id="queueActive">0</p>
+</div>
+<div class="card card-red">
+<h3><span class="card-icon">❌</span> Queue Failed</h3>
+<p id="queueFailed">0</p>
+</div>
+</div>
+
+<div class="monitor-actions">
+<button type="button" id="runCheckBtn">▶ Run Check</button>
+<button type="button" id="refreshSitesBtn">🔄 Refresh</button>
+<button type="button" id="retryFailedBtn">♻ Retry Failed</button>
+<button type="button" id="clearQueueBtn">🧹 Clear Queue</button>
+</div>
+
+<div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
+<div id="sitesTable" class="sites-table-host"></div>
+<div class="recent">
+<h3>Queue Failed Jobs</h3>
+<div id="queueFailedList"></div>
+</div>
+</section>
+
+<!-- Page manager -->
+<section class="page-manager" aria-label="Page list">
+<div class="manager-header">
+<h2 class="manager-title">Page Manager</h2>
+<p class="manager-hint">Search, filter by tag or status, then edit or move to trash.</p>
+</div>
+
+<div class="filters-toolbar">
+ <div class="search-box">
+<span class="search-icon" aria-hidden="true">🔍</span>
+<input type="text" id="searchPage" placeholder="Search by title or slug..." autocomplete="off">
+<div id="searchSuggestions" class="search-suggestions"></div>
+</div>
+
+<div class="filter-group">
+<label for="categoryFilter">Tag</label>
+<select id="categoryFilter">
+<option value="">All</option>
+<option value="__notag">No Tag</option>
+</select>
+</div>
+
+<div class="filter-group">
+<label for="statusFilter">Status</label>
+<select id="statusFilter">
+<option value="">All</option>
+</select>
+</div>
+</div>
+
+<div class="page-list-panel">
+<div class="panel-head">
+<h3 class="panel-title">Pages</h3>
+</div>
+<div id="pageList" class="page-list-host"></div>
+<div class="pagination">
+  <button type="button" id="prevBtn">Previous</button>
+  <div id="pageNumbers" class="page-numbers"></div>
+  <button type="button" id="nextBtn">Next</button>
+</div>
+</div>
+</section>
+
+</div>
+
+<script src="/assets/js/vendor/dompurify.min.js"></script>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/dashboard.js"></script>
+
+</body>
+</html>

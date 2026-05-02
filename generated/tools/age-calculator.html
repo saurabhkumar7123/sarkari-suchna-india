@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Age Calculator | Sarkari Suchna India</title>
+<meta name="description" content="Use the age calculator tool to calculate exact age from date of birth with accurate year, month, day and next birthday details.">
+<link rel="canonical" href="/tools/age-calculator">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/base/reset.css">
+<link rel="stylesheet" href="/css/base/base.css">
+<link rel="stylesheet" href="/css/pages/age-calculator.css">
+</head>
+<body>
+
+<div class="main-container age-tool-main">
+  <section class="age-tool">
+    <h2>Age Calculator Pro</h2>
+    <p class="age-tool__subtitle">Accurate age timeline with leap-year safe local calculations.</p>
+
+    <div class="age-tool__panel">
+      <div class="age-tool__grid">
+        <label>Date of Birth
+          <input type="date" id="dobInput" required>
+        </label>
+        <label>Time of Birth (optional)
+          <input type="time" id="dobTimeInput">
+        </label>
+        <label>Mode
+          <select id="modeInput">
+            <option value="current">Current Age</option>
+            <option value="future">Age On Future Date</option>
+            <option value="past">Age On Past Date</option>
+          </select>
+        </label>
+        <label>Target Date
+          <input type="date" id="targetDateInput">
+        </label>
+        <label>Target Time (optional)
+          <input type="time" id="targetTimeInput">
+        </label>
+      </div>
+      <button type="button" id="copyResultBtn">Copy Result</button>
+    </div>
+
+    <article class="age-tool__hero" id="headlineResult">Enter DOB to see age</article>
+    <div class="age-tool__summary" id="summaryResult"></div>
+    <div class="age-tool__stats" id="statsResult"></div>
+    <div class="age-tool__next" id="nextBirthdayResult"></div>
+  </section>
+</div>
+
+<script src="/js/age-calculator.js"></script>
+</body>
+</html>

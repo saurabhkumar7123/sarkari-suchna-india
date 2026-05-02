@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Sitemap: /sitemap.xml
+
+# Avoid indexing duplicate query-parameter search result URLs.
+Disallow: /search?q=

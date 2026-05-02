@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css">
+</head>
+<body>
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+  <div class="nav-group-title">Admin</div>
+  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
+  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
+  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
+  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
+  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
+  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
+  <div class="nav-group-title">Content</div>
+  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
+  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
+  <div class="nav-group-title">System</div>
+  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
+  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-title">👋 Welcome, Admin</div>
+    <div class="admin-header-actions">
+      <button type="button" class="header-action-btn" id="dashboardRefreshBtn">Refresh Dashboard</button>
+    </div>
+  </div>
+  <h1 class="page-heading">Dashboard</h1>
+  <p class="page-sub">Overview and insights</p>
+  <section class="stats-section" aria-label="Actionable analytics">
+    <h2 class="section-heading">Actionable Analytics</h2>
+    <div class="cards stats-cards">
+      <a class="card card-blue" href="/admin/page-manager"><h3><span class="card-icon">📄</span> Total Pages</h3><p id="kpiTotalPages">0</p></a>
+      <a class="card card-indigo" href="/upload"><h3><span class="card-icon">📤</span> Total Uploads</h3><p id="kpiTotalUploads">0</p></a>
+      <a class="card card-red" href="/admin/monitoring"><h3><span class="card-icon">❌</span> Failed Jobs</h3><p id="kpiFailedJobs">0</p></a>
+      <a class="card card-teal" href="/admin/monitoring"><h3><span class="card-icon">📥</span> Pending Queue</h3><p id="kpiPendingJobs">0</p></a>
+      <a class="card card-green" href="/admin/monitoring"><h3><span class="card-icon">✅</span> Success Rate</h3><p id="kpiSuccessRate">0%</p></a>
+    </div>
+  </section>
+  <div class="dashboard-grid">
+    <div class="recent">
+      <h3>Needs Attention</h3>
+      <div class="page-item"><span>Failed jobs</span><strong id="attentionFailedJobs">0</strong></div>
+      <div class="page-item"><span>Manual actions</span><strong id="attentionManualItems">0</strong></div>
+      <div class="row-actions" style="margin-top:10px;">
+        <a href="/admin/monitoring">View Failed Jobs</a>
+      </div>
+    </div>
+    <div class="recent">
+      <h3>Quick Actions</h3>
+      <div class="row-actions">
+        <a href="/generator">Generate Page</a>
+        <a href="/admin/csv-upload">Upload CSV</a>
+        <a href="/admin/monitoring" id="quickRunCheckBtn">Run Check</a>
+        <a href="/admin/monitoring" id="quickRetryFailedBtn">Retry Failed Jobs</a>
+      </div>
+      <div class="page-item" style="margin-top:8px;"><span>Average Processing Time</span><strong id="avgProcessingTime">N/A</strong></div>
+      <div class="page-item"><span>Recent Trend</span><strong id="recentTrend">N/A</strong></div>
+    </div>
+  </div>
+  <section class="stats-section" aria-label="Statistics">
+    <h2 class="section-heading">Overview</h2>
+    <div class="cards stats-cards">
+      <div class="card card-blue"><h3><span class="card-icon">📄</span> Total Pages</h3><p id="totalPages">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">📑</span> Small Pages</h3><p id="smallPages">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">🗑</span> Trash</h3><p id="trashPages">0</p></div>
+      <div class="card card-green"><h3><span class="card-icon">👁</span> Total Views</h3><p id="totalViews">0</p></div>
+      <div class="card card-orange"><h3><span class="card-icon">📊</span> Today Views</h3><p id="todayViews">0</p></div>
+      <div class="card card-indigo"><h3><span class="card-icon">📂</span> Total Categories</h3><p id="totalCategories">0</p></div>
+      <div class="card card-teal"><h3><span class="card-icon">🟢</span> Live Visitors</h3><p id="liveVisitors">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">✅</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">⚠️</span> Failed Actions</h3><p id="failedActions">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">📝</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
+    </div>
+  </section>
+  <section class="charts-section" aria-label="Charts">
+    <div class="chart-card"><h3 class="chart-block-title">Pages by status</h3><div class="chart-wrap"><canvas id="statusChart" height="100"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-block-title">Top viewed pages</h3><div class="chart-wrap"><canvas id="viewsChart" height="100"></canvas></div></div>
+    <div class="chart-card"><h3 class="chart-block-title">Live traffic (24h)</h3><div class="chart-wrap"><canvas id="trafficChart" height="100"></canvas></div></div>
+  </section>
+  <div class="dashboard-grid">
+    <div class="recent"><h3>Recent Activity</h3><div id="activityLog"></div><div class="row-actions" style="margin-top:8px;"><a href="/admin/activity">View Full Activity</a></div></div>
+    <div class="recent"><h3>Latest Pages</h3><div id="latestPages"></div></div>
+  </div>
+  <div class="widgets-grid">
+    <div class="recent">
+      <h3>Server Status</h3>
+      <div class="page-item"><span>Server</span><strong id="healthServer">…</strong></div>
+      <div class="page-item"><span>Database</span><strong id="healthDb">…</strong></div>
+      <div class="page-item"><span>API</span><strong id="healthApi">…</strong></div>
+    </div>
+    <div class="recent"><h3>Most Viewed Page</h3><div id="topPage"></div></div>
+    <div class="recent"><h3>🔥 Trending Pages</h3><div id="trendingPages"></div></div>
+    <div class="recent"><h3>🔥 Top Pages Today</h3><div id="topTodayPages"></div></div>
+  </div>
+</div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-dashboard.js"></script>
+</body>
+</html>

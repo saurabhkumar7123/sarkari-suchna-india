@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobs Listing</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+  <link rel="stylesheet" href="/css/base/tokens.css">
+  <link rel="stylesheet" href="/css/pages/jobs.css?v=1">
+</head>
+<body>
+  <main class="jobs-wrap">
+    <h1 class="jobs-heading">Jobs</h1>
+    <section class="jobs-summary" aria-live="polite">
+      <span id="jobsCount" class="jobs-count">0 Jobs Found</span>
+      <span id="jobsActiveFilters" class="jobs-active-filters">Showing: All</span>
+    </section>
+    <section id="jobsList" class="jobs-list" aria-live="polite"></section>
+    <section id="jobsPagination" class="jobs-pagination" aria-live="polite"></section>
+  </main>
+
+  <script src="/js/jobs-page.js"></script>
+</body>
+</html>

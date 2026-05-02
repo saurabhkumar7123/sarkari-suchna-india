@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Upload PDF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+  <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+
+
+  <link rel="stylesheet" href="/css/base/tokens.css">
+  <link rel="stylesheet" href="/css/admin/upload.css">
+
+</head>
+<body>
+  <header class="admin-header">
+  <div class="admin-left">
+    <h1>Welcome, Saurabh 👋</h1>
+    <p>File Upload & Manager</p>
+  </div>
+  <div class="admin-right">
+    <span class="admin-badge">🛡 ADMIN</span>
+  </div>
+</header>
+
+<div class="main-container">
+
+  <div class="page-heading">
+    <h2>Upload File &amp; Manager</h2>
+    <p>Upload, preview, search, and manage all files from one place.</p>
+  </div>
+
+  <section class="card upload-card">
+    <form id="uploadForm">
+      <input type="file" id="fileInput" name="pdf" accept=".pdf,.jpg,.jpeg,.png" required hidden>
+      <label for="fileInput" id="uploadDropZone" class="upload-drop-zone">
+        <div class="drop-icon" aria-hidden="true">⤴</div>
+        <p class="drop-title">Click to upload or drag &amp; drop</p>
+        <p class="drop-subtitle">Supports PDF, JPG, JPEG, PNG</p>
+      </label>
+      <div class="upload-meta">
+        <span id="uploadSelectedName" class="selected-file">No file selected</span>
+        <span id="uploadState" class="upload-state" aria-live="polite"></span>
+      </div>
+      <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload File</button>
+    </form>
+
+    <p id="msg"></p>
+    <div id="uploadProgressWrap" class="upload-progress-wrap" hidden>
+      <div class="upload-progress-bar"><span id="uploadProgressFill"></span></div>
+      <span id="uploadProgressText">0%</span>
+    </div>
+  </section>
+
+  <section class="card manager-card">
+    <div class="manager-head">
+      <h3>Uploaded Files</h3>
+      <div class="manager-controls">
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="searchFile" placeholder="Search files...">
+        </div>
+        <select id="filter">
+          <option value="all">All Files</option>
+          <option value="pdf">PDF</option>
+          <option value="image">Image</option>
+        </select>
+      </div>
+    </div>
+    <div id="fileList"></div>
+  </section>
+
+</div>
+
+
+<div id="lightbox" class="modal">
+  <button type="button" class="close" id="lightboxCloseBtn" aria-label="Close">✖</button>
+  <div class="modal-content" id="lightboxContent"></div>
+</div>
+
+<div id="previewModal" class="modal">
+  <button type="button" class="close" id="previewModalCloseBtn" aria-label="Close">&times;</button>
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<script src="/assets/js/vendor/dompurify.min.js"></script>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/upload.js"></script>
+
+</body>
+</html>

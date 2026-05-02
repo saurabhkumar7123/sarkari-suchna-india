@@ -1,0 +1,2 @@
+ALTER TABLE `pages`
+  MODIFY COLUMN `last_date` DATE NULL;

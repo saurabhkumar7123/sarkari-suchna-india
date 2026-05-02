@@ -1,0 +1,61 @@
+.u-panel {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+  box-shadow: var(--site-shadow-sm);
+}
+
+.finder-banner,
+.finder-modal .job-finder,
+.admin-header,
+.generator-card,
+.trending-section,
+.u-panel {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+}
+
+.u-card {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+  box-shadow: var(--site-shadow);
+}
+
+.card,
+.job-title-section,
+.meta-info-section,
+.u-card {
+  border-radius: var(--site-radius);
+}
+
+.u-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--site-radius-pill);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.meta-tag,
+.admin-badge,
+.u-pill {
+  border-radius: var(--site-radius-pill);
+}
+
+.u-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--space-4) var(--site-focus);
+}
+
+.finder-submit,
+.tools-btn,
+.mobile-tools,
+.page-btn,
+.btn {
+  min-height: 44px;
+}

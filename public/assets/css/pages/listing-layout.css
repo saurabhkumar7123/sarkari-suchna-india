@@ -1,0 +1,107 @@
+/* Listing routes (/new-form, /result, …) — width from tokens.css .main-container */
+body.listing-page {
+  font-family: var(--site-font, "Segoe UI", sans-serif);
+  background: #ffffff;
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  opacity: 1;
+}
+
+/* Vertical rhythm only — horizontal width/padding: tokens.css */
+body.listing-page .main-container {
+  margin-top: var(--space-24, 24px);
+  margin-bottom: var(--space-32, 32px);
+}
+
+@media (max-width: 768px) {
+  body.listing-page .main-container {
+    margin-top: 12px;
+    margin-bottom: 32px;
+    
+  }
+}
+
+.listing-hero {
+  text-align: center;
+  margin: 8px auto 20px;
+  max-width: 720px;
+}
+
+.listing-hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  color: var(--site-primary, #1e3c72);
+  letter-spacing: 0.02em;
+}
+
+.listing-hero p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--site-muted, #64748b);
+  line-height: 1.5;
+}
+
+.main-container .cards {
+  margin-top: 8px;
+}
+
+.listing-loading,
+.listing-empty {
+  padding: 16px;
+  color: #64748b;
+  margin: 0;
+}
+
+.listing-error {
+  padding: 16px;
+  color: #b91c1c;
+  margin: 0;
+}
+
+/* Pagination — stays within .main-container (no horizontal overflow) */
+.listing-pager {
+  width: 100%;
+  max-width: min(720px, 100%);
+  margin: 16px auto 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.listing-pager-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--site-surface, #fff);
+  border-radius: var(--site-radius, 14px);
+  border: 1px solid var(--site-border, rgba(148, 163, 184, 0.35));
+  box-shadow: var(--site-shadow, 0 8px 24px rgba(15, 23, 42, 0.06));
+}
+
+.pager-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--site-primary, #1e3c72);
+}
+
+.pager-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.pager-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pager-meta {
+  font-size: 0.9rem;
+  color: var(--site-muted, #64748b);
+}

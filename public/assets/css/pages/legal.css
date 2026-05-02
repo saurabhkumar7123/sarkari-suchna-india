@@ -1,0 +1,82 @@
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#ffffff;
+}
+
+.legal-container{
+  max-width:850px;
+  margin:60px auto;
+  background:#ffffff;
+  padding:40px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.05);
+}
+
+.legal-container h1{
+  font-size:30px;
+  color:#5B5FEF;
+  margin-bottom:20px;
+}
+
+.legal-container h2{
+  font-size:18px;
+  margin-top:25px;
+  color:#2BB6B0;
+}
+
+.legal-container p{
+  line-height:1.8;
+  color:#555;
+  font-size:15px;
+}
+
+/* Responsive */
+@media(max-width:768px){
+  .legal-container{
+    margin:30px 15px;
+    padding:25px;
+  }
+
+  .legal-container h1{
+    font-size:24px;
+  }
+}
+
+/* ========== Terms page: prose links only (inside .legal-container) ==========
+   Do not use bare `a { color: … }` here — scope under .terms-page + .legal-container
+   so header/footer icons and nav are unaffected. */
+body.terms-page .legal-container a {
+  color: var(--site-link, #2563eb);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+body.terms-page .legal-container a:hover {
+  color: var(--site-link-hover, #b91c1c);
+}
+
+/* Header/footer: reinforce icon & control colors if any global link rule leaks */
+body.terms-page .main-header .top-banner .social-icons a,
+body.terms-page .main-header .top-banner .social-icons i {
+  color: #fff;
+  text-decoration: none;
+}
+
+body.terms-page .main-header .tools-btn,
+body.terms-page .main-header .mobile-tools {
+  color: #fff;
+}
+
+body.terms-page .main-header .mobile-actions i {
+  color: #333;
+}
+
+body.terms-page .main-header .hamburger {
+  color: #fff;
+}
+
+body.terms-page .main-footer .footer-social a {
+  color: #fff;
+  text-decoration: none;
+}

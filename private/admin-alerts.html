@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Admin Alerts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css">
+<link rel="stylesheet" href="/css/admin/pdf.css">
+</head>
+<body>
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+  <div class="nav-group-title">Admin</div>
+  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
+  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
+  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
+  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
+  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
+  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
+  <div class="nav-group-title">Content</div>
+  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
+  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
+  <div class="nav-group-title">System</div>
+  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
+  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+</div>
+<div class="main">
+  <div class="admin-header"><div class="admin-title">🔔 Alerts</div></div>
+  <div class="main-container">
+    <div class="page-header">
+      <h1>Latest Notifications</h1>
+      <p>Latest updates and announcements</p>
+    </div>
+    <div id="pdfList"></div>
+  </div>
+</div>
+<script src="/js/admin-shell.js"></script>
+<script src="/js/pdf.js"></script>
+</body>
+</html>

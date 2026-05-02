@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+
+  <!-- White Background with rounded corners -->
+  <rect x="5" y="5" width="90" height="90" rx="20" fill="#ffffff"/>
+
+  <!-- Soft Shadow -->
+  <rect x="5" y="5" width="90" height="90" rx="20"
+        fill="none" stroke="rgba(0,0,0,0.08)" stroke-width="2"/>
+
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="s1" x1="0" x2="1">
+      <stop offset="0%" stop-color="#ff9933"/>
+      <stop offset="100%" stop-color="#ff5e00"/>
+    </linearGradient>
+
+    <linearGradient id="s2" x1="0" x2="1">
+      <stop offset="0%" stop-color="#1e90ff"/>
+      <stop offset="100%" stop-color="#003f88"/>
+    </linearGradient>
+
+    <linearGradient id="s3" x1="0" x2="1">
+      <stop offset="0%" stop-color="#2ecc71"/>
+      <stop offset="100%" stop-color="#0b7d3b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- SSI Text -->
+  <text x="18" y="62" font-size="42" font-weight="900" fill="url(#s1)">S</text>
+  <text x="40" y="62" font-size="42" font-weight="900" fill="url(#s2)">S</text>
+  <text x="62" y="62" font-size="42" font-weight="900" fill="url(#s3)">I</text>
+
+</svg>

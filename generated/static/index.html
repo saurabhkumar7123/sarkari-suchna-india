@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sarkari Result, Govt Jobs, Admit Card 2026 | Sarkari Suchna India</title>
+
+<meta name="description" content="Latest Sarkari Jobs, Results, Admit Cards, Government Vacancy updates. Sarkari Suchna India provides daily job alerts and updates.">
+<link rel="canonical" href="/">
+<meta property="og:title" content="Sarkari Result, Govt Jobs, Admit Card 2026 | Sarkari Suchna India">
+<meta property="og:description" content="Latest Sarkari Jobs, Results, Admit Cards, Government Vacancy updates. Sarkari Suchna India provides daily job alerts and updates.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="/">
+<meta property="og:image" content="/assets/image/logo/favicon.png">
+
+<meta name="keywords" content="sarkari result, govt jobs, admit card, latest vacancy, sarkari naukri 2026">
+
+<meta name="robots" content="index, follow">
+
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+
+<!-- BASE -->
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/base/reset.css">
+<link rel="stylesheet" href="/css/base/base.css">
+
+<!-- COMPONENTS -->
+<link rel="stylesheet" href="/css/components/header.css">
+<link rel="stylesheet" href="/css/components/footer.css">
+<link rel="stylesheet" href="/css/components/buttons.css">
+
+<!-- PAGE -->
+<link rel="stylesheet" href="/css/pages/home.css">
+<link rel="stylesheet" href="/css/pages/finder.css">
+<link rel="stylesheet" href="/css/pages/about-site.css">
+
+<!-- EFFECT -->
+<link rel="stylesheet" href="/css/effects/animation.css">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+<body class="site-home page-home">
+
+<div id="header"></div>
+
+<main class="site-main" id="homeMain">
+
+<!-- 🔍 Search Overlay (fixed; outside .main-container so flex gap only affects sections) -->
+<div id="searchOverlay" class="search-overlay">
+
+  <div class="search-box">
+    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+    <input type="text" id="searchInput" placeholder="Search Jobs, Results, Admit Card...">
+    <button id="searchBtn">Search</button>
+  </div>
+
+  <div id="recentSearches" class="recent-searches"></div>
+  <div id="searchSuggestions" class="search-suggestions"></div>
+
+  <!-- ❌ Close Button -->
+  <button type="button" class="close-search" aria-label="Close search">✖</button>
+
+</div>
+
+<div class="main-container">
+<!-- 🔥 Breaking News -->
+<div class="breaking section breaking-news">
+  <div class="breaking-left">
+    
+    <i class="fa-solid fa-bullhorn speaker"></i>
+    <span>Breaking</span> News
+  </div>
+
+  <div class="breaking-right" id="breakingNews">
+    <!-- Dynamic breaking news yaha aayega -->
+  </div>
+</div>
+
+<!-- 🎯 Small Boxes -->
+<div class="small-boxes section" id="smallBoxes">
+  <!-- Boxes yaha load honge -->
+</div>
+ 
+ <div class="countdown-box section is-hidden" id="countdownBox">
+  <div class="countdown-icon">⏰</div>
+  <div class="countdown-text">
+    ⚡ COMING UP: <span id="countdownTitle">Result</span>
+  </div>
+  <div class="countdown-timer" id="countdownTimer">00:00:00</div>
+</div>
+       
+   <div
+     id="openFinder"
+     class="finder-banner"
+     role="button"
+     tabindex="0"
+     aria-haspopup="dialog"
+     aria-controls="jobFinderModal"
+     aria-expanded="false"
+     aria-label="Open Job Finder"
+   >
+
+<div class="finder-left">
+<i class="fa-solid fa-magnifying-glass"></i>
+</div>
+
+<div class="finder-text">
+
+<span class="finder-banner-title">
+ Job Finder
+</span>
+
+<span class="finder-sub">By Qualification | By Dept | By State</span>
+
+</div>
+
+<div class="finder-cta">
+Check Now <i class="fa-solid fa-angle-right"></i>
+</div>
+
+</div>
+      
+<!-- 🟦 Cards -->
+  <div class="cards card-grid section cards-section" id="dynamicSections">
+ </div>
+
+<div class="trending-section section">
+
+<h2 class="section-title">🔥 Trending Jobs</h2>
+
+<ul id="trendingJobs" class="trending-list"></ul>
+
+</div>
+
+<div id="about-site" class="section about-site-slot" aria-label="About this site"></div>
+</div>
+</main>
+
+<div id="footer"></div>
+
+<!-- Job Finder modal: direct child of body so position:fixed matches viewport (no transformed ancestors) -->
+<div id="jobFinderModal" class="finder-modal" aria-hidden="true">
+  <div class="finder-box" id="jobFinderBox" role="dialog" aria-modal="true" aria-labelledby="finderDialogTitle"></div>
+</div>
+ 
+<script src="/assets/js/vendor/dompurify.min.js" defer></script>
+<script src="/js/search.js" defer></script>
+<script src="/js/header.js" defer></script>
+<script src="/js/finder.js" defer></script>
+<script src="/js/about-site.js" defer></script>
+<script src="/js/footer.js" defer></script>
+<script src="/js/animation.js" defer></script>
+<script src="/js/index.js" defer></script>
+
+</body>
+</html>

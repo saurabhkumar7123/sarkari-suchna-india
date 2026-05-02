@@ -1,0 +1,6 @@
+# Paste INSIDE the existing  http {  ...  }  block of your Nginx nginx.conf
+# (usually: C:\nginx\conf\nginx.conf  on Windows, or /etc/nginx/nginx.conf on Linux)
+#
+# Use the line below (adjust path if your folder name differs):
+
+include C:/Users/ASUS/Desktop/sarkari-suchna-india/nginx/nginx.local.conf;

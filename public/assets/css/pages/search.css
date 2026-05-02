@@ -1,0 +1,210 @@
+/* Layout width: tokens.css .main-container */
+body.search-page{
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin:0;
+    padding:0;
+    background:#ffffff;
+    color:#333;
+  }
+  
+  .search-page .main-container{
+    margin-top:24px;
+    margin-bottom:40px;
+  }
+  
+  /* ===== Top Bar ===== */
+  .top-bar{
+    margin-bottom:25px;
+  }
+  
+  .home-btn{
+    text-decoration:none;
+    background:linear-gradient(45deg,#1e3c72,#2a5298);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:30px;
+    font-size:14px;
+    font-weight:500;
+    transition:background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    display:inline-block;
+  }
+  
+  .home-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 18px rgba(0,0,0,0.15);
+  }
+  
+  /* ===== Title Section ===== */
+  #searchTitle{
+    font-size:28px;
+    margin-bottom:8px;
+    color:#1e3c72;
+    font-weight:600;
+  }
+  
+  #resultCount{
+    margin-bottom:25px;
+    color:#666;
+    font-size:14px;
+  }
+  
+  /* ===== Result Card ===== */
+  .result-card{
+    background:#ffffff;
+    padding:25px;
+    margin-bottom:25px;
+    border-radius:18px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.06);
+    transition:background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  
+  .result-card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 15px 35px rgba(0,0,0,0.12);
+  }
+  
+  /* ===== Title Link ===== */
+  .result-card h2{
+    margin:0 0 12px;
+    font-size:20px;
+  }
+  
+  .result-card h2 a{
+    text-decoration:none;
+    color:#2a15e6;
+    transition:0.3s;
+  }
+  
+  .result-card h2 a:hover{
+    color:#1e3c72;
+    text-decoration:underline;
+  }
+  
+  /* ===== Preview Text ===== */
+  .result-card p{
+    font-size:14px;
+    line-height:1.7;
+    color:#555;
+    margin-bottom:12px;
+  }
+  
+  /* ===== Badge ===== */
+  .badge{
+    display:inline-block;
+    background:linear-gradient(45deg,#1e3c72,#2a5298);
+    color:#fff;
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  
+  /* ===== Highlight ===== */
+  .highlight{
+    background:#ffe066;
+    padding:2px 5px;
+    border-radius:4px;
+    font-weight:600;
+  }  
+  
+    .loader{
+    border:6px solid #f3f3f3;
+    border-top:6px solid #1e3c72;
+    border-radius:50%;
+    width:40px;
+    height:40px;
+    animation:spin 0.8s linear infinite;
+    margin:30px auto;
+  }
+  
+  @keyframes spin{
+    100%{transform:rotate(360deg);}  
+  }  
+  
+   .pagination{
+    text-align:center;
+    margin-top:30px;
+  }
+  
+  .page-btn{
+    padding:6px 12px;
+    margin:4px;
+    border:none;
+    background:#eee;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  
+  .page-btn.active{
+    background:#1e3c72;
+    color:white;
+  }
+  
+  /* ===== Responsive ===== */
+  @media (max-width: 768px){
+    .search-page .main-container{
+      margin-top:16px;
+      margin-bottom:24px;
+    }
+  
+    #searchTitle{
+      font-size:22px;
+    }
+  
+    .result-card{
+      padding:18px;
+    }
+  
+    .result-card h2{
+      font-size:17px;
+    }
+  
+    .home-btn{
+      font-size:12px;
+      padding:8px 14px;
+    }
+  }   
+  
+  
+  .badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 6px;
+  }
+  
+  /* Dynamic colors */
+  .badge-green {
+    background: #16a34a;
+    color: #fff;
+  }
+  
+  .badge-blue {
+    background: #2563eb;
+    color: #fff;
+  }
+  
+  .badge-orange {
+    background: #ea580c;
+    color: #fff;
+  }
+  
+  .badge-purple {
+    background: #7c3aed;
+    color: #fff;
+  }
+  
+  .badge-teal {
+    background: #0d9488;
+    color: #fff;
+  }
+  
+  .badge-default {
+    background: #64748b;
+    color: #fff;
+  }
+   

@@ -1,0 +1,104 @@
+.btn,
+.input,
+.card,
+.badge,
+.pill,
+.panel {
+  font-family: var(--site-font);
+}
+
+.btn,
+.finder-cta,
+.finder-submit,
+.tools-btn,
+.mobile-tools,
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-8) var(--space-16);
+  border-radius: var(--site-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  transition: background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+
+.btn:focus-visible,
+.input:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--space-4) var(--site-focus);
+}
+
+.btn-primary,
+.finder-cta,
+.finder-submit {
+  background: linear-gradient(135deg, var(--site-primary-2), var(--site-primary));
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--site-surface-2);
+  border-color: var(--site-border);
+  color: var(--site-text);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--site-link);
+}
+
+.card,
+.panel,
+.generator-card,
+.finder-modal .job-finder,
+.admin-header,
+.trending-section {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+  box-shadow: var(--site-shadow-sm);
+}
+
+.input,
+input,
+select,
+textarea {
+  min-height: 44px;
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius-sm);
+  background: var(--site-surface);
+  color: var(--site-text);
+  font-size: var(--font-size-small);
+}
+
+.badge,
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--site-radius-pill);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--site-link);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .card,
+  .panel,
+  .badge,
+  .pill {
+    transition: none !important;
+    animation: none !important;
+  }
+}
