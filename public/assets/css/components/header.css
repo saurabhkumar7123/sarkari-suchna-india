@@ -346,7 +346,14 @@
 
 #navbar.active{
   transform:translateX(0);
-  z-index:var(--z-dropdown);
+  /* Above .menu-overlay (--z-overlay) so nav links receive taps; overlay still dims page */
+  z-index:calc(var(--z-overlay) + 1);
+}
+
+/* Keep tap bar above dimmer while menu is open (overlay is full-viewport fixed) */
+body.mobile-nav-open .mobile-nav{
+  position:relative;
+  z-index:calc(var(--z-overlay) + 2);
 }
 
 #navbar .nav-item{
