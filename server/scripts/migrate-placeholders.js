@@ -78,7 +78,7 @@ async function run() {
 
     if (html === row.content) continue;
 
-    await db.query("UPDATE pages SET content = ? WHERE id = ?", [html, row.id]);
+    await db.query("UPDATE pages SET content = ? WHERE id = ? AND deleted = 0", [html, row.id]);
     await fs.writeFile(path.join(outputDir, `${slug}.html`), html, "utf8");
     updated += 1;
   }

@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const { Worker } = require("bullmq");
 const logger = require("../../utils/logger");
 const { queueConnection } = require("../queue/siteQueue");

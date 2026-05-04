@@ -9,7 +9,7 @@ function cleanEnvValue(value) {
 const dbName = cleanEnvValue(process.env.DB_NAME);
 const dbHost = cleanEnvValue(process.env.DB_HOST) || "127.0.0.1";
 const dbUser = cleanEnvValue(process.env.DB_USER) || "root";
-const dbPass = String(process.env.DB_PASS || "");
+const dbPass = String(cleanEnvValue(process.env.DB_PASSWORD || process.env.DB_PASS) || "");
 
 if (!dbName) {
   // Pool still connects, but unqualified `pages` may resolve incorrectly without a default schema.

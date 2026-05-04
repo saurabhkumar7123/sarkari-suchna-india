@@ -883,14 +883,14 @@ async function updatePageBySlug(
     `UPDATE \`pages\`
      SET title = ?, status = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
          breaking = ?, breaking_order = ?, event_time = ?
-     WHERE slug = ?`,
+     WHERE slug = ? AND deleted = 0`,
     updateParams
   );
 
   if (result && result.affectedRows) {
     await logDatabaseName(conn, "same conn, immediately before SELECT verify after UPDATE");
     const [[verifyRow]] = await conn.query(
-      "SELECT `id`, `slug`, `status`, `position`, `post_name`, `total_posts`, `qualification`, `state`, `department` FROM `pages` WHERE `slug` = ? LIMIT 1",
+      "SELECT `id`, `slug`, `status`, `position`, `post_name`, `total_posts`, `qualification`, `state`, `department` FROM `pages` WHERE `slug` = ? AND deleted = 0 LIMIT 1",
       [slug]
     );
     if (IS_NON_PROD) {
@@ -952,7 +952,7 @@ async function updatePageBySlug(
 }
 
 async function selectIdBySlug(slug, conn) {
-  const [[idRow]] = await conn.query("SELECT id FROM pages WHERE slug=? LIMIT 1", [slug]);
+  const [[idRow]] = await conn.query("SELECT id FROM pages WHERE slug=? AND deleted=0 LIMIT 1", [slug]);
   return idRow && idRow.id;
 }
 
