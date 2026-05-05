@@ -593,7 +593,7 @@
   
     /* Slower than desktop ticker for readability on small screens */
     .breaking-scroll{
-      animation:tickerScroll 48s linear infinite;
+      animation:tickerScroll 20s linear infinite;
     }
   
     .breaking-scroll a{
