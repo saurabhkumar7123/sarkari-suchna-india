@@ -189,16 +189,6 @@ function shouldRedirectToHttps(req) {
   return true;
 }
 
-app.use((req, res, next) => {
-  if (!shouldRedirectToHttps(req)) return next();
-  const host = String(req.headers.host || "").trim();
-  if (!host) return res.status(400).send("Bad Request");
-  const target = `https://${host}${req.originalUrl || "/"}`;
-  if (req.method === "GET" || req.method === "HEAD") {
-    return res.redirect(301, target);
-  }
-  return res.redirect(307, target);
-});
 
 app.use((req, res, next) => {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").toLowerCase();
