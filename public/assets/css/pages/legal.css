@@ -31,6 +31,39 @@ body{
   font-size:15px;
 }
 
+.legal-container .lead{
+  font-size:16px;
+  color:#3f3f46;
+  margin-bottom:20px;
+}
+
+.legal-container section{
+  margin-top:26px;
+}
+
+.legal-container h3{
+  font-size:16px;
+  margin-top:18px;
+  color:#374151;
+}
+
+.legal-container ul,
+.legal-container ol{
+  margin:12px 0 0 20px;
+  color:#555;
+}
+
+.legal-container li{
+  line-height:1.75;
+  margin:6px 0;
+}
+
+.legal-container address{
+  font-style:normal;
+  line-height:1.8;
+  color:#555;
+}
+
 /* Responsive */
 @media(max-width:768px){
   .legal-container{
@@ -40,6 +73,10 @@ body{
 
   .legal-container h1{
     font-size:24px;
+  }
+
+  .legal-container .lead{
+    font-size:15px;
   }
 }
 
