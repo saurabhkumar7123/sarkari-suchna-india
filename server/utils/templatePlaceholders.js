@@ -16,6 +16,7 @@ function createSlug(title) {
 
 function formatPostDate(value) {
   return new Date(value).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "long",
     year: "numeric"
@@ -24,6 +25,7 @@ function formatPostDate(value) {
 
 function formatPostTime(value) {
   return new Date(value).toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true
