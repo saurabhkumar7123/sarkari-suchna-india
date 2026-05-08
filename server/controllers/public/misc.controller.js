@@ -9,6 +9,23 @@ const {
 const { collectParsingWarnings } = require("../../../generator/builders/sectionBuilder");
 const { processJobParse } = require("../../services/aiParseJob.service");
 const fileService = require("../../services/file.service");
+const previewHeaderTemplatePath = path.join(process.cwd(), "generated", "static", "header.html");
+
+async function injectPreviewHeader(html) {
+  const source = String(html || "");
+  if (!source.includes('<div id="header"></div>')) return source;
+  try {
+    const headerHtml = await fileService.readFile(previewHeaderTemplatePath, "utf8");
+    const safeHeader = String(headerHtml || "");
+    if (!safeHeader) return source;
+    return source.replace('<div id="header"></div>', safeHeader);
+  } catch (err) {
+    logger.warn("preview header injection skipped", {
+      message: err && err.message ? err.message : String(err)
+    });
+    return source;
+  }
+}
 
 const getSmallBoxes = asyncHandler(async (req, res) => {
   const rows = await miscService.getSmallBoxes();
@@ -59,6 +76,7 @@ const previewPage = asyncHandler(async (req, res) => {
   });
 
   const html = applyTemplatePlaceholders(template, variables);
+  const htmlWithHeader = await injectPreviewHeader(html);
   if (parserWarnings.length) {
     logger.warn("preview parser warnings", {
       count: parserWarnings.length,
@@ -66,7 +84,7 @@ const previewPage = asyncHandler(async (req, res) => {
     });
     res.set("X-Parser-Warnings-Count", String(parserWarnings.length));
   }
-  res.send(html);
+  res.send(htmlWithHeader);
 });
 
 function readAiParseInputText(req) {
