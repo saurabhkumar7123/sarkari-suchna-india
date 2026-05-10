@@ -380,17 +380,18 @@ textarea{
   background:#f1f5ff;
 }
 
-/* SPLIT LAYOUT */
+/* STACKED LAYOUT — editor full width on top, live preview full width below (generator page only) */
 .content-wrapper{
   display:grid;
-  grid-template-columns:minmax(0, 1.1fr) minmax(0, .9fr);
+  grid-template-columns:minmax(0, 1fr);
   gap:20px;
   margin-top:20px;
+  width:100%;
 }
 
 @media (max-width: 768px) {
   .content-wrapper{
-    grid-template-columns:1fr;
+    gap:16px;
   }
 }
 
