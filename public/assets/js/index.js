@@ -72,6 +72,24 @@ function safeExternalUrl(url) {
   return safeUrl(String(url).trim());
 }
 
+/**
+ * Align breaking-news links with small boxes / cards: internal pages same tab,
+ * external http(s) another origin → new tab. href must already be sanitized (safeUrl).
+ */
+function breakingNewsLinkTargetRel(href) {
+  if (!href || href === "#") return "";
+  const s = String(href).trim();
+  if (s.startsWith("//")) return ' target="_blank" rel="noopener noreferrer"';
+  if (s.startsWith("/")) return "";
+  try {
+    const u = new URL(s);
+    if (u.origin === window.location.origin) return "";
+    return ' target="_blank" rel="noopener noreferrer"';
+  } catch {
+    return "";
+  }
+}
+
 // ================= SAFE FETCH =================
 // Default cache lets browser + CDN respect Cache-Control from API (faster repeat visits).
 async function safeFetch(url, opts = {}){
@@ -181,7 +199,7 @@ async function loadBreaking(){
   scrollDiv.innerHTML = data.map((n) => {
     let badge = resolveHomepageBadgeHtml(n);
     const href = safeExternalUrl(n.url);
-    const ext = href !== "#" ? ' target="_blank" rel="noopener noreferrer"' : "";
+    const ext = breakingNewsLinkTargetRel(href);
     return `<a href="${escapeAttr(href)}"${ext}>${escapeHtml(n.title)} ${badge}</a>`;
   }).join("");
 
