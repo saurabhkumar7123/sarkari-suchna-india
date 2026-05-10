@@ -2,6 +2,11 @@ const pageService = require("../../services/page.service");
 const asyncHandler = require("../../utils/asyncHandler");
 const logger = require("../../utils/logger");
 
+function parseIncludeRawTextFlag(query) {
+  const v = query && query.includeRawText != null ? String(query.includeRawText).trim().toLowerCase() : "";
+  return v === "1" || v === "true" || v === "yes";
+}
+
 const listPages = asyncHandler(async (req, res) => {
   let { status, section, type, page, limit } = req.query;
   if (!section && type) {
@@ -11,7 +16,8 @@ const listPages = asyncHandler(async (req, res) => {
       section = t;
     }
   }
-  const payload = await pageService.listPages({ status, section, page, limit });
+  const includeRawText = parseIncludeRawTextFlag(req.query);
+  const payload = await pageService.listPages({ status, section, page, limit, includeRawText });
   res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
   res.json(payload);
 });

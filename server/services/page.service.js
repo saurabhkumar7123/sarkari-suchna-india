@@ -32,14 +32,15 @@ function parseBadges(value) {
 }
 
 /**
- * @param {{ status?: string, section?: string, page: number, limit: number }} opts
+ * @param {{ status?: string, section?: string, page: number, limit: number, includeRawText?: boolean }} opts
  */
-async function listPages({ status, section, page, limit }) {
+async function listPages({ status, section, page, limit, includeRawText = false }) {
   page = Math.max(1, parseInt(page, 10) || 1);
   limit = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
   const offset = (page - 1) * limit;
 
-  const cacheKey = `pages:list:${section || status || "all"}:${page}:${limit}`;
+  const cacheTier = includeRawText ? "full" : "lite";
+  const cacheKey = `pages:list:${section || status || "all"}:${page}:${limit}:${cacheTier}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     try {
@@ -52,22 +53,27 @@ async function listPages({ status, section, page, limit }) {
   const total = await pageRepository.countPublicList(section, status);
   const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / limit));
 
-  const rows = await pageRepository.selectPublicListPage(section, status, limit, offset);
+  const rows = await pageRepository.selectPublicListPage(section, status, limit, offset, undefined, includeRawText);
 
-  const data = rows.map((p) => ({
-    title: p.title,
-    slug: p.slug,
-    url: "/" + p.slug,
-    status: (p.status || "").toLowerCase(),
-    badges: parseBadges(p.badges),
-    category: p.category,
-    date: p.created_at || null,
-    lastDate: normalizeLastDate(pickLastDateColumn(p)),
-    rawText: p.raw_text,
-    breaking: p.breaking,
-    position: p.position,
-    eventTime: p.event_time
-  }));
+  const data = rows.map((p) => {
+    const row = {
+      title: p.title,
+      slug: p.slug,
+      url: "/" + p.slug,
+      status: (p.status || "").toLowerCase(),
+      badges: parseBadges(p.badges),
+      category: p.category,
+      date: p.created_at || null,
+      lastDate: normalizeLastDate(pickLastDateColumn(p)),
+      breaking: p.breaking,
+      position: p.position,
+      eventTime: p.event_time
+    };
+    if (includeRawText) {
+      row.rawText = p.raw_text;
+    }
+    return row;
+  });
 
   const payload = {
     success: true,

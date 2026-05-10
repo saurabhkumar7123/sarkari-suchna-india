@@ -173,11 +173,13 @@ async function countPublicList(section, status, executor = db) {
 
 /**
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @param {boolean} [includeRawText] When false (default), omits `raw_text` for smaller rows + less DB I/O.
  */
-async function selectPublicListPage(section, status, limit, offset, executor = db) {
+async function selectPublicListPage(section, status, limit, offset, executor = db, includeRawText = false) {
   const { baseQuery, params } = buildPublicListWhere(section, status);
+  const rawSql = includeRawText ? ", raw_text" : "";
   const [rows] = await executor.query(
-    `SELECT id, title, slug, status, badges, category, created_at, raw_text, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
   return rows;
