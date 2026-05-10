@@ -1,4 +1,5 @@
 const pageRepository = require("../repositories/page.repository");
+const { parseBadges } = require("./page.service");
 
 async function getSmallBoxes() {
   return pageRepository.selectSmallBoxes();
@@ -10,6 +11,7 @@ async function getBreakingNews() {
     title: p.title,
     url: "/" + p.slug,
     status: (p.status || "").toLowerCase(),
+    badges: parseBadges(p.badges),
     eventTime: p.eventTime,
     date: p.date
   }));

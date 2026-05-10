@@ -6,6 +6,13 @@ document.addEventListener("click", (e) => {
   if (p > 0) changePage(p);
 });
 
+/**
+ * Phase 5: Search results no longer render the status badge.
+ * Flip to `true` to instantly restore it without redeploy if a regression
+ * is reported.
+ */
+const RENDER_BADGES_IN_SEARCH = false;
+
 const params = new URLSearchParams(window.location.search);
 const query = params.get("q");
 
@@ -96,11 +103,14 @@ function displayResults(){
       .replace(/"/g, "&quot;")
       .replace(/</g, "&lt;");
 
+    const badgeHtml = RENDER_BADGES_IN_SEARCH
+      ? `<span class="badge ${getStatusClass(item.status)}">${item.status}</span>`
+      : "";
     const chunk = `
       <div class="result-card">
         <h2><a href="${escHref}">${highlightedTitle}</a></h2>
         <p>${preview}</p>
-       <span class="badge ${getStatusClass(item.status)}">${item.status}</span>
+       ${badgeHtml}
       </div>
     `;
     resultDiv.innerHTML += window.DOMPurify ? window.DOMPurify.sanitize(chunk) : chunk;

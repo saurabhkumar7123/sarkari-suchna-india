@@ -329,6 +329,7 @@ const getAdminPageBySlug = async (req, res) => {
         slug: p.slug,
         url: `/${p.slug}`,
         status: p.status || "",
+        badges: pageService.parseBadges(p.badges),
         category: p.category || "",
         qualification: p.qualification != null ? String(p.qualification) : "",
         state: p.state != null ? String(p.state) : "",

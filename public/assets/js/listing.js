@@ -7,6 +7,12 @@
 
   const EVENT_LIVE_PHASE_MS = 30 * 60 * 1000;
   const PAGE_SIZE = 20;
+  /**
+   * Phase 5: Listing pages no longer render status/freshness badges.
+   * Flip to `true` to instantly restore the old badge column without redeploy
+   * if a regression is reported.
+   */
+  const RENDER_BADGES_IN_LISTINGS = false;
 
   const LISTING_PATH_TO_SECTION = {
     "/new-form": "new form",
@@ -223,9 +229,11 @@
       a.textContent = (item && item.title) || slug || "Untitled";
       li.appendChild(a);
 
-      const badgeWrap = document.createElement("span");
-      badgeWrap.innerHTML = getBadge(item.status, item.eventTime, item.date);
-      li.appendChild(badgeWrap);
+      if (RENDER_BADGES_IN_LISTINGS) {
+        const badgeWrap = document.createElement("span");
+        badgeWrap.innerHTML = getBadge(item.status, item.eventTime, item.date);
+        li.appendChild(badgeWrap);
+      }
       ul.appendChild(li);
     });
 

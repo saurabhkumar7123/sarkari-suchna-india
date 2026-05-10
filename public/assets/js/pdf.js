@@ -1,3 +1,10 @@
+/**
+ * Phase 5: PDF notification cards no longer render NEW/IMPORTANT/URGENT badges.
+ * Flip to `true` to instantly restore them without redeploy if a regression
+ * is reported.
+ */
+const RENDER_BADGES_IN_PDF = false;
+
 function safeUrl(raw) {
   const s = String(raw ?? "").trim();
   if (!s || s === "#") return "#";
@@ -53,8 +60,10 @@ async function loadNotifications() {
       const isImportant = /important|priority|notice/i.test(lowerName);
       const isUrgent = /urgent|emergency|immediate/i.test(lowerName);
       const isNew = item.date ? (Date.now() - new Date(item.date).getTime()) < 1000 * 60 * 60 * 24 * 3 : false;
-      if (isUrgent) wrap.classList.add("urgent");
-      else if (isImportant) wrap.classList.add("important");
+      if (RENDER_BADGES_IN_PDF) {
+        if (isUrgent) wrap.classList.add("urgent");
+        else if (isImportant) wrap.classList.add("important");
+      }
 
       const top = document.createElement("div");
       top.className = "notify-top";
@@ -79,14 +88,15 @@ async function loadNotifications() {
       textWrap.appendChild(title);
       textWrap.appendChild(date);
 
-      const badges = document.createElement("div");
-      badges.className = "notify-badges";
-      if (isNew) badges.innerHTML += `<span class="badge new">NEW</span>`;
-      if (isImportant) badges.innerHTML += `<span class="badge important">IMPORTANT</span>`;
-      if (isUrgent) badges.innerHTML += `<span class="badge urgent">URGENT</span>`;
-
       top.appendChild(textWrap);
-      if (badges.innerHTML.trim()) top.appendChild(badges);
+      if (RENDER_BADGES_IN_PDF) {
+        const badges = document.createElement("div");
+        badges.className = "notify-badges";
+        if (isNew) badges.innerHTML += `<span class="badge new">NEW</span>`;
+        if (isImportant) badges.innerHTML += `<span class="badge important">IMPORTANT</span>`;
+        if (isUrgent) badges.innerHTML += `<span class="badge urgent">URGENT</span>`;
+        if (badges.innerHTML.trim()) top.appendChild(badges);
+      }
 
       const summary = document.createElement("p");
       summary.className = "notify-summary";

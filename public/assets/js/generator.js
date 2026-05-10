@@ -382,6 +382,7 @@ function resetGeneratorForm() {
   updateSlugPreview();
   syncAiConvertButton();
   setCategoryTagsFromString("");
+  applyBadgesToForm([]);
   updateEditorStats();
   updateBreakingOrderVisibility();
 }
@@ -432,6 +433,7 @@ function saveDraftToStorage() {
       eventTime: document.getElementById("eventTime") && document.getElementById("eventTime").value,
       lastDate: document.getElementById("lastDate") && document.getElementById("lastDate").value,
       pageUrl: document.getElementById("pageUrl") && document.getElementById("pageUrl").value,
+      badges: collectBadgesFromForm(),
       savedAt: Date.now()
     };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
@@ -478,6 +480,7 @@ function restoreDraftFromStorage() {
       document.getElementById("status").value = d.status;
     }
     applyStatusToForm(d.customStatus || d.status || "");
+    applyBadgesToForm(d.badges);
     updateSlugPreview();
     return true;
   } catch (e) {
@@ -542,6 +545,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
   updateBreakingOrderVisibility();
   setupCategoryTagInput();
+  setupBadgeCheckboxes();
 
   if (slug) {
     await loadPageFromURL();
@@ -610,6 +614,73 @@ function resolveStatusForSave() {
   if (custom) return custom;
   if (sel === "__custom__") return "";
   return sel.trim();
+}
+
+/** Phase 3: Manual homepage badges. Server whitelist enforces final values. */
+const ALLOWED_BADGE_CODES = ["NEW", "OUT"];
+const MAX_BADGES_PER_PAGE = 2;
+
+function collectBadgesFromForm() {
+  const boxes = document.querySelectorAll(".badge-checkbox");
+  const out = [];
+  const seen = new Set();
+  boxes.forEach((box) => {
+    if (!box.checked) return;
+    const code = String(box.value || "").trim().toUpperCase();
+    if (!code || seen.has(code)) return;
+    if (!ALLOWED_BADGE_CODES.includes(code)) return;
+    if (out.length >= MAX_BADGES_PER_PAGE) return;
+    seen.add(code);
+    out.push(code);
+  });
+  return out;
+}
+
+function syncBadgesHiddenInput() {
+  const hidden = document.getElementById("badgesJson");
+  if (!hidden) return;
+  hidden.value = JSON.stringify(collectBadgesFromForm());
+}
+
+function applyBadgesToForm(value) {
+  let arr = [];
+  if (Array.isArray(value)) {
+    arr = value;
+  } else if (typeof value === "string" && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) arr = parsed;
+    } catch {
+      arr = [];
+    }
+  }
+  const wanted = new Set(
+    arr
+      .map((c) => String(c || "").trim().toUpperCase())
+      .filter((c) => ALLOWED_BADGE_CODES.includes(c))
+      .slice(0, MAX_BADGES_PER_PAGE)
+  );
+  document.querySelectorAll(".badge-checkbox").forEach((box) => {
+    box.checked = wanted.has(String(box.value || "").trim().toUpperCase());
+  });
+  syncBadgesHiddenInput();
+}
+
+function enforceBadgesMaxLimit() {
+  const boxes = Array.from(document.querySelectorAll(".badge-checkbox"));
+  const checked = boxes.filter((b) => b.checked);
+  if (checked.length > MAX_BADGES_PER_PAGE) {
+    const overflow = checked.slice(MAX_BADGES_PER_PAGE);
+    overflow.forEach((b) => (b.checked = false));
+  }
+  syncBadgesHiddenInput();
+}
+
+function setupBadgeCheckboxes() {
+  document.querySelectorAll(".badge-checkbox").forEach((box) => {
+    box.addEventListener("change", enforceBadgesMaxLimit);
+  });
+  syncBadgesHiddenInput();
 }
 
 function normalizeOptionalSelectValue(value) {
@@ -783,6 +854,7 @@ async function loadPageFromURL(){
     if (lastDateInput) lastDateInput.value = lastDateDdMmYyyyToIso(page.lastDate);
     const pos = document.getElementById("position");
     if (pos && page.position) pos.value = page.position;
+    applyBadgesToForm(page.badges);
 
     document.getElementById("deleteBtn").style.display = "inline-block";
     setPageUrlLocked(true);
@@ -962,6 +1034,7 @@ async function selectPage(p){
     if (lastDateInputEdit) lastDateInputEdit.value = lastDateDdMmYyyyToIso(page.lastDate);
     const pos = document.getElementById("position");
     if (pos && page.position) pos.value = page.position;
+    applyBadgesToForm(page.badges);
     document.getElementById("deleteBtn").style.display = "inline-block";
     setPageUrlLocked(true);
     syncAiConvertButton();
@@ -1043,6 +1116,7 @@ async function generatePage(){
     breakingOrder: breakingOrderRaw === "" ? 0 : Number(breakingOrderRaw) || 0,
     eventTime: eventTimeRaw || null,
     lastDate: lastDateInput || null,
+    badges: collectBadgesFromForm(),
     id: document.getElementById("pageId").value.trim(),
     oldSlug: document.getElementById("oldSlug").value.trim()
   };

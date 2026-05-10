@@ -7,6 +7,31 @@ const LIST_TTL_SEC = parseInt(process.env.CACHE_PAGES_LIST_TTL || "60", 10);
 const PAGE_TTL_SEC = parseInt(process.env.CACHE_PAGE_DETAIL_TTL || "120", 10);
 
 /**
+ * mysql2 returns JSON columns either as parsed arrays/objects or as raw
+ * strings depending on driver flags / column type. Treat any malformed
+ * value as "no badges" so a single bad row never breaks a list response.
+ * Always returns a plain string[] of uppercase codes.
+ */
+function parseBadges(value) {
+  if (value == null || value === "") return [];
+  let arr = value;
+  if (typeof value === "string") {
+    try {
+      arr = JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(arr)) return [];
+  const out = [];
+  for (const item of arr) {
+    const code = String(item || "").trim().toUpperCase();
+    if (code) out.push(code);
+  }
+  return out;
+}
+
+/**
  * @param {{ status?: string, section?: string, page: number, limit: number }} opts
  */
 async function listPages({ status, section, page, limit }) {
@@ -34,6 +59,7 @@ async function listPages({ status, section, page, limit }) {
     slug: p.slug,
     url: "/" + p.slug,
     status: (p.status || "").toLowerCase(),
+    badges: parseBadges(p.badges),
     category: p.category,
     date: p.created_at || null,
     lastDate: normalizeLastDate(pickLastDateColumn(p)),
@@ -233,5 +259,6 @@ module.exports = {
   getActivityLogSlice,
   normalizeLastDate,
   isNewFormStatusValue,
-  pickLastDateColumn
+  pickLastDateColumn,
+  parseBadges
 };

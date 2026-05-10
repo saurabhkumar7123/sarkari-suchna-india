@@ -336,6 +336,8 @@ const generatePage = async (req, res) => {
 
     let savedPageId;
 
+    const sanitizedBadges = Array.isArray(req.body.badges) ? req.body.badges : [];
+
     if (oldSlug) {
       const result = await pageRepository.updatePageBySlug(
         {
@@ -354,7 +356,8 @@ const generatePage = async (req, res) => {
           position: normalizedPosition,
           breaking: req.body.breaking,
           breakingOrder: req.body.breakingOrder || 0,
-          eventTime: req.body.eventTime || null
+          eventTime: req.body.eventTime || null,
+          badges: sanitizedBadges
         },
         conn
       );
@@ -381,7 +384,8 @@ const generatePage = async (req, res) => {
           position: normalizedPosition,
           breaking: req.body.breaking,
           breakingOrder: req.body.breakingOrder || 0,
-          eventTime: req.body.eventTime || null
+          eventTime: req.body.eventTime || null,
+          badges: sanitizedBadges
         },
         conn
       );

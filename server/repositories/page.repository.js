@@ -59,6 +59,20 @@ function normalizeFilterValue(value) {
     .toLowerCase();
 }
 
+/**
+ * Manual badge codes coming in from the validated admin payload are stored as
+ * a JSON array string. Anything non-array or empty becomes NULL so existing
+ * rows stay byte-identical to pre-migration state.
+ */
+function badgesToDbValue(value) {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return null;
+  }
+}
+
 function buildNormalizedColumnSql(columnName) {
   return `LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${columnName}, '\r', ' '), '\n', ' '), '\t', ' '), '  ', ' '), '  ', ' ')))`;
 }
@@ -163,7 +177,7 @@ async function countPublicList(section, status, executor = db) {
 async function selectPublicListPage(section, status, limit, offset, executor = db) {
   const { baseQuery, params } = buildPublicListWhere(section, status);
   const [rows] = await executor.query(
-    `SELECT id, title, slug, status, category, created_at, raw_text, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    `SELECT id, title, slug, status, badges, category, created_at, raw_text, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
   return rows;
@@ -283,7 +297,7 @@ async function selectSmallBoxes(executor = db) {
 
 async function selectBreakingNews(executor = db) {
   const [rows] = await executor.query(
-    `SELECT title, slug, status, event_time AS eventTime, created_at AS date
+    `SELECT title, slug, status, badges, event_time AS eventTime, created_at AS date
      FROM pages
      WHERE breaking=1 AND deleted=0
      ORDER BY breaking_order DESC
@@ -568,10 +582,12 @@ async function insertPage(
     position,
     breaking,
     breakingOrder,
-    eventTime
+    eventTime,
+    badges
   },
   conn
 ) {
+  const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
   const sVal = normalizeStructuredColumn(state);
   const dVal = normalizeStructuredColumn(department);
@@ -612,6 +628,7 @@ async function insertPage(
     title,
     slug,
     normalizedStatus,
+    badgesSql,
     category,
     qSql,
     sSql,
@@ -643,7 +660,7 @@ async function insertPage(
   await logDatabaseName(conn, "same conn, immediately before INSERT pages");
 
   const insertColumnOrder =
-    "title, slug, status, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at=NOW()";
+    "title, slug, status, badges, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at=NOW()";
   logger.info("insertPage full bind array pre-EXECUTE (order matches columns)", {
     insertColumnOrder,
     insertParamsFull: insertParams.map((v, i) =>
@@ -653,6 +670,7 @@ async function insertPage(
       ["title", title],
       ["slug", slug],
       ["status", normalizedStatus],
+      ["badges", badgesSql],
       ["category", category],
       ["qualification", qSql],
       ["state", sSql],
@@ -667,7 +685,7 @@ async function insertPage(
       ["breaking_order", breakingOrder ?? 0],
       ["event_time", eventTime ?? null]
     ],
-    placeholderCount: 16
+    placeholderCount: 17
   });
 
   if (IS_NON_PROD) {
@@ -677,8 +695,8 @@ async function insertPage(
 
   const [insResult] = await conn.query(
     `INSERT INTO \`pages\` 
-     (title, slug, status, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
     insertParams
   );
 
@@ -772,10 +790,12 @@ async function updatePageBySlug(
     position,
     breaking,
     breakingOrder,
-    eventTime
+    eventTime,
+    badges
   },
   conn
 ) {
+  const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
   const sVal = normalizeStructuredColumn(state);
   const dVal = normalizeStructuredColumn(department);
@@ -815,6 +835,7 @@ async function updatePageBySlug(
   const updateParams = [
     title,
     normalizedStatus,
+    badgesSql,
     category,
     qSql,
     sSql,
@@ -847,7 +868,7 @@ async function updatePageBySlug(
   await logDatabaseName(conn, "same conn, immediately before UPDATE pages");
 
   const updateSetOrder =
-    "title, status, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, WHERE slug";
+    "title, status, badges, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, WHERE slug";
   logger.info("updatePageBySlug full bind array pre-EXECUTE (order matches SET)", {
     updateSetOrder,
     updateParamsFull: updateParams.map((v, i) =>
@@ -856,6 +877,7 @@ async function updatePageBySlug(
     valuesOrdered: [
       ["title", title],
       ["status", normalizedStatus],
+      ["badges", badgesSql],
       ["category", category],
       ["qualification", qSql],
       ["state", sSql],
@@ -881,7 +903,7 @@ async function updatePageBySlug(
 
   const [result] = await conn.query(
     `UPDATE \`pages\`
-     SET title = ?, status = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
+     SET title = ?, status = ?, \`badges\` = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
          breaking = ?, breaking_order = ?, event_time = ?
      WHERE slug = ? AND deleted = 0`,
     updateParams

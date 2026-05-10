@@ -96,6 +96,44 @@ function rowEventTime(n) {
   return s === "" ? null : s;
 }
 
+/**
+ * Phase 4: Homepage badge resolver.
+ * Prefers server-controlled `badges` array (from Phase 2 API). Falls back to
+ * the legacy auto-derived getBadge() so rows without manual badges keep their
+ * historical appearance during the rollout.
+ *
+ * Reuses existing CSS classes ("tag new", "tag out") — no styling changes.
+ * Caps at 2 badges to match the validation/UI limit.
+ */
+const HOMEPAGE_BADGE_CSS = {
+  NEW: "tag new",
+  OUT: "tag out"
+};
+const HOMEPAGE_BADGE_MAX = 2;
+
+function renderHomepageBadgesFromArray(badges) {
+  if (!Array.isArray(badges) || badges.length === 0) return "";
+  const seen = new Set();
+  const html = [];
+  for (const raw of badges) {
+    if (html.length >= HOMEPAGE_BADGE_MAX) break;
+    const code = String(raw || "").trim().toUpperCase();
+    if (!code || seen.has(code)) continue;
+    const cssClass = HOMEPAGE_BADGE_CSS[code];
+    if (!cssClass) continue;
+    seen.add(code);
+    html.push(`<span class="${cssClass}">${escapeHtml(code)}</span>`);
+  }
+  return html.join(" ");
+}
+
+function resolveHomepageBadgeHtml(item) {
+  if (!item || typeof item !== "object") return "";
+  const serverHtml = renderHomepageBadgesFromArray(item.badges);
+  if (serverHtml) return serverHtml;
+  return getBadge(item.status, rowEventTime(item), item.date);
+}
+
 /** List row badges only — ribbon "NEW" mini-badge is built separately in loadHomeCards. */
 function getBadge(status, eventTime, date) {
   const normalizedStatus = String(status || "").toLowerCase().trim();
@@ -210,7 +248,7 @@ async function loadBreaking(){
   scrollDiv.className = "breaking-scroll";
 
   scrollDiv.innerHTML = data.map((n) => {
-    let badge = getBadge(n.status, rowEventTime(n), n.date);
+    let badge = resolveHomepageBadgeHtml(n);
     const href = safeExternalUrl(n.url);
     const ext = href !== "#" ? ' target="_blank" rel="noopener noreferrer"' : "";
     return `<a href="${escapeAttr(href)}"${ext}>${escapeHtml(n.title)} ${badge}</a>`;
@@ -402,7 +440,7 @@ async function loadHomeCards() {
 
     let html = `<ul class="job-list">`;
     res.data.forEach((item) => {
-      const badge = getBadge(item.status, item.eventTime, item.date);
+      const badge = resolveHomepageBadgeHtml(item);
       const href = safePageHref(item);
       html += `<li><a href="${escapeAttr(href)}">${escapeHtml(item.title)}</a>${badge}</li>`;
     });
