@@ -85,8 +85,6 @@ async function safeFetch(url, opts = {}){
   }
 }
 
-const EVENT_LIVE_PHASE_MS = 30 * 60 * 1000;
-
 /** API may expose `eventTime` or `event_time`. */
 function rowEventTime(n) {
   if (!n || typeof n !== "object") return null;
@@ -97,17 +95,16 @@ function rowEventTime(n) {
 }
 
 /**
- * Phase 4: Homepage badge resolver.
- * Prefers server-controlled `badges` array (from Phase 2 API). Falls back to
- * the legacy auto-derived getBadge() so rows without manual badges keep their
- * historical appearance during the rollout.
+ * Homepage list-row badges: driven only by server `badges` (manual).
+ * Section placement stays status-based via `/api/pages` — unchanged here.
  *
- * Reuses existing CSS classes ("tag new", "tag out") — no styling changes.
- * Caps at 2 badges to match the validation/UI limit.
+ * Maps whitelist codes to existing `.tag.*` classes only — no new CSS.
+ * Caps at 2 badges to match validation/admin UI.
  */
 const HOMEPAGE_BADGE_CSS = {
   NEW: "tag new",
-  OUT: "tag out"
+  OUT: "tag out",
+  DECLARED: "tag declared"
 };
 const HOMEPAGE_BADGE_MAX = 2;
 
@@ -129,73 +126,7 @@ function renderHomepageBadgesFromArray(badges) {
 
 function resolveHomepageBadgeHtml(item) {
   if (!item || typeof item !== "object") return "";
-  const serverHtml = renderHomepageBadgesFromArray(item.badges);
-  if (serverHtml) return serverHtml;
-  return getBadge(item.status, rowEventTime(item), item.date);
-}
-
-/** List row badges only — ribbon "NEW" mini-badge is built separately in loadHomeCards. */
-function getBadge(status, eventTime, date) {
-  const normalizedStatus = String(status || "").toLowerCase().trim();
-  const created = date ? new Date(date) : null;
-  const hasValidDate = created && !isNaN(created.getTime());
-  const now = new Date();
-
-  if (hasValidDate) {
-    const diffDays = (now - created) / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) return "";
-  }
-
-  if (eventTime) {
-    const event = new Date(eventTime);
-    if (!isNaN(event.getTime())) {
-      const diff = event - now;
-      if (diff > 0) return `<span class="tag coming">COMING SOON</span>`;
-      const since = now - event;
-      if (since >= 0 && since < EVENT_LIVE_PHASE_MS) {
-        return `<span class="tag live">LIVE NOW</span>`;
-      }
-      if (since >= EVENT_LIVE_PHASE_MS && normalizedStatus === "result") {
-        return `<span class="tag declared">DECLARED</span>`;
-      }
-    }
-  }
-
-  if (normalizedStatus === "new form" || normalizedStatus.includes("new form")) {
-    return `<span class="tag new">NEW</span>`;
-  }
-  if (status === "new" || normalizedStatus === "new") return `<span class="tag new">NEW</span>`;
-  if (
-    normalizedStatus === "admit card" ||
-    normalizedStatus.includes("admit card") ||
-    status === "admit" ||
-    normalizedStatus === "admit"
-  ) {
-    return `<span class="tag out">OUT</span>`;
-  }
-  if (normalizedStatus === "result") {
-    return `<span class="tag declared">DECLARED</span>`;
-  }
-  if (
-    normalizedStatus === "answer key" ||
-    normalizedStatus.includes("answer key") ||
-    status === "answer" ||
-    normalizedStatus === "answer"
-  ) {
-    return `<span class="tag answer">KEY</span>`;
-  }
-  if (status === "syllabus" || normalizedStatus === "syllabus") {
-    return `<span class="tag syllabus">SYLLABUS</span>`;
-  }
-  if (status === "admission" || normalizedStatus === "admission") {
-    return `<span class="tag admission">OPEN</span>`;
-  }
-  if (status === "document" || normalizedStatus === "document") {
-    return `<span class="tag document">DOC</span>`;
-  }
-  if (normalizedStatus.includes("new")) return `<span class="tag new">NEW</span>`;
-
-  return "";
+  return renderHomepageBadgesFromArray(item.badges);
 }
 
 function escapeRibbonInnerText(s) {

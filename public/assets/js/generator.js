@@ -617,7 +617,7 @@ function resolveStatusForSave() {
 }
 
 /** Phase 3: Manual homepage badges. Server whitelist enforces final values. */
-const ALLOWED_BADGE_CODES = ["NEW", "OUT"];
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "DECLARED"];
 const MAX_BADGES_PER_PAGE = 2;
 
 function collectBadgesFromForm() {

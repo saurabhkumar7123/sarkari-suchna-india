@@ -4,11 +4,10 @@ const Joi = require("joi");
 const SLUG_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * Manual badge codes admin can attach to a page.
- * Initial Phase 3 whitelist: NEW, OUT.
- * Future codes (UPDATE, HOT, LIVE, CORRECTION) can be added here without DB change.
+ * Manual badge codes admin can attach to a page (homepage row tags only).
+ * Must stay in sync with homepage HOMEPAGE_BADGE_CSS in public/assets/js/index.js.
  */
-const ALLOWED_BADGE_CODES = ["NEW", "OUT"];
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "DECLARED"];
 const MAX_BADGES_PER_PAGE = 2;
 
 const adminPagePayloadSchema = Joi.object({
