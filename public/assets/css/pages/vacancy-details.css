@@ -167,7 +167,31 @@
       transform: translateX(3px);
       color: var(--site-primary-2, #2a5298);
     }
-    
+
+    .card-content p{
+    margin:0;
+    font-size:19px;
+    line-height:1.9;
+    font-weight:400;
+    color:#1e293b;
+    letter-spacing:0.2px;
+    word-spacing:1px;
+}
+
+.card-content p::first-letter{
+    font-size:38px;
+    font-weight:700;
+    color:var(--primary);
+}
+
+@media(max-width:768px){
+
+.card-content p{
+    font-size:17px;
+    line-height:1.85;
+}
+
+}
     /* ================= DATE ROW ================= */
     .date-row{
     display:flex;
@@ -209,7 +233,7 @@
     }
     
     .left-text{
-    font-size:14px;
+    font-size:18px;
     font-weight:600;
     line-height:1.45;
     }
