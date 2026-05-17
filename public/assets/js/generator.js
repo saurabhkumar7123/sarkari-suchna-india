@@ -1,5 +1,6 @@
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
+const contentImportId = params.get("importId");
 
 function escapeAttr(s) {
   return String(s ?? "")
@@ -552,6 +553,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  const importLoaded = await loadContentImportFromURL();
+  if (importLoaded) {
+    return;
+  }
+
   const restored = restoreDraftFromStorage();
   if (!restored) {
     resetGeneratorForm();
@@ -813,6 +819,44 @@ async function loadExistingPages() {
 }
 
 loadExistingPages();
+
+// ================= CONTENT IMPORT (CSV queue — #data only) =================
+async function loadContentImportFromURL() {
+  const importId = contentImportId || new URLSearchParams(window.location.search).get("importId");
+  if (!importId) return false;
+
+  try {
+    const data = await safeFetch(
+      "/api/admin/content-imports/" + encodeURIComponent(importId) + "?markOpened=1"
+    );
+    if (!data.ok || !data.body || !data.body.success || !data.body.data) {
+      setGeneratorFeedback("error", "Could not load imported content", {
+        detailsHtml: (data.body && data.body.message) || "Import not found or import queue unavailable."
+      });
+      return false;
+    }
+
+    const row = data.body.data;
+    clearDraftStorage();
+    resetGeneratorForm();
+    const ta = document.getElementById("data");
+    if (ta) ta.value = String(row.content || "");
+    setPageUrlLocked(false);
+    syncAiConvertButton();
+    updateEditorStats();
+
+    const src = row.sourceFile ? ` (${row.sourceFile})` : "";
+    setGeneratorFeedback(
+      "info",
+      `Imported draft #${row.id}${src} — content only. Fill title, status, and other fields, then publish manually.`
+    );
+    return true;
+  } catch (err) {
+    console.error("Content import load error:", err);
+    setGeneratorFeedback("error", "Failed to load imported content");
+    return false;
+  }
+}
 
 // ================= AUTO LOAD =================
 async function loadPageFromURL(){

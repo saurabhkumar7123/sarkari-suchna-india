@@ -6,13 +6,18 @@ const {
 } = require("../../utils/templatePlaceholders");
 const fileService = require("../../services/file.service");
 const { recordActivity } = require("../../services/adminActivity.service");
+const {
+  isContentImportEnabled,
+  isLegacyCsvStaticHtmlEnabled
+} = require("../../config/contentImport");
+const { uploadContentImportCsv } = require("./contentImport.controller");
 
 const templateFile = path.join(__dirname, "../../templates/template.html");
 
 // =============================
-// 📤 CSV UPLOAD
+// Legacy: static HTML CSV publish (rollback only — CSV_LEGACY_STATIC_HTML=1)
 // =============================
-const uploadCSV = async (req, res) => {
+async function uploadCSVLegacy(req, res) {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -20,7 +25,10 @@ const uploadCSV = async (req, res) => {
 
     const csvMime = String(req.file.mimetype || "").toLowerCase();
     const csvExt = path.extname(String(req.file.originalname || "")).toLowerCase();
-    const mimeOk = csvMime === "text/csv" || csvMime === "application/csv" || csvMime === "application/vnd.ms-excel";
+    const mimeOk =
+      csvMime === "text/csv" ||
+      csvMime === "application/csv" ||
+      csvMime === "application/vnd.ms-excel";
     if (!mimeOk || csvExt !== ".csv") {
       return res.status(400).json({ error: "Only CSV allowed" });
     }
@@ -111,7 +119,7 @@ const uploadCSV = async (req, res) => {
       userAgent: String(req.headers["user-agent"] || ""),
       requestId: req.id || ""
     }).catch(() => {});
-    return res.json({ status: "success" });
+    return res.json({ status: "success", mode: "legacy_static_html" });
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
     if (req && req.file && req.file.path) {
@@ -128,6 +136,22 @@ const uploadCSV = async (req, res) => {
     }).catch(() => {});
     return res.status(500).json({ success: false, message: "CSV processing failed" });
   }
+}
+
+// =============================
+// CSV upload dispatcher (safe import queue by default)
+// =============================
+const uploadCSV = async (req, res) => {
+  if (isLegacyCsvStaticHtmlEnabled()) {
+    return uploadCSVLegacy(req, res);
+  }
+  if (!isContentImportEnabled()) {
+    return res.status(503).json({
+      success: false,
+      message: "Content import is disabled (CONTENT_IMPORT_ENABLED=0)"
+    });
+  }
+  return uploadContentImportCsv(req, res);
 };
 
-module.exports = { uploadCSV };
+module.exports = { uploadCSV, uploadCSVLegacy };
