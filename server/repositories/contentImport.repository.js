@@ -112,11 +112,22 @@ async function markOpened(id) {
   );
 }
 
+/**
+ * Remove a single import queue row (does not touch pages table).
+ * @param {number} id
+ * @returns {Promise<boolean>} true if a row was deleted
+ */
+async function deleteById(id) {
+  const [result] = await db.query(`DELETE FROM content_imports WHERE id = ? LIMIT 1`, [id]);
+  return result.affectedRows > 0;
+}
+
 module.exports = {
   tableExists,
   insertOne,
   insertMany,
   listImports,
   findById,
-  markOpened
+  markOpened,
+  deleteById
 };

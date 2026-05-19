@@ -116,8 +116,56 @@ async function getContentImportById(req, res) {
   }
 }
 
+async function deleteContentImport(req, res) {
+  if (!isContentImportEnabled()) {
+    return res.status(503).json({
+      success: false,
+      message: "Content import is disabled (CONTENT_IMPORT_ENABLED=0)"
+    });
+  }
+
+  try {
+    const id = parseInt(String(req.params.id || ""), 10);
+    if (!Number.isInteger(id) || id < 1) {
+      return res.status(400).json({ success: false, message: "Invalid import id" });
+    }
+
+    await contentImportService.deleteImportById(id);
+
+    await recordActivity({
+      admin: req.user && req.user.username ? req.user.username : "admin",
+      action: "content_import_delete",
+      target: String(id),
+      status: "success",
+      ip: req.ip,
+      userAgent: String(req.headers["user-agent"] || ""),
+      requestId: req.id || ""
+    }).catch(() => {});
+
+    return res.json({ success: true, deleted: id });
+  } catch (err) {
+    await recordActivity({
+      admin: req.user && req.user.username ? req.user.username : "admin",
+      action: "content_import_delete",
+      target: String(req.params.id || ""),
+      status: "fail",
+      ip: req.ip,
+      userAgent: String(req.headers["user-agent"] || ""),
+      requestId: req.id || ""
+    }).catch(() => {});
+
+    const status = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;
+    if (status >= 500) console.error("CONTENT IMPORT DELETE ERROR:", err);
+    return res.status(status).json({
+      success: false,
+      message: err.message || "Failed to delete import"
+    });
+  }
+}
+
 module.exports = {
   uploadContentImportCsv,
   listContentImports,
-  getContentImportById
+  getContentImportById,
+  deleteContentImport
 };

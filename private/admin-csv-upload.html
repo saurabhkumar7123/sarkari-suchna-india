@@ -8,6 +8,7 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css">
+<link rel="stylesheet" href="/css/admin/csv-upload.css">
 </head>
 <body>
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -36,29 +37,46 @@
   <div class="admin-header">
     <div class="admin-title">📁 Content Import</div>
   </div>
-  <section class="page-manager" aria-label="Content import">
+  <section class="page-manager csv-upload-page" aria-label="Content import">
     <div class="manager-header">
       <h1 class="manager-title">Content Import Queue</h1>
-      <p class="manager-hint">Upload CSV with a single <strong>content</strong> column. Each row becomes a draft. Open in the generator, fill title/status manually, then publish as usual. CSV does not publish pages automatically.</p>
+      <p class="manager-hint">Upload CSV with a single <strong>content</strong> column. Each row becomes a draft. Open in the generator, fill title and status manually, then publish as usual. CSV does not publish pages automatically.</p>
     </div>
-    <div class="filters-toolbar">
-      <div class="search-box">
-        <input type="file" id="csvInput" accept=".csv">
-      </div>
-      <div class="admin-header-actions">
-        <button type="button" class="header-action-btn" id="uploadBtn" disabled>Import CSV</button>
-        <button type="button" class="header-action-btn" id="refreshImportsBtn">Refresh list</button>
-      </div>
-    </div>
-    <div class="page-item"><span>Selected File</span><strong id="csvFileName">No file selected</strong></div>
-    <div class="page-item"><span>File Size</span><strong id="csvFileSize">—</strong></div>
-    <p id="csvUploadStatus" class="manager-hint" aria-live="polite"></p>
 
-    <div class="manager-header" style="margin-top:1.5rem;">
-      <h2 class="manager-title" style="font-size:1.1rem;">Imported drafts</h2>
-      <p class="manager-hint" id="importListMeta">Loading…</p>
+    <div class="csv-upload-card">
+      <h2 class="csv-upload-card__title">Upload CSV</h2>
+      <div class="csv-upload-toolbar">
+        <div class="csv-file-field">
+          <label for="csvInput">CSV file</label>
+          <input type="file" id="csvInput" accept=".csv">
+        </div>
+        <div class="csv-upload-actions">
+          <button type="button" class="header-action-btn" id="uploadBtn" disabled>Import CSV</button>
+          <button type="button" class="header-action-btn" id="refreshImportsBtn">Refresh list</button>
+        </div>
+      </div>
+      <div class="csv-meta-grid">
+        <div class="csv-meta-item">
+          <span>Selected file</span>
+          <strong id="csvFileName">No file selected</strong>
+        </div>
+        <div class="csv-meta-item">
+          <span>File size</span>
+          <strong id="csvFileSize">—</strong>
+        </div>
+      </div>
+      <p id="csvUploadStatus" class="manager-hint" aria-live="polite"></p>
     </div>
-    <div id="importListContainer" class="page-list" role="list" aria-label="Imported content drafts"></div>
+
+    <div class="import-queue-card">
+      <div class="import-queue-card__head">
+        <div>
+          <h2 class="import-queue-card__title">Imported drafts</h2>
+          <p class="import-queue-card__meta" id="importListMeta">Loading…</p>
+        </div>
+      </div>
+      <div id="importListContainer" class="import-queue-list" role="list" aria-label="Imported content drafts"></div>
+    </div>
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>

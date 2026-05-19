@@ -64,8 +64,14 @@
 
   function previewLabel(row) {
     const preview = String(row.content_preview || "").replace(/\s+/g, " ").trim();
-    if (preview) return preview.slice(0, 120);
+    if (preview) return preview.slice(0, 200);
     return `Import #${row.id}`;
+  }
+
+  function statusClass(status) {
+    const s = String(status || "pending").toLowerCase();
+    if (s === "opened" || s === "published") return `import-queue-status--${s}`;
+    return "import-queue-status--pending";
   }
 
   async function adminFetch(url, options = {}) {
@@ -88,11 +94,11 @@
     return { ok: res.ok, status: res.status, body };
   }
 
-  function renderImportList(rows, pagination) {
+  function renderImportList(rows) {
     if (!listContainer) return;
     if (!rows || !rows.length) {
       listContainer.innerHTML =
-        '<p class="manager-hint">No imports yet. Upload a CSV with a <strong>content</strong> column.</p>';
+        '<p class="import-queue-empty">No imports yet. Upload a CSV with a <strong>content</strong> column.</p>';
       return;
     }
 
@@ -102,21 +108,60 @@
         const status = escapeHtml(row.status || "pending");
         const file = escapeHtml(row.source_file || "—");
         const label = escapeHtml(previewLabel(row));
+        const rowNum =
+          row.row_index != null && row.row_index !== "" ? escapeHtml(row.row_index) : "—";
         return `
-          <div class="page-item" role="listitem" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div style="display:flex;width:100%;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-              <div>
-                <strong>#${escapeHtml(row.id)}</strong>
-                <span class="manager-hint" style="margin-left:8px;">${status}</span>
-              </div>
-              <a class="header-action-btn" href="${href}" style="text-decoration:none;">Open in generator</a>
+          <article class="import-queue-item" role="listitem" data-import-id="${escapeHtml(row.id)}">
+            <div class="import-queue-item__top">
+              <span class="import-queue-item__id">#${escapeHtml(row.id)}</span>
+              <span class="import-queue-status ${statusClass(row.status)}">${status}</span>
             </div>
-            <div class="manager-hint" style="margin:0;">${label}</div>
-            <div class="manager-hint" style="margin:0;">File: ${file} · Row: ${escapeHtml(row.row_index != null ? row.row_index : "—")} · ${formatDate(row.created_at)}</div>
-          </div>
+            <p class="import-queue-preview">${label}</p>
+            <p class="import-queue-item__details">File: ${file} · Row: ${rowNum} · ${formatDate(row.created_at)}</p>
+            <div class="import-queue-item__actions">
+              <a class="import-queue-btn import-queue-btn--primary" href="${href}">Open in generator</a>
+              <button type="button" class="import-queue-btn import-queue-btn--danger js-delete-import" data-import-id="${escapeHtml(row.id)}">Delete</button>
+            </div>
+          </article>
         `;
       })
       .join("");
+  }
+
+  async function deleteImport(id, buttonEl) {
+    const importId = parseInt(String(id), 10);
+    if (!Number.isInteger(importId) || importId < 1) return;
+
+    const preview =
+      buttonEl &&
+      buttonEl.closest(".import-queue-item") &&
+      buttonEl.closest(".import-queue-item").querySelector(".import-queue-preview");
+    const hint = preview ? preview.textContent.trim().slice(0, 80) : "";
+    const msg = hint
+      ? `Delete import #${importId}?\n\n"${hint}${hint.length >= 80 ? "…" : ""}"\n\nThis removes only this queue draft. Published pages are not affected.`
+      : `Delete import #${importId}?\n\nThis removes only this queue draft. Published pages are not affected.`;
+
+    if (!window.confirm(msg)) return;
+
+    if (buttonEl) buttonEl.disabled = true;
+
+    try {
+      const res = await adminFetch(`/api/admin/content-imports/${encodeURIComponent(importId)}`, {
+        method: "DELETE"
+      });
+      if (res.ok && res.body && res.body.success) {
+        window.AdminUI?.toastSuccess(`Import #${importId} deleted`);
+        await loadImportList();
+      } else {
+        const errMsg = (res.body && res.body.message) || "Failed to delete import";
+        window.AdminUI?.toastError(errMsg);
+        if (buttonEl) buttonEl.disabled = false;
+      }
+    } catch (err) {
+      console.error("Delete import error:", err);
+      window.AdminUI?.toastError("Network error while deleting");
+      if (buttonEl) buttonEl.disabled = false;
+    }
   }
 
   async function loadImportList() {
@@ -131,18 +176,32 @@
             ? "Import queue unavailable — run migration and set CONTENT_IMPORT_ENABLED=1"
             : "Failed to load imports");
         if (listMeta) listMeta.textContent = msg;
-        listContainer.innerHTML = `<p class="manager-hint" style="color:#dc2626;">${escapeHtml(msg)}</p>`;
+        listContainer.innerHTML = `<p class="import-queue-error">${escapeHtml(msg)}</p>`;
         return;
       }
       const rows = res.body.data || [];
-      const total = res.body.pagination && res.body.pagination.total != null ? res.body.pagination.total : rows.length;
+      const total =
+        res.body.pagination && res.body.pagination.total != null
+          ? res.body.pagination.total
+          : rows.length;
       if (listMeta) listMeta.textContent = `${total} import(s) in queue`;
-      renderImportList(rows, res.body.pagination);
+      renderImportList(rows);
     } catch (err) {
       console.error("Import list error:", err);
       if (listMeta) listMeta.textContent = "Failed to load imports";
-      listContainer.innerHTML = '<p class="manager-hint" style="color:#dc2626;">Network error loading imports</p>';
+      listContainer.innerHTML =
+        '<p class="import-queue-error">Network error loading imports</p>';
     }
+  }
+
+  if (listContainer) {
+    listContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".js-delete-import");
+      if (!btn) return;
+      e.preventDefault();
+      const id = btn.getAttribute("data-import-id");
+      deleteImport(id, btn);
+    });
   }
 
   csvInput.addEventListener("change", () => {

@@ -185,10 +185,28 @@ async function getImportById(id, { markOpened = false } = {}) {
   return row;
 }
 
+async function deleteImportById(id) {
+  await assertImportTableReady();
+  const row = await contentImportRepository.findById(id);
+  if (!row) {
+    const err = new Error("Import not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  const deleted = await contentImportRepository.deleteById(id);
+  if (!deleted) {
+    const err = new Error("Import not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  return { id };
+}
+
 module.exports = {
   importCsvFile,
   listImports,
   getImportById,
+  deleteImportById,
   normalizeCsvRowKeys,
   extractContentFromRow
 };
