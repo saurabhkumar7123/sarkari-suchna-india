@@ -17,6 +17,11 @@ function isLegacyCsvStaticHtmlEnabled() {
   return envFlag("CSV_LEGACY_STATIC_HTML", false);
 }
 
+/** Structured import_group,section,line → canonical content at import time. Default on. */
+function isStructuredCsvImportEnabled() {
+  return envFlag("CONTENT_IMPORT_STRUCTURED", true);
+}
+
 const MAX_CSV_FILE_BYTES = parseInt(process.env.CONTENT_IMPORT_MAX_FILE_BYTES || String(2 * 1024 * 1024), 10);
 const MAX_CSV_ROWS = parseInt(process.env.CONTENT_IMPORT_MAX_ROWS || "200", 10);
 const MAX_CONTENT_CHARS = parseInt(process.env.CONTENT_IMPORT_MAX_CONTENT_CHARS || "500000", 10);
@@ -24,6 +29,7 @@ const MAX_CONTENT_CHARS = parseInt(process.env.CONTENT_IMPORT_MAX_CONTENT_CHARS 
 module.exports = {
   isContentImportEnabled,
   isLegacyCsvStaticHtmlEnabled,
+  isStructuredCsvImportEnabled,
   MAX_CSV_FILE_BYTES,
   MAX_CSV_ROWS,
   MAX_CONTENT_CHARS

@@ -6,9 +6,20 @@ const fileService = require("./file.service");
 const contentImportRepository = require("../repositories/contentImport.repository");
 const {
   isContentImportEnabled,
+  isStructuredCsvImportEnabled,
   MAX_CSV_ROWS,
   MAX_CONTENT_CHARS
 } = require("../config/contentImport");
+const {
+  createStructuredGroupState,
+  appendLineToStructuredGroup,
+  compileStructuredGroupState,
+  csvHeadersSupportStructured,
+  readImportGroup,
+  readSection,
+  readLine,
+  trimCell
+} = require("../utils/contentCompiler");
 
 function normalizeCsvRowKeys(row) {
   const out = {};
@@ -23,6 +34,10 @@ function normalizeCsvRowKeys(row) {
   return out;
 }
 
+/**
+ * Legacy path: non-empty `content` cell → stored as-is (backward compatible).
+ * @param {object} row — raw CSV row object
+ */
 function extractContentFromRow(row) {
   const normalized = normalizeCsvRowKeys(row);
   const raw = normalized.content;
@@ -91,41 +106,150 @@ async function parseCsvFileToRows(filePath) {
   return results;
 }
 
+/**
+ * Push one compiled/imported draft if content is non-empty; enforce size limit.
+ * @param {object[]} records
+ * @param {{ content: string, sourceFile: string|null, rowIndex: number }} item
+ * @param {number} rowIndexForError — 1-based row for error messages
+ */
+function pushImportRecord(records, item, rowIndexForError) {
+  const content = trimCell(item.content);
+  if (!content) return;
+  if (content.length > MAX_CONTENT_CHARS) {
+    const err = new Error(
+      `Row ${rowIndexForError} exceeds maximum content length (${MAX_CONTENT_CHARS} characters)`
+    );
+    err.statusCode = 400;
+    throw err;
+  }
+  records.push({
+    content,
+    sourceFile: item.sourceFile || null,
+    rowIndex: item.rowIndex
+  });
+}
+
+/**
+ * Flush in-progress structured group into records (one import draft per import_group).
+ * @param {import('../utils/contentCompiler').StructuredGroupState|null} groupState
+ * @param {object[]} records
+ * @param {string|null} sourceFile
+ */
+function flushStructuredGroup(groupState, records, sourceFile) {
+  if (!groupState || !groupState.sections.length) return;
+  const content = compileStructuredGroupState(groupState);
+  if (!content) return;
+  pushImportRecord(
+    records,
+    {
+      content,
+      sourceFile,
+      rowIndex: groupState.groupStartRowIndex || 1
+    },
+    groupState.groupStartRowIndex || 1
+  );
+}
+
+/**
+ * Convert CSV rows → content_imports records.
+ *
+ * Backward compatibility:
+ * - Non-empty `content` on a row → that row alone becomes one draft (legacy; unchanged).
+ * - Otherwise `section` + `line` columns compile to canonical [Section: …] text (import-time only).
+ * - Blank import_group / section continue the previous non-empty values in the same file order.
+ * - Parser (sectionBuilder) and DB schema are not modified.
+ *
+ * @param {object[]} rawRows
+ * @param {string|null} sourceFile
+ */
 function rowsToImportRecords(rawRows, sourceFile) {
   const records = [];
   let skipped = 0;
   let rowIndex = 0;
 
-  for (const raw of rawRows) {
-    rowIndex += 1;
-    const content = extractContentFromRow(raw);
-    if (!content) {
-      skipped += 1;
-      continue;
-    }
-    if (content.length > MAX_CONTENT_CHARS) {
-      const err = new Error(
-        `Row ${rowIndex} exceeds maximum content length (${MAX_CONTENT_CHARS} characters)`
-      );
-      err.statusCode = 400;
-      throw err;
-    }
-    records.push({
-      content,
-      sourceFile: sourceFile || null,
-      rowIndex
-    });
-  }
+  const headerKeys = rawRows.length ? Object.keys(normalizeCsvRowKeys(rawRows[0])) : [];
+  const hasContentCol = headerKeys.includes("content");
+  const structuredEnabled = isStructuredCsvImportEnabled();
+  const hasStructuredCols = structuredEnabled && csvHeadersSupportStructured(headerKeys);
 
-  if (!records.length) {
-    const err = new Error('CSV must contain a "content" column with at least one non-empty row');
+  if (!hasContentCol && !hasStructuredCols) {
+    const err = new Error(
+      'CSV header must include a "content" column, or "section" and "line" columns for structured import'
+    );
     err.statusCode = 400;
     throw err;
   }
 
-  const firstKeys = rawRows.length ? Object.keys(normalizeCsvRowKeys(rawRows[0])) : [];
-  if (!firstKeys.includes("content")) {
-    const err = new Error('CSV header must include a "content" column');
+  /** @type {import('../utils/contentCompiler').StructuredGroupState|null} */
+  let groupState = null;
+
+  for (const raw of rawRows) {
+    rowIndex += 1;
+    const normalized = normalizeCsvRowKeys(raw);
+
+    // Legacy: non-empty content column → one draft per row (existing production behavior).
+    const legacyContent = extractContentFromRow(raw);
+    if (legacyContent) {
+      flushStructuredGroup(groupState, records, sourceFile);
+      groupState = null;
+      pushImportRecord(
+        records,
+        { content: legacyContent, sourceFile, rowIndex },
+        rowIndex
+      );
+      continue;
+    }
+
+    if (!hasStructuredCols) {
+      skipped += 1;
+      continue;
+    }
+
+    const line = readLine(normalized);
+    if (!line) {
+      skipped += 1;
+      continue;
+    }
+
+    const groupRaw = readImportGroup(normalized);
+    const sectionRaw = readSection(normalized);
+
+    if (groupRaw && groupState && groupState.currentGroup && groupRaw !== groupState.currentGroup) {
+      flushStructuredGroup(groupState, records, sourceFile);
+      groupState = null;
+    }
+
+    if (!groupState) {
+      groupState = createStructuredGroupState();
+      groupState.groupStartRowIndex = rowIndex;
+      groupState.currentGroup = groupRaw || "1";
+    } else if (groupRaw) {
+      groupState.currentGroup = groupRaw;
+    }
+
+    if (sectionRaw) {
+      groupState.currentSection = sectionRaw;
+    }
+
+    if (!groupState.currentSection) {
+      const err = new Error(
+        `Row ${rowIndex}: "line" requires a section — set "section" on this row or a previous row in the same import_group`
+      );
+      err.statusCode = 400;
+      throw err;
+    }
+
+    appendLineToStructuredGroup(groupState, groupState.currentSection, line);
+  }
+
+  flushStructuredGroup(groupState, records, sourceFile);
+
+  if (!records.length) {
+    const err = new Error(
+      hasStructuredCols
+        ? "CSV must have at least one non-empty content cell or structured section/line row"
+        : 'CSV must contain a "content" column with at least one non-empty row'
+    );
     err.statusCode = 400;
     throw err;
   }
@@ -208,5 +332,6 @@ module.exports = {
   getImportById,
   deleteImportById,
   normalizeCsvRowKeys,
-  extractContentFromRow
+  extractContentFromRow,
+  rowsToImportRecords
 };
