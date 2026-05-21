@@ -137,10 +137,27 @@ const baseHelmetOptions = {
 };
 const cspDirectivesBase = {
   defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+  scriptSrc: [
+    "'self'",
+    "https://cdn.jsdelivr.net",
+    "https://www.googletagmanager.com",
+    "'unsafe-inline'"
+  ],
   styleSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-  imgSrc: ["'self'", "data:", "blob:"],
-  connectSrc: ["'self'"],
+  imgSrc: [
+    "'self'",
+    "data:",
+    "blob:",
+    "https://www.google-analytics.com",
+    "https://www.googletagmanager.com"
+  ],
+  connectSrc: [
+    "'self'",
+    "https://www.google-analytics.com",
+    "https://analytics.google.com",
+    "https://region1.google-analytics.com",
+    "https://www.googletagmanager.com"
+  ],
   fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
   objectSrc: ["'none'"],
   frameAncestors: ["'none'"],
