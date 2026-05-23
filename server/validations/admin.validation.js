@@ -130,6 +130,11 @@ const adminLoginSchema = Joi.object({
   password: Joi.string().min(6).max(128).required()
 }).required().unknown(false);
 
+const analyzeContentBodySchema = Joi.object({
+  text: Joi.string().allow("").max(500000).default(""),
+  content: Joi.string().allow("").max(500000).default("")
+}).default({});
+
 const emptyBodySchema = Joi.object({}).required().unknown(false);
 const adminLogoutSchema = Joi.object({
   logoutAll: Joi.boolean().optional()
@@ -138,6 +143,7 @@ const adminLogoutSchema = Joi.object({
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
+  analyzeContentBodySchema,
   emptyBodySchema,
   adminLogoutSchema,
   ALLOWED_BADGE_CODES,

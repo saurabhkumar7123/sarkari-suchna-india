@@ -215,6 +215,7 @@
     <div class="editor-toolbar">
       <span>Structured editor</span>
       <span>Auto-saves draft</span>
+      <span class="editor-toolbar-hint">Use <code>[Section: Vacancy | table]</code> for stable tables</span>
     </div>
     <textarea
       id="data"
@@ -222,10 +223,18 @@
       placeholder="Write ShortInfo, Sections, and FAQs here"></textarea>
   </section>
 
+  <section class="content-analysis-panel" id="contentAnalysisPanel" aria-label="Content analysis" hidden>
+    <div class="panel-head">
+      <h3>Content analysis</h3>
+      <span class="preview-hint" id="contentAnalysisSummary">—</span>
+    </div>
+    <div id="contentAnalysisBody" class="content-analysis-body"></div>
+  </section>
+
   <section class="preview-panel">
     <div class="panel-head">
       <h3>Live Preview</h3>
-      <span class="preview-hint">Rendered output</span>
+      <span class="preview-hint">Rendered output (same pipeline as publish)</span>
     </div>
     <iframe id="previewFrame"></iframe>
   </section>

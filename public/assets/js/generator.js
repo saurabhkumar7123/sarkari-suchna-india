@@ -507,6 +507,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     dataTa.addEventListener("input", () => {
       syncAiConvertButton();
       updateEditorStats();
+      scheduleContentAnalysis();
     });
   }
   syncAiConvertButton();
@@ -555,6 +556,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const importLoaded = await loadContentImportFromURL();
   if (importLoaded) {
+    scheduleContentAnalysis();
     return;
   }
 
@@ -562,6 +564,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (!restored) {
     resetGeneratorForm();
   }
+  scheduleContentAnalysis();
 });
 
 function updateEditorStats() {
@@ -1251,6 +1254,10 @@ async function generatePage(){
       : Array.isArray(dataRes?.data?.warnings)
         ? dataRes.data.warnings
         : [];
+    const savedAnalysis = dataRes?.contentAnalysis || dataRes?.data?.contentAnalysis;
+    if (savedAnalysis) {
+      renderContentAnalysis(savedAnalysis);
+    }
 
     if (!dataRes || !resolvedUrl) {
       console.error("FULL RESPONSE:", fetchRes);
@@ -1377,6 +1384,140 @@ document.getElementById("deleteBtn").addEventListener("click", async function ()
     });
   }
 });
+
+// ================= CONTENT ANALYSIS (Phase 1 — same rules as publish) =================
+let contentAnalysisTimer = null;
+let contentAnalysisRequestId = 0;
+
+function renderModeLabel(mode) {
+  const map = {
+    table_forced: "Table (forced | table)",
+    table_auto_safe: "Table (auto CSV)",
+    table_auto_numbered: "Table (auto numbered)",
+    mixed_blocks: "Mixed (text + table blocks)",
+    lines: "Lines (paragraph / key-value / links)"
+  };
+  return map[mode] || mode;
+}
+
+function renderContentAnalysis(analysis) {
+  const panel = document.getElementById("contentAnalysisPanel");
+  const body = document.getElementById("contentAnalysisBody");
+  const summaryEl = document.getElementById("contentAnalysisSummary");
+  if (!panel || !body) return;
+
+  if (!analysis || !analysis.sections) {
+    panel.hidden = true;
+    return;
+  }
+
+  const summary = analysis.summary || {};
+  if (summaryEl) {
+    const pv = analysis.parserVersion ? ` · parser ${analysis.parserVersion}` : "";
+    const mx =
+      summary.mixedSectionCount > 0 ? ` · ${summary.mixedSectionCount} mixed` : "";
+    const mb = analysis.mixedBlocksEnabled ? " · mixed blocks on" : "";
+    summaryEl.textContent = `${summary.sectionCount || 0} section(s), ${summary.tableSectionCount || 0} table(s), ${summary.forcedTableCount || 0} forced${mx}${pv}${mb}`;
+  }
+
+  const globalWarnings = Array.isArray(analysis.warnings) ? analysis.warnings : [];
+  let html = "";
+
+  for (const sec of analysis.sections) {
+    const badges = [];
+    if (sec.forceTable) badges.push('<span class="content-analysis-badge content-analysis-badge--forced">| table</span>');
+    if (sec.isMixedSection) {
+      badges.push('<span class="content-analysis-badge content-analysis-badge--mixed">mixed</span>');
+    } else if (sec.willRenderAsTable) {
+      badges.push('<span class="content-analysis-badge content-analysis-badge--table">table</span>');
+    } else {
+      badges.push('<span class="content-analysis-badge content-analysis-badge--lines">lines</span>');
+    }
+
+    const tableInfo = sec.table
+      ? `Rows: ${sec.table.rowCount}, Cols: ${sec.table.columnCount}`
+      : "";
+
+    html += `<div class="content-analysis-section">
+      <h4>${escapeAttr(sec.name || "Section")}</h4>
+      <div class="content-analysis-meta">
+        <span>Mode: <strong>${escapeAttr(renderModeLabel(sec.renderMode))}</strong></span>
+        ${tableInfo ? `<span>${escapeAttr(tableInfo)}</span>` : ""}
+        ${sec.blockCount ? `<span>${sec.blockCount} block(s)</span>` : ""}
+        <span>${badges.join(" ")}</span>
+      </div>`;
+
+    if (Array.isArray(sec.blocks) && sec.blocks.length) {
+      html += `<ul class="content-analysis-blocks">`;
+      for (const b of sec.blocks) {
+        const label = b.type === "table" ? "table" : "text";
+        const detail =
+          b.type === "table"
+            ? ` (${b.rowCount || 0} rows × ${b.columnCount || 0} cols)`
+            : ` (${b.lineCount || 0} lines)`;
+        html += `<li><span class="content-analysis-badge content-analysis-badge--${label}">${escapeAttr(label)}</span>${escapeAttr(detail)}</li>`;
+      }
+      html += `</ul>`;
+    }
+
+    if (sec.table && sec.table.rowIssues && sec.table.rowIssues.length) {
+      html += `<ul class="content-analysis-warnings">`;
+      for (const issue of sec.table.rowIssues) {
+        html += `<li class="severity-warn">${escapeAttr(issue.message)}</li>`;
+      }
+      html += `</ul>`;
+    }
+    html += `</div>`;
+  }
+
+  if (globalWarnings.length) {
+    html += `<ul class="content-analysis-warnings">`;
+    for (const w of globalWarnings) {
+      const sev = w.severity === "error" ? "error" : w.severity === "info" ? "info" : "warn";
+      const prefix = w.section ? `[${w.section}] ` : "";
+      html += `<li class="severity-${sev}">${escapeAttr(prefix + w.message)}</li>`;
+    }
+    html += `</ul>`;
+  }
+
+  body.innerHTML = html || '<p class="content-analysis-meta">No issues detected.</p>';
+  panel.hidden = false;
+}
+
+async function runContentAnalysis() {
+  const ta = document.getElementById("data");
+  const text = ta ? String(ta.value || "").trim() : "";
+  const panel = document.getElementById("contentAnalysisPanel");
+  if (!text) {
+    if (panel) panel.hidden = true;
+    return;
+  }
+
+  const reqId = ++contentAnalysisRequestId;
+  try {
+    const hdrs = { "Content-Type": "application/json" };
+    if (typeof window.getAdminCsrfToken === "function") {
+      hdrs["X-CSRF-Token"] = await window.getAdminCsrfToken();
+    }
+    const res = await fetch("/api/admin/pages/analyze-content", {
+      method: "POST",
+      credentials: "include",
+      headers: hdrs,
+      body: JSON.stringify({ text })
+    });
+    if (reqId !== contentAnalysisRequestId) return;
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body || !body.success) return;
+    renderContentAnalysis(body.data);
+  } catch (err) {
+    console.error("Content analysis error:", err);
+  }
+}
+
+function scheduleContentAnalysis() {
+  clearTimeout(contentAnalysisTimer);
+  contentAnalysisTimer = setTimeout(() => runContentAnalysis(), 550);
+}
 
 // ================= PREVIEW =================
 let previewTimer;

@@ -4,7 +4,7 @@ const { invalidatePageCaches } = require("../../services/cache.services");
 const { writeSitemapFile } = require("../../lib/sitemapGenerator");
 const logger = require("../../utils/logger");
 const pipeline = require("../../../generator/pipeline/generatePage");
-const { collectParsingWarnings } = require("../../../generator/builders/sectionBuilder");
+const { analyzeJobContent } = require("../../../generator/analysis/contentAnalysis");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
@@ -195,7 +195,8 @@ const generatePage = async (req, res) => {
       oldSlug
     } = req.body;
     const text = bodyText || content || "";
-    const parserWarnings = collectParsingWarnings(text);
+    const contentAnalysis = analyzeJobContent(text);
+    const parserWarnings = contentAnalysis.legacyWarnings;
 
     const rawStructured = {
       qualification: req.body?.qualification,
@@ -423,11 +424,13 @@ const generatePage = async (req, res) => {
       data: {
         url,
         id: savedPageId,
-        warnings: parserWarnings
+        warnings: parserWarnings,
+        contentAnalysis
       },
       url,
       id: savedPageId,
-      warnings: parserWarnings
+      warnings: parserWarnings,
+      contentAnalysis
     });
   } catch (err) {
     if (conn) {
@@ -452,4 +455,13 @@ const generatePage = async (req, res) => {
   }
 };
 
-module.exports = { generatePage };
+async function analyzePageContent(req, res) {
+  const text = String(req.body?.text || req.body?.content || "").trim();
+  const analysis = analyzeJobContent(text);
+  return res.json({
+    success: true,
+    data: analysis
+  });
+}
+
+module.exports = { generatePage, analyzePageContent };

@@ -397,7 +397,8 @@ textarea{
 
 /* PANELS */
 .editor-panel,
-.preview-panel{
+.preview-panel,
+.content-analysis-panel{
   background:var(--surface);
   padding:16px;
   border-radius:14px;
@@ -407,6 +408,122 @@ textarea{
   display:flex;
   flex-direction:column;
   gap:10px;
+}
+
+.content-analysis-panel{
+  min-height:0;
+}
+
+.editor-toolbar-hint{
+  font-size:11px;
+  color:var(--gen-muted);
+}
+
+.editor-toolbar-hint code{
+  font-size:10px;
+}
+
+.content-analysis-body{
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-primary-dark);
+  max-height:220px;
+  overflow-y:auto;
+}
+
+.content-analysis-section{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 10px;
+  margin-bottom:8px;
+  background:var(--gen-surface-2, #f8fafc);
+}
+
+.content-analysis-section h4{
+  margin:0 0 6px;
+  font-size:13px;
+}
+
+.content-analysis-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px 12px;
+  font-size:11px;
+  color:var(--gen-muted);
+}
+
+.content-analysis-badge{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+}
+
+.content-analysis-badge--table{
+  background:#dbeafe;
+  color:#1d4ed8;
+}
+
+.content-analysis-badge--lines{
+  background:#f1f5f9;
+  color:#475569;
+}
+
+.content-analysis-badge--forced{
+  background:#dcfce7;
+  color:#15803d;
+}
+
+.content-analysis-badge--mixed{
+  background:#fef3c7;
+  color:#b45309;
+}
+
+.content-analysis-badge--text{
+  background:#f1f5f9;
+  color:#475569;
+}
+
+.content-analysis-blocks{
+  margin:6px 0 0;
+  padding:0;
+  list-style:none;
+  font-size:11px;
+}
+
+.content-analysis-blocks li{
+  margin:3px 0;
+}
+
+.content-analysis-warnings{
+  margin:8px 0 0;
+  padding:0;
+  list-style:none;
+}
+
+.content-analysis-warnings li{
+  margin:4px 0;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:11px;
+}
+
+.content-analysis-warnings li.severity-error{
+  background:#fef2f2;
+  color:#991b1b;
+}
+
+.content-analysis-warnings li.severity-warn{
+  background:#fffbeb;
+  color:#92400e;
+}
+
+.content-analysis-warnings li.severity-info{
+  background:#eff6ff;
+  color:#1e3a8a;
 }
 
 .panel-head{
