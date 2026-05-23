@@ -1,6 +1,7 @@
 "use strict";
 
-const { escapeHtml, sanitizeUrl, resolveUrl } = require("../../server/utils/escapeHtml");
+const { sanitizeUrl, resolveUrl } = require("../../server/utils/escapeHtml");
+const { escapeDisplayText } = require("../lib/displayTextNormalize");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -28,15 +29,15 @@ function renderLinesToHtml(lines) {
       const isUrlOnlyLine = isUrlLike(rawLine);
 
       if (rawLine.startsWith("Q:")) {
-        return `<div class="faq-item"><p><strong>${escapeHtml(rawLine)}</strong></p>`;
+        return `<div class="faq-item"><p><strong>${escapeDisplayText(rawLine, { mode: "title" })}</strong></p>`;
       }
 
       if (rawLine.startsWith("A:")) {
-        return `<p>${escapeHtml(rawLine)}</p></div>`;
+        return `<p>${escapeDisplayText(rawLine, { mode: "title" })}</p></div>`;
       }
 
       if (isUrlOnlyLine) {
-        const left = "Link";
+        const left = escapeDisplayText("Link", { mode: "title" });
         const href = sanitizeUrl(resolveUrl(rawLine));
         return `
             <div class="link-box">
@@ -49,7 +50,7 @@ function renderLinesToHtml(lines) {
       }
 
       if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
-        const left = escapeHtml(leftOfEq || "Link");
+        const left = escapeDisplayText(leftOfEq || "Link", { mode: "title" });
         const href = sanitizeUrl(resolveUrl(rightOfEq));
         return `
             <div class="link-box">
@@ -63,15 +64,18 @@ function renderLinesToHtml(lines) {
 
       if (rawLine.includes(":") && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
         const parts = rawLine.split(":");
+        const label = parts[0].trim();
+        const value = parts.slice(1).join(":").trim();
         return `
             <div class="date-row">
-              <span class="date-label">${escapeHtml(parts[0].trim())} :</span>
-              <span class="date-value">${escapeHtml(parts.slice(1).join(":").trim())}</span>
+              <span class="date-label">${escapeDisplayText(label, { mode: "title" })} :</span>
+              <span class="date-value">${escapeDisplayText(value, { mode: "title" })}</span>
             </div>
           `;
       }
 
-      return `<p>${escapeHtml(rawLine)}</p>`;
+      const paraMode = rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
+      return `<p>${escapeDisplayText(rawLine, { mode: paraMode })}</p>`;
     })
     .join("");
 }

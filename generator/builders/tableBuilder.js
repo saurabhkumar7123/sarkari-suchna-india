@@ -1,6 +1,6 @@
   /* ===== SMART TABLE BUILDER (Rowspan + Colspan Rules) ===== */
 
-const { escapeHtml } = require("../../server/utils/escapeHtml");
+const { escapeDisplayText } = require("../lib/displayTextNormalize");
 const { parseTableContent } = require("../lib/csvGridParser");
 
 function buildTable(raw) {
@@ -79,11 +79,12 @@ function buildTable(raw) {
 
       const tag = i === 0 ? "th" : "td";
 
+      const cellMode = "title";
       html += `<${tag}
       ${rowspan > 1 ? `rowspan="${rowspan}"` : ""}
       ${colspan > 1 ? `colspan="${colspan}"` : ""}
       >
-      ${escapeHtml(rows[i][j])}
+      ${escapeDisplayText(rows[i][j], { mode: cellMode })}
       </${tag}>`;
     }
 

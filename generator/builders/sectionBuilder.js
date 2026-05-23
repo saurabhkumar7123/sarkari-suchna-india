@@ -1,4 +1,4 @@
-const { escapeHtml } = require("../../server/utils/escapeHtml");
+const { escapeDisplayText } = require("../lib/displayTextNormalize");
 const { buildTable } = require("./tableBuilder");
 const { renderLinesToHtml } = require("./lineRenderer");
 const { buildMixedSectionHtml } = require("./mixedSectionBuilder");
@@ -26,7 +26,7 @@ function buildDynamicSectionsWithWarnings(text) {
 
   for (const sec of sections) {
     const forceTable = sec.forceTable;
-    const title = escapeHtml(sec.cleanHeaderTitle);
+    const title = escapeDisplayText(sec.cleanHeaderTitle, { mode: "title" });
     const content = sec.content;
     const lines = sec.lines;
 
