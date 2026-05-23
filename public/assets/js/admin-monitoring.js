@@ -50,7 +50,13 @@ function renderSitesTable(data) {
     const isBroken = Number(site && site.broken) === 1;
     const statusText = isBroken ? "⚠️ Broken" : isActive ? "✅ Active" : "⏸ Disabled";
     const statusClass = isBroken ? "is-broken" : isActive ? "is-active" : "is-disabled";
-    const lastCheckedAt = (site && (site.lastCheckedAt || site.lastChecked || site.checkedAt || site.last_checked_at)) || null;
+    const lastCheckedAt =
+      (site &&
+        (site.lastCheckedAt ||
+          site.last_checked_at ||
+          site.lastChecked ||
+          site.checkedAt)) ||
+      null;
     row.innerHTML = `
       <div class="monitor-site"><strong>${escapeAttr(site && site.name ? site.name : "Unnamed Site")}</strong><span class="monitor-site-url">${escapeAttr(site && site.url ? site.url : "")}</span></div>
       <div><span class="monitor-status ${statusClass}"><span class="monitor-status-dot"></span>${statusText}</span></div>

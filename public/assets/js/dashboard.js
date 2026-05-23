@@ -397,7 +397,12 @@ function renderSitesTable(data) {
     const statusText = isBroken ? "⚠️ Broken" : isActive ? "✅ Active" : "⏸ Disabled";
     const statusClass = isBroken ? "is-broken" : isActive ? "is-active" : "is-disabled";
     const lastCheckedAt =
-      (site && (site.lastCheckedAt || site.lastChecked || site.checkedAt || site.last_checked_at)) || null;
+      (site &&
+        (site.lastCheckedAt ||
+          site.last_checked_at ||
+          site.lastChecked ||
+          site.checkedAt)) ||
+      null;
     const lastCheckedText = lastCheckedAt ? formatMonitorTime(lastCheckedAt) : "Not available";
     row.innerHTML = `
       <div class="monitor-site">

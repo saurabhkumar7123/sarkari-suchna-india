@@ -267,10 +267,13 @@ async function gracefulShutdown(signal, { exitCode = 0 } = {}) {
     logger.error("HTTP server error", { message: err.message });
   });
 
-  // Temporary connectivity probe for Telegram delivery path.
-  await sendTelegramMessage("TEST MESSAGE FROM BOT").catch((err) => {
-    console.warn("Telegram startup test failed", err && err.message ? err.message : String(err));
-  });
+  if (String(process.env.TELEGRAM_STARTUP_TEST || "").trim() === "1") {
+    await sendTelegramMessage("TEST MESSAGE FROM BOT").catch((err) => {
+      logger.warn("Telegram startup test failed", {
+        message: err && err.message ? err.message : String(err)
+      });
+    });
+  }
 
   tryStartSchedulerWithLock().catch((err) => {
     if (err && err.code === "REDIS_CRITICAL_UNAVAILABLE") {

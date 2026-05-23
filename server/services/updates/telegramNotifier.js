@@ -109,12 +109,13 @@ function buildBatchUpdateMessage(items) {
   return lines.join("\n");
 }
 
-function buildDailySummaryMessage({ checked, updatesFound, errors }) {
+function buildDailySummaryMessage({ checked, enqueued, updatesFound, errors }) {
+  const queued = enqueued != null ? enqueued : updatesFound;
   return [
     "📊 Daily Monitoring Summary",
-    `Sites checked: ${checked}`,
-    `Updates found: ${updatesFound}`,
-    `Errors: ${errors}`
+    `Sites queued: ${checked}`,
+    `Jobs enqueued: ${queued != null ? queued : 0}`,
+    `Enqueue errors: ${errors}`
   ].join("\n");
 }
 

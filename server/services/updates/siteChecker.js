@@ -19,6 +19,35 @@ function buildSignature(value) {
   return `sig:${hash}:${compact}`;
 }
 
+function isStoredFingerprint(value) {
+  return /^sig:[a-f0-9]{40}:/i.test(String(value || "").trim());
+}
+
+/**
+ * Resolve stored last_content to a comparable top-item fingerprint.
+ * @param {string|null|undefined} lastContent
+ * @returns {{ hasBaseline: boolean, fingerprint: string|null }}
+ */
+function normalizeStoredBaseline(lastContent) {
+  const raw = String(lastContent || "").trim();
+  if (!raw) {
+    return { hasBaseline: false, fingerprint: null };
+  }
+  if (isStoredFingerprint(raw)) {
+    return { hasBaseline: true, fingerprint: raw };
+  }
+  return { hasBaseline: true, fingerprint: buildSignature(raw) };
+}
+
+/**
+ * @param {string} itemFingerprint
+ * @param {{ hasBaseline: boolean, fingerprint: string|null }} baseline
+ */
+function itemMatchesBaseline(itemFingerprint, baseline) {
+  if (!baseline.hasBaseline || !baseline.fingerprint) return false;
+  return String(itemFingerprint || "") === baseline.fingerprint;
+}
+
 function absolutizeLink(siteUrl, href) {
   const raw = String(href || "").trim();
   if (!raw) return "";
@@ -74,37 +103,71 @@ function extractLatestItems(html, site) {
   return { items };
 }
 
+/**
+ * @param {object} site — full row including lastContent
+ */
 async function checkSite(site) {
-  logger.warn("updates: checking site", { siteId: site.id, name: site.name, url: site.url });
-  const html = await fetchHtml(site.url);
-  logger.warn("updates: fetched html", { siteId: site.id, bytes: html.length });
-  const extracted = extractLatestItems(html, site);
+  logger.info("updates: checking site", {
+    siteId: site.id,
+    name: site.name,
+    hasBaseline: Boolean(String(site.lastContent || "").trim())
+  });
 
+  const html = await fetchHtml(site.url);
+  logger.info("updates: fetched html", { siteId: site.id, bytes: html.length });
+
+  const extracted = extractLatestItems(html, site);
   if (!extracted) {
-    return { changed: false, reason: "selector_miss" };
+    return { changed: false, reason: "selector_miss", invalid: true };
   }
   if (extracted.invalid) {
     return { changed: false, invalid: true, reason: extracted.reason };
   }
-  const previousSig = buildSignature(site.lastContent || "");
-  const items = extracted.items || [];
-  const changedItems = items.filter((item) => item.fingerprint !== previousSig);
-  const changed = changedItems.length > 0;
 
-  // Basic filtering to avoid spam notifications from empty/noisy selector output.
+  const items = extracted.items || [];
+  const baseline = normalizeStoredBaseline(site.lastContent);
   const minTitleLen = parseInt(process.env.UPDATE_MIN_TITLE_LENGTH || "8", 10);
+
+  if (!baseline.hasBaseline) {
+    const top = items[0];
+    return {
+      changed: false,
+      shouldNotify: false,
+      establishBaseline: true,
+      baselineFingerprint: top.fingerprint,
+      reason: "baseline_established",
+      items: []
+    };
+  }
+
+  const topItem = items[0];
+  if (itemMatchesBaseline(topItem.fingerprint, baseline)) {
+    return {
+      changed: false,
+      shouldNotify: false,
+      reason: "no_change",
+      baselineFingerprint: baseline.fingerprint,
+      items: []
+    };
+  }
+
+  const changedItems = items.filter((item) => !itemMatchesBaseline(item.fingerprint, baseline));
   const filteredItems = changedItems.filter((item) => normalizeText(item.title).length >= minTitleLen);
-  const shouldNotify = changed && filteredItems.length > 0;
+  const shouldNotify = filteredItems.length > 0;
 
   return {
-    changed,
+    changed: true,
     shouldNotify,
-    reason: !changed ? "no_change" : !filteredItems.length ? "title_too_short" : "ok",
-    previousContent: normalizeText(site.lastContent),
+    reason: !filteredItems.length ? "title_too_short" : "ok",
+    baselineFingerprint: topItem.fingerprint,
     items: filteredItems
   };
 }
 
 module.exports = {
-  checkSite
+  checkSite,
+  buildSignature,
+  normalizeStoredBaseline,
+  isStoredFingerprint,
+  itemMatchesBaseline
 };

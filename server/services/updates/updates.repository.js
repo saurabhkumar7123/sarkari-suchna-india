@@ -19,7 +19,8 @@ async function ensureTables() {
       priority INT NOT NULL DEFAULT 1,
       next_retry_at DATETIME NULL,
       pre_disable_warned TINYINT(1) NOT NULL DEFAULT 0,
-      restored_at DATETIME NULL
+      restored_at DATETIME NULL,
+      last_checked_at DATETIME NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
   );
 
@@ -50,6 +51,7 @@ async function ensureTables() {
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS next_retry_at DATETIME NULL`);
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS pre_disable_warned TINYINT(1) NOT NULL DEFAULT 0`);
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS restored_at DATETIME NULL`);
+  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS last_checked_at DATETIME NULL`);
 }
 
 async function fetchSites() {
@@ -67,11 +69,31 @@ async function fetchSites() {
       is_active AS active,
       next_retry_at AS nextRetryAt,
       pre_disable_warned AS preDisableWarned,
-      restored_at AS restoredAt
+      restored_at AS restoredAt,
+      last_checked_at AS lastCheckedAt
      FROM monitored_sites
      ORDER BY priority DESC, id ASC`
   );
   return rows;
+}
+
+async function insertDetectedUpdate({ siteId, title, link }) {
+  await db.query("INSERT INTO updates (site_id, title, link) VALUES (?, ?, ?)", [
+    siteId,
+    title,
+    link || null
+  ]);
+}
+
+async function saveSiteBaseline(siteId, latestContent) {
+  await db.query("UPDATE monitored_sites SET last_content=?, last_checked_at=NOW() WHERE id=?", [
+    latestContent || "",
+    siteId
+  ]);
+}
+
+async function markSiteChecked(siteId) {
+  await db.query("UPDATE monitored_sites SET last_checked_at=NOW() WHERE id=?", [siteId]);
 }
 
 async function saveDetectedUpdate({ siteId, title, link, latestContent }) {
@@ -83,7 +105,10 @@ async function saveDetectedUpdate({ siteId, title, link, latestContent }) {
       title,
       link || null
     ]);
-    await conn.query("UPDATE monitored_sites SET last_content=? WHERE id=?", [latestContent || "", siteId]);
+    await conn.query(
+      "UPDATE monitored_sites SET last_content=?, last_checked_at=NOW() WHERE id=?",
+      [latestContent || "", siteId]
+    );
     await conn.commit();
   } catch (err) {
     await conn.rollback();
@@ -178,7 +203,8 @@ async function getSiteById(siteId) {
   const [rows] = await db.query(
     `SELECT id, name, url, selector, last_content AS lastContent, last_alert_at AS lastAlertAt,
             fail_count AS failCount, broken, priority, is_active AS active, next_retry_at AS nextRetryAt,
-            pre_disable_warned AS preDisableWarned, restored_at AS restoredAt
+            pre_disable_warned AS preDisableWarned, restored_at AS restoredAt,
+            last_checked_at AS lastCheckedAt
      FROM monitored_sites WHERE id=? LIMIT 1`,
     [siteId]
   );
@@ -228,6 +254,9 @@ async function fetchRecentUpdates(limit = 50) {
 module.exports = {
   ensureTables,
   fetchSites,
+  insertDetectedUpdate,
+  saveSiteBaseline,
+  markSiteChecked,
   saveDetectedUpdate,
   hasRecentDuplicate,
   markAlertSent,

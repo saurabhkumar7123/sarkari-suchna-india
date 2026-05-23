@@ -125,7 +125,7 @@ async function runOnce() {
 
     const sites = await fetchSites();
     logger.info("updates: loaded sites", { count: sites.length });
-    const stats = { checked: 0, updatesFound: 0, errors: 0 };
+    const stats = { checked: 0, enqueued: 0, errors: 0 };
 
     for (const site of sites) {
       if (!shouldCheckSiteThisCycle(site)) continue;
@@ -141,7 +141,7 @@ async function runOnce() {
           queuePriority,
           jobId: enqueueResult.jobId
         });
-        stats.updatesFound += 1;
+        stats.enqueued += 1;
       } catch (siteErr) {
         stats.errors += 1;
         logger.error("updates: site enqueue failed", {
