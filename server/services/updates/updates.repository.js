@@ -51,10 +51,26 @@ async function ensureTables() {
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS next_retry_at DATETIME NULL`);
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS pre_disable_warned TINYINT(1) NOT NULL DEFAULT 0`);
   await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS restored_at DATETIME NULL`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS last_checked_at DATETIME NULL`);
+  await ensureLastCheckedAtColumn();
+}
+
+async function ensureLastCheckedAtColumn() {
+  const [rows] = await db.query(
+    `SELECT 1 AS ok FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'last_checked_at'
+     LIMIT 1`,
+    [SITES_TABLE]
+  );
+  if (rows.length) return;
+  try {
+    await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN last_checked_at DATETIME NULL`);
+  } catch (err) {
+    if (err && err.code !== "ER_DUP_FIELDNAME") throw err;
+  }
 }
 
 async function fetchSites() {
+  await ensureLastCheckedAtColumn();
   const [rows] = await db.query(
     `SELECT
       id,
@@ -200,6 +216,7 @@ async function createSite({ name, url, selector, priority = 1 }) {
 }
 
 async function getSiteById(siteId) {
+  await ensureLastCheckedAtColumn();
   const [rows] = await db.query(
     `SELECT id, name, url, selector, last_content AS lastContent, last_alert_at AS lastAlertAt,
             fail_count AS failCount, broken, priority, is_active AS active, next_retry_at AS nextRetryAt,
@@ -270,5 +287,6 @@ module.exports = {
   deleteSite,
   fetchRecentUpdates,
   restoreSite,
-  disableSite
+  disableSite,
+  ensureLastCheckedAtColumn
 };
