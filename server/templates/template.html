@@ -180,15 +180,6 @@
 <script src="/js/highlight-banner-theme.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const headingMap = {
-    ShortInfo: "Overview",
-    ImportantDates: "Important Dates",
-    Eligibility: "Eligibility Criteria",
-    SelectionProcess: "Selection Process",
-    Vacancy: "Vacancy Details",
-    ImportantLinks: "Important Links"
-  };
-
   const cleanText = (value) => String(value || "").replace(/\s+/g, " ").trim();
   const cards = Array.from(document.querySelectorAll(".card"));
   const byLabel = {};
@@ -198,11 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!titleNode) return;
     const icon = titleNode.querySelector(".section-icon");
     const rawTitle = cleanText(titleNode.textContent.replace("➜", ""));
-    if (headingMap[rawTitle]) {
-      titleNode.childNodes[0].textContent = headingMap[rawTitle] + " ";
-    }
-    const finalTitle = headingMap[rawTitle] || rawTitle;
-    byLabel[finalTitle] = card;
+    byLabel[rawTitle] = card;
     if (icon) icon.textContent = "➜";
   });
 
@@ -214,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const extractQualification = () => {
-    const eligibilityCard = byLabel["Eligibility Criteria"];
+    const eligibilityCard = byLabel["Eligibility"];
     if (!eligibilityCard) return "";
     const text = cleanText(eligibilityCard.querySelector(".card-content")?.textContent || "");
     const match = text.match(/(10th|12th|intermediate|diploma|graduation|graduate|degree|b\.?e|b\.?tech|iti|post graduate|master)/i);
@@ -224,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const postName = cleanText(document.querySelector(".highlight-banner-subtitle")?.textContent.replace(/^Post Name/i, "").replace(/^:/, "") || document.querySelector(".job-title")?.textContent);
-  const importantDatesCard = byLabel["Important Dates"];
+  const importantDatesCard = byLabel["ImportantDates"];
   const lastDate = findValueInRows(importantDatesCard, /last\s*date/i);
   const totalPosts = cleanText(document.querySelector(".highlight-banner-total-num")?.textContent);
   const qualification = extractQualification();
