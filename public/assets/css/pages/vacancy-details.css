@@ -275,14 +275,28 @@
     /* ================= TABLE ================= */
     .table-responsive{
     overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
     }
-    
+
+    /* Default: mobile-first fit — wrap text, no forced min-width */
     .table{
     width:100%;
+    max-width:100%;
     border-collapse:collapse;
-    min-width:480px;
+    table-layout:fixed;
+    min-width:0;
     }
-    
+
+    .table th,
+    .table td{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    white-space:normal;
+    hyphens:auto;
+    vertical-align:top;
+    }
+
     .table th{
     background:var(--primary);
     color:var(--site-text-inverse);
@@ -299,6 +313,18 @@
     text-align:left;
     line-height:1.45;
     font-variant-numeric:tabular-nums;
+    }
+
+    /* Wide matrices (5+ columns): allow horizontal scroll when truly needed */
+    .table-responsive--wide{
+    overflow-x:auto;
+    }
+
+    .table.table--wide{
+    table-layout:auto;
+    width:max-content;
+    max-width:none;
+    min-width:min(100%, 36rem);
     }
 
     .table th:last-child,
@@ -610,6 +636,17 @@
     .key-facts-grid{
       grid-template-columns: 1fr;
     }
+
+    .table th,
+    .table td{
+    padding:8px 6px;
+    font-size:13px;
+    line-height:1.4;
+    }
+
+    .table.table--wide{
+    min-width:min(100%, 32rem);
+    }
     
     }
     
@@ -623,6 +660,12 @@
     min-height:44px;
     font-size:14px;
     padding:0 6px;
+    }
+
+    .table th,
+    .table td{
+    padding:6px 5px;
+    font-size:12.5px;
     }
     
     }

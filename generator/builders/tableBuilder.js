@@ -43,7 +43,11 @@ function buildTable(raw) {
 
   const skip = Array.from({ length: rowCount }, () => Array(colCount).fill(false));
 
-  let html = `<div class="table-responsive"><table class="table">`;
+  const isWideTable = colCount >= 5;
+  const wrapClass = isWideTable ? "table-responsive table-responsive--wide" : "table-responsive";
+  const tableClass = isWideTable ? "table table--wide" : "table";
+
+  let html = `<div class="${wrapClass}"><table class="${tableClass}">`;
 
   for (let i = 0; i < rowCount; i++) {
     html += "<tr>";
