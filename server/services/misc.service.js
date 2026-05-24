@@ -1,5 +1,6 @@
 const pageRepository = require("../repositories/page.repository");
 const { parseBadges } = require("./page.service");
+const { getRelatedPagesForSlug } = require("./relatedPages.service");
 
 async function getSmallBoxes() {
   return pageRepository.selectSmallBoxes();
@@ -26,7 +27,7 @@ async function getSitemapRows() {
 }
 
 async function getRelatedPages(slug) {
-  return pageRepository.selectRelated(slug, 6);
+  return getRelatedPagesForSlug(slug, 6);
 }
 
 async function getHomepageSections() {

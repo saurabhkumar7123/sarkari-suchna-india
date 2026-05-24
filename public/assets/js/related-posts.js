@@ -7,10 +7,10 @@ slug = slug.replace(".html","");
 
 console.log("Slug:", slug);
 
-const res = await fetch(`/api/related/${slug}`);
-const posts = await res.json();
-
-console.log("Posts:", posts);
+const res = await fetch(`/api/related/${encodeURIComponent(slug)}`);
+if (!res.ok) return;
+const payload = await res.json();
+const posts = Array.isArray(payload) ? payload : [];
 
 if(!posts.length) return;
 
@@ -43,7 +43,6 @@ ${p.title || ""}
 });
 
 html += `
-</ul>
 </div>
 </div>
 `;

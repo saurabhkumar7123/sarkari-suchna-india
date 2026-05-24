@@ -69,6 +69,13 @@ async function invalidatePageCaches(slugs = []) {
   keys.add("pages:topviews");
   keys.add("finder:all");
 
+  try {
+    const { invalidateRelatedCaches } = require("./relatedPages.service");
+    await invalidateRelatedCaches(slugs);
+  } catch (e) {
+    logger.warn("invalidateRelatedCaches failed", { message: e.message });
+  }
+
   for (const k of keys) {
     await delCache(k);
   }

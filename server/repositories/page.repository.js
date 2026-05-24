@@ -321,6 +321,59 @@ async function selectAllSlugsPublic(executor = db) {
   return rows;
 }
 
+/**
+ * @typedef {{
+ *   id?: number,
+ *   title: string,
+ *   slug: string,
+ *   status?: string | null,
+ *   category?: string | null,
+ *   views?: number | null,
+ *   created_at?: Date | string | null,
+ *   department?: string | null,
+ *   qualification?: string | null,
+ *   state?: string | null,
+ *   post_name?: string | null
+ * }} RelatedPageRow
+ */
+
+const RELATED_CANDIDATE_COLUMNS =
+  "id, title, slug, status, category, views, created_at, department, qualification, state, post_name";
+
+/**
+ * @param {string} slug
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @returns {Promise<RelatedPageRow | null>}
+ */
+async function findRelatedAnchorBySlug(slug, executor = db) {
+  const [rows] = await executor.query(
+    `SELECT ${RELATED_CANDIDATE_COLUMNS} FROM pages WHERE slug=? AND deleted=0 LIMIT 1`,
+    [slug]
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Recent public pages for related scoring (single query, no N+1).
+ * @param {string} excludeSlug
+ * @param {number} poolLimit
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @returns {Promise<RelatedPageRow[]>}
+ */
+async function selectRelatedCandidates(excludeSlug, poolLimit = 150, executor = db) {
+  const lim = Math.min(300, Math.max(20, parseInt(poolLimit, 10) || 150));
+  const [rows] = await executor.query(
+    `SELECT ${RELATED_CANDIDATE_COLUMNS}
+     FROM pages
+     WHERE deleted=0 AND slug != ?
+     ORDER BY created_at DESC, id DESC
+     LIMIT ?`,
+    [excludeSlug, lim]
+  );
+  return rows;
+}
+
+/** @deprecated Legacy random related list — use selectRelatedSmart via misc.service */
 async function selectRelated(slug, limit, executor = db) {
   const [rows] = await executor.query(
     "SELECT title, slug FROM pages WHERE slug != ? AND deleted=0 LIMIT ?",
@@ -996,6 +1049,8 @@ module.exports = {
   selectBreakingNews,
   selectByCategory,
   selectAllSlugsPublic,
+  findRelatedAnchorBySlug,
+  selectRelatedCandidates,
   selectRelated,
   selectDistinctStatuses,
   countJobsFiltered,
