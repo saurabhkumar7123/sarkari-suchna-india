@@ -10,6 +10,7 @@ pnpm-debug.log*
 logs/
 data/admin-activity.json
 data/activity.json
+data/related-analytics.json
 
 # Generator PDF extract temp uploads (multerPdfExtract)
 storage/temp/

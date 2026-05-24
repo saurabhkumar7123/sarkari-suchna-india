@@ -2,6 +2,9 @@ const db = require("../../config/db");
 const pageRepository = require("../../repositories/page.repository");
 const { invalidatePageCaches } = require("../../services/cache.services");
 const { writeSitemapFile } = require("../../lib/sitemapGenerator");
+const { logGeneratorActivity, formatPageTarget } = require("../../lib/generatorActivity");
+const { embedRelatedJobsInJobHtml } = require("../../lib/relatedJobsEmbed");
+const { getRelatedPagesForSlug } = require("../../services/relatedPages.service");
 const logger = require("../../utils/logger");
 const pipeline = require("../../../generator/pipeline/generatePage");
 const { analyzeJobContent } = require("../../../generator/analysis/contentAnalysis");
@@ -296,9 +299,12 @@ const generatePage = async (req, res) => {
     await conn.beginTransaction();
 
     let slug;
+    let previousRow = null;
+    let oldSlugNormalized = "";
 
     if (oldSlug) {
       const os = String(oldSlug).trim().replace(/^\/+|\.html$/gi, "");
+      oldSlugNormalized = os;
       const existing = await pageRepository.findActiveIdBySlug(os, conn);
       if (!existing) {
         await conn.rollback();
@@ -308,6 +314,7 @@ const generatePage = async (req, res) => {
         await conn.rollback();
         return res.status(400).json({ status: "error", message: "Invalid page id for this slug" });
       }
+      previousRow = await pageRepository.findPublicRowBySlug(os, conn);
       slug = os;
     } else {
       const baseSlug = pageUrl
@@ -330,9 +337,24 @@ const generatePage = async (req, res) => {
         postName: normalizedPostName,
         totalPosts: normalizedTotalPosts
       });
-    } catch {
+    } catch (buildErr) {
       await conn.rollback();
+      await logGeneratorActivity(req, {
+        action: "page_template_generate",
+        target: formatPageTarget(slug, title),
+        status: "fail"
+      });
       return res.status(500).json({ status: "error", message: "Failed to build page HTML" });
+    }
+
+    try {
+      const relatedItems = await getRelatedPagesForSlug(slug, 6);
+      finalHTML = embedRelatedJobsInJobHtml(finalHTML, slug, relatedItems);
+    } catch (embedErr) {
+      logger.warn("generator: related embed skipped", {
+        slug,
+        message: embedErr && embedErr.message ? embedErr.message : String(embedErr)
+      });
     }
 
     let savedPageId;
@@ -396,6 +418,11 @@ const generatePage = async (req, res) => {
       await pipeline.writeJobHtmlFile(slug, finalHTML);
     } catch (e) {
       await conn.rollback();
+      await logGeneratorActivity(req, {
+        action: "page_template_generate",
+        target: formatPageTarget(slug, title),
+        status: "fail"
+      });
       logger.error("generator: writeJobHtmlFile failed — transaction rolled back (DB row including structured fields not committed)", {
         slug,
         message: e && e.message ? e.message : String(e)
@@ -412,6 +439,41 @@ const generatePage = async (req, res) => {
     if (oldSlug) cacheSlugs.push(String(oldSlug).trim().replace(/^\/+|\.html$/gi, ""));
     cacheSlugs.push(slug);
     await invalidatePageCaches(cacheSlugs);
+
+    const pageTarget = formatPageTarget(slug, title);
+    if (!oldSlugNormalized) {
+      await logGeneratorActivity(req, {
+        action: "page_create",
+        target: pageTarget,
+        status: "success"
+      });
+    } else {
+      await logGeneratorActivity(req, {
+        action: "page_update",
+        target: pageTarget,
+        status: "success"
+      });
+      const prevStatus = previousRow ? normalizeStatus(previousRow.status) : "";
+      if (prevStatus && prevStatus !== normalizedStatus) {
+        await logGeneratorActivity(req, {
+          action: "page_status_change",
+          target: `${slug} (${prevStatus} → ${normalizedStatus})`,
+          status: "success"
+        });
+      }
+      if (oldSlugNormalized && oldSlugNormalized !== slug) {
+        await logGeneratorActivity(req, {
+          action: "page_slug_change",
+          target: `${oldSlugNormalized} → ${slug}`,
+          status: "success"
+        });
+      }
+    }
+    await logGeneratorActivity(req, {
+      action: "page_publish",
+      target: pageTarget,
+      status: "success"
+    });
 
     setImmediate(() => {
       writeSitemapFile(db).catch((e) => logger.warn("sitemap refresh after publish failed", { message: e.message }));

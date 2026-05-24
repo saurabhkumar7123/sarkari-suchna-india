@@ -1097,6 +1097,10 @@ app.get("/:slug", async (req, res, next) => {
   const postPath = path.join(generatedDir, "jobs", `${slug}.html`);
   if (fileService.existsSync(postPath)) {
     try {
+      const { trackJobPageView } = require("./services/pageViews.service");
+      setImmediate(() => {
+        trackJobPageView(req, slug).catch(() => {});
+      });
       const raw = await fileService.readFile(postPath, "utf8");
       const baseUrl = getPublicBaseUrl(req);
       const html = normalizeSeoUrlsInHtml(raw, baseUrl);

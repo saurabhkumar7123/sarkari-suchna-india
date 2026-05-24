@@ -109,6 +109,11 @@ const relatedSlugParamSchema = Joi.object({
   slug: Joi.string().trim().min(1).max(255).required()
 });
 
+const relatedClickBodySchema = Joi.object({
+  from: Joi.string().trim().min(1).max(255).required(),
+  to: Joi.string().trim().min(1).max(255).required()
+});
+
 const previewBodySchema = Joi.object({
   title: Joi.string().allow("").max(500).default(""),
   text: Joi.string().allow("").max(500000).default("")
@@ -133,6 +138,7 @@ module.exports = {
   searchQuerySchema,
   tagParamSchema,
   relatedSlugParamSchema,
+  relatedClickBodySchema,
   previewBodySchema,
   aiParseBodySchema
 };

@@ -5,6 +5,8 @@ const pageService = require("../../services/page.service");
 const { invalidatePageCaches } = require("../../services/cache.services");
 const db = require("../../config/db");
 const pipeline = require("../../../generator/pipeline/generatePage");
+const { embedRelatedJobsInJobHtml } = require("../../lib/relatedJobsEmbed");
+const { getRelatedPagesForSlug } = require("../../services/relatedPages.service");
 const fileService = require("../../services/file.service");
 const { siteCheckQueue } = require("../../services/queue/siteQueue");
 const { recordActivity, listActivity } = require("../../services/adminActivity.service");
@@ -195,7 +197,7 @@ const restorePage = async (req, res) => {
 
     const filePath = path.join(process.cwd(), "generated", "jobs", `${slug}.html`);
 
-    const finalHtml = await pipeline.buildJobHtml({
+    let finalHtml = await pipeline.buildJobHtml({
       title: page.title || "",
       text: page.raw_text || "",
       slug: page.slug,
@@ -204,6 +206,12 @@ const restorePage = async (req, res) => {
       postName: page.post_name != null ? String(page.post_name) : null,
       totalPosts: page.total_posts != null ? String(page.total_posts) : null
     });
+    try {
+      const relatedItems = await getRelatedPagesForSlug(page.slug, 6);
+      finalHtml = embedRelatedJobsInJobHtml(finalHtml, page.slug, relatedItems);
+    } catch {
+      // non-blocking
+    }
     await fileService.writeFile(filePath, finalHtml, "utf8");
     await db.query("UPDATE pages SET content = ? WHERE slug = ? AND deleted = 0", [finalHtml, slug]);
 

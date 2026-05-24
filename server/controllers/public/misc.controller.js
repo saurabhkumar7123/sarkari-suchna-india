@@ -140,6 +140,19 @@ const getRelatedPages = asyncHandler(async (req, res) => {
   res.json(rows);
 });
 
+const { recordRelatedClick } = require("../../services/relatedAnalytics.service");
+
+const postRelatedClick = asyncHandler(async (req, res) => {
+  const from = String(req.body.from || "")
+    .trim()
+    .replace(/\.html$/i, "");
+  const to = String(req.body.to || "")
+    .trim()
+    .replace(/\.html$/i, "");
+  recordRelatedClick({ from, to });
+  res.status(204).end();
+});
+
 module.exports = {
   getSmallBoxes,
   getBreakingNews,
@@ -147,5 +160,6 @@ module.exports = {
   previewPage,
   aiParse,
   getSections,
-  getRelatedPages
+  getRelatedPages,
+  postRelatedClick
 };

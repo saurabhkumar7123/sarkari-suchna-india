@@ -14,7 +14,8 @@ const {
   previewPage,
   aiParse,
   getSections,
-  getRelatedPages
+  getRelatedPages,
+  postRelatedClick
 } = require("../../controllers/public/misc.controller");
 const { getNotifications } = require("../../controllers/public/notification.controller");
 
@@ -23,6 +24,7 @@ const requireDb = require("../../middleware/dbReady.middleware");
 const {
   tagParamSchema,
   relatedSlugParamSchema,
+  relatedClickBodySchema,
   previewBodySchema,
   aiParseBodySchema
 } = require("../../validations/public.validation");
@@ -50,6 +52,12 @@ router.get(
   requireDb,
   validate(relatedSlugParamSchema, "params"),
   getRelatedPages
+);
+
+router.post(
+  "/related-click",
+  validate(relatedClickBodySchema, "body"),
+  postRelatedClick
 );
 
 module.exports = router;

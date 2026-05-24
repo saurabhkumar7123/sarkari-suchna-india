@@ -213,6 +213,20 @@ async function selectTopViews(limit, executor = db) {
   return rows;
 }
 
+/**
+ * Increment view counter for a public job page (non-deleted).
+ * @param {string} slug
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @returns {Promise<number>} affected rows
+ */
+async function incrementViewsBySlug(slug, executor = db) {
+  const [result] = await executor.query(
+    `UPDATE pages SET views = IFNULL(views, 0) + 1 WHERE slug = ? AND deleted = 0 LIMIT 1`,
+    [slug]
+  );
+  return Number(result && result.affectedRows ? result.affectedRows : 0);
+}
+
 async function searchByLike(likeQuery, executor = db) {
   const [rows] = await executor.query(
     `SELECT title, slug, status 
@@ -1040,6 +1054,7 @@ module.exports = {
   findRowBySlug,
   findPublicRowBySlug,
   selectTopViews,
+  incrementViewsBySlug,
   searchByFullText,
   searchByLike,
   suggestByTitlePrefix,
