@@ -1,7 +1,11 @@
 const path = require("path");
+const fsp = require("fs/promises");
 const fileService = require("./file.service");
+const logger = require("../utils/logger");
 
-const ACTIVITY_PATH = path.join(process.cwd(), "data", "admin-activity.json");
+const ACTIVITY_DIR = path.join(process.cwd(), "data");
+// JSON is gitignored on deploy; path must exist before any read/write.
+const ACTIVITY_PATH = path.join(ACTIVITY_DIR, "admin-activity.json");
 const MAX_ITEMS = 5000;
 
 function normalizeMeta(meta = {}) {
@@ -17,27 +21,58 @@ function normalizeMeta(meta = {}) {
   };
 }
 
+/**
+ * Ensures data/ and an empty admin-activity.json exist.
+ * Without this, first recordActivity on a fresh server fails silently (callers use .catch).
+ */
+async function ensureActivityStore() {
+  await fsp.mkdir(ACTIVITY_DIR, { recursive: true });
+  try {
+    await fsp.access(ACTIVITY_PATH);
+  } catch {
+    await fileService.writeFile(ACTIVITY_PATH, "[]\n", "utf8");
+  }
+}
+
 async function readAll() {
+  await ensureActivityStore();
   try {
     const raw = await fileService.readFile(ACTIVITY_PATH, "utf8");
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
-  } catch {
+  } catch (err) {
+    logger.warn("admin-activity: read failed, using empty list", {
+      path: ACTIVITY_PATH,
+      message: err && err.message ? err.message : String(err)
+    });
     return [];
   }
 }
 
 async function writeAll(items) {
-  await fileService.writeFile(ACTIVITY_PATH, JSON.stringify(items, null, 2), "utf8");
+  await ensureActivityStore();
+  const payload = JSON.stringify(items, null, 2);
+  // Write temp file then rename — avoids half-written JSON on crash.
+  const tmp = `${ACTIVITY_PATH}.${process.pid}.${Date.now()}.tmp`;
+  await fileService.writeFile(tmp, payload, "utf8");
+  await fsp.rename(tmp, ACTIVITY_PATH);
 }
 
 async function recordActivity(meta = {}) {
   const row = normalizeMeta(meta);
   if (!row.action) return;
-  const items = await readAll();
-  items.push(row);
-  const trimmed = items.length > MAX_ITEMS ? items.slice(items.length - MAX_ITEMS) : items;
-  await writeAll(trimmed);
+  try {
+    const items = await readAll();
+    items.push(row);
+    const trimmed = items.length > MAX_ITEMS ? items.slice(items.length - MAX_ITEMS) : items;
+    await writeAll(trimmed);
+  } catch (err) {
+    logger.warn("admin-activity: record failed (non-blocking)", {
+      action: row.action,
+      path: ACTIVITY_PATH,
+      message: err && err.message ? err.message : String(err)
+    });
+  }
 }
 
 async function listActivity({ page = 1, limit = 20, action = "", from = "", to = "" } = {}) {

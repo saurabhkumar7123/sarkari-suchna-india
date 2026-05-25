@@ -36,14 +36,24 @@ function renderPagination(pagination) {
   });
 }
 
+/** API/network/auth failure — not the same as an empty audit log. */
+function renderActivityError(message) {
+  const host = document.getElementById("activityTable");
+  if (!host) return;
+  host.innerHTML = `<p class="empty-msg is-error">${esc(message)}</p>`;
+}
+
+/** Successful response with zero rows (filters may still apply). */
+function renderActivityEmpty(pagination) {
+  const host = document.getElementById("activityTable");
+  if (!host) return;
+  host.innerHTML = '<p class="empty-msg">No activity records found.</p><div id="activityPagination" class="pagination"></div>';
+  renderPagination(pagination || { totalPages: 1 });
+}
+
 function renderActivity(rows, pagination) {
   const host = document.getElementById("activityTable");
   if (!host) return;
-  if (!Array.isArray(rows) || !rows.length) {
-    host.innerHTML = '<p class="empty-msg">No activity records found.</p><div id="activityPagination" class="pagination"></div>';
-    renderPagination(pagination || { totalPages: 1 });
-    return;
-  }
   host.innerHTML = `
     <div class="monitor-table">
       <div class="monitor-head"><div>Admin</div><div>Action</div><div>Target</div><div>Status</div><div>IP</div><div>Time</div></div>
@@ -64,11 +74,32 @@ function renderActivity(rows, pagination) {
 }
 
 async function loadActivity() {
+  const host = document.getElementById("activityTable");
+  if (host) host.innerHTML = '<p class="empty-msg">Loading activity...</p>';
+
   const res = await window.adminSafeFetch(`/api/admin/activity?${buildQuery()}`);
-  if (!res || !res.success) {
-    return renderActivity([], { totalPages: 1 });
+
+  // adminSafeFetch returns null on non-OK HTTP — previously shown as "no records".
+  if (res == null) {
+    console.warn("[activity] Request failed (HTTP error, network, or non-JSON). Check login and Network tab.");
+    renderActivityError(
+      "Could not load activity. Your session may have expired or the server returned an error. Try logging in again, then refresh."
+    );
+    return;
   }
-  renderActivity(res.data || [], res.pagination || { totalPages: 1 });
+
+  if (!res.success) {
+    console.warn("[activity] API returned success=false", res);
+    renderActivityError("Activity API returned an error. Check server logs or try again later.");
+    return;
+  }
+
+  const rows = res.data || [];
+  if (!Array.isArray(rows) || !rows.length) {
+    return renderActivityEmpty(res.pagination || { totalPages: 1 });
+  }
+
+  renderActivity(rows, res.pagination || { totalPages: 1 });
 }
 
 document.getElementById("applyActivityFilter")?.addEventListener("click", () => {
