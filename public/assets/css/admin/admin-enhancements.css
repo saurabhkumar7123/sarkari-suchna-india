@@ -209,9 +209,7 @@ body.dark .admin-global-error-banner button{
 }
 
 /* ===== Sticky publish bar (generator) ===== */
-body.has-sticky-publish-bar{
-  padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
-}
+/* Generator sticky padding: scoped in admin-standalone-layout.css */
 .action-bar.is-sticky-publish{
   position:fixed;
   left:0;
@@ -228,15 +226,6 @@ body.has-sticky-publish-bar{
 body.dark .action-bar.is-sticky-publish{
   background:rgba(15,23,42,.92);
   border-color:#334155;
-}
-body.admin-has-sidebar .action-bar.is-sticky-publish{
-  left:250px;
-  width:calc(100% - 250px);
-}
-body.admin-has-sidebar.sidebar-collapsed .action-bar.is-sticky-publish,
-body.sidebar-collapsed.admin-has-sidebar .action-bar.is-sticky-publish{
-  left:72px;
-  width:calc(100% - 72px);
 }
 .sticky-draft-status{
   font-size:12px;
@@ -366,27 +355,7 @@ body.sidebar-collapsed.admin-has-sidebar .action-bar.is-sticky-publish{
 }
 .bulk-action-btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* ===== Standalone admin shell (generator/upload/trash) ===== */
-body.admin-has-sidebar{padding-top:0}
-body.admin-has-sidebar .toggle-btn{display:block}
-body.admin-has-sidebar .main-container,
-body.admin-has-sidebar .admin-layout-main{
-  margin-left:250px;
-  width:calc(100% - 250px);
-  transition:margin-left .25s ease,width .25s ease;
-  box-sizing:border-box;
-}
-body.admin-has-sidebar .admin-header{
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:10px;
-}
-body.admin-has-sidebar.sidebar-collapsed .main-container,
-body.admin-has-sidebar.sidebar-collapsed .admin-layout-main{
-  margin-left:72px;
-  width:calc(100% - 72px);
-}
+/* Standalone page layout: see admin-standalone-layout.css */
 
 /* ===== Mobile responsive (enhancements) ===== */
 @media (max-width:768px){
@@ -407,16 +376,6 @@ body.admin-has-sidebar.sidebar-collapsed .admin-layout-main{
     top:auto;
     bottom:12px;
     width:auto;
-  }
-  body.admin-has-sidebar .main-container,
-  body.admin-has-sidebar .admin-layout-main{
-    margin-left:0;
-    width:100%;
-    padding-top:52px;
-  }
-  body.admin-has-sidebar .action-bar.is-sticky-publish{
-    left:0;
-    width:100%;
   }
   .monitor-table .monitor-head{display:none}
   .monitor-row{

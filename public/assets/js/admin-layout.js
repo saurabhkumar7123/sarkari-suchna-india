@@ -1,6 +1,6 @@
 /**
- * Unified admin shell: injects shared sidebar on standalone pages (generator/upload/trash)
- * and topbar tools on all admin pages. Reversible via adminEnhancementsOff=1.
+ * Unified admin shell: sidebar on standalone pages + topbar tools.
+ * Standalone content is wrapped in #standaloneAdminShell to avoid dashboard layout leaks.
  */
 (function () {
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
@@ -29,6 +29,20 @@
   <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
 </div>`;
 
+  function detectStandalonePageClass() {
+    const p = String(window.location.pathname || "").toLowerCase();
+    if (p.includes("/generator")) return "generator-page";
+    if (p.includes("/upload")) return "upload-page";
+    if (p.includes("/trash")) return "trash-page";
+    return "";
+  }
+
+  function applyStandaloneBodyClasses() {
+    document.body.classList.add("standalone-admin-page");
+    const pageClass = detectStandalonePageClass();
+    if (pageClass) document.body.classList.add(pageClass);
+  }
+
   function parseBreadcrumbs() {
     const raw = document.body.getAttribute("data-admin-breadcrumbs") || "";
     if (!raw) return [];
@@ -44,12 +58,9 @@
     return `<nav class="admin-breadcrumbs" aria-label="Breadcrumb">${parts.join("")}</nav>`;
   }
 
-  /** Mount bell + palette hint into existing admin-header. */
   function enhanceTopbar() {
     if (document.getElementById("adminTopbarTools")) return;
-    const header =
-      document.querySelector(".admin-header") ||
-      document.querySelector(".main .admin-header");
+    const header = document.querySelector("#standaloneAdminShell .admin-header") || document.querySelector(".admin-header");
     if (!header) return;
 
     const crumbs = parseBreadcrumbs();
@@ -59,34 +70,51 @@
       header.insertBefore(bc.firstElementChild, header.firstChild);
     }
 
+    const toolsHost = header.querySelector(".admin-right") || header;
     const tools = document.createElement("div");
     tools.id = "adminTopbarTools";
     tools.className = "admin-topbar-tools";
     tools.setAttribute("aria-label", "Admin tools");
-    header.appendChild(tools);
+    toolsHost.appendChild(tools);
 
     if (typeof window.AdminNotifications !== "undefined") {
       window.AdminNotifications.mount(tools);
     }
   }
 
-  /** Inject sidebar on generator/upload/trash (no duplicated sidebar in HTML). */
+  /**
+   * Wrap header + main-container so sidebar offset applies once (original page widths inside).
+   */
+  function wrapStandaloneContent() {
+    if (document.getElementById("standaloneAdminShell")) return;
+    const header = document.querySelector(".admin-header");
+    const main = document.querySelector(".main-container");
+    if (!header || !main || header.closest("#standaloneAdminShell")) return;
+
+    const shell = document.createElement("div");
+    shell.id = "standaloneAdminShell";
+    shell.className = "standalone-admin-content";
+
+    const parent = header.parentNode;
+    parent.insertBefore(shell, header);
+    shell.appendChild(header);
+    shell.appendChild(main);
+  }
+
   function mountStandaloneShell() {
-    if (document.getElementById("sidebar")) {
-      enhanceTopbar();
-      return;
+    applyStandaloneBodyClasses();
+
+    if (!document.getElementById("sidebar")) {
+      if (document.body.dataset.adminLayoutMounted === "1") return;
+      const wrap = document.createElement("div");
+      wrap.innerHTML = SIDEBAR_HTML.trim();
+      const frag = document.createDocumentFragment();
+      while (wrap.firstChild) frag.appendChild(wrap.firstChild);
+      document.body.insertBefore(frag, document.body.firstChild);
+      document.body.dataset.adminLayoutMounted = "1";
     }
-    if (document.body.dataset.adminLayoutMounted === "1") return;
 
-    const wrap = document.createElement("div");
-    wrap.innerHTML = SIDEBAR_HTML.trim();
-    const frag = document.createDocumentFragment();
-    while (wrap.firstChild) frag.appendChild(wrap.firstChild);
-    document.body.insertBefore(frag, document.body.firstChild);
-
-    document.body.classList.add("admin-has-sidebar");
-    document.body.dataset.adminLayoutMounted = "1";
-
+    wrapStandaloneContent();
     enhanceTopbar();
 
     if (typeof window.AdminShellRebind === "function") {

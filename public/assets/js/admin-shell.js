@@ -14,7 +14,11 @@
 
   function ensureErrorBanner() {
     if (errorBannerEl && document.body.contains(errorBannerEl)) return errorBannerEl;
-    const main = document.querySelector(".main") || document.querySelector(".main-container") || document.body;
+    const main =
+      document.getElementById("standaloneAdminShell") ||
+      document.querySelector(".main") ||
+      document.querySelector(".main-container") ||
+      document.body;
     errorBannerEl = document.createElement("div");
     errorBannerEl.id = "adminGlobalErrorBanner";
     errorBannerEl.className = "admin-global-error-banner";

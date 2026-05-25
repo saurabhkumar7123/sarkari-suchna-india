@@ -1,0 +1,221 @@
+/**
+ * Standalone admin pages (generator / upload / trash) — scoped layout isolation.
+ * Keeps sidebar navigation without dashboard .main / flex / grid leaks.
+ * Load after dashboard.css + page CSS + admin-enhancements.css.
+ */
+
+/* ---- Base: block layout (override dashboard body { display:flex }) ---- */
+body.standalone-admin-page{
+  display:block !important;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+body.standalone-admin-page .sidebar{
+  position:fixed;
+  left:0;
+  top:0;
+  height:100vh;
+  z-index:var(--z-modal,1200);
+  display:flex;
+  flex-direction:column;
+}
+
+/* Single content column beside sidebar */
+body.standalone-admin-page #standaloneAdminShell{
+  margin-left:250px;
+  width:calc(100% - 250px);
+  min-height:100vh;
+  box-sizing:border-box;
+  transition:margin-left .25s ease,width .25s ease;
+}
+
+body.standalone-admin-page.sidebar-collapsed #standaloneAdminShell{
+  margin-left:72px;
+  width:calc(100% - 72px);
+}
+
+/* Undo per-child margin rules from admin-enhancements (legacy) */
+body.standalone-admin-page .admin-header,
+body.standalone-admin-page .main-container{
+  margin-left:0 !important;
+  width:100% !important;
+  max-width:none;
+}
+
+/* ---- Generator page ---- */
+body.standalone-admin-page.generator-page{
+  background:linear-gradient(180deg,#f8fbff 0%,var(--gen-bg,#f3f6fb) 100%);
+}
+
+body.standalone-admin-page.generator-page .admin-header{
+  background:var(--gen-surface,var(--site-surface,#fff));
+  color:var(--gen-text,var(--site-text,#0f172a));
+  border:1px solid var(--gen-border,var(--site-border,#e2e8f0));
+  border-radius:var(--gen-radius,var(--site-radius,14px));
+  box-shadow:var(--gen-shadow,var(--site-shadow-sm));
+  margin:0 0 18px;
+  padding:16px 22px;
+  position:sticky;
+  top:0;
+  z-index:var(--z-sticky,100);
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+body.standalone-admin-page.generator-page .admin-left h1{
+  font-size:22px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+body.standalone-admin-page.generator-page .main-container{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 16px 24px;
+  width:100%;
+  box-sizing:border-box;
+}
+
+body.standalone-admin-page.generator-page .content-wrapper{
+  width:100%;
+  max-width:100%;
+}
+
+body.standalone-admin-page.generator-page #previewFrame{
+  min-height:360px;
+  width:100%;
+}
+
+body.standalone-admin-page.generator-page.has-sticky-publish-bar #standaloneAdminShell{
+  padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
+}
+
+body.standalone-admin-page.generator-page .action-bar.is-sticky-publish{
+  left:250px;
+  width:calc(100% - 250px);
+}
+
+body.standalone-admin-page.generator-page.sidebar-collapsed .action-bar.is-sticky-publish{
+  left:72px;
+  width:calc(100% - 72px);
+}
+
+/* ---- Upload page ---- */
+body.standalone-admin-page.upload-page{
+  background:linear-gradient(180deg,#f8fbff,var(--up-bg,#f3f6fb));
+}
+
+body.standalone-admin-page.upload-page .admin-header{
+  background:#fff;
+  color:var(--up-text,#0f172a);
+  border-bottom:1px solid var(--up-line,#e2e8f0);
+  border-radius:0;
+  box-shadow:0 8px 22px rgba(15,23,42,.08);
+  margin:0;
+  padding:14px 22px;
+  position:sticky;
+  top:0;
+  z-index:var(--z-sticky,100);
+}
+
+body.standalone-admin-page.upload-page .main-container{
+  max-width:1140px;
+  margin:0 auto;
+  padding:20px 16px 30px;
+  width:100%;
+}
+
+/* ---- Trash page ---- */
+body.standalone-admin-page.trash-page{
+  background:#f3f6fb;
+}
+
+body.standalone-admin-page.trash-page .admin-header{
+  background:#fff;
+  color:#0f172a;
+  border-bottom:1px solid #e2e8f0;
+  border-radius:0;
+  box-shadow:0 4px 14px rgba(15,23,42,.06);
+  margin:0;
+  padding:14px 24px;
+  position:sticky;
+  top:0;
+  z-index:var(--z-base,10);
+}
+
+body.standalone-admin-page.trash-page .main-container{
+  max-width:1100px;
+  margin:0 auto;
+  padding:22px 16px 28px;
+  width:100%;
+}
+
+/* Topbar tools on standalone headers */
+body.standalone-admin-page .admin-topbar-tools{
+  margin-left:auto;
+  flex-shrink:0;
+}
+
+body.standalone-admin-page .admin-breadcrumbs{
+  flex:1 1 100%;
+  margin:0 0 6px;
+  order:-1;
+}
+
+/* Global error banner inside shell */
+body.standalone-admin-page #standaloneAdminShell > .admin-global-error-banner{
+  margin:12px 16px 0;
+  max-width:calc(100% - 32px);
+}
+
+/* ---- Mobile ---- */
+@media (max-width:768px){
+  body.standalone-admin-page #standaloneAdminShell{
+    margin-left:0 !important;
+    width:100% !important;
+    padding-top:52px;
+  }
+
+  body.standalone-admin-page .toggle-btn{
+    display:block;
+  }
+
+  body.standalone-admin-page.generator-page .main-container,
+  body.standalone-admin-page.upload-page .main-container,
+  body.standalone-admin-page.trash-page .main-container{
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  body.standalone-admin-page.generator-page .action-bar.is-sticky-publish{
+    left:0 !important;
+    width:100% !important;
+  }
+
+  body.standalone-admin-page.dashboard-sidebar-open{
+    overflow:hidden;
+    touch-action:none;
+  }
+
+  body.standalone-admin-page .admin-header{
+    flex-wrap:wrap;
+  }
+}
+
+@media (min-width:769px){
+  body.standalone-admin-page.dashboard-sidebar-open{
+    overflow-x:hidden;
+    overflow-y:auto;
+    touch-action:auto;
+  }
+}
+
+/* Upload/trash modals above sidebar */
+body.standalone-admin-page.upload-page .modal,
+body.standalone-admin-page.trash-page .modal{
+  z-index:calc(var(--z-modal,1200) + 10);
+}
