@@ -61,27 +61,39 @@ function renderBulkBar() {
   if (!bar) {
     bar = document.createElement("div");
     bar.id = "bulkActionBar";
-    bar.style.display = "none";
-    bar.style.marginBottom = "10px";
-    bar.style.padding = "10px";
-    bar.style.border = "1px solid #cbd5e1";
-    bar.style.borderRadius = "10px";
-    bar.style.background = "var(--surface-soft, #f8fafc)";
-    panel.insertBefore(bar, document.getElementById("pageList"));
+    bar.className = "bulk-action-bar";
+    document.body.appendChild(bar);
   }
   const count = selectedSlugs.size;
   if (!count) {
-    bar.style.display = "none";
+    bar.classList.remove("is-visible");
     bar.innerHTML = "";
     return;
   }
-  bar.style.display = "flex";
-  bar.style.alignItems = "center";
-  bar.style.justifyContent = "space-between";
+  bar.classList.add("is-visible");
   bar.innerHTML = `
     <strong>${count} selected</strong>
-    <button type="button" id="bulkDeleteBtn" style="border:1px solid #dc2626;background:#dc2626;color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;">Delete Selected</button>
+    <div class="bulk-action-bar__actions">
+      <button type="button" class="bulk-action-btn" id="bulkExportBtn">Export slugs</button>
+      <button type="button" class="bulk-action-btn" id="bulkRegenerateBtn" disabled title="Coming soon">Regenerate (soon)</button>
+      <button type="button" class="bulk-action-btn bulk-action-btn--danger" id="bulkDeleteBtn">Move to trash</button>
+      <button type="button" class="bulk-action-btn" id="bulkClearBtn">Clear</button>
+    </div>
   `;
+  document.getElementById("bulkClearBtn")?.addEventListener("click", () => {
+    selectedSlugs.clear();
+    renderPages(activePages);
+  });
+  document.getElementById("bulkExportBtn")?.addEventListener("click", () => {
+    const slugs = Array.from(selectedSlugs);
+    const blob = new Blob([slugs.join("\n")], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "selected-slugs.txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    window.AdminUI?.toastSuccess(`Exported ${slugs.length} slug(s)`);
+  });
   document.getElementById("bulkDeleteBtn")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     const countNow = selectedSlugs.size;

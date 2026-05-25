@@ -3,12 +3,77 @@ function esc(v) {
 }
 
 let activityPage = 1;
+let activeActionChip = "";
+
+const ACTION_CHIPS = [
+  { id: "", label: "All" },
+  { id: "login", label: "Login" },
+  { id: "page_create", label: "Publish" },
+  { id: "page_delete", label: "Delete" },
+  { id: "content_import", label: "Import" }
+];
+
+function actionBadgeClass(action) {
+  const a = String(action || "").toLowerCase();
+  if (a.includes("login")) return "activity-badge--login";
+  if (a.includes("create") || a.includes("publish") || a.includes("update")) return "activity-badge--publish";
+  if (a.includes("delete")) return "activity-badge--delete";
+  if (a.includes("import")) return "activity-badge--import";
+  return "activity-badge--default";
+}
+
+function targetLink(row) {
+  const action = String(row.action || "");
+  const target = String(row.target || "").trim();
+  if (!target) return esc("-");
+  const slugMatch = target.match(/^[a-z0-9-]+/i);
+  if (action.includes("page") && slugMatch) {
+    const slug = slugMatch[0];
+    return `<a href="/generator?slug=${encodeURIComponent(slug)}">${esc(target)}</a>`;
+  }
+  return esc(target);
+}
+
+function dayKey(ts) {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "Unknown date";
+  return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+}
+
+function ensureFilterChips() {
+  const toolbar = document.querySelector(".filters-toolbar");
+  if (!toolbar || document.getElementById("activityFilterChips")) return;
+  const host = document.createElement("div");
+  host.id = "activityFilterChips";
+  host.className = "activity-filter-chips";
+  host.setAttribute("role", "group");
+  host.setAttribute("aria-label", "Quick action filters");
+  ACTION_CHIPS.forEach((chip) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "activity-chip" + (chip.id === activeActionChip ? " is-active" : "");
+    btn.textContent = chip.label;
+    btn.dataset.action = chip.id;
+    btn.addEventListener("click", () => {
+      activeActionChip = chip.id;
+      const input = document.getElementById("activityAction");
+      if (input) input.value = chip.id;
+      activityPage = 1;
+      host.querySelectorAll(".activity-chip").forEach((b) => {
+        b.classList.toggle("is-active", b.dataset.action === activeActionChip);
+      });
+      loadActivity();
+    });
+    host.appendChild(btn);
+  });
+  toolbar.parentNode.insertBefore(host, toolbar);
+}
 
 function buildQuery() {
   const q = new URLSearchParams();
   q.set("page", String(activityPage));
   q.set("limit", "20");
-  const action = document.getElementById("activityAction")?.value || "";
+  const action = document.getElementById("activityAction")?.value || activeActionChip || "";
   const from = document.getElementById("activityFrom")?.value || "";
   const to = document.getElementById("activityTo")?.value || "";
   if (String(action).trim()) q.set("action", String(action).trim());
@@ -36,14 +101,12 @@ function renderPagination(pagination) {
   });
 }
 
-/** API/network/auth failure — not the same as an empty audit log. */
 function renderActivityError(message) {
   const host = document.getElementById("activityTable");
   if (!host) return;
   host.innerHTML = `<p class="empty-msg is-error">${esc(message)}</p>`;
 }
 
-/** Successful response with zero rows (filters may still apply). */
 function renderActivityEmpty(pagination) {
   const host = document.getElementById("activityTable");
   if (!host) return;
@@ -51,25 +114,41 @@ function renderActivityEmpty(pagination) {
   renderPagination(pagination || { totalPages: 1 });
 }
 
+/** Timeline cards (progressive); falls back to table-friendly layout on wide screens via CSS. */
 function renderActivity(rows, pagination) {
   const host = document.getElementById("activityTable");
   if (!host) return;
-  host.innerHTML = `
-    <div class="monitor-table">
-      <div class="monitor-head"><div>Admin</div><div>Action</div><div>Target</div><div>Status</div><div>IP</div><div>Time</div></div>
-      ${rows.map((r) => `
-        <div class="monitor-row">
-          <div>${esc(r.admin || "admin")}</div>
-          <div>${esc(r.action || "-")}</div>
-          <div>${esc(r.target || "-")}</div>
-          <div><span class="badge ${String(r.status || "").toLowerCase() === "success" ? "status-new" : "badge-custom"}">${esc(r.status || "-")}</span></div>
-          <div>${esc(r.ip || "-")}</div>
-          <div>${esc(r.timestamp ? new Date(r.timestamp).toLocaleString() : "-")}</div>
-        </div>
-      `).join("")}
-    </div>
-    <div id="activityPagination" class="pagination"></div>
-  `;
+
+  const byDay = {};
+  rows.forEach((r) => {
+    const key = dayKey(r.timestamp);
+    if (!byDay[key]) byDay[key] = [];
+    byDay[key].push(r);
+  });
+
+  let html = '<div class="activity-timeline">';
+  Object.keys(byDay).forEach((day) => {
+    html += `<div class="activity-timeline-day">${esc(day)}</div>`;
+    byDay[day].forEach((r) => {
+      const badgeCls = actionBadgeClass(r.action);
+      html += `
+        <article class="activity-timeline-card">
+          <div class="activity-timeline-card__meta">
+            <span class="activity-badge ${badgeCls}">${esc(r.action || "-")}</span>
+            <strong class="activity-timeline-card__admin">${esc(r.admin || "admin")}</strong>
+          </div>
+          <div class="activity-timeline-card__body">
+            <div>${targetLink(r)}</div>
+            <div class="activity-timeline-card__sub">${esc(r.ip || "-")} · ${esc(r.timestamp ? new Date(r.timestamp).toLocaleString() : "-")}</div>
+            <span class="badge ${String(r.status || "").toLowerCase() === "success" ? "status-new" : "badge-custom"}">${esc(r.status || "-")}</span>
+          </div>
+        </article>`;
+    });
+  });
+  html += "</div>";
+
+  html += '<div id="activityPagination" class="pagination"></div>';
+  host.innerHTML = html;
   renderPagination(pagination || { totalPages: 1 });
 }
 
@@ -79,7 +158,6 @@ async function loadActivity() {
 
   const res = await window.adminSafeFetch(`/api/admin/activity?${buildQuery()}`);
 
-  // adminSafeFetch returns null on non-OK HTTP — previously shown as "no records".
   if (res == null) {
     console.warn("[activity] Request failed (HTTP error, network, or non-JSON). Check login and Network tab.");
     renderActivityError(
@@ -104,8 +182,10 @@ async function loadActivity() {
 
 document.getElementById("applyActivityFilter")?.addEventListener("click", () => {
   activityPage = 1;
+  activeActionChip = String(document.getElementById("activityAction")?.value || "").trim();
   loadActivity();
 });
 document.getElementById("refreshActivityBtn")?.addEventListener("click", () => loadActivity());
 
+ensureFilterChips();
 loadActivity();

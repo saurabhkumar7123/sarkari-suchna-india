@@ -10,10 +10,12 @@
 
 
   <link rel="stylesheet" href="/css/base/tokens.css">
+  <link rel="stylesheet" href="/css/admin/dashboard.css">
   <link rel="stylesheet" href="/css/admin/upload.css">
+  <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 
 </head>
-<body>
+<body data-admin-layout="standalone" data-admin-breadcrumbs="Content,Upload">
   <header class="admin-header">
   <div class="admin-left">
     <h1>Welcome, Saurabh 👋</h1>
@@ -86,6 +88,10 @@
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/upload.js"></script>
 

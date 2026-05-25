@@ -8,6 +8,16 @@ function escapeAttr(value) {
 const ADMIN_METRICS_KEY = "adminUxMetrics_v1";
 
 let lastDashboardStats = null;
+let dashboardLiveTimer = null;
+let dashboardLivePaused = false;
+
+function flashKpi(id) {
+  const card = document.getElementById(id)?.closest(".card");
+  if (!card) return;
+  card.classList.remove("admin-kpi-flash");
+  void card.offsetWidth;
+  card.classList.add("admin-kpi-flash");
+}
 
 async function loadStatsCards() {
   const res = await window.adminSafeFetch("/api/admin/dashboard");
@@ -16,10 +26,13 @@ async function loadStatsCards() {
     return;
   }
   const d = res.data;
+  const prev = lastDashboardStats;
   lastDashboardStats = d;
   const set = (id, v) => {
     const el = document.getElementById(id);
-    if (el) el.textContent = v;
+    if (!el) return;
+    if (prev && String(el.textContent) !== String(v)) flashKpi(id);
+    el.textContent = v;
   };
   set("totalPages", d.totalPages ?? 0);
   set("smallPages", d.smallPages ?? 0);
@@ -169,6 +182,55 @@ async function initAdminDashboard() {
   loadAdminUxMetrics();
   await loadStatsCards();
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
+  updateLiveStripLabel();
+}
+
+/** Live refresh — polling only, cleans up on pagehide. */
+function ensureLiveRefreshUi() {
+  if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
+  if (document.getElementById("adminLiveStrip")) return;
+
+  const heading = document.querySelector(".page-sub");
+  if (!heading) return;
+
+  const strip = document.createElement("div");
+  strip.id = "adminLiveStrip";
+  strip.className = "admin-live-strip";
+  strip.innerHTML = `
+    <span class="admin-live-dot" id="adminLiveDot" aria-hidden="true"></span>
+    <span id="adminLiveLabel">Updated just now</span>
+    <button type="button" class="header-action-btn" id="adminLivePauseBtn" aria-pressed="false">Pause live</button>
+  `;
+  heading.after(strip);
+
+  document.getElementById("adminLivePauseBtn")?.addEventListener("click", () => {
+    dashboardLivePaused = !dashboardLivePaused;
+    const btn = document.getElementById("adminLivePauseBtn");
+    const dot = document.getElementById("adminLiveDot");
+    if (btn) {
+      btn.textContent = dashboardLivePaused ? "Resume live" : "Pause live";
+      btn.setAttribute("aria-pressed", dashboardLivePaused ? "true" : "false");
+    }
+    if (dot) dot.classList.toggle("is-paused", dashboardLivePaused);
+    if (!dashboardLivePaused) tickLive();
+  });
+
+  const INTERVAL_MS = 45000;
+  async function tickLive() {
+    if (dashboardLivePaused) return;
+    await initAdminDashboard();
+  }
+
+  dashboardLiveTimer = window.setInterval(tickLive, INTERVAL_MS);
+  window.addEventListener("pagehide", () => {
+    if (dashboardLiveTimer) clearInterval(dashboardLiveTimer);
+    dashboardLiveTimer = null;
+  });
+}
+
+function updateLiveStripLabel() {
+  const el = document.getElementById("adminLiveLabel");
+  if (el) el.textContent = `Updated ${new Date().toLocaleTimeString()}`;
 }
 
 document.getElementById("dashboardRefreshBtn")?.addEventListener("click", () => initAdminDashboard());
@@ -182,4 +244,6 @@ document.getElementById("quickRetryFailedBtn")?.addEventListener("click", async 
   await window.adminSafeFetch("/api/admin/queue/retry", { method: "POST" });
   window.location.href = "/admin/monitoring";
 });
+
 initAdminDashboard();
+ensureLiveRefreshUi();

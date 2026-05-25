@@ -8,10 +8,12 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
+  <link rel="stylesheet" href="/css/admin/dashboard.css">
   <link rel="stylesheet" href="/css/admin/generator.css">
+  <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 </head>
 
-<body>
+<body data-admin-layout="standalone" data-admin-breadcrumbs="Content,Page Generator">
   <div class="admin-header">
   <div class="admin-left">
     <h1>Welcome, Saurabh 👋</h1>
@@ -240,7 +242,7 @@
   </section>
 </div>
 
-<div class="action-bar">
+<div class="action-bar is-sticky-publish">
   <div class="action-group action-group-secondary">
     <button type="button" id="previewBtn" class="btn btn-preview btn-secondary">👁 Preview</button>
     <button type="button" id="aiConvertBtn" class="btn btn-ai btn-secondary">✨ Convert with AI</button>
@@ -277,7 +279,13 @@
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-seo-checklist.js"></script>
+<script src="/js/admin-generator-ui.js"></script>
 <script src="/js/jobSectionStructure.js"></script>
 <script src="/js/generator.js"></script>
 </body>
