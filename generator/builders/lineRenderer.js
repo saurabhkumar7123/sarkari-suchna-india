@@ -7,15 +7,56 @@ function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
 }
 
+function normalizeSectionKey(name) {
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+}
+
+function isImportantLinksSection(sectionName) {
+  const key = normalizeSectionKey(sectionName);
+  return key === "importantlinks" || key === "importantlink";
+}
+
+function renderLinkBox(left, rightHtml) {
+  return `
+            <div class="link-box">
+              <div class="left-text">${left}</div>
+              <div class="right-link">
+                ${rightHtml}
+              </div>
+            </div>
+          `;
+}
+
+function renderLinkBoxAnchor(label, href) {
+  const left = escapeDisplayText(label, { mode: "title" });
+  const safeHref = sanitizeUrl(resolveUrl(href));
+  return renderLinkBox(
+    left,
+    `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">Click Here</a>`
+  );
+}
+
+function renderLinkBoxStatus(label, statusText) {
+  const left = escapeDisplayText(label, { mode: "title" });
+  const status = escapeDisplayText(statusText, { mode: "title" });
+  return renderLinkBox(left, `<span class="link-box-status">${status}</span>`);
+}
+
 /**
  * Render section lines as HTML (paragraphs, FAQ, links, key-value rows).
  * @param {string[]} lines — non-empty trimmed lines
+ * @param {{ sectionName?: string }} [options]
  * @returns {string}
  */
-function renderLinesToHtml(lines) {
+function renderLinesToHtml(lines, options = {}) {
   if (!Array.isArray(lines) || !lines.length) {
     return "";
   }
+
+  const linksSection = isImportantLinksSection(options.sectionName);
 
   return lines
     .map((line) => {
@@ -37,35 +78,22 @@ function renderLinesToHtml(lines) {
       }
 
       if (isUrlOnlyLine) {
-        const left = escapeDisplayText("Link", { mode: "title" });
-        const href = sanitizeUrl(resolveUrl(rawLine));
-        return `
-            <div class="link-box">
-              <div class="left-text">${left}</div>
-              <div class="right-link">
-                <a href="${href}" target="_blank" rel="noopener noreferrer">Click Here</a>
-              </div>
-            </div>
-          `;
+        return renderLinkBoxAnchor("Link", rawLine);
       }
 
       if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
-        const left = escapeDisplayText(leftOfEq || "Link", { mode: "title" });
-        const href = sanitizeUrl(resolveUrl(rightOfEq));
-        return `
-            <div class="link-box">
-              <div class="left-text">${left}</div>
-              <div class="right-link">
-                <a href="${href}" target="_blank" rel="noopener noreferrer">Click Here</a>
-              </div>
-            </div>
-          `;
+        return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
       }
 
-      if (rawLine.includes(":") && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
+      if (hasColon && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
         const parts = rawLine.split(":");
         const label = parts[0].trim();
         const value = parts.slice(1).join(":").trim();
+
+        if (linksSection && label && value) {
+          return renderLinkBoxStatus(label, value);
+        }
+
         return `
             <div class="date-row">
               <span class="date-label">${escapeDisplayText(label, { mode: "title" })} :</span>
@@ -80,4 +108,8 @@ function renderLinesToHtml(lines) {
     .join("");
 }
 
-module.exports = { renderLinesToHtml, isUrlLike };
+module.exports = {
+  renderLinesToHtml,
+  isUrlLike,
+  isImportantLinksSection
+};

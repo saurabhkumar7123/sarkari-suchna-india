@@ -33,7 +33,7 @@ function buildDynamicSectionsWithWarnings(text) {
     let sectionContent = "";
 
     if (shouldUseMixedSectionBlocks(sec)) {
-      sectionContent = buildMixedSectionHtml(content);
+      sectionContent = buildMixedSectionHtml(content, sec.cleanHeaderTitle);
     } else {
       const renderMode = resolveSectionRenderMode(lines, forceTable, content);
       const isTable =
@@ -46,7 +46,7 @@ function buildDynamicSectionsWithWarnings(text) {
       }
 
       if (!sectionContent && !forceTable) {
-        sectionContent = renderLinesToHtml(lines);
+        sectionContent = renderLinesToHtml(lines, { sectionName: sec.cleanHeaderTitle });
       }
     }
 

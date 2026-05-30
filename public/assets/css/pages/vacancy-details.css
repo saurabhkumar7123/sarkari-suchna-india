@@ -239,6 +239,19 @@
     font-size:14px;
     line-height:1.3;
     }
+
+    .link-box-status{
+    font-size:14px;
+    font-weight:600;
+    line-height:1.3;
+    color:var(--color-info);
+    text-align:right;
+    }
+
+    .link-box:not(:has(.right-link a)):hover{
+    transform:none;
+    box-shadow:none;
+    }
     
     /* ================= FAQ ================= */
     .faq-item{

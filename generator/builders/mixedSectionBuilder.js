@@ -7,9 +7,10 @@ const { parseSectionBlocks } = require("../parse/sectionBlocks");
 /**
  * Render a section body that uses explicit ---table--- / ---endtable--- blocks.
  * @param {string} content
+ * @param {string} [sectionName]
  * @returns {string}
  */
-function buildMixedSectionHtml(content) {
+function buildMixedSectionHtml(content, sectionName = "") {
   const { blocks } = parseSectionBlocks(content);
   let html = "";
 
@@ -20,7 +21,7 @@ function buildMixedSectionHtml(content) {
       continue;
     }
     if (block.lines && block.lines.length) {
-      html += renderLinesToHtml(block.lines);
+      html += renderLinesToHtml(block.lines, { sectionName });
     }
   }
 
