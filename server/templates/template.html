@@ -29,7 +29,7 @@
     <!-- CSS (always apply to screen; avoid print+JS flip for mobile compatibility) -->
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=2">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=2">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=7">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=8">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -223,11 +223,20 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Qualification", value: qualification }
   ].filter((item) => item.value && item.value !== "—" && item.value.toLowerCase() !== "n/a");
 
+  const isTotalPostsFact = (label) => /^total\s*(posts|vacancies)\b/i.test(String(label || "").trim());
+
   const factsSection = document.getElementById("keyFactsSection");
   const factsGrid = document.getElementById("keyFactsGrid");
   if (facts.length && factsSection && factsGrid) {
     factsGrid.innerHTML = facts
-      .map((item) => '<div class="key-fact-item"><span class="key-fact-label">' + item.label + '</span><span class="key-fact-value">' + item.value + "</span></div>")
+      .map((item) => {
+        const highlight = isTotalPostsFact(item.label);
+        const itemClass = highlight ? "key-fact-item key-fact-item--total-posts" : "key-fact-item";
+        const valueClass = highlight ? "key-fact-value key-fact-value--total-posts" : "key-fact-value";
+        return (
+          '<div class="' + itemClass + '"><span class="key-fact-label">' + item.label + '</span><span class="' + valueClass + '">' + item.value + "</span></div>"
+        );
+      })
       .join("");
     factsSection.hidden = false;
   }
