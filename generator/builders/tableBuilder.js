@@ -1,7 +1,7 @@
   /* ===== SMART TABLE BUILDER (Rowspan + Colspan Rules) ===== */
 
-const { escapeDisplayText } = require("../lib/displayTextNormalize");
 const { parseTableContent } = require("../lib/csvGridParser");
+const { renderTableCellContent } = require("../lib/tableCellLink");
 
 function buildTable(raw) {
   const parsed = parseTableContent(raw);
@@ -88,7 +88,7 @@ function buildTable(raw) {
       ${rowspan > 1 ? `rowspan="${rowspan}"` : ""}
       ${colspan > 1 ? `colspan="${colspan}"` : ""}
       >
-      ${escapeDisplayText(rows[i][j], { mode: cellMode })}
+      ${renderTableCellContent(rows[i][j], { mode: cellMode })}
       </${tag}>`;
     }
 

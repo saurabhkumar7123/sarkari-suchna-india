@@ -316,6 +316,25 @@
     font-variant-numeric:tabular-nums;
     }
 
+    .table a.table-cell-link{
+    color:var(--primary);
+    text-decoration:underline;
+    text-underline-offset:2px;
+    text-decoration-thickness:1px;
+    cursor:pointer;
+    transition:color 0.2s ease, text-decoration-color 0.2s ease, text-decoration-thickness 0.2s ease;
+    -webkit-tap-highlight-color:transparent;
+    padding:2px 0;
+    }
+
+    .table a.table-cell-link:hover,
+    .table a.table-cell-link:focus-visible{
+    color:var(--secondary);
+    text-decoration-thickness:2px;
+    outline:2px solid var(--primary);
+    outline-offset:2px;
+    }
+
     /* Wide matrices (5+ columns): allow horizontal scroll when truly needed */
     .table-responsive--wide{
     overflow-x:auto;
