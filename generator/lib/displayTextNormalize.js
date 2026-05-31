@@ -86,19 +86,51 @@ function normalizeDisplayText(text, options = {}) {
   return work;
 }
 
+/** Literal body-only line break token (section content, not titles/meta). */
+const BODY_LINE_BREAK_TOKEN = "[br]";
+
 /**
- * Normalize for display, then HTML-escape.
+ * Normalize, optionally split on [br], escape each segment, join with <br>.
+ * @param {string} text
+ * @param {{ mode?: "title"|"sentence", allowLineBreaks?: boolean }} [options]
+ * @returns {string}
+ */
+function formatDisplayTextForHtml(text, options = {}) {
+  const normalized = normalizeDisplayText(text, options);
+  if (!options.allowLineBreaks || !String(normalized).includes(BODY_LINE_BREAK_TOKEN)) {
+    return escapeHtml(normalized);
+  }
+  return String(normalized)
+    .split(BODY_LINE_BREAK_TOKEN)
+    .map((segment) => escapeHtml(segment))
+    .join("<br>");
+}
+
+/**
+ * Normalize for display, then HTML-escape. No [br] — use for section titles and other non-body fields.
  * @param {string} text
  * @param {{ mode?: "title"|"sentence" }} [options]
  */
 function escapeDisplayText(text, options = {}) {
-  return escapeHtml(normalizeDisplayText(text, options));
+  return formatDisplayTextForHtml(text, { ...options, allowLineBreaks: false });
+}
+
+/**
+ * Section body text: same as escapeDisplayText plus [br] → safe &lt;br&gt; in output.
+ * @param {string} text
+ * @param {{ mode?: "title"|"sentence" }} [options]
+ */
+function escapeBodyDisplayText(text, options = {}) {
+  return formatDisplayTextForHtml(text, { ...options, allowLineBreaks: true });
 }
 
 module.exports = {
+  BODY_LINE_BREAK_TOKEN,
   isDisplayTextCapitalizeEnabled,
   normalizeDisplayText,
+  formatDisplayTextForHtml,
   escapeDisplayText,
+  escapeBodyDisplayText,
   capitalizeLatinWord,
   isAcronymWord
 };

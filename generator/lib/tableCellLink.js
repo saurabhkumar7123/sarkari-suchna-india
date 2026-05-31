@@ -1,7 +1,7 @@
 "use strict";
 
 const { sanitizeUrl, resolveUrl, escapeHtml } = require("../../server/utils/escapeHtml");
-const { escapeDisplayText } = require("./displayTextNormalize");
+const { escapeBodyDisplayText } = require("./displayTextNormalize");
 
 /** Same URL detection as lineRenderer.js */
 function isUrlLike(value) {
@@ -39,11 +39,11 @@ function renderTableCellContent(cell, options = {}) {
   const mode = options.mode || "title";
   const link = parseTableCellLink(cell);
   if (link) {
-    const labelHtml = escapeDisplayText(link.label, { mode });
+    const labelHtml = escapeBodyDisplayText(link.label, { mode });
     const hrefAttr = escapeHtml(link.safeHref);
     return `<a class="table-cell-link" href="${hrefAttr}" target="_blank" rel="noopener noreferrer">${labelHtml}</a>`;
   }
-  return escapeDisplayText(cell, { mode });
+  return escapeBodyDisplayText(cell, { mode });
 }
 
 module.exports = {

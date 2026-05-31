@@ -1,7 +1,7 @@
 "use strict";
 
 const { sanitizeUrl, resolveUrl } = require("../../server/utils/escapeHtml");
-const { escapeDisplayText } = require("../lib/displayTextNormalize");
+const { escapeBodyDisplayText } = require("../lib/displayTextNormalize");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -31,7 +31,7 @@ function renderLinkBox(left, rightHtml) {
 }
 
 function renderLinkBoxAnchor(label, href) {
-  const left = escapeDisplayText(label, { mode: "title" });
+  const left = escapeBodyDisplayText(label, { mode: "title" });
   const safeHref = sanitizeUrl(resolveUrl(href));
   return renderLinkBox(
     left,
@@ -40,8 +40,8 @@ function renderLinkBoxAnchor(label, href) {
 }
 
 function renderLinkBoxStatus(label, statusText) {
-  const left = escapeDisplayText(label, { mode: "title" });
-  const status = escapeDisplayText(statusText, { mode: "title" });
+  const left = escapeBodyDisplayText(label, { mode: "title" });
+  const status = escapeBodyDisplayText(statusText, { mode: "title" });
   return renderLinkBox(left, `<span class="link-box-status">${status}</span>`);
 }
 
@@ -70,11 +70,11 @@ function renderLinesToHtml(lines, options = {}) {
       const isUrlOnlyLine = isUrlLike(rawLine);
 
       if (rawLine.startsWith("Q:")) {
-        return `<div class="faq-item"><p><strong>${escapeDisplayText(rawLine, { mode: "title" })}</strong></p>`;
+        return `<div class="faq-item"><p><strong>${escapeBodyDisplayText(rawLine, { mode: "title" })}</strong></p>`;
       }
 
       if (rawLine.startsWith("A:")) {
-        return `<p>${escapeDisplayText(rawLine, { mode: "title" })}</p></div>`;
+        return `<p>${escapeBodyDisplayText(rawLine, { mode: "title" })}</p></div>`;
       }
 
       if (isUrlOnlyLine) {
@@ -96,14 +96,14 @@ function renderLinesToHtml(lines, options = {}) {
 
         return `
             <div class="date-row">
-              <span class="date-label">${escapeDisplayText(label, { mode: "title" })} :</span>
-              <span class="date-value">${escapeDisplayText(value, { mode: "title" })}</span>
+              <span class="date-label">${escapeBodyDisplayText(label, { mode: "title" })} :</span>
+              <span class="date-value">${escapeBodyDisplayText(value, { mode: "title" })}</span>
             </div>
           `;
       }
 
       const paraMode = rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
-      return `<p>${escapeDisplayText(rawLine, { mode: paraMode })}</p>`;
+      return `<p>${escapeBodyDisplayText(rawLine, { mode: paraMode })}</p>`;
     })
     .join("");
 }
