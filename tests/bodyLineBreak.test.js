@@ -9,6 +9,13 @@ const { buildTable } = require("../generator/builders/tableBuilder");
 const { buildDynamicSectionsWithWarnings } = require("../generator/builders/sectionBuilder");
 
 describe("body [br] line breaks", () => {
+  const prevCapitalize = process.env.DISPLAY_TEXT_CAPITALIZE;
+
+  afterEach(() => {
+    if (prevCapitalize === undefined) delete process.env.DISPLAY_TEXT_CAPITALIZE;
+    else process.env.DISPLAY_TEXT_CAPITALIZE = prevCapitalize;
+  });
+
   test("escapeDisplayText does not convert [br] (section titles)", () => {
     const out = escapeDisplayText("Important Dates[br]2026", { mode: "title" });
     expect(out).toContain("[br]");
@@ -70,5 +77,62 @@ Last Date : 22 June[br]2026`;
     });
     expect(html).toContain("Apply Online<br>Registration");
     expect(html).toContain("https://example.com");
+  });
+
+  describe("with DISPLAY_TEXT_CAPITALIZE=1", () => {
+    beforeEach(() => {
+      process.env.DISPLAY_TEXT_CAPITALIZE = "1";
+    });
+
+    test("escapeBodyDisplayText paragraph with [br] renders br element", () => {
+      const out = escapeBodyDisplayText("Line One[br]Line Two");
+      expect(out).toBe("Line One<br>Line Two");
+      expect(out).not.toContain("[br]");
+      expect(out).not.toContain("[Br]");
+    });
+
+    test("escapeBodyDisplayText table-style cell with [br]", () => {
+      const out = escapeBodyDisplayText("18 Years[br]40 Years", { mode: "title" });
+      expect(out).toBe("18 Years<br>40 Years");
+    });
+
+    test("escapeBodyDisplayText multiple [br] tokens", () => {
+      const out = escapeBodyDisplayText("A[br]B[br]C");
+      expect(out).toBe("A<br>B<br>C");
+    });
+
+    test("escapeBodyDisplayText URL and [br] in same content", () => {
+      const out = escapeBodyDisplayText(
+        "apply at https://example.com/path[br]before deadline"
+      );
+      expect(out).toContain("https://example.com/path<br>");
+      expect(out).toContain("Apply At");
+      expect(out).toContain("Deadline");
+      expect(out).not.toContain("[br]");
+      expect(out).not.toMatch(/\u0000[UB]\d+\u0000/);
+    });
+
+    test("escapeDisplayText title path unchanged (no br element, no placeholder leak)", () => {
+      const out = escapeDisplayText("Important Dates[br]2026", { mode: "title" });
+      expect(out).toContain("[Br]");
+      expect(out).not.toContain("<br");
+      expect(out).not.toMatch(/\u0000[UB]\d+\u0000/);
+    });
+
+    test("buildTable and renderLinesToHtml with [br] under capitalize", () => {
+      const table = buildTable("Field,Value\nAge Limit,18 Years[br]40 Years");
+      expect(table).toContain("18 Years<br>40 Years");
+      expect(table).not.toContain("[Br]");
+
+      const lines = renderLinesToHtml(["Line One[br]Line Two"], { sectionName: "Test" });
+      expect(lines).toContain("Line One<br>Line Two");
+      expect(lines).not.toMatch(/\u0000[UB]\d+\u0000/);
+    });
+
+    test("no visible placeholder leakage in body output", () => {
+      const out = escapeBodyDisplayText("Fee[br]Rs 100[br]+ GST");
+      expect(out).not.toMatch(/\u0000/);
+      expect(out).not.toContain("[br]");
+    });
   });
 });

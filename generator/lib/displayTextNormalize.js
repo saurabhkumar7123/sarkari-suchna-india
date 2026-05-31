@@ -89,6 +89,37 @@ function normalizeDisplayText(text, options = {}) {
 /** Literal body-only line break token (section content, not titles/meta). */
 const BODY_LINE_BREAK_TOKEN = "[br]";
 
+/** Internal sentinel prefix for [br] during normalization (distinct from URL \u0000U). */
+const BODY_LINE_BREAK_PLACEHOLDER_PREFIX = "\u0000B";
+
+/**
+ * Shield canonical [br] from Latin title-case (same pattern as URL placeholders).
+ * @param {string} text
+ * @returns {{ work: string, placeholders: string[] }}
+ */
+function protectBodyLineBreakTokens(text) {
+  const placeholders = [];
+  const tokenRe = new RegExp(BODY_LINE_BREAK_TOKEN.replace(/[[\]]/g, "\\$&"), "g");
+  const work = String(text ?? "").replace(tokenRe, () => {
+    const token = `${BODY_LINE_BREAK_PLACEHOLDER_PREFIX}${placeholders.length}\u0000`;
+    placeholders.push(BODY_LINE_BREAK_TOKEN);
+    return token;
+  });
+  return { work, placeholders };
+}
+
+/**
+ * @param {string} text
+ * @param {string[]} placeholders
+ */
+function restoreBodyLineBreakTokens(text, placeholders) {
+  let work = String(text ?? "");
+  placeholders.forEach((value, i) => {
+    work = work.replace(`${BODY_LINE_BREAK_PLACEHOLDER_PREFIX}${i}\u0000`, () => value);
+  });
+  return work;
+}
+
 /**
  * Normalize, optionally split on [br], escape each segment, join with <br>.
  * @param {string} text
@@ -96,7 +127,21 @@ const BODY_LINE_BREAK_TOKEN = "[br]";
  * @returns {string}
  */
 function formatDisplayTextForHtml(text, options = {}) {
-  const normalized = normalizeDisplayText(text, options);
+  let src = String(text ?? "");
+  let brPlaceholders = [];
+
+  if (options.allowLineBreaks && src.includes(BODY_LINE_BREAK_TOKEN)) {
+    const protected_ = protectBodyLineBreakTokens(src);
+    src = protected_.work;
+    brPlaceholders = protected_.placeholders;
+  }
+
+  let normalized = normalizeDisplayText(src, options);
+
+  if (brPlaceholders.length > 0) {
+    normalized = restoreBodyLineBreakTokens(normalized, brPlaceholders);
+  }
+
   if (!options.allowLineBreaks || !String(normalized).includes(BODY_LINE_BREAK_TOKEN)) {
     return escapeHtml(normalized);
   }
