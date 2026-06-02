@@ -2,6 +2,10 @@
 
 const { sanitizeUrl, resolveUrl } = require("../../server/utils/escapeHtml");
 const { escapeBodyDisplayText } = require("../lib/displayTextNormalize");
+const {
+  hasMarkdownInlineLinks,
+  renderParagraphWithInlineMarkdownLinks
+} = require("../lib/inlineMarkdownLinks");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -83,6 +87,12 @@ function renderLinesToHtml(lines, options = {}) {
 
       if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
         return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
+      }
+
+      if (hasMarkdownInlineLinks(rawLine)) {
+        const paraMode =
+          rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
+        return `<p>${renderParagraphWithInlineMarkdownLinks(rawLine, { mode: paraMode })}</p>`;
       }
 
       if (hasColon && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
