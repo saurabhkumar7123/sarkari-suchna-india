@@ -166,6 +166,11 @@ function escapeDisplayText(text, options = {}) {
  * @param {{ mode?: "title"|"sentence" }} [options]
  */
 function escapeBodyDisplayText(text, options = {}) {
+  const src = String(text ?? "");
+  const { hasRichInlineTags, renderRichBodyDisplayHtml } = require("./richInlineText");
+  if (hasRichInlineTags(src)) {
+    return renderRichBodyDisplayHtml(src, { ...options, allowLineBreaks: true });
+  }
   return formatDisplayTextForHtml(text, { ...options, allowLineBreaks: true });
 }
 
@@ -176,6 +181,8 @@ module.exports = {
   formatDisplayTextForHtml,
   escapeDisplayText,
   escapeBodyDisplayText,
+  protectBodyLineBreakTokens,
+  restoreBodyLineBreakTokens,
   capitalizeLatinWord,
   isAcronymWord
 };

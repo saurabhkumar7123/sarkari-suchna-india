@@ -6,6 +6,7 @@ const {
   hasMarkdownInlineLinks,
   renderParagraphWithInlineMarkdownLinks
 } = require("../lib/inlineMarkdownLinks");
+const { hasRichInlineTags, renderRichBodyDisplayHtml } = require("../lib/richInlineText");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -89,9 +90,10 @@ function renderLinesToHtml(lines, options = {}) {
         return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
       }
 
+      const paraMode =
+        rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
+
       if (hasMarkdownInlineLinks(rawLine)) {
-        const paraMode =
-          rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
         return `<p>${renderParagraphWithInlineMarkdownLinks(rawLine, { mode: paraMode })}</p>`;
       }
 
@@ -112,7 +114,10 @@ function renderLinesToHtml(lines, options = {}) {
           `;
       }
 
-      const paraMode = rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
+      if (hasRichInlineTags(rawLine)) {
+        return `<p>${renderRichBodyDisplayHtml(rawLine, { mode: paraMode })}</p>`;
+      }
+
       return `<p>${escapeBodyDisplayText(rawLine, { mode: paraMode })}</p>`;
     })
     .join("");

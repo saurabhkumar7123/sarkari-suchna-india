@@ -272,6 +272,53 @@
     color:#555;
     line-height:1.6;
     }
+
+    /* ================= RICH INLINE TEXT ================= */
+    .rt-bold{
+    font-weight:700;
+    }
+
+    .rt-color--red{
+    color:#dc2626;
+    font-weight:600;
+    }
+
+    .rt-color--green{
+    color:#15803d;
+    font-weight:600;
+    }
+
+    .rt-color--blue{
+    color:#1d4ed8;
+    font-weight:600;
+    }
+
+    .rt-color--orange{
+    color:#c2410c;
+    font-weight:600;
+    }
+
+    .rt-color--purple{
+    color:#6d28d9;
+    font-weight:600;
+    }
+
+    .rt-color--gray{
+    color:#4b5563;
+    font-weight:600;
+    }
+
+    .rt-color--yellow{
+    color:#a16207;
+    font-weight:600;
+    }
+
+    .rt-highlight{
+    background-color:#fef08a;
+    color:inherit;
+    padding:0 0.15em;
+    border-radius:2px;
+    }
     
     /* ================= TABLE ================= */
     .table-responsive{
