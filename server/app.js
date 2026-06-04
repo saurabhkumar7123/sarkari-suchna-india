@@ -797,6 +797,19 @@ app.get("/search", asyncHandler(async (req, res) => {
   }
 }));
 
+/** Phase 2: department-only jobs filter → canonical board hub URL */
+app.get("/jobs.html", asyncHandler(async (req, res, next) => {
+  const dept = normalizeBoardSlug(req.query.department);
+  const hasExtra =
+    req.query.qualification || req.query.state || req.query.status || req.query.jobType || req.query.source;
+  if (dept && isBoardSlug(dept) && !hasExtra) {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const target = page > 1 ? `/tag/${dept}?page=${page}` : `/tag/${dept}`;
+    return res.redirect(301, target);
+  }
+  return next();
+}));
+
 app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
   try {
     const source = await fileService.readFile(path.join(generatedDir, "static", "index.html"), "utf8");
@@ -833,14 +846,79 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
   }
 }));
 
-/** Tag links on job pages use /tag/:tag — redirect to search with the same term. */
-app.get("/tag/:tag", (req, res) => {
-  const raw = String(req.params.tag || "").trim();
+const { isBoardSlug, getBoardHub, normalizeBoardSlug } = require("./lib/boardHubs");
+
+function renderBoardHubItemsHtml(boardLabel, items) {
+  if (!Array.isArray(items) || !items.length) {
+    return '<div class="card"><div class="card-content"><p class="listing-empty">No updates found for this category yet.</p></div></div>';
+  }
+  const linksHtml = items
+    .map((item) => `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a></li>`)
+    .join("");
+  return `
+    <div class="card">
+      <div class="ribbon navy-ribbon">
+        <span class="title">${escapeHtml(String(boardLabel || "Jobs").toUpperCase())}</span>
+      </div>
+      <div class="card-content">
+        <ul class="job-list">${linksHtml}</ul>
+      </div>
+    </div>`;
+}
+
+async function sendBoardHubHtml(req, res, boardSlug) {
+  const hub = getBoardHub(boardSlug);
+  if (!hub) {
+    return res.redirect(302, `/search?q=${encodeURIComponent(boardSlug)}`);
+  }
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = 20;
+  const baseUrl = getPublicBaseUrl(req);
+  const canonicalPath = page > 1 ? `/tag/${hub.slug}?page=${page}` : `/tag/${hub.slug}`;
+  const absoluteUrl = baseUrl ? `${baseUrl}${canonicalPath}` : canonicalPath;
+  const listingHtmlPath = path.join(generatedDir, "static", "listing.html");
+  const source = await fileService.readFile(listingHtmlPath, "utf8");
+  const payload = await pageService
+    .listPagesByDepartment({ department: hub.slug, page, limit })
+    .catch(() => ({ data: [], pagination: { totalPages: 0, currentPage: page, limit } }));
+  let html = String(source)
+    .replace(/<title id="pageTitle">[\s\S]*?<\/title>/, `<title id="pageTitle">${escapeHtml(hub.title)}</title>`)
+    .replace(
+      /<meta name="description" id="metaDesc" content="[^"]*">/,
+      `<meta name="description" id="metaDesc" content="${escapeHtml(hub.description)}">`
+    )
+    .replace(/<link rel="canonical" id="canonicalLink" href="[^"]*">/, `<link rel="canonical" id="canonicalLink" href="${absoluteUrl}">`)
+    .replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${escapeHtml(hub.title)}">`)
+    .replace(/<meta property="og:description" id="ogDesc" content="[^"]*">/, `<meta property="og:description" id="ogDesc" content="${escapeHtml(hub.description)}">`)
+    .replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${absoluteUrl}">`)
+    .replace(/<h1 id="listingHeading">[\s\S]*?<\/h1>/, `<h1 id="listingHeading">${escapeHtml(hub.h1)}</h1>`)
+    .replace(/<p id="listingSub">[\s\S]*?<\/p>/, `<p id="listingSub">${escapeHtml(hub.sub)}</p>`)
+    .replace(
+      /<div class="cards card-grid" id="dynamicSections">[\s\S]*?<\/div>/,
+      `<div class="cards card-grid" id="dynamicSections">${renderBoardHubItemsHtml(hub.label, payload.data)}</div>`
+    )
+    .replace(
+      '<script src="/js/listing.js" defer></script>',
+      `<script>window.__BOARD_HUB_SLUG__=${JSON.stringify(hub.slug)};window.__BOARD_HUB_PAGINATION__=${JSON.stringify(payload.pagination || null)};</script>\n<script src="/js/board-hub.js" defer></script>`
+    );
+  if (!/<meta name="robots"[^>]*>/i.test(html)) {
+    html = html.replace(/<\/head>/i, '  <meta name="robots" content="index, follow">\n</head>');
+  }
+  html = normalizeSeoUrlsInHtml(html, baseUrl);
+  return sendHtmlString(req, res, html);
+}
+
+/** Board hubs: /tag/ssc → department listing; other tags → search (until exam tag hubs). */
+app.get("/tag/:tag", asyncHandler(async (req, res) => {
+  const raw = normalizeBoardSlug(req.params.tag);
   if (!raw) {
     return res.redirect(302, "/search");
   }
-  res.redirect(302, `/search?q=${encodeURIComponent(raw)}`);
-});
+  if (isBoardSlug(raw)) {
+    return sendBoardHubHtml(req, res, raw);
+  }
+  return res.redirect(302, `/search?q=${encodeURIComponent(raw)}`);
+}));
 
 const staticPageRoutes = {
   "privacy-policy": "privacy-policy.html",

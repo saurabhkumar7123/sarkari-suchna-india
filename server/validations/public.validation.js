@@ -74,6 +74,8 @@ const pagesListQuerySchema = Joi.object({
     .optional(),
   /** Alias for section (e.g. type=new-form); normalized in controller */
   type: Joi.string().trim().max(32).optional(),
+  /** Board hub filter — must match pages.department (ssc, railway, …) */
+  department: optionalWhitelistedString(ALLOWED_JOB_DEPARTMENTS),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(20)
 });

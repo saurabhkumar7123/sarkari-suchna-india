@@ -40,6 +40,14 @@ const getBreakingNews = asyncHandler(async (req, res) => {
 });
 
 const getTagPage = asyncHandler(async (req, res) => {
+  const { isBoardSlug } = require("../../lib/boardHubs");
+  const pageService = require("../../services/page.service");
+  const tag = String(req.params.tag || "").trim().toLowerCase();
+  if (isBoardSlug(tag)) {
+    const payload = await pageService.listPagesByDepartment({ department: tag, page: 1, limit: 50 });
+    res.set("Cache-Control", "public, max-age=60");
+    return res.json(payload.data);
+  }
   const rows = await miscService.getPagesByTag(req.params.tag);
   res.set("Cache-Control", "public, max-age=60");
   res.json(rows);

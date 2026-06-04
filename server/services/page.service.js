@@ -85,6 +85,63 @@ async function listPages({ status, section, page, limit, includeRawText = false 
   return payload;
 }
 
+/**
+ * Board hub listing — pages.department = board slug (SSC, railway, …).
+ * @param {{ department: string, page: number, limit: number, includeRawText?: boolean }} opts
+ */
+async function listPagesByDepartment({ department, page, limit, includeRawText = false }) {
+  page = Math.max(1, parseInt(page, 10) || 1);
+  limit = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+  const offset = (page - 1) * limit;
+  const dept = String(department || "")
+    .trim()
+    .toLowerCase();
+
+  const cacheTier = includeRawText ? "full" : "lite";
+  const cacheKey = `pages:board:${dept}:${page}:${limit}:${cacheTier}`;
+  const cached = await getCache(cacheKey);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch {
+      // miss
+    }
+  }
+
+  const total = await pageRepository.countPublicListByDepartment(dept);
+  const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / limit));
+  const rows = await pageRepository.selectPublicListByDepartment(dept, limit, offset, undefined, includeRawText);
+
+  const data = rows.map((p) => {
+    const row = {
+      title: p.title,
+      slug: p.slug,
+      url: "/" + p.slug,
+      status: (p.status || "").toLowerCase(),
+      badges: parseBadges(p.badges),
+      category: p.category,
+      date: p.created_at || null,
+      lastDate: normalizeLastDate(pickLastDateColumn(p)),
+      breaking: p.breaking,
+      position: p.position,
+      eventTime: p.event_time
+    };
+    if (includeRawText) {
+      row.rawText = p.raw_text;
+    }
+    return row;
+  });
+
+  const payload = {
+    success: true,
+    data,
+    pagination: { total, totalPages, currentPage: page, limit }
+  };
+
+  await setCache(cacheKey, payload, LIST_TTL_SEC);
+  return payload;
+}
+
 async function getPageRowBySlug(slug) {
   return pageRepository.findRowBySlug(slug);
 }
@@ -257,6 +314,7 @@ async function getJobById(id) {
 
 module.exports = {
   listPages,
+  listPagesByDepartment,
   listJobs,
   getJobById,
   getPageRowBySlug,

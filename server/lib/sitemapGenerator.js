@@ -26,7 +26,16 @@ function staticPaths(baseUrl) {
     "/terms-and-conditions",
     "/disclaimer",
     "/content-policy",
-    "/contact-us"
+    "/contact-us",
+    "/categories",
+    "/tag/ssc",
+    "/tag/railway",
+    "/tag/upsc",
+    "/tag/bank",
+    "/tag/police",
+    "/tag/teaching",
+    "/tag/defence",
+    "/tag/health"
   ];
   return paths.map((p) => ({ loc: `${baseUrl.replace(/\/$/, "")}${p}`, changefreq: "weekly" }));
 }

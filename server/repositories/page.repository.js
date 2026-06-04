@@ -185,6 +185,39 @@ async function selectPublicListPage(section, status, limit, offset, executor = d
   return rows;
 }
 
+function buildPublicListWhereDepartment(department) {
+  const normalizedDepartmentColumn = buildNormalizedColumnSql("department");
+  const dept = normalizeFilterValue(department);
+  return {
+    baseQuery: `FROM pages WHERE deleted=0 AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} = ?`,
+    params: [dept]
+  };
+}
+
+/**
+ * Board hub listings — filter by pages.department (not category / page_tags).
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ */
+async function countPublicListByDepartment(department, executor = db) {
+  const { baseQuery, params } = buildPublicListWhereDepartment(department);
+  const [countRows] = await executor.query(`SELECT COUNT(*) as total ${baseQuery}`, params);
+  return countRows[0].total;
+}
+
+/**
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @param {boolean} [includeRawText]
+ */
+async function selectPublicListByDepartment(department, limit, offset, executor = db, includeRawText = false) {
+  const { baseQuery, params } = buildPublicListWhereDepartment(department);
+  const rawSql = includeRawText ? ", raw_text" : "";
+  const [rows] = await executor.query(
+    `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+  return rows;
+}
+
 /**
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
  */
@@ -1051,6 +1084,8 @@ module.exports = {
   SECTION_STATUS_GROUPS,
   countPublicList,
   selectPublicListPage,
+  countPublicListByDepartment,
+  selectPublicListByDepartment,
   findRowBySlug,
   findPublicRowBySlug,
   selectTopViews,

@@ -8,7 +8,7 @@ function parseIncludeRawTextFlag(query) {
 }
 
 const listPages = asyncHandler(async (req, res) => {
-  let { status, section, type, page, limit } = req.query;
+  let { status, section, type, department, page, limit } = req.query;
   if (!section && type) {
     const t = String(type).toLowerCase().trim();
     if (t === "new" || t === "new-form") section = "new-form";
@@ -17,7 +17,9 @@ const listPages = asyncHandler(async (req, res) => {
     }
   }
   const includeRawText = parseIncludeRawTextFlag(req.query);
-  const payload = await pageService.listPages({ status, section, page, limit, includeRawText });
+  const payload = department
+    ? await pageService.listPagesByDepartment({ department, page, limit, includeRawText })
+    : await pageService.listPages({ status, section, page, limit, includeRawText });
   res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=60");
   res.json(payload);
 });
