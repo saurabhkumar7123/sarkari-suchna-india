@@ -1408,3 +1408,131 @@
     margin-right: auto;
   }
 }
+
+/* ---------- Popular Categories (homepage + /categories) — not .small-boxes ---------- */
+.popular-categories {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
+body.page-home .popular-categories {
+  padding: 0;
+}
+
+.popular-categories__title {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--site-primary);
+  text-align: left;
+}
+
+.popular-categories__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.popular-categories__grid--browse {
+  max-width: 720px;
+}
+
+.popular-categories__pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: var(--site-radius-pill, 999px);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  color: var(--site-primary);
+  background: var(--site-surface, #fff);
+  border: 1px solid var(--home-border-soft, var(--site-border));
+  box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+  box-sizing: border-box;
+  transition: transform var(--duration-fast, 0.15s) ease, box-shadow var(--duration-base, 0.2s) ease,
+    border-color var(--duration-fast, 0.15s) ease;
+}
+
+.popular-categories__pill:hover,
+.popular-categories__pill:focus-visible {
+  color: var(--site-primary);
+  border-color: var(--site-primary);
+  box-shadow: var(--home-shadow, var(--site-shadow));
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.popular-categories__pill--view-all {
+  color: var(--site-text-inverse, #fff);
+  background: linear-gradient(45deg, var(--home-primary, var(--site-primary)), var(--home-primary-2, var(--site-primary-2)));
+  border-color: transparent;
+}
+
+.popular-categories__pill--view-all:hover,
+.popular-categories__pill--view-all:focus-visible {
+  color: var(--site-text-inverse, #fff);
+  border-color: transparent;
+}
+
+/* Browse Categories page */
+body.page-categories .site-main .main-container {
+  margin-top: var(--space-24, 24px);
+  margin-bottom: var(--space-24, 24px);
+  padding: 0 var(--space-12, 12px);
+}
+
+.categories-page__title {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--site-primary);
+}
+
+.categories-page__lead {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #555;
+  max-width: 42rem;
+}
+
+@media (max-width: 768px) {
+  .popular-categories {
+    min-height: 120px;
+  }
+
+  .popular-categories__title {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .popular-categories__grid {
+    gap: 8px;
+  }
+
+  .popular-categories__pill {
+    flex: 1 1 calc(50% - 4px);
+    min-width: calc(50% - 4px);
+    max-width: 100%;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .popular-categories__pill--view-all {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .categories-page__title {
+    font-size: 1.35rem;
+  }
+}

@@ -892,6 +892,18 @@ const staticPageSeo = {
   }
 };
 
+const categoriesPagePath = path.join(generatedDir, "static", "categories.html");
+const categoriesPageSeo = {
+  title: "Browse Categories | Sarkari Suchna India",
+  description:
+    "Browse government job categories by board — SSC, Railway, UPSC, Bank, Police, Teaching, Defence and Health on Sarkari Suchna India.",
+  canonicalPath: "/categories"
+};
+
+app.get(["/categories", "/categories.html"], asyncHandler(async (req, res) => {
+  await sendSeoAugmentedHtml(req, res, categoriesPagePath, categoriesPageSeo);
+}));
+
 Object.entries(staticPageRoutes).forEach(([route, file]) => {
   const abs = path.join(generatedDir, "static", file);
   app.get(`/${route}`, asyncHandler(async (req, res) => {
@@ -1084,6 +1096,7 @@ app.get("/:slug", async (req, res, next) => {
     "document",
     "syllabus",
     "admission",
+    "categories",
     "tools",
     "static",
     "image",
