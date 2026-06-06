@@ -21,6 +21,8 @@ const pageService = require("./services/page.service");
 const searchService = require("./services/search.service");
 const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
+const { buildHomeBootstrap, buildHomeBootstrapScriptTag } = require("./lib/homeBootstrap");
+const { resolveHomepageBadgeHtmlFromItem } = require("./lib/homepageBadges");
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -426,12 +428,24 @@ function buildRibbonTitleHtml(status) {
   return `<span class="title">${escapeHtml(line.toUpperCase())}</span>`;
 }
 
+function breakingNewsLinkAttrsSsr(href) {
+  const s = String(href || "").trim();
+  if (!s || s === "#") return "";
+  if (s.startsWith("/")) return "";
+  if (/^https?:\/\//i.test(s)) return ' target="_blank" rel="noopener noreferrer"';
+  return "";
+}
+
 function renderBreakingNewsHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
   return `<div class="breaking-scroll">${items
     .map((item) => {
-      const href = safePageHref(item);
-      return `<a href="${escapeHtml(href)}">${escapeHtml(item.title)}</a>`;
+      const href = item && item.url != null && String(item.url).trim()
+        ? String(item.url).trim()
+        : safePageHref(item);
+      const badge = resolveHomepageBadgeHtmlFromItem(item);
+      const ext = breakingNewsLinkAttrsSsr(href);
+      return `<a href="${escapeHtml(href)}"${ext}>${escapeHtml(item.title)} ${badge}</a>`;
     })
     .join("")}</div>`;
 }
@@ -459,7 +473,10 @@ function renderHomeCardsHtml(sectionResults) {
     const ribbonClass = getHomeRibbonClass(def.ribbonStatus);
     const ribbonFormClass = isNewFormRibbonStatus(def.ribbonStatus) ? " form-ribbon" : "";
     const linksHtml = payload.data
-      .map((item) => `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a></li>`)
+      .map((item) => {
+        const badge = resolveHomepageBadgeHtmlFromItem(item);
+        return `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a>${badge}</li>`;
+      })
       .join("");
     cards.push(`
       <div class="card">
@@ -604,11 +621,20 @@ async function buildHomepageInitialSections() {
     })
   );
 
+  const bootstrap = buildHomeBootstrap({
+    breakingNews,
+    smallBoxes,
+    trendingJobs,
+    sectionDefs,
+    sectionResults
+  });
+
   return {
     breakingNewsHtml: renderBreakingNewsHtml(breakingNews),
     smallBoxesHtml: renderSmallBoxesHtml(smallBoxes),
     trendingJobsHtml: renderTrendingJobsHtml(trendingJobs),
-    dynamicSectionsHtml: renderHomeCardsHtml(sectionResults)
+    dynamicSectionsHtml: renderHomeCardsHtml(sectionResults),
+    bootstrapScript: buildHomeBootstrapScriptTag(bootstrap)
   };
 }
 
@@ -831,6 +857,10 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       .replace(
         /<ul id="trendingJobs" class="trending-list">[\s\S]*?<\/ul>/,
         `<ul id="trendingJobs" class="trending-list">${homeSections.trendingJobsHtml}</ul>`
+      )
+      .replace(
+        '<script src="/js/index.js" defer></script>',
+        `${homeSections.bootstrapScript}\n<script src="/js/index.js" defer></script>`
       );
     const baseUrl = getPublicBaseUrl(req);
     html = normalizeSeoUrlsInHtml(html, baseUrl);

@@ -172,6 +172,57 @@ function buildRibbonTitleHtml(status) {
   return `<span class="title">${escapeRibbonInnerText(t)}</span>`;
 }
 
+// ================= HOME BOOTSTRAP =================
+function readHomeBootstrap() {
+  const el = document.getElementById("home-bootstrap");
+  if (!el || !el.textContent) return null;
+  try {
+    const data = JSON.parse(el.textContent);
+    return data && data.v === 1 ? data : null;
+  } catch (err) {
+    console.warn("home bootstrap parse failed", err);
+    return null;
+  }
+}
+
+function renderBreakingNewsIntoContainer(data) {
+  const container = document.getElementById("breakingNews");
+  if (!container) return;
+
+  const scrollDiv = document.createElement("div");
+  scrollDiv.className = "breaking-scroll";
+
+  scrollDiv.innerHTML = data.map((n) => {
+    const badge = resolveHomepageBadgeHtml(n);
+    const href = safeExternalUrl(n.url);
+    const ext = breakingNewsLinkTargetRel(href);
+    return `<a href="${escapeAttr(href)}"${ext}>${escapeHtml(n.title)} ${badge}</a>`;
+  }).join("");
+
+  container.innerHTML = "";
+  container.appendChild(scrollDiv);
+}
+
+function initBreakingFromBootstrap(data) {
+  const box = document.getElementById("countdownBox");
+  const container = document.getElementById("breakingNews");
+
+  if (!Array.isArray(data) || data.length === 0) {
+    if (container) container.style.display = "none";
+    if (box) box.style.display = "none";
+    clearCountdownInterval();
+    return;
+  }
+
+  if (container) container.style.display = "";
+
+  if (!container || !container.querySelector(".breaking-scroll")) {
+    renderBreakingNewsIntoContainer(data);
+  }
+
+  startCountdown(data);
+}
+
 // ================= BREAKING NEWS =================
 async function loadBreaking(){
   const box = document.getElementById("countdownBox");
@@ -193,18 +244,7 @@ async function loadBreaking(){
     return;
   }
 
-  const scrollDiv = document.createElement("div");
-  scrollDiv.className = "breaking-scroll";
-
-  scrollDiv.innerHTML = data.map((n) => {
-    let badge = resolveHomepageBadgeHtml(n);
-    const href = safeExternalUrl(n.url);
-    const ext = breakingNewsLinkTargetRel(href);
-    return `<a href="${escapeAttr(href)}"${ext}>${escapeHtml(n.title)} ${badge}</a>`;
-  }).join("");
-
-  container.innerHTML = "";
-  container.appendChild(scrollDiv);
+  renderBreakingNewsIntoContainer(data);
 
   startCountdown(data); // 🔥 existing logic preserved
 }
@@ -456,10 +496,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    loadBreaking();
-    loadTopCategories();
-    loadHomeCards();
-    loadTrendingJobs();
+    const boot = readHomeBootstrap();
+    if (boot) {
+      initBreakingFromBootstrap(boot.breakingNews);
+    } else {
+      loadBreaking();
+      loadTopCategories();
+      loadHomeCards();
+      loadTrendingJobs();
+    }
   } catch (err) {
     console.error("index.js init:", err);
   }
