@@ -450,10 +450,12 @@ function buildJobsWhere({ qualification, state, department, jobType, status }) {
     where += ` AND status IS NOT NULL AND TRIM(status) <> '' AND ${normalizedStatusColumn} = ?`;
     params.push(normalizeFilterValue(status));
   }
+  // Qualification filter: single-value equality today. Future multi-qual: see structuredFields.qualificationSetMatchesFilter.
   if (qualification) {
     where += ` AND qualification IS NOT NULL AND TRIM(qualification) <> '' AND ${normalizedQualificationColumn} = ?`;
     params.push(normalizeFilterValue(qualification));
   }
+  // State filter: single-value equality today. Future multi-state: see structuredFields.stateCoverageMatchesFilter.
   if (state) {
     const normalizedState = normalizeFilterValue(state);
     if (normalizedState === "all india") {

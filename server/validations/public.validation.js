@@ -1,36 +1,9 @@
 const Joi = require("joi");
-
-/** Lowercase values aligned with finder / admin / DB */
-const ALLOWED_JOB_QUALIFICATIONS = new Set([
-  "10th",
-  "12th",
-  "diploma",
-  "graduation",
-  "post graduation",
-  "phd"
-]);
-
-const ALLOWED_JOB_STATES = new Set([
-  "all india",
-  "uttar pradesh",
-  "bihar",
-  "madhya pradesh",
-  "rajasthan",
-  "other",
-  "delhi",
-  "uttarakhand"
-]);
-
-const ALLOWED_JOB_DEPARTMENTS = new Set([
-  "police",
-  "railway",
-  "bank",
-  "ssc",
-  "upsc",
-  "teaching",
-  "defence",
-  "health"
-]);
+const {
+  ALLOWED_JOB_QUALIFICATIONS,
+  ALLOWED_JOB_STATES,
+  ALLOWED_JOB_DEPARTMENTS
+} = require("../lib/structuredFields");
 
 function normalizeFilterValue(value) {
   return String(value || "")

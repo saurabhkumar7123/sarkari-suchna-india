@@ -4,12 +4,14 @@ const fs = require("fs/promises");
 const path = require("path");
 const logger = require("../utils/logger");
 const { getBaseUrl } = require("../utils/baseUrl");
+const { allBoardHubs } = require("./boardHubs");
 
 const OUT_DIR = path.join(process.cwd(), "generated", "sitemap");
 const OUT_FILE = path.join(OUT_DIR, "sitemap.xml");
 const CHUNK_SIZE = Math.max(5000, parseInt(process.env.SITEMAP_CHUNK_SIZE || "40000", 10));
 
 function staticPaths(baseUrl) {
+  const boardTagPaths = allBoardHubs().map((hub) => `/tag/${hub.slug}`);
   const paths = [
     "/",
     "/search",
@@ -28,14 +30,7 @@ function staticPaths(baseUrl) {
     "/content-policy",
     "/contact-us",
     "/categories",
-    "/tag/ssc",
-    "/tag/railway",
-    "/tag/upsc",
-    "/tag/bank",
-    "/tag/police",
-    "/tag/teaching",
-    "/tag/defence",
-    "/tag/health"
+    ...boardTagPaths
   ];
   return paths.map((p) => ({ loc: `${baseUrl.replace(/\/$/, "")}${p}`, changefreq: "weekly" }));
 }
@@ -177,6 +172,7 @@ async function ensureSitemapExists(db) {
 module.exports = {
   OUT_DIR,
   OUT_FILE,
+  staticPaths,
   writeSitemapFile,
   ensureSitemapExists
 };

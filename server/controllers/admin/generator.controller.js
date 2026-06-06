@@ -6,6 +6,7 @@ const { logGeneratorActivity, formatPageTarget } = require("../../lib/generatorA
 const { embedRelatedJobsInJobHtml } = require("../../lib/relatedJobsEmbed");
 const { getRelatedPagesForSlug } = require("../../services/relatedPages.service");
 const logger = require("../../utils/logger");
+const { auditInvalidBoardDepartment } = require("../../lib/structuredFields");
 const pipeline = require("../../../generator/pipeline/generatePage");
 const { analyzeJobContent } = require("../../../generator/analysis/contentAnalysis");
 
@@ -232,6 +233,7 @@ const generatePage = async (req, res) => {
     const normalizedQualification = normalizeOptionalStructuredField(qualification);
     const normalizedState = normalizeOptionalStructuredField(state);
     const normalizedDepartment = normalizeOptionalStructuredField(department);
+    auditInvalidBoardDepartment(normalizedDepartment, { context: "generator.publish" });
     const rawLastDate =
       req.body?.lastDate ?? req.body?.last_date ?? req.body?.LastDate ?? req.body?.LAST_DATE;
     const normalizedLastDate = normalizeOptionalDateField(rawLastDate);

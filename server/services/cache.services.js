@@ -58,7 +58,7 @@ async function delCache(key) {
 }
 
 /**
- * After page create/update/delete — clears list/detail/finder/search caches.
+ * After page create/update/delete/restore/republish — clears list/detail/finder/search/board caches.
  * @param {string[]} slugs
  */
 async function invalidatePageCaches(slugs = []) {
@@ -86,6 +86,9 @@ async function invalidatePageCaches(slugs = []) {
         await delCache(key);
       }
       for await (const key of redis.scanIterator({ MATCH: "finder:*", COUNT: 200 })) {
+        await delCache(key);
+      }
+      for await (const key of redis.scanIterator({ MATCH: "pages:board:*", COUNT: 200 })) {
         await delCache(key);
       }
     } catch (e) {
