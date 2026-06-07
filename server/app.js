@@ -546,8 +546,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
       label: "Departments",
       tabId: "taxonomyTabDepartments",
       html: renderPopularBoardsHtml(boards, {
-        panelAttrs:
-          'data-taxonomy-panel="departments" role="tabpanel" aria-labelledby="taxonomyTabDepartments"'
+        panelAttrs: 'data-taxonomy-panel="departments" role="tabpanel"'
       })
     },
     {
@@ -555,8 +554,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
       label: "Qualifications",
       tabId: "taxonomyTabQualifications",
       html: renderPopularQualificationsHtml(qualifications, {
-        panelAttrs:
-          'data-taxonomy-panel="qualifications" role="tabpanel" aria-labelledby="taxonomyTabQualifications"'
+        panelAttrs: 'data-taxonomy-panel="qualifications" role="tabpanel"'
       })
     },
     {
@@ -564,7 +562,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
       label: "States",
       tabId: "taxonomyTabStates",
       html: renderPopularStatesHtml(states, {
-        panelAttrs: 'data-taxonomy-panel="states" role="tabpanel" aria-labelledby="taxonomyTabStates"'
+        panelAttrs: 'data-taxonomy-panel="states" role="tabpanel"'
       })
     }
   ];
@@ -1029,7 +1027,7 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       )
       .replace(
         '<script src="/js/index.js" defer></script>',
-        `${homeSections.bootstrapScript}\n<script src="/js/taxonomy-tabs.js" defer></script>\n<script src="/js/index.js" defer></script>`
+        `${homeSections.bootstrapScript}\n<script src="/js/index.js" defer></script>`
       );
     const baseUrl = getPublicBaseUrl(req);
     html = normalizeSeoUrlsInHtml(html, baseUrl);
