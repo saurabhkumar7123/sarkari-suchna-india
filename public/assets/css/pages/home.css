@@ -1505,9 +1505,101 @@ body.page-categories .site-main .main-container {
   max-width: 42rem;
 }
 
+/* ---------- Homepage taxonomy tabs (mobile) ---------- */
+.taxonomy-discovery {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.taxonomy-tabs {
+  display: none;
+}
+
+.taxonomy-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+@media (min-width: 769px) {
+  body.page-home .taxonomy-discovery .taxonomy-panel + .taxonomy-panel {
+    padding-top: 6px;
+    border-top: 1px solid var(--home-border-soft);
+  }
+
+  body.page-home .taxonomy-discovery .taxonomy-panel {
+    display: block;
+  }
+}
+
 @media (max-width: 768px) {
+  .taxonomy-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 10px;
+    padding: 0;
+  }
+
+  .taxonomy-tabs__btn {
+    flex: 1 1 0;
+    min-height: 44px;
+    padding: 10px 8px;
+    border-radius: var(--site-radius-pill, 999px);
+    border: 1px solid var(--home-border-soft, var(--site-border));
+    background: var(--site-surface, #fff);
+    color: var(--site-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .taxonomy-tabs__btn.is-active {
+    color: var(--site-text-inverse, #fff);
+    background: linear-gradient(
+      45deg,
+      var(--home-primary, var(--site-primary)),
+      var(--home-primary-2, var(--site-primary-2))
+    );
+    border-color: transparent;
+    box-shadow: var(--home-shadow, var(--site-shadow));
+  }
+
+  .taxonomy-discovery .taxonomy-panel {
+    display: none;
+    min-height: 0;
+  }
+
+  .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
+    display: block;
+    animation: taxonomy-panel-in 0.2s ease;
+  }
+
+  @keyframes taxonomy-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .taxonomy-discovery .popular-categories__title--desktop {
+    display: none;
+  }
+
   .popular-categories {
-    min-height: 120px;
+    min-height: 0;
   }
 
   .popular-categories__title {

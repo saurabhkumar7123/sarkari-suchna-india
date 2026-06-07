@@ -474,17 +474,20 @@ function renderTrendingJobsHtml(items) {
     .join("");
 }
 
-function renderPopularBoardsHtml(boards) {
+function renderPopularBoardsHtml(boards, opts = {}) {
   if (!Array.isArray(boards) || !boards.length) return "";
   const pills = boards
-    .map(
-      (board) =>
-        `<a href="${escapeHtml(board.href)}" class="popular-categories__pill">${escapeHtml(board.label)}</a>`
-    )
+    .map((board) => {
+      const count = Number(board.count) || 0;
+      const label = count > 0 ? `${board.label} (${count})` : board.label;
+      return `<a href="${escapeHtml(board.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+    })
     .join("");
+  const panelClass = opts.panelClass || "";
+  const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories section" id="popularBoards" aria-labelledby="popularBoardsTitle">
-  <h2 class="section-title popular-categories__title" id="popularBoardsTitle">Popular Boards</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-labelledby="popularBoardsTitle">
+  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularBoardsTitle">Popular Boards</h2>
   <div class="popular-categories__grid">
     ${pills}
     <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All Categories</a>
@@ -492,7 +495,7 @@ function renderPopularBoardsHtml(boards) {
 </section>`;
 }
 
-function renderPopularQualificationsHtml(qualifications) {
+function renderPopularQualificationsHtml(qualifications, opts = {}) {
   if (!Array.isArray(qualifications) || !qualifications.length) return "";
   const pills = qualifications
     .map((item) => {
@@ -500,16 +503,18 @@ function renderPopularQualificationsHtml(qualifications) {
       return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
     })
     .join("");
+  const panelClass = opts.panelClass || "";
+  const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories section" id="popularQualifications" aria-labelledby="popularQualificationsTitle">
-  <h2 class="section-title popular-categories__title" id="popularQualificationsTitle">Popular Qualifications</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-labelledby="popularQualificationsTitle">
+  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularQualificationsTitle">Popular Qualifications</h2>
   <div class="popular-categories__grid">
     ${pills}
   </div>
 </section>`;
 }
 
-function renderPopularStatesHtml(states) {
+function renderPopularStatesHtml(states, opts = {}) {
   if (!Array.isArray(states) || !states.length) return "";
   const pills = states
     .map((item) => {
@@ -517,13 +522,83 @@ function renderPopularStatesHtml(states) {
       return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
     })
     .join("");
+  const panelClass = opts.panelClass || "";
+  const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories section" id="popularStates" aria-labelledby="popularStatesTitle">
-  <h2 class="section-title popular-categories__title" id="popularStatesTitle">Popular States</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-labelledby="popularStatesTitle">
+  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularStatesTitle">Popular States</h2>
   <div class="popular-categories__grid">
     ${pills}
   </div>
 </section>`;
+}
+
+function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
+  const panelIdByKey = {
+    departments: "popularBoards",
+    qualifications: "popularQualifications",
+    states: "popularStates"
+  };
+
+  const tabDefs = [
+    {
+      key: "departments",
+      label: "Departments",
+      tabId: "taxonomyTabDepartments",
+      html: renderPopularBoardsHtml(boards, {
+        panelAttrs:
+          'data-taxonomy-panel="departments" role="tabpanel" aria-labelledby="taxonomyTabDepartments"'
+      })
+    },
+    {
+      key: "qualifications",
+      label: "Qualifications",
+      tabId: "taxonomyTabQualifications",
+      html: renderPopularQualificationsHtml(qualifications, {
+        panelAttrs:
+          'data-taxonomy-panel="qualifications" role="tabpanel" aria-labelledby="taxonomyTabQualifications"'
+      })
+    },
+    {
+      key: "states",
+      label: "States",
+      tabId: "taxonomyTabStates",
+      html: renderPopularStatesHtml(states, {
+        panelAttrs: 'data-taxonomy-panel="states" role="tabpanel" aria-labelledby="taxonomyTabStates"'
+      })
+    }
+  ];
+
+  const activeTabs = tabDefs.filter((def) => Boolean(def.html));
+
+  if (!activeTabs.length) return "";
+
+  const tabsHtml = activeTabs
+    .map((tab, index) => {
+      const isActive = index === 0;
+      return `<button type="button" class="taxonomy-tabs__btn${isActive ? " is-active" : ""}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-controls="${escapeHtml(panelIdByKey[tab.key] || "")}">${escapeHtml(tab.label)}</button>`;
+    })
+    .join("");
+
+  const panelsHtml = activeTabs
+    .map((tab, index) => {
+      const activeClass = index === 0 ? " taxonomy-panel--active" : "";
+      return tab.html.replace(
+        'class="popular-categories taxonomy-panel section"',
+        `class="popular-categories taxonomy-panel section${activeClass}"`
+      );
+    })
+    .join("");
+
+  return `
+<div class="taxonomy-discovery section" id="taxonomyDiscovery">
+  <div class="taxonomy-tabs" role="tablist" aria-label="Explore jobs by category">
+    ${tabsHtml}
+  </div>
+  <div class="taxonomy-panels">
+    ${panelsHtml}
+  </div>
+</div>`;
 }
 
 function renderHomeCardsHtml(sectionResults) {
@@ -706,10 +781,11 @@ async function buildHomepageInitialSections() {
     popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
     popularQualificationsHtml: renderPopularQualificationsHtml(popularQualifications),
     popularStatesHtml: renderPopularStatesHtml(popularStates),
-    taxonomyDiscoveryHtml:
-      renderPopularBoardsHtml(popularBoards) +
-      renderPopularQualificationsHtml(popularQualifications) +
-      renderPopularStatesHtml(popularStates),
+    taxonomyDiscoveryHtml: renderTaxonomyDiscoveryHtml(
+      popularBoards,
+      popularQualifications,
+      popularStates
+    ),
     dynamicSectionsHtml: renderHomeCardsHtml(sectionResults),
     bootstrapScript: buildHomeBootstrapScriptTag(bootstrap)
   };
@@ -940,7 +1016,7 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
         `<div class="small-boxes section" id="smallBoxes">${homeSections.smallBoxesHtml}</div>`
       )
       .replace(
-        /<section class="popular-categories section" id="popularCategories"[\s\S]*?<\/section>/,
+        /<div class="taxonomy-discovery section" id="taxonomyDiscovery"[\s\S]*?<\/div>\s*(?=<!-- 🟦 Cards -->|<div class="cards card-grid section cards-section" id="dynamicSections">)/,
         homeSections.taxonomyDiscoveryHtml || ""
       )
       .replace(
@@ -953,7 +1029,7 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       )
       .replace(
         '<script src="/js/index.js" defer></script>',
-        `${homeSections.bootstrapScript}\n<script src="/js/index.js" defer></script>`
+        `${homeSections.bootstrapScript}\n<script src="/js/taxonomy-tabs.js" defer></script>\n<script src="/js/index.js" defer></script>`
       );
     const baseUrl = getPublicBaseUrl(req);
     html = normalizeSeoUrlsInHtml(html, baseUrl);
