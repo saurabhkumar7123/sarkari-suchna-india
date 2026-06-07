@@ -1670,17 +1670,45 @@ body.page-home .taxonomy-discovery .popular-categories {
     width: auto;
   }
 
-  #popularBoards .popular-categories__pill:nth-child(-n + 2) {
+  #popularBoards .popular-categories__pill:nth-child(-n + 2):not(.popular-categories__pill--view-all) {
     grid-column: span 3;
   }
 
-  #popularBoards .popular-categories__pill:nth-child(n + 3) {
+  #popularBoards .popular-categories__pill:nth-child(n + 3):not(.popular-categories__pill--view-all) {
     grid-column: span 2;
   }
 
-  #popularBoards .popular-categories__pill--view-all {
+  /* View All — fixed CTA; never inherit tab/panel/pill state */
+  body.page-home .taxonomy-discovery .popular-categories__pill--view-all,
+  body.page-home .taxonomy-discovery .taxonomy-panel--active .popular-categories__pill--view-all,
+  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:any-link {
     flex: unset;
     min-width: 0;
+    color: var(--site-text-inverse, #fff);
+    background: linear-gradient(
+      45deg,
+      var(--home-primary, var(--site-primary)),
+      var(--home-primary-2, var(--site-primary-2))
+    );
+    border-color: transparent;
+    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+  }
+
+  #popularBoards .popular-categories__pill--view-all {
+    grid-column: span 2;
+  }
+
+  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:hover,
+  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-visible {
+    color: var(--site-text-inverse, #fff);
+    background: linear-gradient(
+      45deg,
+      var(--home-primary, var(--site-primary)),
+      var(--home-primary-2, var(--site-primary-2))
+    );
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: var(--home-shadow, var(--site-shadow));
   }
 
   /* Active taxonomy panel — structured section module (mobile only) */
