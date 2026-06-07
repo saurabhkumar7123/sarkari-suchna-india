@@ -175,11 +175,22 @@ async function countPublicList(section, status, executor = db) {
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
  * @param {boolean} [includeRawText] When false (default), omits `raw_text` for smaller rows + less DB I/O.
  */
-async function selectPublicListPage(section, status, limit, offset, executor = db, includeRawText = false) {
+async function selectPublicListPage(
+  section,
+  status,
+  limit,
+  offset,
+  executor = db,
+  includeRawText = false,
+  freshnessSort = false
+) {
   const { baseQuery, params } = buildPublicListWhere(section, status);
   const rawSql = includeRawText ? ", raw_text" : "";
+  const orderBySql = freshnessSort
+    ? "ORDER BY COALESCE(updated_at, created_at) DESC, id DESC"
+    : "ORDER BY created_at DESC";
   const [rows] = await executor.query(
-    `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ${orderBySql} LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
   return rows;
@@ -850,8 +861,8 @@ async function insertPage(
 
   const [insResult] = await conn.query(
     `INSERT INTO \`pages\` 
-     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at, updated_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
     insertParams
   );
 
@@ -1059,7 +1070,7 @@ async function updatePageBySlug(
   const [result] = await conn.query(
     `UPDATE \`pages\`
      SET title = ?, status = ?, \`badges\` = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
-         breaking = ?, breaking_order = ?, event_time = ?
+         breaking = ?, breaking_order = ?, event_time = ?, updated_at = NOW()
      WHERE slug = ? AND deleted = 0`,
     updateParams
   );

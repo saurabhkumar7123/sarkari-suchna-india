@@ -752,7 +752,8 @@ async function buildHomepageInitialSections() {
         status: def.queryMode === "status" ? def.queryValue : undefined,
         section: def.queryMode === "section" ? def.queryValue : undefined,
         page: 1,
-        limit: 25
+        limit: 25,
+        freshnessSort: true
       }).catch(() => null);
       return { def, payload };
     })

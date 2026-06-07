@@ -32,15 +32,15 @@ function parseBadges(value) {
 }
 
 /**
- * @param {{ status?: string, section?: string, page: number, limit: number, includeRawText?: boolean }} opts
+ * @param {{ status?: string, section?: string, page: number, limit: number, includeRawText?: boolean, freshnessSort?: boolean }} opts
  */
-async function listPages({ status, section, page, limit, includeRawText = false }) {
+async function listPages({ status, section, page, limit, includeRawText = false, freshnessSort = false }) {
   page = Math.max(1, parseInt(page, 10) || 1);
   limit = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
   const offset = (page - 1) * limit;
 
   const cacheTier = includeRawText ? "full" : "lite";
-  const cacheKey = `pages:list:${section || status || "all"}:${page}:${limit}:${cacheTier}`;
+  const cacheKey = `pages:list:${section || status || "all"}:${page}:${limit}:${cacheTier}${freshnessSort ? ":fresh" : ""}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     try {
@@ -53,7 +53,15 @@ async function listPages({ status, section, page, limit, includeRawText = false 
   const total = await pageRepository.countPublicList(section, status);
   const totalPages = total === 0 ? 0 : Math.max(1, Math.ceil(total / limit));
 
-  const rows = await pageRepository.selectPublicListPage(section, status, limit, offset, undefined, includeRawText);
+  const rows = await pageRepository.selectPublicListPage(
+    section,
+    status,
+    limit,
+    offset,
+    undefined,
+    includeRawText,
+    freshnessSort
+  );
 
   const data = rows.map((p) => {
     const row = {
