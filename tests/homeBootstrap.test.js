@@ -23,6 +23,9 @@ describe("homeBootstrap", () => {
       const trendingJobs = [{ title: "Trend", slug: "trend" }];
 
       const popularBoards = [{ slug: "railway", label: "Railway", href: "/tag/railway", count: 3 }];
+      const popularQualifications = [
+        { slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 7 }
+      ];
 
       const boot = buildHomeBootstrap({
         breakingNews,
@@ -30,7 +33,8 @@ describe("homeBootstrap", () => {
         trendingJobs,
         sectionDefs,
         sectionResults,
-        popularBoards
+        popularBoards,
+        popularQualifications
       });
 
       expect(boot.v).toBe(BOOTSTRAP_VERSION);
@@ -40,6 +44,7 @@ describe("homeBootstrap", () => {
       expect(boot.sections).toEqual(sectionDefs);
       expect(boot.sectionPages).toEqual(sectionResults);
       expect(boot.popularBoards).toEqual(popularBoards);
+      expect(boot.popularQualifications).toEqual(popularQualifications);
       expect(boot.trending).toEqual({ success: true, data: trendingJobs });
     });
 
@@ -50,6 +55,7 @@ describe("homeBootstrap", () => {
       expect(boot.sections).toEqual([]);
       expect(boot.sectionPages).toEqual([]);
       expect(boot.popularBoards).toEqual([]);
+      expect(boot.popularQualifications).toEqual([]);
       expect(boot.trending).toEqual({ success: true, data: [] });
     });
   });

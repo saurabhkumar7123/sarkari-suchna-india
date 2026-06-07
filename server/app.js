@@ -485,6 +485,23 @@ function renderPopularBoardsHtml(boards) {
 </section>`;
 }
 
+function renderPopularQualificationsHtml(qualifications) {
+  if (!Array.isArray(qualifications) || !qualifications.length) return "";
+  const pills = qualifications
+    .map((item) => {
+      const label = `${item.label} (${item.count})`;
+      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+    })
+    .join("");
+  return `
+<section class="popular-categories section" id="popularQualifications" aria-labelledby="popularQualificationsTitle">
+  <h2 class="section-title popular-categories__title" id="popularQualificationsTitle">Popular Qualifications</h2>
+  <div class="popular-categories__grid">
+    ${pills}
+  </div>
+</section>`;
+}
+
 function renderHomeCardsHtml(sectionResults) {
   const cards = [];
   for (const { def, payload } of sectionResults) {
@@ -621,13 +638,18 @@ async function buildSearchFallbackHtml(req, query) {
 }
 
 async function buildHomepageInitialSections() {
-  const [breakingNews, smallBoxes, trendingJobs, sectionDefs, popularBoards] = await Promise.all([
+  const [breakingNews, smallBoxes, trendingJobs, sectionDefs, taxonomyStats] = await Promise.all([
     miscService.getBreakingNews().catch(() => []),
     miscService.getSmallBoxes().catch(() => []),
     pageService.getTopViews().catch(() => []),
     miscService.getHomepageSections().catch(() => []),
-    homeStatsService.getPopularBoards().catch(() => [])
+    homeStatsService.getTaxonomyStats().catch(() => ({ boards: [], qualifications: [] }))
   ]);
+
+  const popularBoards = Array.isArray(taxonomyStats.boards) ? taxonomyStats.boards : [];
+  const popularQualifications = Array.isArray(taxonomyStats.qualifications)
+    ? taxonomyStats.qualifications
+    : [];
 
   const sectionResults = await Promise.all(
     sectionDefs.map(async (def) => {
@@ -647,7 +669,8 @@ async function buildHomepageInitialSections() {
     trendingJobs,
     sectionDefs,
     sectionResults,
-    popularBoards
+    popularBoards,
+    popularQualifications
   });
 
   return {
@@ -655,6 +678,9 @@ async function buildHomepageInitialSections() {
     smallBoxesHtml: renderSmallBoxesHtml(smallBoxes),
     trendingJobsHtml: renderTrendingJobsHtml(trendingJobs),
     popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
+    popularQualificationsHtml: renderPopularQualificationsHtml(popularQualifications),
+    taxonomyDiscoveryHtml:
+      renderPopularBoardsHtml(popularBoards) + renderPopularQualificationsHtml(popularQualifications),
     dynamicSectionsHtml: renderHomeCardsHtml(sectionResults),
     bootstrapScript: buildHomeBootstrapScriptTag(bootstrap)
   };
@@ -874,7 +900,7 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       )
       .replace(
         /<section class="popular-categories section" id="popularCategories"[\s\S]*?<\/section>/,
-        homeSections.popularBoardsHtml || ""
+        homeSections.taxonomyDiscoveryHtml || ""
       )
       .replace(
         /<div class="cards card-grid section cards-section" id="dynamicSections">[\s\S]*?<\/div>/,
