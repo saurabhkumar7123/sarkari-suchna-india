@@ -1330,38 +1330,39 @@
 @media (max-width:768px){
   /*
    * Mobile homepage visual order (SSR DOM unchanged; flex order only).
-   * Small Boxes → Listings → Finder → Departments → Breaking → Trending
+   * Small Boxes → Finder → Departments → Listings → Trending → About
    */
   body.page-home .main-container > #smallBoxes {
     order: 1;
   }
 
-  body.page-home .main-container > #dynamicSections {
+  body.page-home .main-container > #openFinder {
     order: 2;
   }
 
-  body.page-home .main-container > #openFinder {
-    order: 3;
+  body.page-home .main-container > #countdownBox {
+    order: 2;
   }
 
   body.page-home .main-container > #taxonomyDiscovery {
+    order: 3;
+  }
+
+  body.page-home .main-container > #dynamicSections {
     order: 4;
   }
 
-  body.page-home .main-container > .breaking-news {
-    order: 5;
-  }
-
-  body.page-home .main-container > #countdownBox {
-    order: 5;
-  }
-
   body.page-home .main-container > .trending-section {
-    order: 6;
+    order: 5;
   }
 
   body.page-home .main-container > #about-site {
-    order: 7;
+    order: 6;
+  }
+
+  /* Breaking News hidden on mobile — removed from layout flow (no gap) */
+  body.page-home .main-container > .breaking-news {
+    display: none;
   }
 
   /* Adjacent-sibling borders follow DOM, not visual order — rely on flex gap */
@@ -1378,10 +1379,6 @@
 
 /* Mobile search overlay (loads after duplicate .search-overlay rules above — full-width + touch targets) */
 @media (max-width: 768px) {
-  body.page-home .main-container .breaking-news{
-    display:flex;
-  }
-
   .search-overlay {
     box-sizing: border-box;
     align-items: stretch;
