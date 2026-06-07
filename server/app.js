@@ -489,7 +489,7 @@ function renderPopularBoardsHtml(boards, opts = {}) {
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="Departments">
   <div class="popular-categories__grid">
     ${pills}
-    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All Categories</a>
+    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
 </section>`;
 }
