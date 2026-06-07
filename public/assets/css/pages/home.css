@@ -1621,6 +1621,33 @@ body.page-home .taxonomy-discovery .popular-categories {
     min-width: 100%;
   }
 
+  /* Departments tab: 2 items row 1, remaining + View All on row 2 (no orphan row) */
+  #popularBoards .popular-categories__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  #popularBoards .popular-categories__pill {
+    flex: unset;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+  }
+
+  #popularBoards .popular-categories__pill:nth-child(-n + 2) {
+    grid-column: span 3;
+  }
+
+  #popularBoards .popular-categories__pill:nth-child(n + 3) {
+    grid-column: span 2;
+  }
+
+  #popularBoards .popular-categories__pill--view-all {
+    flex: unset;
+    min-width: 0;
+  }
+
   .categories-page__title {
     font-size: 1.35rem;
   }
