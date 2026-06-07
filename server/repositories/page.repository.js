@@ -258,7 +258,7 @@ async function selectDepartmentCounts(executor = db) {
      WHERE deleted = 0
        AND department IS NOT NULL
        AND TRIM(department) <> ''
-     GROUP BY slug`
+     GROUP BY ${normalizedDepartmentColumn}`
   );
   return rows;
 }
