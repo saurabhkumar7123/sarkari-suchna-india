@@ -41,7 +41,7 @@ describe("homeStats.service", () => {
     expect(stats.boards[0]).toMatchObject({
       slug: "railway",
       label: "Railway",
-      href: "/board/railway",
+      href: "/department/railway",
       count: 3
     });
     expect(cacheServices.setCache).toHaveBeenCalledWith(
@@ -110,7 +110,7 @@ describe("homeStats.service", () => {
   it("serves cached taxonomy stats without querying the database", async () => {
     const cached = {
       generatedAt: "2026-01-01T00:00:00.000Z",
-      boards: [{ slug: "ssc", label: "SSC", href: "/board/ssc", count: 5 }],
+      boards: [{ slug: "ssc", label: "SSC", href: "/department/ssc", count: 5 }],
       qualifications: [{ slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 3 }],
       states: [{ slug: "delhi", label: "Delhi", href: "/state/delhi", count: 2 }]
     };
@@ -128,7 +128,7 @@ describe("homeStats.service", () => {
     cacheServices.getCache.mockResolvedValue(
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        boards: [{ slug: "ssc", label: "SSC", href: "/board/ssc", count: 5 }],
+        boards: [{ slug: "ssc", label: "SSC", href: "/department/ssc", count: 5 }],
         qualifications: [{ slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 2 }]
       })
     );
@@ -177,7 +177,7 @@ describe("homeStats.service", () => {
     cacheServices.getCache.mockResolvedValue(
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        boards: [{ slug: "bank", label: "Bank", href: "/board/bank", count: 1 }],
+        boards: [{ slug: "bank", label: "Bank", href: "/department/bank", count: 1 }],
         qualifications: [],
         states: []
       })

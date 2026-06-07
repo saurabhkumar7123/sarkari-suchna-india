@@ -4,6 +4,7 @@ const {
   toTaxonomyPathSlug,
   resolveQualificationFromPath,
   resolveStateFromPath,
+  buildDepartmentPath,
   buildBoardPath,
   buildQualificationPath,
   buildStatePath
@@ -29,7 +30,8 @@ describe("taxonomySlugs", () => {
   });
 
   it("builds canonical taxonomy hub paths", () => {
-    expect(buildBoardPath("railway")).toBe("/board/railway");
+    expect(buildDepartmentPath("railway")).toBe("/department/railway");
+    expect(buildBoardPath("railway")).toBe("/department/railway");
     expect(buildQualificationPath("10th")).toBe("/qualification/10th");
     expect(buildStatePath("all india")).toBe("/state/all-india");
   });

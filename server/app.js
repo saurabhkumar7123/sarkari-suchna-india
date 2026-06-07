@@ -21,7 +21,7 @@ const pageService = require("./services/page.service");
 const homeStatsService = require("./services/homeStats.service");
 const taxonomyPageService = require("./services/taxonomyPage.service");
 const {
-  buildBoardPath,
+  buildDepartmentPath,
   buildQualificationPath,
   buildStatePath
 } = require("./lib/taxonomySlugs");
@@ -486,8 +486,7 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-labelledby="popularBoardsTitle">
-  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularBoardsTitle">Popular Boards</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="Departments">
   <div class="popular-categories__grid">
     ${pills}
     <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All Categories</a>
@@ -506,8 +505,7 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-labelledby="popularQualificationsTitle">
-  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularQualificationsTitle">Popular Qualifications</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-label="Qualifications">
   <div class="popular-categories__grid">
     ${pills}
   </div>
@@ -525,8 +523,7 @@ function renderPopularStatesHtml(states, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-labelledby="popularStatesTitle">
-  <h2 class="section-title popular-categories__title popular-categories__title--desktop" id="popularStatesTitle">Popular States</h2>
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-label="States">
   <div class="popular-categories__grid">
     ${pills}
   </div>
@@ -987,7 +984,7 @@ app.get("/jobs.html", asyncHandler(async (req, res, next) => {
 
   if (!hasExtra) {
     if (dept && isBoardSlug(dept) && !qual && !state) {
-      return res.redirect(301, buildBoardPath(dept));
+      return res.redirect(301, buildDepartmentPath(dept));
     }
     if (qual && !dept && !state && ALLOWED_JOB_QUALIFICATIONS.has(qual)) {
       return res.redirect(301, buildQualificationPath(qual));
@@ -1063,18 +1060,27 @@ async function sendTaxonomyHubHtml(req, res, type) {
   return sendHtmlString(req, res, normalized);
 }
 
-app.get("/board/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "board")));
+app.get("/department/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "board")));
 app.get("/qualification/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "qualification")));
 app.get("/state/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "state")));
 
-/** Legacy /tag/{board} → /board/{board}; other tags → search. */
+/** Legacy /board/{slug} → canonical /department/{slug} */
+app.get("/board/:slug", asyncHandler(async (req, res) => {
+  const slug = String(req.params.slug || "").trim();
+  if (!slug) {
+    return res.redirect(302, "/search");
+  }
+  return res.redirect(301, buildDepartmentPath(slug));
+}));
+
+/** Legacy /tag/{board} → /department/{board}; other tags → search. */
 app.get("/tag/:tag", asyncHandler(async (req, res) => {
   const raw = normalizeBoardSlug(req.params.tag);
   if (!raw) {
     return res.redirect(302, "/search");
   }
   if (isBoardSlug(raw)) {
-    return res.redirect(301, buildBoardPath(raw));
+    return res.redirect(301, buildDepartmentPath(raw));
   }
   return res.redirect(302, `/search?q=${encodeURIComponent(raw)}`);
 }));

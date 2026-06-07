@@ -1,12 +1,11 @@
 /**
- * Homepage taxonomy discovery — mobile tab switcher (Departments / Qualifications / States).
- * Desktop: all panels remain visible; tabs hidden via CSS.
+ * Homepage taxonomy discovery — tab switcher (Departments / Qualifications / States).
+ * All viewports: one active panel; links remain SSR-rendered in inactive panels.
  */
 (function initTaxonomyTabs() {
   const root = document.getElementById("taxonomyDiscovery");
   if (!root) return;
 
-  const mobileQuery = window.matchMedia("(max-width: 768px)");
   const tabs = Array.from(root.querySelectorAll("[data-taxonomy-tab]"));
   const panels = Array.from(root.querySelectorAll("[data-taxonomy-panel]"));
   if (!tabs.length || !panels.length) return;
@@ -28,27 +27,12 @@
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      if (!mobileQuery.matches) return;
       const tabKey = tab.dataset.taxonomyTab;
       if (!tabKey) return;
       setActiveTab(tabKey);
     });
   });
 
-  function syncForViewport() {
-    if (mobileQuery.matches) {
-      const current = tabs.find((tab) => tab.classList.contains("is-active"));
-      setActiveTab(current && current.dataset.taxonomyTab ? current.dataset.taxonomyTab : defaultTab);
-      return;
-    }
-    panels.forEach((panel) => panel.classList.add("taxonomy-panel--active"));
-  }
-
-  if (typeof mobileQuery.addEventListener === "function") {
-    mobileQuery.addEventListener("change", syncForViewport);
-  } else if (typeof mobileQuery.addListener === "function") {
-    mobileQuery.addListener(syncForViewport);
-  }
-
-  syncForViewport();
+  const current = tabs.find((tab) => tab.classList.contains("is-active"));
+  setActiveTab(current && current.dataset.taxonomyTab ? current.dataset.taxonomyTab : defaultTab);
 })();

@@ -29,9 +29,14 @@ function resolveStateFromPath(pathSlug) {
   return normalized;
 }
 
-function buildBoardPath(slug) {
+function buildDepartmentPath(slug) {
   const value = String(slug || "").trim().toLowerCase();
-  return value ? `/board/${encodeURIComponent(value)}` : "/board";
+  return value ? `/department/${encodeURIComponent(value)}` : "/department";
+}
+
+/** @deprecated Legacy alias — canonical URLs use buildDepartmentPath */
+function buildBoardPath(slug) {
+  return buildDepartmentPath(slug);
 }
 
 function buildQualificationPath(slug) {
@@ -49,6 +54,7 @@ module.exports = {
   normalizePathSegment,
   resolveQualificationFromPath,
   resolveStateFromPath,
+  buildDepartmentPath,
   buildBoardPath,
   buildQualificationPath,
   buildStatePath

@@ -14,7 +14,7 @@ describe("sitemapGenerator.staticPaths", () => {
 
   it("includes every registered board hub URL", () => {
     for (const hub of allBoardHubs()) {
-      expect(locs).toContain(`${baseUrl}/board/${hub.slug}`);
+      expect(locs).toContain(`${baseUrl}/department/${hub.slug}`);
     }
   });
 

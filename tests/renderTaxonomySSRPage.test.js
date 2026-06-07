@@ -9,7 +9,7 @@ describe("renderTaxonomySSRPage", () => {
       description: "Latest railway jobs.",
       h1: "Railway Jobs",
       sub: "Browse railway updates.",
-      canonicalPath: "/board/railway",
+      canonicalPath: "/department/railway",
       baseUrl: "https://www.example.com",
       headerHtml: "<header>Site</header>",
       footerHtml: "<footer>Footer</footer>",
@@ -21,7 +21,7 @@ describe("renderTaxonomySSRPage", () => {
 
     expect(html).toMatch(/<!DOCTYPE html>/i);
     expect(html).toContain("<h1>Railway Jobs</h1>");
-    expect(html).toContain('href="https://www.example.com/board/railway"');
+    expect(html).toContain('href="https://www.example.com/department/railway"');
     expect(html).toContain('href="/rrb-alp-2026"');
     expect(html).toContain("RRB ALP 2026");
     expect(html).toContain("new form");

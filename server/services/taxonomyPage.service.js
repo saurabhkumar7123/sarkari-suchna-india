@@ -8,7 +8,7 @@ const { getBoardHub, isBoardSlug, normalizeBoardSlug } = require("../lib/boardHu
 const {
   resolveQualificationFromPath,
   resolveStateFromPath,
-  buildBoardPath,
+  buildDepartmentPath,
   buildQualificationPath,
   buildStatePath
 } = require("../lib/taxonomySlugs");
@@ -125,7 +125,7 @@ async function buildTaxonomyPage(opts) {
       description: hub.description,
       h1: hub.h1,
       sub: hub.sub,
-      canonicalPath: buildBoardPath(boardSlug)
+      canonicalPath: buildDepartmentPath(boardSlug)
     };
   } else if (type === "qualification") {
     filterValue = resolveQualificationFromPath(pathSlug);

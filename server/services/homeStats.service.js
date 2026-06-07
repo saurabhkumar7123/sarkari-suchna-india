@@ -5,7 +5,7 @@ const { getCache, setCache, delCache } = require("./cache.services");
 const { allBoardHubs, BOARD_SLUG_SET } = require("../lib/boardHubs");
 const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("../lib/structuredFields");
 const {
-  buildBoardPath,
+  buildDepartmentPath,
   buildQualificationPath,
   buildStatePath
 } = require("../lib/taxonomySlugs");
@@ -110,7 +110,7 @@ async function recomputeTaxonomyStats() {
     .map((hub) => ({
       slug: hub.slug,
       label: hub.label,
-      href: buildBoardPath(hub.slug),
+      href: buildDepartmentPath(hub.slug),
       count: countByDept.get(hub.slug) || 0
     }))
     .filter((board) => board.count > 0)

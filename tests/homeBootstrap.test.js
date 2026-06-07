@@ -22,7 +22,7 @@ describe("homeBootstrap", () => {
       ];
       const trendingJobs = [{ title: "Trend", slug: "trend" }];
 
-      const popularBoards = [{ slug: "railway", label: "Railway", href: "/board/railway", count: 3 }];
+      const popularBoards = [{ slug: "railway", label: "Railway", href: "/department/railway", count: 3 }];
       const popularQualifications = [
         { slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 7 }
       ];
