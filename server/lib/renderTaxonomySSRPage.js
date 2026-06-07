@@ -1,10 +1,6 @@
 "use strict";
 
-const TAXONOMY_BREADCRUMB_PARENT = {
-  department: { label: "Departments", href: "/categories" },
-  qualification: { label: "Qualifications", href: "/" },
-  state: { label: "States", href: "/" }
-};
+const { renderBreadcrumbHtml } = require("./breadcrumb");
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -23,21 +19,6 @@ function safeItemHref(item) {
     return `/${rawSlug.replace(/^\/+/, "")}`;
   }
   return "#";
-}
-
-function renderBreadcrumbHtml(taxonomyKind, taxonomyLabel) {
-  const parent = TAXONOMY_BREADCRUMB_PARENT[taxonomyKind];
-  if (!parent) return "";
-
-  const current = escapeHtml(taxonomyLabel || "");
-  return `
-  <nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="/">Home</a>
-    <span> / </span>
-    <a href="${escapeHtml(parent.href)}">${escapeHtml(parent.label)}</a>
-    <span> / </span>
-    <span aria-current="page">${current}</span>
-  </nav>`;
 }
 
 function renderJobListHtml(items) {
@@ -75,8 +56,6 @@ function renderJobListHtml(items) {
  *   h1: string,
  *   sub?: string,
  *   canonicalPath: string,
- *   taxonomyKind?: "department"|"qualification"|"state",
- *   taxonomyLabel?: string,
  *   baseUrl?: string,
  *   headerHtml?: string,
  *   footerHtml?: string,
@@ -89,13 +68,11 @@ function renderTaxonomySSRPage(opts) {
   const h1 = String(opts.h1 || title);
   const sub = String(opts.sub || description);
   const canonicalPath = String(opts.canonicalPath || "/");
-  const taxonomyKind = String(opts.taxonomyKind || "").trim().toLowerCase();
-  const taxonomyLabel = String(opts.taxonomyLabel || "").trim();
   const baseUrl = String(opts.baseUrl || "").replace(/\/$/, "");
   const absoluteUrl = baseUrl ? `${baseUrl}${canonicalPath}` : canonicalPath;
   const headerHtml = String(opts.headerHtml || "");
   const footerHtml = String(opts.footerHtml || "");
-  const breadcrumbHtml = renderBreadcrumbHtml(taxonomyKind, taxonomyLabel);
+  const breadcrumbHtml = renderBreadcrumbHtml(h1);
   const listHtml = renderJobListHtml(opts.items);
 
   return `<!DOCTYPE html>
@@ -115,7 +92,7 @@ function renderTaxonomySSRPage(opts) {
 <link rel="preload" href="/css/main.min.css?v=2" as="style">
 <link rel="stylesheet" href="/css/main.min.css?v=2">
 <link rel="stylesheet" href="/css/pages/listing-layout.css?v=2">
-<link rel="stylesheet" href="/css/components/breadcrumb.css?v=2">
+<link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
 <link rel="stylesheet" href="/css/pages/home.css?v=2">
 <link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -141,6 +118,5 @@ module.exports = {
   renderTaxonomySSRPage,
   escapeHtml,
   safeItemHref,
-  renderJobListHtml,
-  renderBreadcrumbHtml
+  renderJobListHtml
 };

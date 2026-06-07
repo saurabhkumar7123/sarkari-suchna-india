@@ -113,8 +113,6 @@ async function buildTaxonomyPage(opts) {
 
   let filterValue = null;
   let meta = null;
-  let taxonomyKind = "";
-  let taxonomyLabel = "";
 
   if (type === "board") {
     const boardSlug = normalizeBoardSlug(pathSlug);
@@ -122,8 +120,6 @@ async function buildTaxonomyPage(opts) {
     const hub = getBoardHub(boardSlug);
     if (!hub) return null;
     filterValue = boardSlug;
-    taxonomyKind = "department";
-    taxonomyLabel = hub.label;
     meta = {
       title: hub.title,
       description: hub.description,
@@ -135,15 +131,10 @@ async function buildTaxonomyPage(opts) {
     filterValue = resolveQualificationFromPath(pathSlug);
     if (!filterValue) return null;
     meta = getQualificationMeta(filterValue);
-    taxonomyKind = "qualification";
-    taxonomyLabel =
-      QUALIFICATION_REGISTRY.find((item) => item.slug === filterValue)?.label || filterValue;
   } else if (type === "state") {
     filterValue = resolveStateFromPath(pathSlug);
     if (!filterValue) return null;
     meta = getStateMeta(filterValue);
-    taxonomyKind = "state";
-    taxonomyLabel = STATE_REGISTRY.find((item) => item.slug === filterValue)?.label || filterValue;
   } else {
     return null;
   }
@@ -155,8 +146,6 @@ async function buildTaxonomyPage(opts) {
 
   return renderTaxonomySSRPage({
     ...meta,
-    taxonomyKind,
-    taxonomyLabel,
     items: Array.isArray(payload.data) ? payload.data : [],
     baseUrl: opts.baseUrl || "",
     headerHtml: opts.headerHtml || "",

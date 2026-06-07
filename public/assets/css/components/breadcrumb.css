@@ -1,20 +1,31 @@
 .breadcrumb {
   font-size: 14px;
   margin: 10px 0 15px;
-  color: #000000;
+  color: #0f172a;
+  line-height: 1.5;
 }
 
-.breadcrumb a {
+.breadcrumb a.breadcrumb__brand {
   text-decoration: none;
   color: #ea2222;
   font-weight: 600;
 }
 
-.breadcrumb a:hover {
+.breadcrumb a.breadcrumb__brand:hover,
+.breadcrumb a.breadcrumb__brand:focus-visible {
   color: #2522ed;
 }
 
-.breadcrumb span {
-  color: #000000;
-  margin-left: 5px;
+.breadcrumb__sep {
+  color: #64748b;
+  margin: 0 4px;
+}
+
+.breadcrumb__current {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.breadcrumb__icon {
+  margin-right: 2px;
 }

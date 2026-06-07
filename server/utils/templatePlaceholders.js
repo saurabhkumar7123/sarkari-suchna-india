@@ -5,6 +5,7 @@ const { extractAdvertisementNo } = require("./extractAdvertisementNo");
 const { extractTotalPosts } = require("./extractTotalPosts");
 const { escapeHtml, sanitizeUrl, safeUrlSegment } = require("./escapeHtml");
 const { getBaseUrl } = require("./baseUrl");
+const { renderBreadcrumbHtml } = require("../lib/breadcrumb");
 
 function createSlug(title) {
   return String(title || "")
@@ -204,9 +205,12 @@ function buildJobTemplateVariables(opts) {
   const SEO_TITLE = escapeHtml(seoTitle);
   console.log("SEO_TITLE:", SEO_TITLE);
 
+  const displayTitle = titleTrim || seoBaseTitle;
+
   return {
     /** Escaped for HTML text/attributes — do not double-escape {{DYNAMIC_SECTIONS}} (already HTML). */
-    TITLE: escapeHtml(titleTrim || seoBaseTitle),
+    TITLE: escapeHtml(displayTitle),
+    BREADCRUMB: renderBreadcrumbHtml(displayTitle),
     SEO_TITLE,
     /** Display: explicit post name, else page title (never raw {{POST_NAME}}). */
     POST_NAME: escapeHtml(postNameForTemplate),

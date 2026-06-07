@@ -10,8 +10,6 @@ describe("renderTaxonomySSRPage", () => {
       h1: "Railway Jobs",
       sub: "Browse railway updates.",
       canonicalPath: "/department/railway",
-      taxonomyKind: "department",
-      taxonomyLabel: "Railway",
       baseUrl: "https://www.example.com",
       headerHtml: "<header>Site</header>",
       footerHtml: "<footer>Footer</footer>",
@@ -24,9 +22,12 @@ describe("renderTaxonomySSRPage", () => {
     expect(html).toMatch(/<!DOCTYPE html>/i);
     expect(html).toContain("<h1>Railway Jobs</h1>");
     expect(html).toContain('href="https://www.example.com/department/railway"');
-    expect(html).toContain('href="/categories">Departments</a>');
-    expect(html).toContain('aria-current="page">Railway</span>');
+    expect(html).toContain('href="/" class="breadcrumb__brand"');
+    expect(html).toContain('aria-current="page">Railway Jobs</span>');
+    expect(html).toContain("Sarkari Suchna India");
+    expect(html).toContain('href="/css/components/breadcrumb.css?v=3"');
     expect(html).toContain('href="/css/pages/taxonomy-hub.css?v=1"');
+    expect(html).not.toContain("You are here");
     expect(html).toContain('class="job-list"');
     expect(html).toContain('href="/rrb-alp-2026"');
     expect(html).toContain("RRB ALP 2026");
