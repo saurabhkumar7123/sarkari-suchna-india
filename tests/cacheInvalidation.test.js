@@ -11,5 +11,6 @@ describe("invalidatePageCaches board hub coverage", () => {
     );
     expect(source).toMatch(/MATCH:\s*"pages:board:\*"/);
     expect(source).toMatch(/pages:board:\*/);
+    expect(source).toMatch(/home:taxonomy-stats:v1/);
   });
 });

@@ -18,6 +18,7 @@ const { sendSitemap } = require("./controllers/public/sitemap.controller");
 const fileService = require("./services/file.service");
 const miscService = require("./services/misc.service");
 const pageService = require("./services/page.service");
+const homeStatsService = require("./services/homeStats.service");
 const searchService = require("./services/search.service");
 const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
@@ -466,6 +467,24 @@ function renderTrendingJobsHtml(items) {
     .join("");
 }
 
+function renderPopularBoardsHtml(boards) {
+  if (!Array.isArray(boards) || !boards.length) return "";
+  const pills = boards
+    .map(
+      (board) =>
+        `<a href="${escapeHtml(board.href)}" class="popular-categories__pill">${escapeHtml(board.label)}</a>`
+    )
+    .join("");
+  return `
+<section class="popular-categories section" id="popularBoards" aria-labelledby="popularBoardsTitle">
+  <h2 class="section-title popular-categories__title" id="popularBoardsTitle">Popular Boards</h2>
+  <div class="popular-categories__grid">
+    ${pills}
+    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All Categories</a>
+  </div>
+</section>`;
+}
+
 function renderHomeCardsHtml(sectionResults) {
   const cards = [];
   for (const { def, payload } of sectionResults) {
@@ -602,11 +621,12 @@ async function buildSearchFallbackHtml(req, query) {
 }
 
 async function buildHomepageInitialSections() {
-  const [breakingNews, smallBoxes, trendingJobs, sectionDefs] = await Promise.all([
+  const [breakingNews, smallBoxes, trendingJobs, sectionDefs, popularBoards] = await Promise.all([
     miscService.getBreakingNews().catch(() => []),
     miscService.getSmallBoxes().catch(() => []),
     pageService.getTopViews().catch(() => []),
-    miscService.getHomepageSections().catch(() => [])
+    miscService.getHomepageSections().catch(() => []),
+    homeStatsService.getPopularBoards().catch(() => [])
   ]);
 
   const sectionResults = await Promise.all(
@@ -626,13 +646,15 @@ async function buildHomepageInitialSections() {
     smallBoxes,
     trendingJobs,
     sectionDefs,
-    sectionResults
+    sectionResults,
+    popularBoards
   });
 
   return {
     breakingNewsHtml: renderBreakingNewsHtml(breakingNews),
     smallBoxesHtml: renderSmallBoxesHtml(smallBoxes),
     trendingJobsHtml: renderTrendingJobsHtml(trendingJobs),
+    popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
     dynamicSectionsHtml: renderHomeCardsHtml(sectionResults),
     bootstrapScript: buildHomeBootstrapScriptTag(bootstrap)
   };
@@ -849,6 +871,10 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       .replace(
         /<div class="small-boxes section" id="smallBoxes">[\s\S]*?<\/div>/,
         `<div class="small-boxes section" id="smallBoxes">${homeSections.smallBoxesHtml}</div>`
+      )
+      .replace(
+        /<section class="popular-categories section" id="popularCategories"[\s\S]*?<\/section>/,
+        homeSections.popularBoardsHtml || ""
       )
       .replace(
         /<div class="cards card-grid section cards-section" id="dynamicSections">[\s\S]*?<\/div>/,

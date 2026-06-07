@@ -8,7 +8,8 @@ const BOOTSTRAP_VERSION = 1;
  *   smallBoxes: unknown[],
  *   trendingJobs: unknown[],
  *   sectionDefs: unknown[],
- *   sectionResults: { def: object, payload: object | null }[]
+ *   sectionResults: { def: object, payload: object | null }[],
+ *   popularBoards?: { slug: string, label: string, href: string, count: number }[]
  * }} input
  */
 function buildHomeBootstrap(input) {
@@ -17,7 +18,8 @@ function buildHomeBootstrap(input) {
     smallBoxes = [],
     trendingJobs = [],
     sectionDefs = [],
-    sectionResults = []
+    sectionResults = [],
+    popularBoards = []
   } = input || {};
 
   return {
@@ -27,6 +29,7 @@ function buildHomeBootstrap(input) {
     smallBoxes: Array.isArray(smallBoxes) ? smallBoxes : [],
     sections: Array.isArray(sectionDefs) ? sectionDefs : [],
     sectionPages: Array.isArray(sectionResults) ? sectionResults : [],
+    popularBoards: Array.isArray(popularBoards) ? popularBoards : [],
     trending: {
       success: true,
       data: Array.isArray(trendingJobs) ? trendingJobs : []

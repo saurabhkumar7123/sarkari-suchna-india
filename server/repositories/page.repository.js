@@ -247,6 +247,23 @@ async function selectTopViews(limit, executor = db) {
 }
 
 /**
+ * Active-page counts per normalized department slug (board hub taxonomy).
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ */
+async function selectDepartmentCounts(executor = db) {
+  const normalizedDepartmentColumn = buildNormalizedColumnSql("department");
+  const [rows] = await executor.query(
+    `SELECT ${normalizedDepartmentColumn} AS slug, COUNT(*) AS page_count
+     FROM pages
+     WHERE deleted = 0
+       AND department IS NOT NULL
+       AND TRIM(department) <> ''
+     GROUP BY slug`
+  );
+  return rows;
+}
+
+/**
  * Increment view counter for a public job page (non-deleted).
  * @param {string} slug
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
@@ -1091,6 +1108,7 @@ module.exports = {
   findRowBySlug,
   findPublicRowBySlug,
   selectTopViews,
+  selectDepartmentCounts,
   incrementViewsBySlug,
   searchByFullText,
   searchByLike,

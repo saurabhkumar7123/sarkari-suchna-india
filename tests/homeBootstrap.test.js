@@ -22,12 +22,15 @@ describe("homeBootstrap", () => {
       ];
       const trendingJobs = [{ title: "Trend", slug: "trend" }];
 
+      const popularBoards = [{ slug: "railway", label: "Railway", href: "/tag/railway", count: 3 }];
+
       const boot = buildHomeBootstrap({
         breakingNews,
         smallBoxes,
         trendingJobs,
         sectionDefs,
-        sectionResults
+        sectionResults,
+        popularBoards
       });
 
       expect(boot.v).toBe(BOOTSTRAP_VERSION);
@@ -36,6 +39,7 @@ describe("homeBootstrap", () => {
       expect(boot.smallBoxes).toEqual(smallBoxes);
       expect(boot.sections).toEqual(sectionDefs);
       expect(boot.sectionPages).toEqual(sectionResults);
+      expect(boot.popularBoards).toEqual(popularBoards);
       expect(boot.trending).toEqual({ success: true, data: trendingJobs });
     });
 
@@ -45,6 +49,7 @@ describe("homeBootstrap", () => {
       expect(boot.smallBoxes).toEqual([]);
       expect(boot.sections).toEqual([]);
       expect(boot.sectionPages).toEqual([]);
+      expect(boot.popularBoards).toEqual([]);
       expect(boot.trending).toEqual({ success: true, data: [] });
     });
   });

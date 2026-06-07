@@ -67,6 +67,7 @@ async function invalidatePageCaches(slugs = []) {
     if (slug) keys.add(`page:detail:${slug}`);
   }
   keys.add("pages:topviews");
+  keys.add("home:taxonomy-stats:v1");
   keys.add("finder:all");
 
   try {
