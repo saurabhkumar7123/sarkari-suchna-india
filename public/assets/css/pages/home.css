@@ -1328,8 +1328,46 @@
   }
 
 @media (max-width:768px){
-  body.page-home .main-container > .section + .section{
-    padding-top: 4px;
+  /*
+   * Mobile homepage visual order (SSR DOM unchanged; flex order only).
+   * Small Boxes → Listings → Finder → Departments → Breaking → Trending
+   */
+  body.page-home .main-container > #smallBoxes {
+    order: 1;
+  }
+
+  body.page-home .main-container > #dynamicSections {
+    order: 2;
+  }
+
+  body.page-home .main-container > #openFinder {
+    order: 3;
+  }
+
+  body.page-home .main-container > #taxonomyDiscovery {
+    order: 4;
+  }
+
+  body.page-home .main-container > .breaking-news {
+    order: 5;
+  }
+
+  body.page-home .main-container > #countdownBox {
+    order: 5;
+  }
+
+  body.page-home .main-container > .trending-section {
+    order: 6;
+  }
+
+  body.page-home .main-container > #about-site {
+    order: 7;
+  }
+
+  /* Adjacent-sibling borders follow DOM, not visual order — rely on flex gap */
+  body.page-home .main-container > .section + .section {
+    padding-top: 0;
+    border-top: none;
   }
 
   body.page-home #about-site .sarkari-about{
