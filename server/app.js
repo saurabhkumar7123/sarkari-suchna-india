@@ -502,6 +502,23 @@ function renderPopularQualificationsHtml(qualifications) {
 </section>`;
 }
 
+function renderPopularStatesHtml(states) {
+  if (!Array.isArray(states) || !states.length) return "";
+  const pills = states
+    .map((item) => {
+      const label = `${item.label} (${item.count})`;
+      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+    })
+    .join("");
+  return `
+<section class="popular-categories section" id="popularStates" aria-labelledby="popularStatesTitle">
+  <h2 class="section-title popular-categories__title" id="popularStatesTitle">Popular States</h2>
+  <div class="popular-categories__grid">
+    ${pills}
+  </div>
+</section>`;
+}
+
 function renderHomeCardsHtml(sectionResults) {
   const cards = [];
   for (const { def, payload } of sectionResults) {
@@ -643,13 +660,14 @@ async function buildHomepageInitialSections() {
     miscService.getSmallBoxes().catch(() => []),
     pageService.getTopViews().catch(() => []),
     miscService.getHomepageSections().catch(() => []),
-    homeStatsService.getTaxonomyStats().catch(() => ({ boards: [], qualifications: [] }))
+    homeStatsService.getTaxonomyStats().catch(() => ({ boards: [], qualifications: [], states: [] }))
   ]);
 
   const popularBoards = Array.isArray(taxonomyStats.boards) ? taxonomyStats.boards : [];
   const popularQualifications = Array.isArray(taxonomyStats.qualifications)
     ? taxonomyStats.qualifications
     : [];
+  const popularStates = Array.isArray(taxonomyStats.states) ? taxonomyStats.states : [];
 
   const sectionResults = await Promise.all(
     sectionDefs.map(async (def) => {
@@ -670,7 +688,8 @@ async function buildHomepageInitialSections() {
     sectionDefs,
     sectionResults,
     popularBoards,
-    popularQualifications
+    popularQualifications,
+    popularStates
   });
 
   return {
@@ -679,8 +698,11 @@ async function buildHomepageInitialSections() {
     trendingJobsHtml: renderTrendingJobsHtml(trendingJobs),
     popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
     popularQualificationsHtml: renderPopularQualificationsHtml(popularQualifications),
+    popularStatesHtml: renderPopularStatesHtml(popularStates),
     taxonomyDiscoveryHtml:
-      renderPopularBoardsHtml(popularBoards) + renderPopularQualificationsHtml(popularQualifications),
+      renderPopularBoardsHtml(popularBoards) +
+      renderPopularQualificationsHtml(popularQualifications) +
+      renderPopularStatesHtml(popularStates),
     dynamicSectionsHtml: renderHomeCardsHtml(sectionResults),
     bootstrapScript: buildHomeBootstrapScriptTag(bootstrap)
   };

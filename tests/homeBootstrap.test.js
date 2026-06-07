@@ -26,6 +26,9 @@ describe("homeBootstrap", () => {
       const popularQualifications = [
         { slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 7 }
       ];
+      const popularStates = [
+        { slug: "uttar pradesh", label: "Uttar Pradesh", href: "/jobs.html?state=uttar%20pradesh", count: 4 }
+      ];
 
       const boot = buildHomeBootstrap({
         breakingNews,
@@ -34,7 +37,8 @@ describe("homeBootstrap", () => {
         sectionDefs,
         sectionResults,
         popularBoards,
-        popularQualifications
+        popularQualifications,
+        popularStates
       });
 
       expect(boot.v).toBe(BOOTSTRAP_VERSION);
@@ -45,6 +49,7 @@ describe("homeBootstrap", () => {
       expect(boot.sectionPages).toEqual(sectionResults);
       expect(boot.popularBoards).toEqual(popularBoards);
       expect(boot.popularQualifications).toEqual(popularQualifications);
+      expect(boot.popularStates).toEqual(popularStates);
       expect(boot.trending).toEqual({ success: true, data: trendingJobs });
     });
 
@@ -56,6 +61,7 @@ describe("homeBootstrap", () => {
       expect(boot.sectionPages).toEqual([]);
       expect(boot.popularBoards).toEqual([]);
       expect(boot.popularQualifications).toEqual([]);
+      expect(boot.popularStates).toEqual([]);
       expect(boot.trending).toEqual({ success: true, data: [] });
     });
   });

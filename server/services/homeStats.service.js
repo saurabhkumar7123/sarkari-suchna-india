@@ -3,7 +3,7 @@
 const pageRepository = require("../repositories/page.repository");
 const { getCache, setCache, delCache } = require("./cache.services");
 const { allBoardHubs, BOARD_SLUG_SET } = require("../lib/boardHubs");
-const { ALLOWED_JOB_QUALIFICATIONS } = require("../lib/structuredFields");
+const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("../lib/structuredFields");
 
 const CACHE_KEY = "home:taxonomy-stats:v1";
 const TTL_SEC = parseInt(process.env.CACHE_HOME_TAXONOMY_TTL || "300", 10);
@@ -19,13 +19,30 @@ const QUALIFICATION_REGISTRY = [
   { slug: "phd", label: "PhD" }
 ];
 
+/** Display labels aligned with Finder state options + whitelist. */
+const STATE_REGISTRY = [
+  { slug: "all india", label: "All India" },
+  { slug: "uttar pradesh", label: "Uttar Pradesh" },
+  { slug: "bihar", label: "Bihar" },
+  { slug: "madhya pradesh", label: "Madhya Pradesh" },
+  { slug: "rajasthan", label: "Rajasthan" },
+  { slug: "other", label: "Other" },
+  { slug: "delhi", label: "Delhi" },
+  { slug: "uttarakhand", label: "Uttarakhand" }
+];
+
 /**
  * @typedef {{ slug: string, label: string, href: string, count: number }} PopularBoardRow
  * @typedef {{ slug: string, label: string, href: string, count: number }} PopularQualificationRow
+ * @typedef {{ slug: string, label: string, href: string, count: number }} PopularStateRow
  */
 
 function buildQualificationHref(slug) {
   return `/jobs.html?qualification=${encodeURIComponent(slug)}`;
+}
+
+function buildStateHref(slug) {
+  return `/jobs.html?state=${encodeURIComponent(slug)}`;
 }
 
 function buildPopularQualificationsFromCounts(rows) {
@@ -47,14 +64,34 @@ function buildPopularQualificationsFromCounts(rows) {
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 }
 
+function buildPopularStatesFromCounts(rows) {
+  const countBySlug = new Map();
+
+  for (const row of rows) {
+    const slug = String(row.slug || "").trim().toLowerCase();
+    if (!slug || !ALLOWED_JOB_STATES.has(slug)) continue;
+    countBySlug.set(slug, Number(row.page_count) || 0);
+  }
+
+  return STATE_REGISTRY.map((entry) => ({
+    slug: entry.slug,
+    label: entry.label,
+    href: buildStateHref(entry.slug),
+    count: countBySlug.get(entry.slug) || 0
+  }))
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
 /**
  * Aggregate taxonomy counts; keep whitelist values with count > 0.
- * @returns {Promise<{ generatedAt: string, boards: PopularBoardRow[], qualifications: PopularQualificationRow[] }>}
+ * @returns {Promise<{ generatedAt: string, boards: PopularBoardRow[], qualifications: PopularQualificationRow[], states: PopularStateRow[] }>}
  */
 async function recomputeTaxonomyStats() {
-  const [departmentRows, qualificationRows] = await Promise.all([
+  const [departmentRows, qualificationRows, stateRows] = await Promise.all([
     pageRepository.selectDepartmentCounts(),
-    pageRepository.selectQualificationCounts()
+    pageRepository.selectQualificationCounts(),
+    pageRepository.selectStateCounts()
   ]);
 
   const countByDept = new Map();
@@ -75,11 +112,13 @@ async function recomputeTaxonomyStats() {
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 
   const qualifications = buildPopularQualificationsFromCounts(qualificationRows);
+  const states = buildPopularStatesFromCounts(stateRows);
 
   const stats = {
     generatedAt: new Date().toISOString(),
     boards,
-    qualifications
+    qualifications,
+    states
   };
 
   await setCache(CACHE_KEY, stats, TTL_SEC);
@@ -98,7 +137,12 @@ async function getTaxonomyStats(opts = {}) {
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      if (parsed && Array.isArray(parsed.boards) && Array.isArray(parsed.qualifications)) {
+      if (
+        parsed &&
+        Array.isArray(parsed.boards) &&
+        Array.isArray(parsed.qualifications) &&
+        Array.isArray(parsed.states)
+      ) {
         return parsed;
       }
     } catch {
@@ -127,6 +171,15 @@ async function getPopularQualifications() {
   return Array.isArray(stats.qualifications) ? stats.qualifications : [];
 }
 
+/**
+ * Active states only (count > 0), sorted by popularity.
+ * @returns {Promise<PopularStateRow[]>}
+ */
+async function getPopularStates() {
+  const stats = await getTaxonomyStats();
+  return Array.isArray(stats.states) ? stats.states : [];
+}
+
 async function invalidateTaxonomyStats() {
   await delCache(CACHE_KEY);
 }
@@ -135,10 +188,13 @@ module.exports = {
   CACHE_KEY,
   TTL_SEC,
   QUALIFICATION_REGISTRY,
+  STATE_REGISTRY,
   buildQualificationHref,
+  buildStateHref,
   getTaxonomyStats,
   getPopularBoards,
   getPopularQualifications,
+  getPopularStates,
   recomputeTaxonomyStats,
   invalidateTaxonomyStats
 };

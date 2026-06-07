@@ -2,7 +2,8 @@
 
 jest.mock("../server/repositories/page.repository", () => ({
   selectDepartmentCounts: jest.fn(),
-  selectQualificationCounts: jest.fn()
+  selectQualificationCounts: jest.fn(),
+  selectStateCounts: jest.fn()
 }));
 
 jest.mock("../server/services/cache.services", () => ({
@@ -21,6 +22,7 @@ describe("homeStats.service", () => {
     cacheServices.getCache.mockResolvedValue(null);
     cacheServices.setCache.mockResolvedValue(undefined);
     pageRepository.selectQualificationCounts.mockResolvedValue([]);
+    pageRepository.selectStateCounts.mockResolvedValue([]);
   });
 
   it("returns only whitelist boards with count > 0, sorted by count desc", async () => {
@@ -44,7 +46,11 @@ describe("homeStats.service", () => {
     });
     expect(cacheServices.setCache).toHaveBeenCalledWith(
       homeStats.CACHE_KEY,
-      expect.objectContaining({ boards: expect.any(Array), qualifications: expect.any(Array) }),
+      expect.objectContaining({
+        boards: expect.any(Array),
+        qualifications: expect.any(Array),
+        states: expect.any(Array)
+      }),
       homeStats.TTL_SEC
     );
   });
@@ -68,23 +74,47 @@ describe("homeStats.service", () => {
       href: "/jobs.html?qualification=graduation",
       count: 7
     });
-    expect(stats.qualifications[2]).toMatchObject({
-      slug: "10th",
-      href: "/jobs.html?qualification=10th"
+  });
+
+  it("returns only whitelist states with count > 0, sorted by count desc", async () => {
+    pageRepository.selectDepartmentCounts.mockResolvedValue([]);
+    pageRepository.selectStateCounts.mockResolvedValue([
+      { slug: "all india", page_count: 6 },
+      { slug: "uttar pradesh", page_count: 4 },
+      { slug: "bihar", page_count: 0 },
+      { slug: "invalid-state", page_count: 99 }
+    ]);
+
+    const stats = await homeStats.recomputeTaxonomyStats();
+
+    expect(stats.states.map((s) => s.slug)).toEqual(["all india", "uttar pradesh"]);
+    expect(stats.states[0]).toMatchObject({
+      slug: "all india",
+      label: "All India",
+      href: "/jobs.html?state=all%20india",
+      count: 6
+    });
+    expect(stats.states[1]).toMatchObject({
+      slug: "uttar pradesh",
+      label: "Uttar Pradesh",
+      href: "/jobs.html?state=uttar%20pradesh",
+      count: 4
     });
   });
 
-  it("encodes post graduation slug in jobs.html href", () => {
+  it("encodes spaced slugs in jobs.html hrefs", () => {
     expect(homeStats.buildQualificationHref("post graduation")).toBe(
       "/jobs.html?qualification=post%20graduation"
     );
+    expect(homeStats.buildStateHref("uttar pradesh")).toBe("/jobs.html?state=uttar%20pradesh");
   });
 
   it("serves cached taxonomy stats without querying the database", async () => {
     const cached = {
       generatedAt: "2026-01-01T00:00:00.000Z",
       boards: [{ slug: "ssc", label: "SSC", href: "/tag/ssc", count: 5 }],
-      qualifications: [{ slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 3 }]
+      qualifications: [{ slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 3 }],
+      states: [{ slug: "delhi", label: "Delhi", href: "/jobs.html?state=delhi", count: 2 }]
     };
     cacheServices.getCache.mockResolvedValue(JSON.stringify(cached));
 
@@ -93,22 +123,41 @@ describe("homeStats.service", () => {
     expect(stats).toEqual(cached);
     expect(pageRepository.selectDepartmentCounts).not.toHaveBeenCalled();
     expect(pageRepository.selectQualificationCounts).not.toHaveBeenCalled();
+    expect(pageRepository.selectStateCounts).not.toHaveBeenCalled();
   });
 
-  it("recomputes when cached payload lacks qualifications array", async () => {
+  it("recomputes when cached payload lacks states array", async () => {
     cacheServices.getCache.mockResolvedValue(
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        boards: [{ slug: "ssc", label: "SSC", href: "/tag/ssc", count: 5 }]
+        boards: [{ slug: "ssc", label: "SSC", href: "/tag/ssc", count: 5 }],
+        qualifications: [{ slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 2 }]
       })
     );
     pageRepository.selectDepartmentCounts.mockResolvedValue([{ slug: "ssc", page_count: 5 }]);
     pageRepository.selectQualificationCounts.mockResolvedValue([{ slug: "graduation", page_count: 2 }]);
+    pageRepository.selectStateCounts.mockResolvedValue([{ slug: "uttar pradesh", page_count: 3 }]);
 
     const stats = await homeStats.getTaxonomyStats();
 
-    expect(pageRepository.selectQualificationCounts).toHaveBeenCalled();
-    expect(stats.qualifications).toHaveLength(1);
+    expect(pageRepository.selectStateCounts).toHaveBeenCalled();
+    expect(stats.states).toHaveLength(1);
+    expect(stats.states[0].slug).toBe("uttar pradesh");
+  });
+
+  it("getPopularStates returns states array from stats", async () => {
+    cacheServices.getCache.mockResolvedValue(
+      JSON.stringify({
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        boards: [],
+        qualifications: [],
+        states: [{ slug: "bihar", label: "Bihar", href: "/jobs.html?state=bihar", count: 2 }]
+      })
+    );
+
+    const states = await homeStats.getPopularStates();
+    expect(states).toHaveLength(1);
+    expect(states[0].slug).toBe("bihar");
   });
 
   it("getPopularQualifications returns qualifications array from stats", async () => {
@@ -116,7 +165,8 @@ describe("homeStats.service", () => {
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
         boards: [],
-        qualifications: [{ slug: "iti", label: "ITI", href: "/jobs.html?qualification=iti", count: 4 }]
+        qualifications: [{ slug: "iti", label: "ITI", href: "/jobs.html?qualification=iti", count: 4 }],
+        states: []
       })
     );
 
@@ -130,7 +180,8 @@ describe("homeStats.service", () => {
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
         boards: [{ slug: "bank", label: "Bank", href: "/tag/bank", count: 1 }],
-        qualifications: []
+        qualifications: [],
+        states: []
       })
     );
 

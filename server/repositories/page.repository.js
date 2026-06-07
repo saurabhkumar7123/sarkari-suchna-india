@@ -281,6 +281,23 @@ async function selectQualificationCounts(executor = db) {
 }
 
 /**
+ * Active-page counts per normalized state slug.
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ */
+async function selectStateCounts(executor = db) {
+  const normalizedStateColumn = buildNormalizedColumnSql("state");
+  const [rows] = await executor.query(
+    `SELECT ${normalizedStateColumn} AS slug, COUNT(*) AS page_count
+     FROM pages
+     WHERE deleted = 0
+       AND state IS NOT NULL
+       AND TRIM(state) <> ''
+     GROUP BY ${normalizedStateColumn}`
+  );
+  return rows;
+}
+
+/**
  * Increment view counter for a public job page (non-deleted).
  * @param {string} slug
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
@@ -1127,6 +1144,7 @@ module.exports = {
   selectTopViews,
   selectDepartmentCounts,
   selectQualificationCounts,
+  selectStateCounts,
   incrementViewsBySlug,
   searchByFullText,
   searchByLike,

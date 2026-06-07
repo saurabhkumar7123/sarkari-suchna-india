@@ -10,7 +10,8 @@ const BOOTSTRAP_VERSION = 1;
  *   sectionDefs: unknown[],
  *   sectionResults: { def: object, payload: object | null }[],
  *   popularBoards?: { slug: string, label: string, href: string, count: number }[],
- *   popularQualifications?: { slug: string, label: string, href: string, count: number }[]
+ *   popularQualifications?: { slug: string, label: string, href: string, count: number }[],
+ *   popularStates?: { slug: string, label: string, href: string, count: number }[]
  * }} input
  */
 function buildHomeBootstrap(input) {
@@ -21,7 +22,8 @@ function buildHomeBootstrap(input) {
     sectionDefs = [],
     sectionResults = [],
     popularBoards = [],
-    popularQualifications = []
+    popularQualifications = [],
+    popularStates = []
   } = input || {};
 
   return {
@@ -33,6 +35,7 @@ function buildHomeBootstrap(input) {
     sectionPages: Array.isArray(sectionResults) ? sectionResults : [],
     popularBoards: Array.isArray(popularBoards) ? popularBoards : [],
     popularQualifications: Array.isArray(popularQualifications) ? popularQualifications : [],
+    popularStates: Array.isArray(popularStates) ? popularStates : [],
     trending: {
       success: true,
       data: Array.isArray(trendingJobs) ? trendingJobs : []
