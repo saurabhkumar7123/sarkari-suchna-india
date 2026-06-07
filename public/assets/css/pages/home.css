@@ -1617,6 +1617,33 @@ body.page-home .taxonomy-discovery .popular-categories {
   min-height: 0;
 }
 
+/* View All — fixed CTA in taxonomy discovery (never inherits tab/pill state) */
+body.page-home .taxonomy-discovery .popular-categories__pill--view-all,
+body.page-home .taxonomy-discovery .taxonomy-panel--active .popular-categories__pill--view-all,
+body.page-home .taxonomy-discovery .popular-categories__pill--view-all:any-link {
+  color: var(--site-text-inverse, #fff);
+  background: linear-gradient(
+    45deg,
+    var(--home-primary, var(--site-primary)),
+    var(--home-primary-2, var(--site-primary-2))
+  );
+  border-color: transparent;
+  box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+}
+
+body.page-home .taxonomy-discovery .popular-categories__pill--view-all:hover,
+body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-visible {
+  color: var(--site-text-inverse, #fff);
+  background: linear-gradient(
+    45deg,
+    var(--home-primary, var(--site-primary)),
+    var(--home-primary-2, var(--site-primary-2))
+  );
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: var(--home-shadow, var(--site-shadow));
+}
+
 @media (min-width: 769px) {
   .taxonomy-tabs {
     gap: 10px;
@@ -1628,8 +1655,41 @@ body.page-home .taxonomy-discovery .popular-categories {
     padding: 12px 16px;
   }
 
+  /* Active panel — structured section module (desktop) */
+  body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
+    background: var(--home-surface, var(--site-surface, #fff));
+    border: 1px solid var(--home-border-soft, var(--site-border));
+    border-radius: var(--home-radius-sm, 12px);
+    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+    padding: 16px 18px 18px;
+    box-sizing: border-box;
+  }
+
+  body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
+    margin-top: 0;
+  }
+
+  /* Multi-column pill grids — desktop scanning layout */
   body.page-home .taxonomy-discovery .popular-categories__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     gap: 10px;
+    align-items: stretch;
+  }
+
+  body.page-home .taxonomy-discovery .popular-categories__pill {
+    width: auto;
+    max-width: none;
+    min-width: 0;
+  }
+
+  #popularBoards .popular-categories__grid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  }
+
+  #popularQualifications .popular-categories__grid,
+  #popularStates .popular-categories__grid {
+    grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
   }
 }
 
@@ -1678,40 +1738,13 @@ body.page-home .taxonomy-discovery .popular-categories {
     grid-column: span 2;
   }
 
-  /* View All — fixed CTA; never inherit tab/panel/pill state */
-  body.page-home .taxonomy-discovery .popular-categories__pill--view-all,
-  body.page-home .taxonomy-discovery .taxonomy-panel--active .popular-categories__pill--view-all,
-  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:any-link {
+  #popularBoards .popular-categories__pill--view-all {
     flex: unset;
     min-width: 0;
-    color: var(--site-text-inverse, #fff);
-    background: linear-gradient(
-      45deg,
-      var(--home-primary, var(--site-primary)),
-      var(--home-primary-2, var(--site-primary-2))
-    );
-    border-color: transparent;
-    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
-  }
-
-  #popularBoards .popular-categories__pill--view-all {
     grid-column: span 2;
   }
 
-  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:hover,
-  body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-visible {
-    color: var(--site-text-inverse, #fff);
-    background: linear-gradient(
-      45deg,
-      var(--home-primary, var(--site-primary)),
-      var(--home-primary-2, var(--site-primary-2))
-    );
-    border-color: transparent;
-    transform: translateY(-1px);
-    box-shadow: var(--home-shadow, var(--site-shadow));
-  }
-
-  /* Active taxonomy panel — structured section module (mobile only) */
+  /* Active taxonomy panel — structured section module (mobile) */
   body.page-home .taxonomy-discovery .taxonomy-tabs {
     margin-bottom: 10px;
   }
