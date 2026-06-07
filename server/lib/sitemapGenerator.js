@@ -11,7 +11,7 @@ const OUT_FILE = path.join(OUT_DIR, "sitemap.xml");
 const CHUNK_SIZE = Math.max(5000, parseInt(process.env.SITEMAP_CHUNK_SIZE || "40000", 10));
 
 function staticPaths(baseUrl) {
-  const boardTagPaths = allBoardHubs().map((hub) => `/tag/${hub.slug}`);
+  const boardTagPaths = allBoardHubs().map((hub) => `/board/${hub.slug}`);
   const paths = [
     "/",
     "/search",

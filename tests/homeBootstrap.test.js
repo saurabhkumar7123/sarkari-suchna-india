@@ -22,12 +22,12 @@ describe("homeBootstrap", () => {
       ];
       const trendingJobs = [{ title: "Trend", slug: "trend" }];
 
-      const popularBoards = [{ slug: "railway", label: "Railway", href: "/tag/railway", count: 3 }];
+      const popularBoards = [{ slug: "railway", label: "Railway", href: "/board/railway", count: 3 }];
       const popularQualifications = [
-        { slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 7 }
+        { slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 7 }
       ];
       const popularStates = [
-        { slug: "uttar pradesh", label: "Uttar Pradesh", href: "/jobs.html?state=uttar%20pradesh", count: 4 }
+        { slug: "uttar pradesh", label: "Uttar Pradesh", href: "/state/uttar-pradesh", count: 4 }
       ];
 
       const boot = buildHomeBootstrap({

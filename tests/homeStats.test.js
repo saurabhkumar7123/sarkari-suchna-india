@@ -41,7 +41,7 @@ describe("homeStats.service", () => {
     expect(stats.boards[0]).toMatchObject({
       slug: "railway",
       label: "Railway",
-      href: "/tag/railway",
+      href: "/board/railway",
       count: 3
     });
     expect(cacheServices.setCache).toHaveBeenCalledWith(
@@ -71,7 +71,7 @@ describe("homeStats.service", () => {
     expect(stats.qualifications[0]).toMatchObject({
       slug: "graduation",
       label: "Graduation",
-      href: "/jobs.html?qualification=graduation",
+      href: "/qualification/graduation",
       count: 7
     });
   });
@@ -91,30 +91,28 @@ describe("homeStats.service", () => {
     expect(stats.states[0]).toMatchObject({
       slug: "all india",
       label: "All India",
-      href: "/jobs.html?state=all%20india",
+      href: "/state/all-india",
       count: 6
     });
     expect(stats.states[1]).toMatchObject({
       slug: "uttar pradesh",
       label: "Uttar Pradesh",
-      href: "/jobs.html?state=uttar%20pradesh",
+      href: "/state/uttar-pradesh",
       count: 4
     });
   });
 
-  it("encodes spaced slugs in jobs.html hrefs", () => {
-    expect(homeStats.buildQualificationHref("post graduation")).toBe(
-      "/jobs.html?qualification=post%20graduation"
-    );
-    expect(homeStats.buildStateHref("uttar pradesh")).toBe("/jobs.html?state=uttar%20pradesh");
+  it("uses hyphenated path slugs for multi-word taxonomy hrefs", () => {
+    expect(homeStats.buildQualificationHref("post graduation")).toBe("/qualification/post-graduation");
+    expect(homeStats.buildStateHref("uttar pradesh")).toBe("/state/uttar-pradesh");
   });
 
   it("serves cached taxonomy stats without querying the database", async () => {
     const cached = {
       generatedAt: "2026-01-01T00:00:00.000Z",
-      boards: [{ slug: "ssc", label: "SSC", href: "/tag/ssc", count: 5 }],
-      qualifications: [{ slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 3 }],
-      states: [{ slug: "delhi", label: "Delhi", href: "/jobs.html?state=delhi", count: 2 }]
+      boards: [{ slug: "ssc", label: "SSC", href: "/board/ssc", count: 5 }],
+      qualifications: [{ slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 3 }],
+      states: [{ slug: "delhi", label: "Delhi", href: "/state/delhi", count: 2 }]
     };
     cacheServices.getCache.mockResolvedValue(JSON.stringify(cached));
 
@@ -130,8 +128,8 @@ describe("homeStats.service", () => {
     cacheServices.getCache.mockResolvedValue(
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        boards: [{ slug: "ssc", label: "SSC", href: "/tag/ssc", count: 5 }],
-        qualifications: [{ slug: "graduation", label: "Graduation", href: "/jobs.html?qualification=graduation", count: 2 }]
+        boards: [{ slug: "ssc", label: "SSC", href: "/board/ssc", count: 5 }],
+        qualifications: [{ slug: "graduation", label: "Graduation", href: "/qualification/graduation", count: 2 }]
       })
     );
     pageRepository.selectDepartmentCounts.mockResolvedValue([{ slug: "ssc", page_count: 5 }]);
@@ -151,7 +149,7 @@ describe("homeStats.service", () => {
         generatedAt: "2026-01-01T00:00:00.000Z",
         boards: [],
         qualifications: [],
-        states: [{ slug: "bihar", label: "Bihar", href: "/jobs.html?state=bihar", count: 2 }]
+        states: [{ slug: "bihar", label: "Bihar", href: "/state/bihar", count: 2 }]
       })
     );
 
@@ -165,7 +163,7 @@ describe("homeStats.service", () => {
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
         boards: [],
-        qualifications: [{ slug: "iti", label: "ITI", href: "/jobs.html?qualification=iti", count: 4 }],
+        qualifications: [{ slug: "iti", label: "ITI", href: "/qualification/iti", count: 4 }],
         states: []
       })
     );
@@ -179,7 +177,7 @@ describe("homeStats.service", () => {
     cacheServices.getCache.mockResolvedValue(
       JSON.stringify({
         generatedAt: "2026-01-01T00:00:00.000Z",
-        boards: [{ slug: "bank", label: "Bank", href: "/tag/bank", count: 1 }],
+        boards: [{ slug: "bank", label: "Bank", href: "/board/bank", count: 1 }],
         qualifications: [],
         states: []
       })

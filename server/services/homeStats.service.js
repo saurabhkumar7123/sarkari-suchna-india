@@ -4,6 +4,11 @@ const pageRepository = require("../repositories/page.repository");
 const { getCache, setCache, delCache } = require("./cache.services");
 const { allBoardHubs, BOARD_SLUG_SET } = require("../lib/boardHubs");
 const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("../lib/structuredFields");
+const {
+  buildBoardPath,
+  buildQualificationPath,
+  buildStatePath
+} = require("../lib/taxonomySlugs");
 
 const CACHE_KEY = "home:taxonomy-stats:v1";
 const TTL_SEC = parseInt(process.env.CACHE_HOME_TAXONOMY_TTL || "300", 10);
@@ -38,11 +43,11 @@ const STATE_REGISTRY = [
  */
 
 function buildQualificationHref(slug) {
-  return `/jobs.html?qualification=${encodeURIComponent(slug)}`;
+  return buildQualificationPath(slug);
 }
 
 function buildStateHref(slug) {
-  return `/jobs.html?state=${encodeURIComponent(slug)}`;
+  return buildStatePath(slug);
 }
 
 function buildPopularQualificationsFromCounts(rows) {
@@ -105,7 +110,7 @@ async function recomputeTaxonomyStats() {
     .map((hub) => ({
       slug: hub.slug,
       label: hub.label,
-      href: `/tag/${hub.slug}`,
+      href: buildBoardPath(hub.slug),
       count: countByDept.get(hub.slug) || 0
     }))
     .filter((board) => board.count > 0)

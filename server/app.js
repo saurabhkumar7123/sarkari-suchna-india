@@ -19,6 +19,13 @@ const fileService = require("./services/file.service");
 const miscService = require("./services/misc.service");
 const pageService = require("./services/page.service");
 const homeStatsService = require("./services/homeStats.service");
+const taxonomyPageService = require("./services/taxonomyPage.service");
+const {
+  buildBoardPath,
+  buildQualificationPath,
+  buildStatePath
+} = require("./lib/taxonomySlugs");
+const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("./lib/structuredFields");
 const searchService = require("./services/search.service");
 const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
@@ -893,15 +900,27 @@ app.get("/search", asyncHandler(async (req, res) => {
   }
 }));
 
-/** Phase 2: department-only jobs filter → canonical board hub URL */
+/** Legacy jobs.html filters → canonical SEO taxonomy hub URLs */
 app.get("/jobs.html", asyncHandler(async (req, res, next) => {
   const dept = normalizeBoardSlug(req.query.department);
-  const hasExtra =
-    req.query.qualification || req.query.state || req.query.status || req.query.jobType || req.query.source;
-  if (dept && isBoardSlug(dept) && !hasExtra) {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const target = page > 1 ? `/tag/${dept}?page=${page}` : `/tag/${dept}`;
-    return res.redirect(301, target);
+  const qual = String(req.query.qualification || "")
+    .trim()
+    .toLowerCase();
+  const state = String(req.query.state || "")
+    .trim()
+    .toLowerCase();
+  const hasExtra = req.query.status || req.query.jobType || req.query.source;
+
+  if (!hasExtra) {
+    if (dept && isBoardSlug(dept) && !qual && !state) {
+      return res.redirect(301, buildBoardPath(dept));
+    }
+    if (qual && !dept && !state && ALLOWED_JOB_QUALIFICATIONS.has(qual)) {
+      return res.redirect(301, buildQualificationPath(qual));
+    }
+    if (state && !dept && !qual && ALLOWED_JOB_STATES.has(state)) {
+      return res.redirect(301, buildStatePath(state));
+    }
   }
   return next();
 }));
@@ -950,76 +969,38 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
   }
 }));
 
-const { isBoardSlug, getBoardHub, normalizeBoardSlug } = require("./lib/boardHubs");
+const { isBoardSlug, normalizeBoardSlug } = require("./lib/boardHubs");
 
-function renderBoardHubItemsHtml(boardLabel, items) {
-  if (!Array.isArray(items) || !items.length) {
-    return '<div class="card"><div class="card-content"><p class="listing-empty">No updates found for this category yet.</p></div></div>';
+async function sendTaxonomyHubHtml(req, res, type) {
+  const slug = String(req.params.slug || "").trim();
+  if (!slug) {
+    return res.redirect(302, "/search");
   }
-  const linksHtml = items
-    .map((item) => `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a></li>`)
-    .join("");
-  return `
-    <div class="card">
-      <div class="ribbon navy-ribbon">
-        <span class="title">${escapeHtml(String(boardLabel || "Jobs").toUpperCase())}</span>
-      </div>
-      <div class="card-content">
-        <ul class="job-list">${linksHtml}</ul>
-      </div>
-    </div>`;
+  const html = await taxonomyPageService.buildTaxonomyPage({
+    type,
+    slug,
+    baseUrl: getPublicBaseUrl(req),
+    headerHtml: cachedHeader
+  });
+  if (!html) {
+    return res.redirect(302, `/search?q=${encodeURIComponent(slug)}`);
+  }
+  const normalized = normalizeSeoUrlsInHtml(html, getPublicBaseUrl(req));
+  return sendHtmlString(req, res, normalized);
 }
 
-async function sendBoardHubHtml(req, res, boardSlug) {
-  const hub = getBoardHub(boardSlug);
-  if (!hub) {
-    return res.redirect(302, `/search?q=${encodeURIComponent(boardSlug)}`);
-  }
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = 20;
-  const baseUrl = getPublicBaseUrl(req);
-  const canonicalPath = page > 1 ? `/tag/${hub.slug}?page=${page}` : `/tag/${hub.slug}`;
-  const absoluteUrl = baseUrl ? `${baseUrl}${canonicalPath}` : canonicalPath;
-  const listingHtmlPath = path.join(generatedDir, "static", "listing.html");
-  const source = await fileService.readFile(listingHtmlPath, "utf8");
-  const payload = await pageService
-    .listPagesByDepartment({ department: hub.slug, page, limit })
-    .catch(() => ({ data: [], pagination: { totalPages: 0, currentPage: page, limit } }));
-  let html = String(source)
-    .replace(/<title id="pageTitle">[\s\S]*?<\/title>/, `<title id="pageTitle">${escapeHtml(hub.title)}</title>`)
-    .replace(
-      /<meta name="description" id="metaDesc" content="[^"]*">/,
-      `<meta name="description" id="metaDesc" content="${escapeHtml(hub.description)}">`
-    )
-    .replace(/<link rel="canonical" id="canonicalLink" href="[^"]*">/, `<link rel="canonical" id="canonicalLink" href="${absoluteUrl}">`)
-    .replace(/<meta property="og:title" id="ogTitle" content="[^"]*">/, `<meta property="og:title" id="ogTitle" content="${escapeHtml(hub.title)}">`)
-    .replace(/<meta property="og:description" id="ogDesc" content="[^"]*">/, `<meta property="og:description" id="ogDesc" content="${escapeHtml(hub.description)}">`)
-    .replace(/<meta property="og:url" id="ogUrl" content="[^"]*">/, `<meta property="og:url" id="ogUrl" content="${absoluteUrl}">`)
-    .replace(/<h1 id="listingHeading">[\s\S]*?<\/h1>/, `<h1 id="listingHeading">${escapeHtml(hub.h1)}</h1>`)
-    .replace(/<p id="listingSub">[\s\S]*?<\/p>/, `<p id="listingSub">${escapeHtml(hub.sub)}</p>`)
-    .replace(
-      /<div class="cards card-grid" id="dynamicSections">[\s\S]*?<\/div>/,
-      `<div class="cards card-grid" id="dynamicSections">${renderBoardHubItemsHtml(hub.label, payload.data)}</div>`
-    )
-    .replace(
-      '<script src="/js/listing.js" defer></script>',
-      `<script>window.__BOARD_HUB_SLUG__=${JSON.stringify(hub.slug)};window.__BOARD_HUB_PAGINATION__=${JSON.stringify(payload.pagination || null)};</script>\n<script src="/js/board-hub.js" defer></script>`
-    );
-  if (!/<meta name="robots"[^>]*>/i.test(html)) {
-    html = html.replace(/<\/head>/i, '  <meta name="robots" content="index, follow">\n</head>');
-  }
-  html = normalizeSeoUrlsInHtml(html, baseUrl);
-  return sendHtmlString(req, res, html);
-}
+app.get("/board/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "board")));
+app.get("/qualification/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "qualification")));
+app.get("/state/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "state")));
 
-/** Board hubs: /tag/ssc → department listing; other tags → search (until exam tag hubs). */
+/** Legacy /tag/{board} → /board/{board}; other tags → search. */
 app.get("/tag/:tag", asyncHandler(async (req, res) => {
   const raw = normalizeBoardSlug(req.params.tag);
   if (!raw) {
     return res.redirect(302, "/search");
   }
   if (isBoardSlug(raw)) {
-    return sendBoardHubHtml(req, res, raw);
+    return res.redirect(301, buildBoardPath(raw));
   }
   return res.redirect(302, `/search?q=${encodeURIComponent(raw)}`);
 }));
