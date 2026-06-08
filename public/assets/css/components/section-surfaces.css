@@ -1,0 +1,19 @@
+/**
+ * Section surface / on-surface component layer.
+ * Tokens defined in tokens.css (--section-header-*).
+ * Parent sets color; titles inherit for theme-safe readability.
+ */
+
+.card-header,
+.section-header-surface {
+  background: var(--section-header-bg, var(--site-surface-2));
+  color: var(--section-header-text, var(--site-text));
+  border-bottom-color: var(--section-header-border, var(--site-border));
+}
+
+.card-header h2,
+.card-header .section-title,
+.section-header-surface h2,
+.section-header-surface .section-title {
+  color: inherit;
+}

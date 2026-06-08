@@ -96,6 +96,54 @@
 
   --site-max: 1200px;
   --site-content-pad: var(--space-16);
+
+  /*
+   * Section header — surface / on-surface pairs (theme-aware).
+   * Always change bg + text + border together per theme block.
+   */
+  --section-header-bg: var(--site-surface-2);
+  --section-header-text: var(--site-text);
+  --section-header-border: var(--site-border);
+
+  /* Card body (optional pair for section content areas) */
+  --section-body-bg: var(--site-surface);
+  --section-body-text: var(--site-text-secondary);
+}
+
+/* Explicit light theme (default public site) */
+[data-theme="light"] {
+  --site-surface: #ffffff;
+  --site-surface-2: #f8fafc;
+  --site-text: #0f172a;
+  --site-text-secondary: #334155;
+  --site-muted: #64748b;
+  --site-border: rgba(148, 163, 184, 0.35);
+  --site-bg-page: #ffffff;
+
+  --section-header-bg: var(--site-surface-2);
+  --section-header-text: var(--site-text);
+  --section-header-border: var(--site-border);
+
+  --section-body-bg: var(--site-surface);
+  --section-body-text: var(--site-text-secondary);
+}
+
+/* Dark theme — public pages via html[data-theme="dark"] */
+[data-theme="dark"] {
+  --site-surface: #0f172a;
+  --site-surface-2: #1e293b;
+  --site-text: #f1f5f9;
+  --site-text-secondary: #cbd5e1;
+  --site-muted: #94a3b8;
+  --site-border: rgba(148, 163, 184, 0.28);
+  --site-bg-page: #020617;
+
+  --section-header-bg: var(--site-surface-2);
+  --section-header-text: var(--site-text);
+  --section-header-border: var(--site-border);
+
+  --section-body-bg: var(--site-surface);
+  --section-body-text: var(--site-text-secondary);
 }
 
 body.dark {
@@ -111,6 +159,13 @@ body.dark {
   --border: #334155;
   --border-strong: #475569;
   --border-muted: #334155;
+
+  /* Admin dark — same semantic section pairs as [data-theme="dark"] */
+  --section-header-bg: #1e293b;
+  --section-header-text: #f1f5f9;
+  --section-header-border: #334155;
+  --section-body-bg: #0f172a;
+  --section-body-text: #cbd5e1;
 }
 
 *,

@@ -115,7 +115,7 @@
     
     /* ================= CARD ================= */
     .card{
-    background:var(--site-surface, #ffffff);
+    background:var(--section-body-bg, var(--site-surface, #ffffff));
     border-radius:var(--site-radius, 14px);
     padding:18px 22px;
     margin-bottom:24px;
@@ -132,8 +132,9 @@
     gap:8px;
     margin:-18px -22px 16px;
     padding:14px 22px 12px;
-    background:var(--site-surface-2, #f8fafc);
-    border-bottom:1px solid var(--vac-border);
+    background:var(--section-header-bg, var(--site-surface-2, #f8fafc));
+    color:var(--section-header-text, var(--site-text, #0f172a));
+    border-bottom:1px solid var(--section-header-border, var(--vac-border));
     border-radius:var(--site-radius, 14px) var(--site-radius, 14px) 0 0;
     }
     
@@ -143,7 +144,7 @@
     font-weight:700;
     line-height:1.35;
     letter-spacing:-0.01em;
-    color:var(--site-text, #0f172a);
+    color:inherit;
     }
 
     .card-header .section-title{
@@ -151,6 +152,7 @@
     align-items:center;
     gap:6px;
     font-weight:700;
+    color:inherit;
     }
 
     .card-header .section-icon{
@@ -162,7 +164,7 @@
     font-size:16px;
     line-height:1.65;
     font-weight:400;
-    color:#334155;
+    color:var(--section-body-text, #334155);
     letter-spacing:normal;
     word-spacing:normal;
     }
