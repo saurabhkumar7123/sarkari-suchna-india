@@ -349,11 +349,23 @@ const getAdminPageBySlug = async (req, res) => {
         breaking: !!p.breaking,
         breakingOrder: p.breaking_order != null && p.breaking_order !== 0 ? String(p.breaking_order) : "",
         eventTime: formatDatetimeLocal(p.event_time),
-        position: p.position || "normal"
+        position: p.position || "normal",
+        smallBoxSlot: p.small_box_slot != null ? Number(p.small_box_slot) : null
       }
     });
   } catch (error) {
     console.error("❌ ADMIN GET PAGE:", error);
+    return res.status(500).json({ success: false });
+  }
+};
+
+const getSmallBoxSlots = async (req, res) => {
+  try {
+    const smallBoxService = require("../../services/smallBox.service");
+    const rows = await smallBoxService.getSmallBoxSlotMap();
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("ADMIN SMALL BOX SLOTS:", error);
     return res.status(500).json({ success: false });
   }
 };
@@ -366,5 +378,6 @@ module.exports = {
   getTrashPages,
   getAdminActivity,
   getDashboardStats,
-  getAdminPageBySlug
+  getAdminPageBySlug,
+  getSmallBoxSlots
 };

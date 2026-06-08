@@ -217,10 +217,20 @@ const generatePage = async (req, res) => {
     const totalPostsRaw = readBodyFieldWithAliases(req.body, ["total_posts", "totalPosts", "TOTAL_POSTS"]);
     const normalizedPostName = postNameRaw ? String(postNameRaw).trim().slice(0, 512) : "";
     const normalizedTotalPosts = totalPostsRaw ? String(totalPostsRaw).trim().slice(0, 64) : "";
-    const normalizedPosition =
-      req.body.position && String(req.body.position).trim() !== "" ? String(req.body.position).trim() : "normal";
-    logger.warn("POSITION FLOW [controller]", {
-      incomingPosition: req.body.position,
+    const smallBoxService = require("../../services/smallBox.service");
+    const { positionFromSlot } = require("../../lib/smallBoxSlots");
+    const slotParsed = smallBoxService.parseSmallBoxSlot(req.body.smallBoxSlot);
+    if (!slotParsed.ok) {
+      return res.status(400).json({
+        status: "error",
+        message: slotParsed.error
+      });
+    }
+    const smallBoxSlot = slotParsed.value;
+    const normalizedPosition = positionFromSlot(smallBoxSlot);
+    logger.warn("SMALL BOX SLOT [controller]", {
+      incomingSmallBoxSlot: req.body.smallBoxSlot,
+      smallBoxSlot,
       normalizedPosition
     });
 
@@ -415,6 +425,17 @@ const generatePage = async (req, res) => {
         conn
       );
     }
+
+    if (!savedPageId) {
+      await conn.rollback();
+      return res.status(500).json({ status: "error", message: "Failed to resolve saved page id" });
+    }
+
+    await smallBoxService.assignSmallBoxSlot({
+      pageId: savedPageId,
+      slot: smallBoxSlot,
+      conn
+    });
 
     try {
       await pipeline.writeJobHtmlFile(slug, finalHTML);

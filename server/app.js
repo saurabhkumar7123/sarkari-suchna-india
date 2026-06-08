@@ -461,9 +461,14 @@ function renderBreakingNewsHtml(items) {
 function renderSmallBoxesHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
   const colors = ["blue", "green", "purple", "red"];
+  const { colorIndexForSlot } = require("./lib/smallBoxSlots");
   return items
     .slice(0, 4)
-    .map((item, idx) => `<a href="${escapeHtml(safePageHref(item))}" class="cat ${colors[idx % colors.length]}">${escapeHtml(item.title)}</a>`)
+    .map((item, idx) => {
+      const slot = item && item.smallBoxSlot != null ? Number(item.smallBoxSlot) : null;
+      const colorIdx = colorIndexForSlot(slot, idx);
+      return `<a href="${escapeHtml(safePageHref(item))}" class="cat ${colors[colorIdx % colors.length]}">${escapeHtml(item.title)}</a>`;
+    })
     .join("");
 }
 

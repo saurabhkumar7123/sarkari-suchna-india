@@ -66,6 +66,23 @@ const adminPagePayloadSchema = Joi.object({
       return String(v).trim();
     }, "lastDate"),
   position: Joi.string().trim().max(20).allow("", null).optional(),
+  smallBoxSlot: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(1).max(4),
+      Joi.string().trim().valid("1", "2", "3", "4", ""),
+      Joi.valid(null)
+    )
+    .optional()
+    .custom((v, helpers) => {
+      if (v === undefined || v === null || v === "") return null;
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 4) {
+        return helpers.error("any.invalid", {
+          message: "smallBoxSlot must be 1–4 or empty"
+        });
+      }
+      return n;
+    }, "smallBoxSlot"),
   breaking: Joi.boolean().optional(),
   breakingOrder: Joi.alternatives()
     .try(Joi.number(), Joi.string().allow(""))

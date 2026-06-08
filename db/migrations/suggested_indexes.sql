@@ -13,8 +13,11 @@ CREATE INDEX idx_pages_slug_deleted ON pages (slug, deleted);
 -- Breaking news
 CREATE INDEX idx_pages_breaking ON pages (deleted, breaking, breaking_order);
 
--- Homepage small boxes
+-- Homepage small boxes (legacy position flag)
 CREATE INDEX idx_pages_position ON pages (deleted, position);
+
+-- Homepage small-box slots 1–4 (preferred after 2026-06-08 migration)
+CREATE INDEX idx_pages_small_box_slot ON pages (deleted, small_box_slot);
 
 -- Tag / category listing
 CREATE INDEX idx_pages_category ON pages (deleted, category);

@@ -92,11 +92,15 @@
           placeholder="Custom section (when Custom is selected or override)">
       </div>
       <div class="field-group">
-        <label>Normal</label>
-        <select id="position">
-          <option value="normal">Normal</option>
-          <option value="small">Small Box</option>
+        <label>Homepage Small Box</label>
+        <select id="smallBoxSlot">
+          <option value="">Normal (Not in Small Box)</option>
+          <option value="1">Small Box Slot 1</option>
+          <option value="2">Small Box Slot 2</option>
+          <option value="3">Small Box Slot 3</option>
+          <option value="4">Small Box Slot 4 (Desktop Only)</option>
         </select>
+        <p class="field-hint" id="smallBoxSlotHint">Slot 4 is hidden on mobile (≤768px). Choosing a slot replaces the current occupant.</p>
       </div>
       <div class="field-group inline-checkbox-group">
         <label class="inline-checkbox-label">

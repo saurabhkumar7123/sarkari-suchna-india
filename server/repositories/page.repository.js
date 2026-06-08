@@ -401,9 +401,65 @@ async function selectFinderPage(limit, offset, executor = db) {
 
 async function selectSmallBoxes(executor = db) {
   const [rows] = await executor.query(
-    "SELECT title, slug FROM pages WHERE position='small' AND deleted=0 LIMIT 4"
+    `SELECT title, slug, small_box_slot AS smallBoxSlot
+     FROM pages
+     WHERE deleted = 0
+       AND (
+         small_box_slot IS NOT NULL
+         OR (small_box_slot IS NULL AND position = 'small')
+       )
+     ORDER BY
+       CASE WHEN small_box_slot IS NOT NULL THEN small_box_slot ELSE 100 END ASC,
+       created_at DESC,
+       id DESC
+     LIMIT 4`
   );
   return rows;
+}
+
+async function selectSmallBoxSlotMap(executor = db) {
+  const [rows] = await executor.query(
+    `SELECT small_box_slot AS slot, title, slug
+     FROM pages
+     WHERE deleted = 0 AND small_box_slot IS NOT NULL
+     ORDER BY small_box_slot ASC`
+  );
+  return rows;
+}
+
+/**
+ * Remove slot N from other active pages (displacement). Does not delete rows.
+ * @returns {Promise<Array<{ slug: string, title: string }>>}
+ */
+async function displaceSmallBoxSlot(slot, excludePageId, executor = db) {
+  const [result] = await executor.query(
+    `UPDATE pages
+     SET small_box_slot = NULL, position = 'normal'
+     WHERE small_box_slot = ? AND deleted = 0 AND id <> ?`,
+    [slot, excludePageId]
+  );
+  if (!result || !result.affectedRows) {
+    return [];
+  }
+  return [];
+}
+
+async function setSmallBoxSlotForPage(pageId, slot, executor = db) {
+  await executor.query(
+    `UPDATE pages
+     SET small_box_slot = ?, position = 'small'
+     WHERE id = ? AND deleted = 0`,
+    [slot, pageId]
+  );
+}
+
+async function clearSmallBoxSlotForPage(pageId, executor = db) {
+  await executor.query(
+    `UPDATE pages
+     SET small_box_slot = NULL, position = 'normal'
+     WHERE id = ? AND deleted = 0`,
+    [pageId]
+  );
 }
 
 async function selectBreakingNews(executor = db) {
@@ -674,7 +730,12 @@ async function selectTrashPagesPaginated(limit, offset, executor = db) {
 }
 
 async function softDeleteBySlug(slug, executor = db) {
-  const [result] = await executor.query("UPDATE pages SET deleted=1 WHERE slug=?", [slug]);
+  const [result] = await executor.query(
+    `UPDATE pages
+     SET deleted = 1, small_box_slot = NULL, position = 'normal'
+     WHERE slug = ?`,
+    [slug]
+  );
   return result;
 }
 
@@ -692,7 +753,7 @@ async function selectDashboardAggregate(executor = db) {
   const [[agg]] = await executor.query(
     `SELECT 
       SUM(deleted = 0) AS totalPages,
-      SUM(deleted = 0 AND position = 'small') AS smallPages,
+      SUM(deleted = 0 AND small_box_slot IS NOT NULL) AS smallPages,
       SUM(deleted = 1) AS trashPages,
       IFNULL(SUM(CASE WHEN deleted = 0 THEN views ELSE 0 END), 0) AS totalViews
      FROM pages`
@@ -1163,6 +1224,10 @@ module.exports = {
   selectAllForFinder,
   selectFinderPage,
   selectSmallBoxes,
+  selectSmallBoxSlotMap,
+  displaceSmallBoxSlot,
+  setSmallBoxSlotForPage,
+  clearSmallBoxSlotForPage,
   selectBreakingNews,
   selectByCategory,
   selectAllSlugsPublic,

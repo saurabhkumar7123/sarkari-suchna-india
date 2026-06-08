@@ -16,6 +16,9 @@ router.get("/pages", asyncHandler(controller.getAllPages));
 // 📊 DASHBOARD
 router.get("/dashboard", asyncHandler(controller.getDashboardStats));
 
+// 🎯 Homepage small-box slot occupancy (admin generator UI)
+router.get("/small-box-slots", asyncHandler(controller.getSmallBoxSlots));
+
 // 📜 Activity log (admin alias; same data as public /api/activity-log)
 router.get("/activity", asyncHandler(controller.getAdminActivity));
 

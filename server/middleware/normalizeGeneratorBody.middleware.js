@@ -30,11 +30,21 @@ function normalizeGeneratorBody(req, res, next) {
   console.log("FINAL STATUS:", req.body.status);
   console.warn("FINAL STATUS:", req.body.status);
 
-  const normalizedPosition = String(req.body.position || "")
-    .toLowerCase()
-    .trim();
-  req.body.position = normalizedPosition || "normal";
-  console.warn("FINAL POSITION [middleware]:", req.body.position);
+  const { parseSmallBoxSlot, positionFromSlot } = require("../lib/smallBoxSlots");
+  if (req.body.smallBoxSlot !== undefined) {
+    const slotParsed = parseSmallBoxSlot(req.body.smallBoxSlot);
+    if (slotParsed.ok) {
+      req.body.smallBoxSlot = slotParsed.value;
+      req.body.position = positionFromSlot(slotParsed.value);
+    }
+  } else {
+    const normalizedPosition = String(req.body.position || "")
+      .toLowerCase()
+      .trim();
+    req.body.position = normalizedPosition || "normal";
+    req.body.smallBoxSlot = null;
+  }
+  console.warn("FINAL SMALL BOX SLOT [middleware]:", req.body.smallBoxSlot, "position:", req.body.position);
 
   const bo = req.body.breakingOrder;
   req.body.breakingOrder = bo === "" || bo == null ? 0 : Number(bo);

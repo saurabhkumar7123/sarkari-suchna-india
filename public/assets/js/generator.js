@@ -222,6 +222,63 @@ function updateBreakingOrderVisibility() {
   if (!enabled) input.value = "";
 }
 
+let smallBoxSlotOccupancy = {};
+
+function setSmallBoxSlotFormValue(slot) {
+  const el = document.getElementById("smallBoxSlot");
+  if (!el) return;
+  if (slot == null || slot === "" || slot === "normal") {
+    el.value = "";
+  } else {
+    el.value = String(slot);
+  }
+  updateSmallBoxSlotHint();
+}
+
+async function loadSmallBoxSlotOccupancy() {
+  try {
+    const res = await fetch("/api/admin/small-box-slots", { credentials: "include" });
+    if (!res.ok) return;
+    const json = await res.json();
+    const rows = Array.isArray(json.data) ? json.data : [];
+    smallBoxSlotOccupancy = {};
+    rows.forEach((row) => {
+      if (row && row.slot != null) {
+        smallBoxSlotOccupancy[String(row.slot)] = row.title || row.slug || "";
+      }
+    });
+    updateSmallBoxSlotHint();
+  } catch (err) {
+    console.warn("small box slot occupancy load failed", err);
+  }
+}
+
+function updateSmallBoxSlotHint() {
+  const hint = document.getElementById("smallBoxSlotHint");
+  const select = document.getElementById("smallBoxSlot");
+  if (!hint || !select) return;
+  const slot = select.value;
+  if (!slot) {
+    hint.textContent =
+      "Slot 4 is hidden on mobile (≤768px). Choosing a slot replaces the current occupant.";
+    return;
+  }
+  const occupant = smallBoxSlotOccupancy[slot];
+  const currentSlug = (document.getElementById("oldSlug")?.value || "").trim();
+  const currentTitle = (document.getElementById("title")?.value || "").trim();
+  const isSelf =
+    occupant &&
+    currentTitle &&
+    String(occupant).trim().toLowerCase() === currentTitle.trim().toLowerCase();
+  if (occupant && !isSelf) {
+    hint.textContent = `Slot ${slot} is currently: ${occupant}. Saving will move it to Normal.`;
+  } else if (slot === "4") {
+    hint.textContent = "Slot 4 is hidden on mobile (≤768px).";
+  } else {
+    hint.textContent = `Slot ${slot} will appear in homepage small boxes.`;
+  }
+}
+
 /**
  * Merge server/AI output into #data without wiping good text with empty/short junk.
  * If textarea was empty, allow shorter pasted/extract content (≥1 non-whitespace).
@@ -371,8 +428,7 @@ function resetGeneratorForm() {
   setVal("breakingOrder", "");
   setEventTimeInputValue("");
   setVal("lastDate", "");
-  const pos = document.getElementById("position");
-  if (pos) pos.value = "normal";
+  setSmallBoxSlotFormValue("");
   const breaking = document.getElementById("breaking");
   if (breaking) breaking.checked = false;
   const delBtn = document.getElementById("deleteBtn");
@@ -546,6 +602,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     breaking.addEventListener("change", updateBreakingOrderVisibility);
   }
   updateBreakingOrderVisibility();
+  const smallBoxSlot = document.getElementById("smallBoxSlot");
+  if (smallBoxSlot) {
+    smallBoxSlot.addEventListener("change", updateSmallBoxSlotHint);
+  }
+  await loadSmallBoxSlotOccupancy();
   setupCategoryTagInput();
   setupBadgeCheckboxes();
 
@@ -899,8 +960,7 @@ async function loadPageFromURL(){
     setEventTimeInputValue(page.eventTime || "");
     const lastDateInput = document.querySelector('input[name="lastDate"]');
     if (lastDateInput) lastDateInput.value = lastDateDdMmYyyyToIso(page.lastDate);
-    const pos = document.getElementById("position");
-    if (pos && page.position) pos.value = page.position;
+    setSmallBoxSlotFormValue(page.smallBoxSlot != null ? page.smallBoxSlot : "");
     applyBadgesToForm(page.badges);
 
     document.getElementById("deleteBtn").style.display = "inline-block";
@@ -908,6 +968,7 @@ async function loadPageFromURL(){
     updateSlugPreview();
     syncAiConvertButton();
     updateBreakingOrderVisibility();
+    await loadSmallBoxSlotOccupancy();
 
   }catch(err){
     console.error("Auto load error:", err);
@@ -1079,13 +1140,13 @@ async function selectPage(p){
     setEventTimeInputValue(page.eventTime || "");
     const lastDateInputEdit = document.querySelector('input[name="lastDate"]');
     if (lastDateInputEdit) lastDateInputEdit.value = lastDateDdMmYyyyToIso(page.lastDate);
-    const pos = document.getElementById("position");
-    if (pos && page.position) pos.value = page.position;
+    setSmallBoxSlotFormValue(page.smallBoxSlot != null ? page.smallBoxSlot : "");
     applyBadgesToForm(page.badges);
     document.getElementById("deleteBtn").style.display = "inline-block";
     setPageUrlLocked(true);
     syncAiConvertButton();
     updateBreakingOrderVisibility();
+    await loadSmallBoxSlotOccupancy();
   }
 
   recentPages = recentPages.filter(r => r.url !== p.url);
@@ -1158,7 +1219,7 @@ async function generatePage(){
     pageUrl: pageUrlValue || "",
     content: contentValue,
     text: contentValue,
-    position: document.getElementById("position").value,
+    smallBoxSlot: document.getElementById("smallBoxSlot")?.value ?? "",
     breaking: document.getElementById("breaking").checked,
     breakingOrder: breakingOrderRaw === "" ? 0 : Number(breakingOrderRaw) || 0,
     eventTime: eventTimeRaw || null,
@@ -1202,8 +1263,8 @@ async function generatePage(){
     sentStatus: payload.status
   });
   console.warn("FRONTEND POSITION FLOW:", {
-    selectedPosition: document.getElementById("position")?.value,
-    sentPosition: payload.position
+    selectedSmallBoxSlot: document.getElementById("smallBoxSlot")?.value,
+    sentSmallBoxSlot: payload.smallBoxSlot
   });
   console.log("Submitting lastDate:", payload.lastDate);
   console.log("Submitting post_name / total_posts:", payload.post_name, payload.total_posts);
@@ -1277,6 +1338,7 @@ async function generatePage(){
     if (isCreate) {
       bumpAdminMetric("publishesSuccess");
       showSuccess(resolvedUrl, payload.status);
+      await loadSmallBoxSlotOccupancy();
       if (parserWarnings.length) {
         setGeneratorFeedback("info", "Saved with parsing warnings", {
           detailsHtml: parserWarnings.map((w) => `• ${escapeAttr(String(w))}`).join("<br>")
@@ -1295,6 +1357,7 @@ async function generatePage(){
     updateSlugPreview();
 
     showSuccess(resolvedUrl, payload.status);
+    await loadSmallBoxSlotOccupancy();
     if (window.AdminUI && window.AdminUI.toastSuccess) {
       window.AdminUI.toastSuccess("Action completed successfully");
     }

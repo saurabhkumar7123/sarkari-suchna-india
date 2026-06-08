@@ -340,9 +340,11 @@ async function loadTopCategories(){
   const colors = ["blue","green","purple","red"];
 
   data.slice(0, 4).forEach((item, i) => {
+    const slot = item && item.smallBoxSlot != null ? Number(item.smallBoxSlot) : null;
+    const colorIdx = slot >= 1 && slot <= 4 ? slot - 1 : i % colors.length;
     const a = document.createElement("a");
     a.href = safePageHref(item);
-    a.className = `cat ${colors[i % colors.length]}`;
+    a.className = `cat ${colors[colorIdx % colors.length]}`;
     a.textContent = item.title;
     container.appendChild(a);
   });
