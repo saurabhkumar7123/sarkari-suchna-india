@@ -7,6 +7,7 @@ const {
   resolveSectionRenderMode
 } = require("../parse/sectionParse");
 const { shouldUseMixedSectionBlocks } = require("../parse/sectionBlocks");
+const { isImportantLinksSection } = require("./lineRenderer");
 
 function collectParsingWarnings(text) {
   const { analyzeJobContent } = require("../analysis/contentAnalysis");
@@ -22,6 +23,9 @@ function buildDynamicSectionsWithWarnings(text) {
   }
 
   let html = "";
+  let htmlBeforeBanner = "";
+  let htmlAfterBanner = "";
+  let passedImportantLinks = false;
   const sections = parseSectionsFromText(text);
 
   for (const sec of sections) {
@@ -50,7 +54,7 @@ function buildDynamicSectionsWithWarnings(text) {
       }
     }
 
-    html += `
+    const cardHtml = `
       <div class="card">
         <div class="card-header">
           <h2 class="section-title">
@@ -62,10 +66,28 @@ function buildDynamicSectionsWithWarnings(text) {
         </div>
       </div>
     `;
+
+    html += cardHtml;
+
+    if (passedImportantLinks) {
+      htmlAfterBanner += cardHtml;
+    } else {
+      htmlBeforeBanner += cardHtml;
+      if (isImportantLinksSection(sec.cleanHeaderTitle)) {
+        passedImportantLinks = true;
+      }
+    }
+  }
+
+  if (!passedImportantLinks) {
+    htmlBeforeBanner = html;
+    htmlAfterBanner = "";
   }
 
   return {
     html,
+    htmlBeforeBanner,
+    htmlAfterBanner,
     warnings: collectParsingWarnings(text)
   };
 }

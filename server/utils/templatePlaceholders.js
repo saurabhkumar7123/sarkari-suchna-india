@@ -128,13 +128,19 @@ function buildJobTemplateVariables(opts) {
   } = opts;
 
   let dynamicSections;
+  let dynamicSectionsBeforeBanner;
+  let dynamicSectionsAfterBanner;
   let parserWarnings = [];
   try {
     const parsed = buildDynamicSectionsWithWarnings(String(text || ""));
     dynamicSections = parsed.html;
+    dynamicSectionsBeforeBanner = parsed.htmlBeforeBanner ?? parsed.html;
+    dynamicSectionsAfterBanner = parsed.htmlAfterBanner ?? "";
     parserWarnings = Array.isArray(parsed.warnings) ? parsed.warnings : [];
   } catch {
     dynamicSections = String(text || "");
+    dynamicSectionsBeforeBanner = dynamicSections;
+    dynamicSectionsAfterBanner = "";
     parserWarnings = [];
   }
 
@@ -215,6 +221,8 @@ function buildJobTemplateVariables(opts) {
     /** Display: explicit post name, else page title (never raw {{POST_NAME}}). */
     POST_NAME: escapeHtml(postNameForTemplate),
     DYNAMIC_SECTIONS: dynamicSections,
+    DYNAMIC_SECTIONS_BEFORE_BANNER: dynamicSectionsBeforeBanner,
+    DYNAMIC_SECTIONS_AFTER_BANNER: dynamicSectionsAfterBanner,
     POST_DATE: formatPostDate(now),
     POST_TIME: formatPostTime(now),
     TAG: escapeHtml(tag || "general"),

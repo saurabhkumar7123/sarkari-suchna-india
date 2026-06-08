@@ -29,7 +29,7 @@
     <!-- CSS (always apply to screen; avoid print+JS flip for mobile compatibility) -->
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=2">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=10">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=11">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -100,6 +100,37 @@
     <div class="key-facts-grid" id="keyFactsGrid"></div>
   </section>
 
+  <!-- ================= ADVERTISEMENT ================= -->
+  <div class="advt-box" role="note" aria-label="Advertisement number">
+    <span class="advt-label">Advertisement No</span>
+    <span class="advt-sep">:</span>
+    <span class="advt-value">{{ADVERTISEMENT_NO}}</span>
+  </div>
+
+  <!-- ================= SOCIAL / SHARE ================= -->
+  <section class="social-share-bar" aria-label="Share and follow">
+    <div class="social-share-actions">
+      <button type="button" class="share-btn social-btn social-btn-share" id="sharePageBtn">
+        Share
+      </button>
+
+      <a href="https://whatsapp.com/channel/0029VbCtmOJIiRoqIP4wgN1n" target="_blank" class="btn social-btn whatsapp" rel="noopener noreferrer">
+        WhatsApp
+      </a>
+
+      <a href="https://t.me/sarkarisuchnaindia" target="_blank" class="btn social-btn telegram" rel="noopener">
+        Telegram
+      </a>
+
+      <a href="https://www.facebook.com/share/1cQMwV2STp/" target="_blank" class="btn social-btn facebook" rel="noopener noreferrer">
+        Facebook
+      </a>
+    </div>
+  </section>
+
+  <!-- ================= MAIN CONTENT (before banner) ================= -->
+  {{DYNAMIC_SECTIONS_BEFORE_BANNER}}
+
   <!-- ================= HIGHLIGHT BANNER (3-layer poster) ================= -->
   <section class="highlight-banner-root" aria-label="Job highlight summary">
     <div class="highlight-banner-wrap">
@@ -131,36 +162,8 @@
     </div>
   </section>
 
-  <!-- ================= ADVERTISEMENT ================= -->
-  <div class="advt-box" role="note" aria-label="Advertisement number">
-    <span class="advt-label">Advertisement No</span>
-    <span class="advt-sep">:</span>
-    <span class="advt-value">{{ADVERTISEMENT_NO}}</span>
-  </div>
-
-  <!-- ================= SOCIAL / SHARE ================= -->
-  <section class="social-share-bar" aria-label="Share and follow">
-    <div class="social-share-actions">
-      <button type="button" class="share-btn social-btn social-btn-share" id="sharePageBtn">
-        Share
-      </button>
-
-      <a href="https://whatsapp.com/channel/0029VbCtmOJIiRoqIP4wgN1n" target="_blank" class="btn social-btn whatsapp" rel="noopener noreferrer">
-        WhatsApp
-      </a>
-
-      <a href="https://t.me/sarkarisuchnaindia" target="_blank" class="btn social-btn telegram" rel="noopener">
-        Telegram
-      </a>
-
-      <a href="https://www.facebook.com/share/1cQMwV2STp/" target="_blank" class="btn social-btn facebook" rel="noopener noreferrer">
-        Facebook
-      </a>
-    </div>
-  </section>
-
-  <!-- ================= MAIN CONTENT ================= -->
-  {{DYNAMIC_SECTIONS}}
+  <!-- ================= MAIN CONTENT (after banner) ================= -->
+  {{DYNAMIC_SECTIONS_AFTER_BANNER}}
 
   <!-- ================= RELATED ================= -->
   <div id="related-posts"></div>

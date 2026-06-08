@@ -115,7 +115,7 @@ describe("lineRenderer date styling classes", () => {
 });
 
 describe("template phase 1 layout", () => {
-  test("highlight banner appears before dynamic sections and uses normalized key facts lookup", async () => {
+  test("highlight banner appears after Important Links and uses normalized key facts lookup", async () => {
     const html = await buildJobHtml({
       title: "SSC CGL Online Form 2026",
       text: `[Section: ShortInfo]
@@ -123,7 +123,14 @@ SSC Combined Graduate Level notification.
 
 [Section: ImportantDates]
 Online Apply Last Date: 22 June 2026
-Exam Date: August 2026`,
+Exam Date: August 2026
+
+[Section: ImportantLinks]
+Apply Online=https://example.com/apply
+
+[Section: FAQ]
+Q: Sample question?
+A: Sample answer.`,
       slug: "ssc-cgl-2026-test",
       category: "ssc cgl",
       normalizedStatus: "new form",
@@ -132,11 +139,14 @@ Exam Date: August 2026`,
     });
 
     const bannerIdx = html.indexOf('class="highlight-banner-root"');
-    const firstCardIdx = html.indexOf('class="card"');
+    const linksIdx = html.indexOf('class="link-box"');
+    const faqIdx = html.indexOf("Sample question");
     expect(bannerIdx).toBeGreaterThan(-1);
-    expect(firstCardIdx).toBeGreaterThan(bannerIdx);
+    expect(linksIdx).toBeGreaterThan(-1);
+    expect(faqIdx).toBeGreaterThan(bannerIdx);
+    expect(linksIdx).toBeLessThan(bannerIdx);
     expect(html).toContain('normalizeSectionKey("important dates")');
     expect(html).not.toContain('byLabel["ImportantDates"]');
-    expect(html).toContain("vacancy-details.css?v=10");
+    expect(html).toContain("vacancy-details.css?v=11");
   });
 });
