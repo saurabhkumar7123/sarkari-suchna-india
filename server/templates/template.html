@@ -29,7 +29,7 @@
     <!-- CSS (always apply to screen; avoid print+JS flip for mobile compatibility) -->
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=2">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=9">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=10">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -77,11 +77,6 @@
     <h1 class="job-title">{{TITLE}}</h1>
   </section>
 
-  <section class="key-facts-section" id="keyFactsSection" aria-label="Key facts" hidden>
-    <h2 class="key-facts-heading">Key Facts</h2>
-    <div class="key-facts-grid" id="keyFactsGrid"></div>
-  </section>
-
   <!-- ================= META INFO ================= -->
   <section class="meta-info-section" aria-label="Post metadata">
     <div class="meta-info">
@@ -97,6 +92,42 @@
         <span class="meta-label">🏷 Tag</span>
         <a href="/tag/{{TAG_SLUG}}" class="tag-link meta-tag">{{TAG}}</a>
       </div>
+    </div>
+  </section>
+
+  <section class="key-facts-section" id="keyFactsSection" aria-label="Key facts" hidden>
+    <h2 class="key-facts-heading">Key Facts</h2>
+    <div class="key-facts-grid" id="keyFactsGrid"></div>
+  </section>
+
+  <!-- ================= HIGHLIGHT BANNER (3-layer poster) ================= -->
+  <section class="highlight-banner-root" aria-label="Job highlight summary">
+    <div class="highlight-banner-wrap">
+      <header class="highlight-banner-top">
+        <div class="highlight-banner-top-inner">
+          <span class="highlight-banner-top-badge">Recruitment</span>
+          <span class="highlight-banner-top-badge highlight-banner-top-badge-outline">Official Website</span>
+        </div>
+        <p class="highlight-banner-top-advt">
+          <span class="highlight-banner-top-advt-label">Notification No.</span>
+          <span class="highlight-banner-top-advt-value">{{ADVERTISEMENT_NO}}</span>
+        </p>
+      </header>
+      <div class="highlight-banner-main">
+        <p class="highlight-banner-title-main">{{TITLE}}</p>
+        <p class="highlight-banner-subtitle"><span class="highlight-banner-subtitle-label">Post Name</span> {{POST_NAME}}</p>
+        <p class="highlight-banner-total-line">
+          <span class="highlight-banner-total-main">
+            <span class="highlight-banner-total-text">Total : <span class="highlight-banner-total-num">{{TOTAL_POSTS}}</span> Posts</span>
+          </span>
+          <span class="highlight-banner-total-fallback">Total Posts: N/A</span>
+        </p>
+        <p class="highlight-banner-tagline"><span class="highlight-banner-tag">{{TAG}}</span></p>
+      </div>
+      <footer class="highlight-banner-bottom">
+        <div class="highlight-banner-brand-domain">sarkarisuchnaindia.com</div>
+        <div class="highlight-banner-brand-tagline">Official Sarkari Suchna India</div>
+      </footer>
     </div>
   </section>
 
@@ -131,37 +162,6 @@
   <!-- ================= MAIN CONTENT ================= -->
   {{DYNAMIC_SECTIONS}}
 
-  <!-- ================= HIGHLIGHT BANNER (3-layer poster) ================= -->
-  <section class="highlight-banner-root" aria-label="Job highlight summary">
-    <div class="highlight-banner-wrap">
-      <header class="highlight-banner-top">
-        <div class="highlight-banner-top-inner">
-          <span class="highlight-banner-top-badge">Recruitment</span>
-          <span class="highlight-banner-top-badge highlight-banner-top-badge-outline">Official Website</span>
-        </div>
-        <p class="highlight-banner-top-advt">
-          <span class="highlight-banner-top-advt-label">Notification No.</span>
-          <span class="highlight-banner-top-advt-value">{{ADVERTISEMENT_NO}}</span>
-        </p>
-      </header>
-      <div class="highlight-banner-main">
-        <p class="highlight-banner-title-main">{{TITLE}}</p>
-        <p class="highlight-banner-subtitle"><span class="highlight-banner-subtitle-label">Post Name</span> {{POST_NAME}}</p>
-        <p class="highlight-banner-total-line">
-          <span class="highlight-banner-total-main">
-            <span class="highlight-banner-total-text">Total : <span class="highlight-banner-total-num">{{TOTAL_POSTS}}</span> Posts</span>
-          </span>
-          <span class="highlight-banner-total-fallback">Total Posts: N/A</span>
-        </p>
-        <p class="highlight-banner-tagline"><span class="highlight-banner-tag">{{TAG}}</span></p>
-      </div>
-      <footer class="highlight-banner-bottom">
-        <div class="highlight-banner-brand-domain">sarkarisuchnaindia.com</div>
-        <div class="highlight-banner-brand-tagline">Official Sarkari Suchna India</div>
-      </footer>
-    </div>
-  </section>
-
   <!-- ================= RELATED ================= -->
   <div id="related-posts"></div>
 
@@ -177,6 +177,12 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const cleanText = (value) => String(value || "").replace(/\s+/g, " ").trim();
+  const normalizeSectionKey = (value) =>
+    cleanText(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const isPlaceholderFactValue = (value) =>
+    /will\s+be\s+update(d)?(\s+here)?\s+soon|will\s+be\s+updated\s+soon|available\s+soon|to\s+be\s+announced|^tba$|^n\/a$|not\s+yet\s+(released|announced|available)|coming\s+soon/i.test(
+      cleanText(value)
+    );
   const cards = Array.from(document.querySelectorAll(".card"));
   const byLabel = {};
 
@@ -185,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!titleNode) return;
     const icon = titleNode.querySelector(".section-icon");
     const rawTitle = cleanText(titleNode.textContent.replace("➜", ""));
-    byLabel[rawTitle] = card;
+    byLabel[normalizeSectionKey(rawTitle)] = card;
     if (icon) icon.textContent = "➜";
   });
 
@@ -197,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const extractQualification = () => {
-    const eligibilityCard = byLabel["Eligibility"];
+    const eligibilityCard = byLabel[normalizeSectionKey("eligibility")];
     if (!eligibilityCard) return "";
     const text = cleanText(eligibilityCard.querySelector(".card-content")?.textContent || "");
     const match = text.match(/(10th|12th|intermediate|diploma|graduation|graduate|degree|b\.?e|b\.?tech|iti|post graduate|master)/i);
@@ -207,8 +213,9 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const postName = cleanText(document.querySelector(".highlight-banner-subtitle")?.textContent.replace(/^Post Name/i, "").replace(/^:/, "") || document.querySelector(".job-title")?.textContent);
-  const importantDatesCard = byLabel["ImportantDates"];
-  const lastDate = findValueInRows(importantDatesCard, /last\s*date/i);
+  const importantDatesCard = byLabel[normalizeSectionKey("important dates")];
+  const lastDateRaw = findValueInRows(importantDatesCard, /(?:online\s+apply\s+)?last\s*date/i);
+  const lastDate = isPlaceholderFactValue(lastDateRaw) ? "" : lastDateRaw;
   const totalPosts = cleanText(document.querySelector(".highlight-banner-total-num")?.textContent);
   const qualification = extractQualification();
 

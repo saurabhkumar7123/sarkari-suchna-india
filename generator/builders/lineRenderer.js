@@ -50,6 +50,25 @@ function renderLinkBoxStatus(label, statusText) {
   return renderLinkBox(left, `<span class="link-box-status">${status}</span>`);
 }
 
+function isPlaceholderDateValue(value) {
+  const v = String(value || "").trim().toLowerCase();
+  if (!v) return false;
+  return (
+    /will\s+be\s+update(d)?(\s+here)?\s+soon/i.test(v) ||
+    /will\s+be\s+updated\s+soon/i.test(v) ||
+    /available\s+soon/i.test(v) ||
+    /to\s+be\s+announced/i.test(v) ||
+    /^tba$/i.test(v) ||
+    /^n\/a$/i.test(v) ||
+    /not\s+yet\s+(released|announced|available)/i.test(v) ||
+    /coming\s+soon/i.test(v)
+  );
+}
+
+function dateValueClassName(value) {
+  return isPlaceholderDateValue(value) ? "date-value date-value--placeholder" : "date-value";
+}
+
 /**
  * Render section lines as HTML (paragraphs, FAQ, links, key-value rows).
  * @param {string[]} lines — non-empty trimmed lines
@@ -106,10 +125,11 @@ function renderLinesToHtml(lines, options = {}) {
           return renderLinkBoxStatus(label, value);
         }
 
+        const valueClass = dateValueClassName(value);
         return `
             <div class="date-row">
               <span class="date-label">${escapeBodyDisplayText(label, { mode: "title" })} :</span>
-              <span class="date-value">${escapeBodyDisplayText(value, { mode: "title" })}</span>
+              <span class="${valueClass}">${escapeBodyDisplayText(value, { mode: "title" })}</span>
             </div>
           `;
       }
@@ -126,5 +146,7 @@ function renderLinesToHtml(lines, options = {}) {
 module.exports = {
   renderLinesToHtml,
   isUrlLike,
-  isImportantLinksSection
+  isImportantLinksSection,
+  isPlaceholderDateValue,
+  dateValueClassName
 };
