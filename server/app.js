@@ -605,7 +605,7 @@ function renderHomeCardsHtml(sectionResults) {
     const linksHtml = payload.data
       .map((item) => {
         const badge = resolveHomepageBadgeHtmlFromItem(item);
-        return `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a>${badge}</li>`;
+        return `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}${badge ? ` ${badge}` : ""}</a></li>`;
       })
       .join("");
     cards.push(`

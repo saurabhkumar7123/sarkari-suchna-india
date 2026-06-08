@@ -431,7 +431,7 @@ async function loadHomeCards() {
     res.data.forEach((item) => {
       const badge = resolveHomepageBadgeHtml(item);
       const href = safePageHref(item);
-      html += `<li><a href="${escapeAttr(href)}">${escapeHtml(item.title)}</a>${badge}</li>`;
+      html += `<li><a href="${escapeAttr(href)}">${escapeHtml(item.title)}${badge ? ` ${badge}` : ""}</a></li>`;
     });
     html += `</ul>`;
 
