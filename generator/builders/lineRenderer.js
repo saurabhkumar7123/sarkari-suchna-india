@@ -7,6 +7,7 @@ const {
   renderParagraphWithInlineMarkdownLinks
 } = require("../lib/inlineMarkdownLinks");
 const { hasRichInlineTags, renderRichBodyDisplayHtml } = require("../lib/richInlineText");
+const { parseLineBlocks, renderContentListHtml } = require("../lib/listBlocks");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -70,7 +71,72 @@ function dateValueClassName(value) {
 }
 
 /**
- * Render section lines as HTML (paragraphs, FAQ, links, key-value rows).
+ * Render a single content line (paragraph, FAQ, links, key-value rows).
+ * @param {string} line
+ * @param {{ sectionName?: string }} [options]
+ * @returns {string}
+ */
+function renderOneLine(line, options = {}) {
+  const linksSection = isImportantLinksSection(options.sectionName);
+  const rawLine = String(line || "").trim();
+  const eqIdx = rawLine.indexOf("=");
+  const hasEq = eqIdx > -1;
+  const hasColon = rawLine.includes(":");
+  const leftOfEq = hasEq ? rawLine.slice(0, eqIdx).trim() : "";
+  const rightOfEq = hasEq ? rawLine.slice(eqIdx + 1).trim() : "";
+  const eqLooksLikeLink = hasEq && isUrlLike(rightOfEq);
+  const isUrlOnlyLine = isUrlLike(rawLine);
+
+  if (rawLine.startsWith("Q:")) {
+    return `<div class="faq-item"><p><strong>${escapeBodyDisplayText(rawLine, { mode: "title" })}</strong></p>`;
+  }
+
+  if (rawLine.startsWith("A:")) {
+    return `<p>${escapeBodyDisplayText(rawLine, { mode: "title" })}</p></div>`;
+  }
+
+  if (isUrlOnlyLine) {
+    return renderLinkBoxAnchor("Link", rawLine);
+  }
+
+  if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
+    return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
+  }
+
+  const paraMode =
+    rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
+
+  if (hasMarkdownInlineLinks(rawLine)) {
+    return `<p>${renderParagraphWithInlineMarkdownLinks(rawLine, { mode: paraMode })}</p>`;
+  }
+
+  if (hasColon && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
+    const parts = rawLine.split(":");
+    const label = parts[0].trim();
+    const value = parts.slice(1).join(":").trim();
+
+    if (linksSection && label && value) {
+      return renderLinkBoxStatus(label, value);
+    }
+
+    const valueClass = dateValueClassName(value);
+    return `
+            <div class="date-row">
+              <span class="date-label">${escapeBodyDisplayText(label, { mode: "title" })} :</span>
+              <span class="${valueClass}">${escapeBodyDisplayText(value, { mode: "title" })}</span>
+            </div>
+          `;
+  }
+
+  if (hasRichInlineTags(rawLine)) {
+    return `<p>${renderRichBodyDisplayHtml(rawLine, { mode: paraMode })}</p>`;
+  }
+
+  return `<p>${escapeBodyDisplayText(rawLine, { mode: paraMode })}</p>`;
+}
+
+/**
+ * Render section lines as HTML (paragraphs, lists, FAQ, links, key-value rows).
  * @param {string[]} lines — non-empty trimmed lines
  * @param {{ sectionName?: string }} [options]
  * @returns {string}
@@ -80,71 +146,20 @@ function renderLinesToHtml(lines, options = {}) {
     return "";
   }
 
-  const linksSection = isImportantLinksSection(options.sectionName);
-
-  return lines
-    .map((line) => {
-      const rawLine = String(line || "").trim();
-      const eqIdx = rawLine.indexOf("=");
-      const hasEq = eqIdx > -1;
-      const hasColon = rawLine.includes(":");
-      const leftOfEq = hasEq ? rawLine.slice(0, eqIdx).trim() : "";
-      const rightOfEq = hasEq ? rawLine.slice(eqIdx + 1).trim() : "";
-      const eqLooksLikeLink = hasEq && isUrlLike(rightOfEq);
-      const isUrlOnlyLine = isUrlLike(rawLine);
-
-      if (rawLine.startsWith("Q:")) {
-        return `<div class="faq-item"><p><strong>${escapeBodyDisplayText(rawLine, { mode: "title" })}</strong></p>`;
+  const blocks = parseLineBlocks(lines);
+  return blocks
+    .map((block) => {
+      if (block.type === "list") {
+        return renderContentListHtml(block.items, options);
       }
-
-      if (rawLine.startsWith("A:")) {
-        return `<p>${escapeBodyDisplayText(rawLine, { mode: "title" })}</p></div>`;
-      }
-
-      if (isUrlOnlyLine) {
-        return renderLinkBoxAnchor("Link", rawLine);
-      }
-
-      if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
-        return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
-      }
-
-      const paraMode =
-        rawLine.length > 160 && /[.!?]\s/.test(rawLine) ? "sentence" : "title";
-
-      if (hasMarkdownInlineLinks(rawLine)) {
-        return `<p>${renderParagraphWithInlineMarkdownLinks(rawLine, { mode: paraMode })}</p>`;
-      }
-
-      if (hasColon && !rawLine.startsWith("Q:") && !rawLine.startsWith("A:")) {
-        const parts = rawLine.split(":");
-        const label = parts[0].trim();
-        const value = parts.slice(1).join(":").trim();
-
-        if (linksSection && label && value) {
-          return renderLinkBoxStatus(label, value);
-        }
-
-        const valueClass = dateValueClassName(value);
-        return `
-            <div class="date-row">
-              <span class="date-label">${escapeBodyDisplayText(label, { mode: "title" })} :</span>
-              <span class="${valueClass}">${escapeBodyDisplayText(value, { mode: "title" })}</span>
-            </div>
-          `;
-      }
-
-      if (hasRichInlineTags(rawLine)) {
-        return `<p>${renderRichBodyDisplayHtml(rawLine, { mode: paraMode })}</p>`;
-      }
-
-      return `<p>${escapeBodyDisplayText(rawLine, { mode: paraMode })}</p>`;
+      return renderOneLine(block.line, options);
     })
     .join("");
 }
 
 module.exports = {
   renderLinesToHtml,
+  renderOneLine,
   isUrlLike,
   isImportantLinksSection,
   isPlaceholderDateValue,

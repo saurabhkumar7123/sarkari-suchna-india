@@ -173,11 +173,40 @@
     margin-bottom:0;
     }
 
+    /* ================= CONTENT LIST ================= */
+    .card-content .content-list{
+    margin:12px 0;
+    padding-left:22px;
+    list-style:disc;
+    color:var(--section-body-text, #334155);
+    font-size:16px;
+    }
+
+    .card-content .content-list li{
+    margin:6px 0;
+    line-height:1.7;
+    padding-left:4px;
+    }
+
+    .card-content .content-list li::marker{
+    color:#475569;
+    font-size:0.85em;
+    }
+
 @media(max-width:768px){
 
 .card-content p{
     font-size:16px;
     line-height:1.62;
+    }
+
+.card-content .content-list{
+    font-size:16px;
+    padding-left:20px;
+    }
+
+.card-content .content-list li{
+    line-height:1.65;
     }
 
 }
