@@ -26,12 +26,15 @@ describe("renderTaxonomySSRPage", () => {
     expect(html).toContain('aria-current="page">Railway Jobs</span>');
     expect(html).toContain("Sarkari Suchna India");
     expect(html).toContain('href="/css/components/breadcrumb.css?v=3"');
-    expect(html).toContain('href="/css/pages/taxonomy-hub.css?v=1"');
+    expect(html).toContain('href="/css/pages/taxonomy-hub.css?v=2"');
+    expect(html).toContain('href="/css/pages/home.css?v=5"');
     expect(html).not.toContain("You are here");
     expect(html).toContain('class="job-list"');
     expect(html).toContain('href="/rrb-alp-2026"');
     expect(html).toContain("RRB ALP 2026");
-    expect(html).toContain("new form");
+    expect(html).not.toContain("taxonomy-hub__status");
+    expect(html).not.toContain("home-badge");
+    expect(html).not.toContain("home-card-badge-sep");
     expect(html).not.toMatch(/index\.js/i);
     expect(html).not.toMatch(/board-hub\.js/i);
     expect(html).not.toMatch(/listing\.js/i);

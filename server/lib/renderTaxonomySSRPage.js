@@ -30,11 +30,7 @@ function renderJobListHtml(items) {
     .map((item) => {
       const title = escapeHtml(item.title || "Untitled");
       const href = escapeHtml(safeItemHref(item));
-      const status = String(item.status || "").trim();
-      const statusHtml = status
-        ? `<span class="taxonomy-hub__status">${escapeHtml(status)}</span>`
-        : "";
-      return `<li><a href="${href}">${title}</a>${statusHtml}</li>`;
+      return `<li><a href="${href}">${title}</a></li>`;
     })
     .join("");
 
@@ -93,8 +89,8 @@ function renderTaxonomySSRPage(opts) {
 <link rel="stylesheet" href="/css/main.min.css?v=2">
 <link rel="stylesheet" href="/css/pages/listing-layout.css?v=2">
 <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
-<link rel="stylesheet" href="/css/pages/home.css?v=2">
-<link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=1">
+<link rel="stylesheet" href="/css/pages/home.css?v=5">
+<link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="listing-page page-section taxonomy-page">
