@@ -489,22 +489,31 @@
     text-decoration:underline;
   }
 
-  /* Homepage card badges only (#dynamicSections): title – NEW */
+  /* Homepage card rows (#dynamicSections): title – BADGE hierarchy */
+  body.page-home #dynamicSections .job-list li::before{
+    width:6px;
+    height:6px;
+    margin-right:9px;
+    background:#94a3b8;
+    opacity:0.88;
+  }
+
   body.page-home #dynamicSections .home-card-badge-group{
     display:inline;
     white-space:nowrap;
+    margin-left:0.1em;
   }
 
   body.page-home #dynamicSections .home-card-badge-sep{
-    color:#000;
-    margin-left:0.2em;
-    margin-right:5px;
-    font-weight:600;
+    color:#9ca3af;
+    margin-left:0.35em;
+    margin-right:4px;
+    font-weight:400;
     text-decoration:none;
   }
 
   body.page-home #dynamicSections .job-list a:hover .home-card-badge-sep{
-    color:#000;
+    color:#9ca3af;
     text-decoration:none;
   }
 
@@ -512,12 +521,12 @@
     display:inline-flex;
     align-items:center;
     vertical-align:middle;
-    font-size:11px;
-    font-weight:700;
+    font-size:10px;
+    font-weight:600;
     line-height:1.2;
-    letter-spacing:0.03em;
+    letter-spacing:0.02em;
     text-transform:uppercase;
-    padding:2px 8px;
+    padding:2px 7px;
     border-radius:999px;
     border:1px solid transparent;
     white-space:nowrap;
@@ -530,27 +539,27 @@
   }
 
   body.page-home #dynamicSections .home-badge--new{
-    color:var(--home-link);
-    background:color-mix(in srgb, var(--home-link) 12%, #fff);
-    border-color:color-mix(in srgb, var(--home-link) 34%, transparent);
+    color:color-mix(in srgb, var(--home-link) 90%, #475569);
+    background:color-mix(in srgb, var(--home-link) 8%, #fff);
+    border-color:color-mix(in srgb, var(--home-link) 22%, transparent);
   }
 
   body.page-home #dynamicSections .home-badge--out{
-    color:var(--home-primary-2);
-    background:color-mix(in srgb, var(--home-link) 18%, #fff);
-    border-color:color-mix(in srgb, var(--home-primary-2) 42%, transparent);
+    color:color-mix(in srgb, var(--home-primary-2) 92%, #475569);
+    background:color-mix(in srgb, var(--home-link) 12%, #fff);
+    border-color:color-mix(in srgb, var(--home-primary-2) 28%, transparent);
   }
 
   body.page-home #dynamicSections .home-badge--start{
-    color:color-mix(in srgb, var(--home-success) 78%, #14532d);
-    background:color-mix(in srgb, var(--home-success) 10%, #fff);
-    border-color:color-mix(in srgb, var(--home-link) 30%, transparent);
+    color:color-mix(in srgb, var(--home-success) 72%, #14532d);
+    background:color-mix(in srgb, var(--home-success) 7%, #fff);
+    border-color:color-mix(in srgb, var(--home-link) 22%, transparent);
   }
 
   body.page-home #dynamicSections .home-badge--soon{
-    color:color-mix(in srgb, var(--home-warning) 82%, #78350f);
-    background:color-mix(in srgb, var(--home-warning) 14%, #fff);
-    border-color:color-mix(in srgb, var(--home-warning) 36%, transparent);
+    color:color-mix(in srgb, var(--home-warning) 78%, #78350f);
+    background:color-mix(in srgb, var(--home-warning) 10%, #fff);
+    border-color:color-mix(in srgb, var(--home-warning) 26%, transparent);
   }
 
   body.page-home #dynamicSections .job-list a:hover .home-badge{
@@ -753,13 +762,22 @@
       padding:2px 4px;
     }
 
+    body.page-home #dynamicSections .job-list li::before{
+      width:3px;
+      height:3px;
+      margin-right:6px;
+      background:#94a3b8;
+      opacity:0.88;
+    }
+
     body.page-home #dynamicSections .home-card-badge-sep{
-      margin-right:4px;
+      margin-left:0.3em;
+      margin-right:3px;
     }
 
     body.page-home #dynamicSections .home-badge{
-      font-size:10px;
-      padding:1px 7px;
+      font-size:9px;
+      padding:1px 6px;
     }
 
     .tag.live {
