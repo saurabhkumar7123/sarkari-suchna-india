@@ -22,6 +22,12 @@
   --home-warning: var(--color-warning);
   --home-danger: var(--color-danger);
   --home-info: var(--color-info);
+
+  /* Small boxes + category pills — shared 2-line min-height (no truncation) */
+  --home-cat-2line-min-h: calc(2 * 1.35em + 28px);
+  --home-cat-2line-min-h-mobile: calc(2 * 1.35em + 24px);
+  --home-pill-2line-min-h: calc(2 * 1.25em + 20px);
+  --home-pill-2line-min-h-mobile: calc(2 * 1.25em + 20px);
 }
 
 .visually-hidden-seo {
@@ -248,6 +254,7 @@
       max-width:900px;
       margin:20px auto 40px;
       gap:12px;
+      align-items:stretch;
     }
   
     /* Homepage: align with main column (flex gap handles vertical rhythm) */
@@ -262,6 +269,12 @@
     
     /* CARD */
     .cat{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:var(--home-cat-2line-min-h);
+      height:100%;
+      width:100%;
       padding:14px 16px;
       border-radius:var(--home-radius-sm);
     
@@ -716,7 +729,7 @@
       padding:12px 10px;
       font-size:12px;
       border-radius:8px;
-      min-height:44px;
+      min-height:var(--home-cat-2line-min-h-mobile);
       display:flex;
       align-items:center;
       justify-content:center;
@@ -1564,8 +1577,8 @@ body.page-home .popular-categories {
 }
 
 .popular-categories__grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   align-items: stretch;
 }
@@ -1578,8 +1591,12 @@ body.page-home .popular-categories {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  align-self: stretch;
+  min-height: var(--home-pill-2line-min-h);
+  height: 100%;
+  width: 100%;
   padding: 10px 16px;
+  text-align: center;
   border-radius: var(--site-radius-pill, 999px);
   font-size: 14px;
   font-weight: 600;
@@ -1775,7 +1792,7 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   }
 
   body.page-home .taxonomy-discovery .popular-categories__pill {
-    width: auto;
+    width: 100%;
     max-width: none;
     min-width: 0;
   }
@@ -1800,45 +1817,28 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
     gap: 8px;
   }
 
-  .taxonomy-discovery .popular-categories__pill {
-    flex: 1 1 calc(50% - 4px);
-    min-width: calc(50% - 4px);
-    max-width: 100%;
-    padding: 10px 12px;
-    font-size: 13px;
-  }
-
-  .taxonomy-discovery .popular-categories__pill--view-all {
-    flex: 1 1 100%;
-    min-width: 100%;
-  }
-
-  /* Departments tab: 2 items row 1, remaining + View All on row 2 (no orphan row) */
-  #popularBoards .popular-categories__grid {
+  .taxonomy-discovery .popular-categories__grid,
+  #popularBoards .popular-categories__grid,
+  #popularQualifications .popular-categories__grid,
+  #popularStates .popular-categories__grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+    align-items: stretch;
   }
 
-  #popularBoards .popular-categories__pill {
-    flex: unset;
+  .taxonomy-discovery .popular-categories__pill {
     min-width: 0;
     max-width: none;
-    width: auto;
+    padding: 10px 12px;
+    font-size: 13px;
+    min-height: var(--home-pill-2line-min-h-mobile);
   }
 
-  #popularBoards .popular-categories__pill:nth-child(-n + 2):not(.popular-categories__pill--view-all) {
-    grid-column: span 3;
-  }
-
-  #popularBoards .popular-categories__pill:nth-child(n + 3):not(.popular-categories__pill--view-all) {
-    grid-column: span 2;
-  }
-
+  .taxonomy-discovery .popular-categories__pill--view-all,
   #popularBoards .popular-categories__pill--view-all {
-    flex: unset;
-    min-width: 0;
-    grid-column: span 2;
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   /* Active taxonomy panel — structured section module (mobile) */
@@ -1857,21 +1857,6 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
     margin-top: 0;
-  }
-
-  #popularQualifications .popular-categories__grid,
-  #popularStates .popular-categories__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  #popularQualifications .popular-categories__pill,
-  #popularStates .popular-categories__pill {
-    flex: unset;
-    min-width: 0;
-    max-width: none;
-    width: auto;
   }
 
   .categories-page__title {
