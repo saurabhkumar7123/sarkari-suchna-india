@@ -6,7 +6,10 @@ const {
   serializeHomeBootstrapForHtml,
   buildHomeBootstrapScriptTag
 } = require("../server/lib/homeBootstrap");
-const { renderHomepageBadgesHtml } = require("../server/lib/homepageBadges");
+const {
+  renderHomepageBadgesHtml,
+  renderHomeCardBadgesHtml
+} = require("../server/lib/homepageBadges");
 
 describe("homeBootstrap", () => {
   describe("buildHomeBootstrap", () => {
@@ -93,5 +96,20 @@ describe("homepageBadges SSR", () => {
     expect(html).toContain("NEW");
     expect(html).toContain('class="tag out"');
     expect((html.match(/NEW/g) || []).length).toBe(1);
+    expect(html).not.toContain("home-card-badge-sep");
+  });
+
+  it("card badges include black en-dash separator before badge cluster", () => {
+    const html = renderHomeCardBadgesHtml(["OUT"]);
+    expect(html).toContain('class="home-card-badge-group"');
+    expect(html).toContain('class="home-card-badge-sep"');
+    expect(html).toContain("–");
+    expect(html).toContain('class="tag out"');
+    expect(html.indexOf("home-card-badge-sep")).toBeLessThan(html.indexOf("tag out"));
+  });
+
+  it("card badges with no codes render empty", () => {
+    expect(renderHomeCardBadgesHtml([])).toBe("");
+    expect(renderHomeCardBadgesHtml(["INVALID"])).toBe("");
   });
 });

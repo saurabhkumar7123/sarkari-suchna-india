@@ -147,6 +147,18 @@ function resolveHomepageBadgeHtml(item) {
   return renderHomepageBadgesFromArray(item.badges);
 }
 
+/** Card grid (#dynamicSections) — en-dash before badges; breaking news uses resolveHomepageBadgeHtml. */
+function renderHomeCardBadgesFromArray(badges) {
+  const badgeHtml = renderHomepageBadgesFromArray(badges);
+  if (!badgeHtml) return "";
+  return `<span class="home-card-badge-group"><span class="home-card-badge-sep" aria-hidden="true">–</span>${badgeHtml}</span>`;
+}
+
+function resolveHomeCardBadgeHtml(item) {
+  if (!item || typeof item !== "object") return "";
+  return renderHomeCardBadgesFromArray(item.badges);
+}
+
 function escapeRibbonInnerText(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
@@ -431,7 +443,7 @@ async function loadHomeCards() {
 
     let html = `<ul class="job-list">`;
     res.data.forEach((item) => {
-      const badge = resolveHomepageBadgeHtml(item);
+      const badge = resolveHomeCardBadgeHtml(item);
       const href = safePageHref(item);
       html += `<li><a href="${escapeAttr(href)}">${escapeHtml(item.title)}${badge ? ` ${badge}` : ""}</a></li>`;
     });

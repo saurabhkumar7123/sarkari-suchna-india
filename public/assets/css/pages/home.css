@@ -488,6 +488,34 @@
     color:#eb2d2d;
     text-decoration:underline;
   }
+
+  /* Homepage card badges only (#dynamicSections): title – NEW */
+  body.page-home #dynamicSections .home-card-badge-group{
+    display:inline;
+    white-space:nowrap;
+  }
+
+  body.page-home #dynamicSections .home-card-badge-sep{
+    color:#000;
+    margin-left:0.2em;
+    margin-right:5px;
+    font-weight:600;
+    text-decoration:none;
+  }
+
+  body.page-home #dynamicSections .job-list a:hover .home-card-badge-sep{
+    color:#000;
+    text-decoration:none;
+  }
+
+  body.page-home #dynamicSections .home-card-badge-group .tag{
+    margin-left:0;
+  }
+
+  body.page-home #dynamicSections .home-card-badge-group .tag + .tag{
+    margin-left:6px;
+  }
+
   .tag{
     display:inline-block;
     font-size:10px;
@@ -683,6 +711,11 @@
       font-size:8px;
       padding:2px 4px;
     }
+
+    body.page-home #dynamicSections .home-card-badge-sep{
+      margin-right:4px;
+    }
+
     .tag.live {
     padding: 2px 4px;
     font-size: 8px;

@@ -37,6 +37,17 @@ function renderHomepageBadgesHtml(badges) {
 }
 
 /**
+ * Homepage card rows only: en-dash separator before badge cluster.
+ * @param {unknown} badges
+ * @returns {string}
+ */
+function renderHomeCardBadgesHtml(badges) {
+  const badgeHtml = renderHomepageBadgesHtml(badges);
+  if (!badgeHtml) return "";
+  return `<span class="home-card-badge-group"><span class="home-card-badge-sep" aria-hidden="true">–</span>${badgeHtml}</span>`;
+}
+
+/**
  * @param {Record<string, unknown> | null | undefined} item
  * @returns {string}
  */
@@ -45,9 +56,21 @@ function resolveHomepageBadgeHtmlFromItem(item) {
   return renderHomepageBadgesHtml(item.badges);
 }
 
+/**
+ * Card listing badges (#dynamicSections) — includes black en-dash separator.
+ * @param {Record<string, unknown> | null | undefined} item
+ * @returns {string}
+ */
+function resolveHomeCardBadgeHtmlFromItem(item) {
+  if (!item || typeof item !== "object") return "";
+  return renderHomeCardBadgesHtml(item.badges);
+}
+
 module.exports = {
   HOMEPAGE_BADGE_CSS,
   HOMEPAGE_BADGE_MAX,
   renderHomepageBadgesHtml,
-  resolveHomepageBadgeHtmlFromItem
+  renderHomeCardBadgesHtml,
+  resolveHomepageBadgeHtmlFromItem,
+  resolveHomeCardBadgeHtmlFromItem
 };

@@ -30,7 +30,10 @@ const searchService = require("./services/search.service");
 const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
 const { buildHomeBootstrap, buildHomeBootstrapScriptTag } = require("./lib/homeBootstrap");
-const { resolveHomepageBadgeHtmlFromItem } = require("./lib/homepageBadges");
+const {
+  resolveHomepageBadgeHtmlFromItem,
+  resolveHomeCardBadgeHtmlFromItem
+} = require("./lib/homepageBadges");
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -609,7 +612,7 @@ function renderHomeCardsHtml(sectionResults) {
     const ribbonFormClass = isNewFormRibbonStatus(def.ribbonStatus) ? " form-ribbon" : "";
     const linksHtml = payload.data
       .map((item) => {
-        const badge = resolveHomepageBadgeHtmlFromItem(item);
+        const badge = resolveHomeCardBadgeHtmlFromItem(item);
         return `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}${badge ? ` ${badge}` : ""}</a></li>`;
       })
       .join("");
