@@ -8,8 +8,11 @@ const {
 } = require("../server/lib/homeBootstrap");
 const {
   renderHomepageBadgesHtml,
-  renderHomeCardBadgesHtml
+  renderHomeCardBadgesHtml,
+  normalizeBadgeCode,
+  ALLOWED_BADGE_CODES
 } = require("../server/lib/homepageBadges");
+const { ALLOWED_BADGE_CODES: VALIDATION_BADGE_CODES } = require("../server/validations/admin.validation");
 
 describe("homeBootstrap", () => {
   describe("buildHomeBootstrap", () => {
@@ -89,26 +92,88 @@ describe("homeBootstrap", () => {
   });
 });
 
-describe("homepageBadges SSR", () => {
-  it("renders whitelisted badge codes with existing CSS classes", () => {
-    const html = renderHomepageBadgesHtml(["NEW", "OUT", "DECLARED", "NEW"]);
+describe("homepageBadges whitelist sync", () => {
+  it("server badge codes match admin validation whitelist", () => {
+    expect(ALLOWED_BADGE_CODES).toEqual(VALIDATION_BADGE_CODES);
+    expect(ALLOWED_BADGE_CODES).toEqual(["NEW", "OUT", "START", "SOON"]);
+  });
+});
+
+describe("homepageBadges normalizeBadgeCode", () => {
+  it("maps legacy DECLARED to OUT", () => {
+    expect(normalizeBadgeCode("DECLARED")).toBe("OUT");
+    expect(normalizeBadgeCode("declared")).toBe("OUT");
+  });
+});
+
+describe("homepageBadges SSR — breaking news (legacy .tag)", () => {
+  it("renders NEW and OUT with legacy tag classes", () => {
+    const html = renderHomepageBadgesHtml(["NEW", "OUT"]);
     expect(html).toContain('class="tag new"');
-    expect(html).toContain("NEW");
     expect(html).toContain('class="tag out"');
-    expect((html.match(/NEW/g) || []).length).toBe(1);
+    expect(html).not.toContain("home-badge");
     expect(html).not.toContain("home-card-badge-sep");
   });
 
-  it("card badges include black en-dash separator before badge cluster", () => {
-    const html = renderHomeCardBadgesHtml(["OUT"]);
-    expect(html).toContain('class="home-card-badge-group"');
-    expect(html).toContain('class="home-card-badge-sep"');
-    expect(html).toContain("–");
+  it("maps DECLARED to OUT label with tag out class", () => {
+    const html = renderHomepageBadgesHtml(["DECLARED"]);
     expect(html).toContain('class="tag out"');
-    expect(html.indexOf("home-card-badge-sep")).toBeLessThan(html.indexOf("tag out"));
+    expect(html).toContain("OUT");
+    expect(html).not.toContain("DECLARED");
   });
 
-  it("card badges with no codes render empty", () => {
+  it("caps at 2 badges and dedupes", () => {
+    const html = renderHomepageBadgesHtml(["NEW", "OUT", "START", "NEW"]);
+    expect(html).toContain("NEW");
+    expect(html).toContain("OUT");
+    expect(html).not.toContain("START");
+    expect((html.match(/NEW/g) || []).length).toBe(1);
+  });
+});
+
+describe("homepageBadges SSR — card grid (.home-badge)", () => {
+  it("renders NEW with home-badge--new and en-dash separator", () => {
+    const html = renderHomeCardBadgesHtml(["NEW"]);
+    expect(html).toContain('class="home-card-badge-group"');
+    expect(html).toContain('class="home-card-badge-sep"');
+    expect(html).toContain('class="home-badge home-badge--new"');
+    expect(html).toContain("NEW");
+    expect(html).not.toContain('class="tag new"');
+  });
+
+  it("renders OUT with home-badge--out", () => {
+    const html = renderHomeCardBadgesHtml(["OUT"]);
+    expect(html).toContain('class="home-badge home-badge--out"');
+    expect(html).toContain("OUT");
+  });
+
+  it("renders START with home-badge--start", () => {
+    const html = renderHomeCardBadgesHtml(["START"]);
+    expect(html).toContain('class="home-badge home-badge--start"');
+    expect(html).toContain("START");
+  });
+
+  it("renders SOON with home-badge--soon", () => {
+    const html = renderHomeCardBadgesHtml(["SOON"]);
+    expect(html).toContain('class="home-badge home-badge--soon"');
+    expect(html).toContain("SOON");
+  });
+
+  it("maps legacy DECLARED to OUT pill on cards", () => {
+    const html = renderHomeCardBadgesHtml(["DECLARED"]);
+    expect(html).toContain('class="home-badge home-badge--out"');
+    expect(html).toContain("OUT");
+    expect(html).not.toContain("DECLARED");
+  });
+
+  it("renders up to two card badges", () => {
+    const html = renderHomeCardBadgesHtml(["START", "SOON", "NEW"]);
+    expect(html).toContain("START");
+    expect(html).toContain("SOON");
+    expect(html).not.toContain("home-badge--new");
+  });
+
+  it("returns empty for invalid or empty codes", () => {
     expect(renderHomeCardBadgesHtml([])).toBe("");
     expect(renderHomeCardBadgesHtml(["INVALID"])).toBe("");
   });

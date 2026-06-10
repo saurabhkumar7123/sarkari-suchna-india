@@ -1,11 +1,29 @@
 "use strict";
 
-/** Must stay in sync with public/assets/js/index.js HOMEPAGE_BADGE_CSS */
-const HOMEPAGE_BADGE_CSS = {
+/** Must stay in sync with admin.validation.js and public/assets/js/generator.js */
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
+
+/** Legacy DB values — render/display as OUT, not stored on new saves. */
+const BADGE_CODE_ALIASES = {
+  DECLARED: "OUT"
+};
+
+/** Breaking news ticker — legacy `.tag` classes (unchanged styling scope). */
+const HOMEPAGE_BREAKING_BADGE_CSS = {
   NEW: "tag new",
   OUT: "tag out",
-  DECLARED: "tag declared"
+  START: "tag start",
+  SOON: "tag soon"
 };
+
+/** Homepage card grid (#dynamicSections) — compact government-style pills. */
+const HOMEPAGE_CARD_BADGE_CSS = {
+  NEW: "home-badge home-badge--new",
+  OUT: "home-badge home-badge--out",
+  START: "home-badge home-badge--start",
+  SOON: "home-badge home-badge--soon"
+};
+
 const HOMEPAGE_BADGE_MAX = 2;
 
 function escapeHtml(value) {
@@ -17,18 +35,29 @@ function escapeHtml(value) {
 }
 
 /**
- * @param {unknown} badges
+ * @param {unknown} raw
  * @returns {string}
  */
-function renderHomepageBadgesHtml(badges) {
+function normalizeBadgeCode(raw) {
+  const code = String(raw || "").trim().toUpperCase();
+  if (!code) return "";
+  return BADGE_CODE_ALIASES[code] || code;
+}
+
+/**
+ * @param {unknown} badges
+ * @param {Record<string, string>} cssMap
+ * @returns {string}
+ */
+function renderBadgesHtmlWithMap(badges, cssMap) {
   if (!Array.isArray(badges) || badges.length === 0) return "";
   const seen = new Set();
   const html = [];
   for (const raw of badges) {
     if (html.length >= HOMEPAGE_BADGE_MAX) break;
-    const code = String(raw || "").trim().toUpperCase();
+    const code = normalizeBadgeCode(raw);
     if (!code || seen.has(code)) continue;
-    const cssClass = HOMEPAGE_BADGE_CSS[code];
+    const cssClass = cssMap[code];
     if (!cssClass) continue;
     seen.add(code);
     html.push(`<span class="${cssClass}">${escapeHtml(code)}</span>`);
@@ -37,12 +66,21 @@ function renderHomepageBadgesHtml(badges) {
 }
 
 /**
- * Homepage card rows only: en-dash separator before badge cluster.
+ * Breaking news — legacy tag badges, no en-dash separator.
+ * @param {unknown} badges
+ * @returns {string}
+ */
+function renderHomepageBadgesHtml(badges) {
+  return renderBadgesHtmlWithMap(badges, HOMEPAGE_BREAKING_BADGE_CSS);
+}
+
+/**
+ * Homepage card rows — professional pills + en-dash separator.
  * @param {unknown} badges
  * @returns {string}
  */
 function renderHomeCardBadgesHtml(badges) {
-  const badgeHtml = renderHomepageBadgesHtml(badges);
+  const badgeHtml = renderBadgesHtmlWithMap(badges, HOMEPAGE_CARD_BADGE_CSS);
   if (!badgeHtml) return "";
   return `<span class="home-card-badge-group"><span class="home-card-badge-sep" aria-hidden="true">–</span>${badgeHtml}</span>`;
 }
@@ -57,7 +95,6 @@ function resolveHomepageBadgeHtmlFromItem(item) {
 }
 
 /**
- * Card listing badges (#dynamicSections) — includes black en-dash separator.
  * @param {Record<string, unknown> | null | undefined} item
  * @returns {string}
  */
@@ -67,8 +104,12 @@ function resolveHomeCardBadgeHtmlFromItem(item) {
 }
 
 module.exports = {
-  HOMEPAGE_BADGE_CSS,
+  ALLOWED_BADGE_CODES,
+  BADGE_CODE_ALIASES,
+  HOMEPAGE_BREAKING_BADGE_CSS,
+  HOMEPAGE_CARD_BADGE_CSS,
   HOMEPAGE_BADGE_MAX,
+  normalizeBadgeCode,
   renderHomepageBadgesHtml,
   renderHomeCardBadgesHtml,
   resolveHomepageBadgeHtmlFromItem,

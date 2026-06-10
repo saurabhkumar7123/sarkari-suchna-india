@@ -508,12 +508,53 @@
     text-decoration:none;
   }
 
-  body.page-home #dynamicSections .home-card-badge-group .tag{
+  body.page-home #dynamicSections .home-badge{
+    display:inline-flex;
+    align-items:center;
+    vertical-align:middle;
+    font-size:11px;
+    font-weight:700;
+    line-height:1.2;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:2px 8px;
+    border-radius:999px;
+    border:1px solid transparent;
+    white-space:nowrap;
     margin-left:0;
+    box-shadow:none;
   }
 
-  body.page-home #dynamicSections .home-card-badge-group .tag + .tag{
+  body.page-home #dynamicSections .home-card-badge-group .home-badge + .home-badge{
     margin-left:6px;
+  }
+
+  body.page-home #dynamicSections .home-badge--new{
+    color:var(--home-link);
+    background:color-mix(in srgb, var(--home-link) 12%, #fff);
+    border-color:color-mix(in srgb, var(--home-link) 34%, transparent);
+  }
+
+  body.page-home #dynamicSections .home-badge--out{
+    color:var(--home-primary-2);
+    background:color-mix(in srgb, var(--home-link) 18%, #fff);
+    border-color:color-mix(in srgb, var(--home-primary-2) 42%, transparent);
+  }
+
+  body.page-home #dynamicSections .home-badge--start{
+    color:color-mix(in srgb, var(--home-success) 78%, #14532d);
+    background:color-mix(in srgb, var(--home-success) 10%, #fff);
+    border-color:color-mix(in srgb, var(--home-link) 30%, transparent);
+  }
+
+  body.page-home #dynamicSections .home-badge--soon{
+    color:color-mix(in srgb, var(--home-warning) 82%, #78350f);
+    background:color-mix(in srgb, var(--home-warning) 14%, #fff);
+    border-color:color-mix(in srgb, var(--home-warning) 36%, transparent);
+  }
+
+  body.page-home #dynamicSections .job-list a:hover .home-badge{
+    text-decoration:none;
   }
 
   .tag{
@@ -714,6 +755,11 @@
 
     body.page-home #dynamicSections .home-card-badge-sep{
       margin-right:4px;
+    }
+
+    body.page-home #dynamicSections .home-badge{
+      font-size:10px;
+      padding:1px 7px;
     }
 
     .tag.live {

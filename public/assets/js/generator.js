@@ -687,8 +687,15 @@ function resolveStatusForSave() {
 }
 
 /** Phase 3: Manual homepage badges. Server whitelist enforces final values. */
-const ALLOWED_BADGE_CODES = ["NEW", "OUT", "DECLARED"];
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
+const BADGE_CODE_ALIASES = { DECLARED: "OUT" };
 const MAX_BADGES_PER_PAGE = 2;
+
+function normalizeBadgeCodeForForm(code) {
+  const c = String(code || "").trim().toUpperCase();
+  if (!c) return "";
+  return BADGE_CODE_ALIASES[c] || c;
+}
 
 function collectBadgesFromForm() {
   const boxes = document.querySelectorAll(".badge-checkbox");
@@ -726,7 +733,7 @@ function applyBadgesToForm(value) {
   }
   const wanted = new Set(
     arr
-      .map((c) => String(c || "").trim().toUpperCase())
+      .map((c) => normalizeBadgeCodeForForm(c))
       .filter((c) => ALLOWED_BADGE_CODES.includes(c))
       .slice(0, MAX_BADGES_PER_PAGE)
   );

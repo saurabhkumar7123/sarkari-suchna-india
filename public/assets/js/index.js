@@ -113,28 +113,43 @@ function rowEventTime(n) {
 }
 
 /**
- * Homepage list-row badges: driven only by server `badges` (manual).
- * Section placement stays status-based via `/api/pages` — unchanged here.
- *
- * Maps whitelist codes to existing `.tag.*` classes only — no new CSS.
- * Caps at 2 badges to match validation/admin UI.
+ * Homepage badges — breaking news uses legacy `.tag`; cards use `.home-badge`.
+ * Must stay in sync with server/lib/homepageBadges.js
  */
-const HOMEPAGE_BADGE_CSS = {
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
+const BADGE_CODE_ALIASES = { DECLARED: "OUT" };
+
+const HOMEPAGE_BREAKING_BADGE_CSS = {
   NEW: "tag new",
   OUT: "tag out",
-  DECLARED: "tag declared"
+  START: "tag start",
+  SOON: "tag soon"
 };
+
+const HOMEPAGE_CARD_BADGE_CSS = {
+  NEW: "home-badge home-badge--new",
+  OUT: "home-badge home-badge--out",
+  START: "home-badge home-badge--start",
+  SOON: "home-badge home-badge--soon"
+};
+
 const HOMEPAGE_BADGE_MAX = 2;
 
-function renderHomepageBadgesFromArray(badges) {
+function normalizeBadgeCode(raw) {
+  const code = String(raw || "").trim().toUpperCase();
+  if (!code) return "";
+  return BADGE_CODE_ALIASES[code] || code;
+}
+
+function renderBadgesFromArray(badges, cssMap) {
   if (!Array.isArray(badges) || badges.length === 0) return "";
   const seen = new Set();
   const html = [];
   for (const raw of badges) {
     if (html.length >= HOMEPAGE_BADGE_MAX) break;
-    const code = String(raw || "").trim().toUpperCase();
+    const code = normalizeBadgeCode(raw);
     if (!code || seen.has(code)) continue;
-    const cssClass = HOMEPAGE_BADGE_CSS[code];
+    const cssClass = cssMap[code];
     if (!cssClass) continue;
     seen.add(code);
     html.push(`<span class="${cssClass}">${escapeHtml(code)}</span>`);
@@ -142,14 +157,18 @@ function renderHomepageBadgesFromArray(badges) {
   return html.join(" ");
 }
 
+function renderHomepageBadgesFromArray(badges) {
+  return renderBadgesFromArray(badges, HOMEPAGE_BREAKING_BADGE_CSS);
+}
+
 function resolveHomepageBadgeHtml(item) {
   if (!item || typeof item !== "object") return "";
   return renderHomepageBadgesFromArray(item.badges);
 }
 
-/** Card grid (#dynamicSections) — en-dash before badges; breaking news uses resolveHomepageBadgeHtml. */
+/** Card grid (#dynamicSections) — en-dash + home-badge pills; breaking news uses resolveHomepageBadgeHtml. */
 function renderHomeCardBadgesFromArray(badges) {
-  const badgeHtml = renderHomepageBadgesFromArray(badges);
+  const badgeHtml = renderBadgesFromArray(badges, HOMEPAGE_CARD_BADGE_CSS);
   if (!badgeHtml) return "";
   return `<span class="home-card-badge-group"><span class="home-card-badge-sep" aria-hidden="true">–</span>${badgeHtml}</span>`;
 }

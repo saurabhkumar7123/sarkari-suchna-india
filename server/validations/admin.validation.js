@@ -5,9 +5,9 @@ const SLUG_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
  * Manual badge codes admin can attach to a page (homepage row tags only).
- * Must stay in sync with homepage HOMEPAGE_BADGE_CSS in public/assets/js/index.js.
+ * Must stay in sync with server/lib/homepageBadges.js ALLOWED_BADGE_CODES.
  */
-const ALLOWED_BADGE_CODES = ["NEW", "OUT", "DECLARED"];
+const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
 const MAX_BADGES_PER_PAGE = 2;
 
 const adminPagePayloadSchema = Joi.object({
