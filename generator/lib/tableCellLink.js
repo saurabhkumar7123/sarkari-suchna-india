@@ -2,6 +2,7 @@
 
 const { sanitizeUrl, resolveUrl, escapeHtml } = require("../../server/utils/escapeHtml");
 const { escapeBodyDisplayText } = require("./displayTextNormalize");
+const { cellHasExplicitListBlock, renderCellBlocksToHtml } = require("./listBlocks");
 
 /** Same URL detection as lineRenderer.js */
 function isUrlLike(value) {
@@ -42,6 +43,9 @@ function renderTableCellContent(cell, options = {}) {
     const labelHtml = escapeBodyDisplayText(link.label, { mode });
     const hrefAttr = escapeHtml(link.safeHref);
     return `<a class="table-cell-link" href="${hrefAttr}" target="_blank" rel="noopener noreferrer">${labelHtml}</a>`;
+  }
+  if (cellHasExplicitListBlock(cell)) {
+    return renderCellBlocksToHtml(cell, { mode });
   }
   return escapeBodyDisplayText(cell, { mode });
 }

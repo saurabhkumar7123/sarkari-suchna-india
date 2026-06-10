@@ -116,6 +116,41 @@ function renderContentListHtml(items, options = {}) {
   return `<ul class="content-list">${lis}</ul>`;
 }
 
+/**
+ * True when cell text contains an explicit `[list]` line (not inline mentions).
+ * @param {string} cell
+ * @returns {boolean}
+ */
+function cellHasExplicitListBlock(cell) {
+  const lines = String(cell ?? "").replace(/\r\n/g, "\n").split("\n");
+  return lines.some((line) => LIST_OPEN_RE.test(String(line).trim()));
+}
+
+/**
+ * Render table cell blocks: plain lines via escapeBodyDisplayText, lists via renderContentListHtml.
+ * @param {string} cell
+ * @param {{ mode?: "title"|"sentence" }} [options]
+ * @returns {string}
+ */
+function renderCellBlocksToHtml(cell, options = {}) {
+  const mode = options.mode || "title";
+  const lines = String(cell ?? "").replace(/\r\n/g, "\n").split("\n");
+  const blocks = parseLineBlocks(lines);
+
+  const parts = blocks
+    .map((block) => {
+      if (block.type === "list") {
+        return renderContentListHtml(block.items, { mode });
+      }
+      const lineText = String(block.line ?? "").trim();
+      if (!lineText) return "";
+      return escapeBodyDisplayText(block.line, { mode });
+    })
+    .filter(Boolean);
+
+  return parts.join("<br>");
+}
+
 module.exports = {
   LIST_OPEN_RE,
   LIST_CLOSE_RE,
@@ -123,5 +158,7 @@ module.exports = {
   parseBulletLineContent,
   canAutoGroupBulletLines,
   parseLineBlocks,
-  renderContentListHtml
+  renderContentListHtml,
+  cellHasExplicitListBlock,
+  renderCellBlocksToHtml
 };
