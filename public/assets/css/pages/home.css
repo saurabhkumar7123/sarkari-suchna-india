@@ -123,13 +123,20 @@
    * Horizontal gutter comes from tokens.css .main-container only.
    */
   body.page-home .main-container > .section,
-  body.page-home .main-container > #openFinder,
   body.page-home .main-container > #countdownBox {
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  /* Finder: alignment only — vertical padding comes from finder.css */
+  body.page-home .main-container > #openFinder {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
   }
 
   body.page-home .main-container .breaking-news,

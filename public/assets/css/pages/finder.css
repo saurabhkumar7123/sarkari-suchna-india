@@ -9,8 +9,9 @@
   gap:var(--space-16, 16px);
   margin:0;
   max-width:100%;
-  padding:var(--space-16, 16px) var(--space-12, 12px);
+  padding:18px var(--space-12, 12px);
   width:100%;
+  min-height:calc(48px + 36px);
 
   background:linear-gradient(180deg,#ffffff,#fafcff);
 
@@ -30,7 +31,8 @@
   .finder-banner{
     max-width:100%;
     margin:0;
-    padding:var(--space-16, 16px) var(--home-gap-inline, var(--space-16, 16px));
+    padding:18px var(--home-gap-inline, var(--space-16, 16px));
+    min-height:calc(48px + 36px);
   }
 }
 
@@ -76,6 +78,7 @@
   display:flex;
   flex-direction:column;
   flex:1;
+  gap:var(--space-4, 4px);
 }
 
 .finder-banner-title{
@@ -99,7 +102,7 @@
   color:#fff;
 
   font-weight:700;
-  padding:8px 16px;
+  padding:10px 16px;
   border-radius:var(--site-radius-sm);
 
   display:flex;
@@ -713,11 +716,13 @@ body.finder-modal-open{
 =================================*/
 @media (max-width: 768px) {
 .finder-banner{
-  padding:14px;
+  padding:16px var(--space-12, 12px);
+  min-height:calc(40px + 32px);
 }
 
 .finder-banner-title{
   font-size:18px;
+  line-height:1.25;
 }
 
 .finder-sub{
@@ -735,7 +740,7 @@ body.finder-modal-open{
 }
 
 .finder-cta{
-  padding:6px 12px;
+  padding:8px 12px;
   font-size:13px;
 }
 
