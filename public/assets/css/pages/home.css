@@ -1785,6 +1785,20 @@ body.page-home .taxonomy-discovery .popular-categories {
   min-height: 0;
 }
 
+/* Departments — strict 3-column grid; items flow in DOM order (View All last) */
+body.page-home #popularBoards .popular-categories__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--home-gap-grid);
+  align-items: stretch;
+}
+
+body.page-home #popularBoards .popular-categories__pill {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
 /* View All — fixed CTA in taxonomy discovery (never inherits tab/pill state) */
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all,
 body.page-home .taxonomy-discovery .taxonomy-panel--active .popular-categories__pill--view-all,
@@ -1849,10 +1863,6 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
     min-width: 0;
   }
 
-  #popularBoards .popular-categories__grid {
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-  }
-
   #popularQualifications .popular-categories__grid,
   #popularStates .popular-categories__grid {
     grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
@@ -1870,7 +1880,6 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   }
 
   .taxonomy-discovery .popular-categories__grid,
-  #popularBoards .popular-categories__grid,
   #popularQualifications .popular-categories__grid,
   #popularStates .popular-categories__grid {
     display: grid;
@@ -1879,18 +1888,17 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
     align-items: stretch;
   }
 
+  body.page-home #popularBoards .popular-categories__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--home-gap-grid-tight);
+  }
+
   .taxonomy-discovery .popular-categories__pill {
     min-width: 0;
     max-width: none;
     padding: 10px 12px;
     font-size: 13px;
     min-height: var(--home-pill-2line-min-h-mobile);
-  }
-
-  .taxonomy-discovery .popular-categories__pill--view-all,
-  #popularBoards .popular-categories__pill--view-all {
-    grid-column: 1 / -1;
-    width: 100%;
   }
 
   /* Active taxonomy panel — structured section module (mobile) */
