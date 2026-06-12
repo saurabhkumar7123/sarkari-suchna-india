@@ -28,6 +28,14 @@
   --home-cat-2line-min-h-mobile: calc(2 * 1.35em + 24px);
   --home-pill-2line-min-h: calc(2 * 1.25em + 20px);
   --home-pill-2line-min-h-mobile: calc(2 * 1.25em + 20px);
+
+  /* Homepage rhythm — section gaps, grid gaps, card insets */
+  --home-gap-section: var(--space-24);
+  --home-gap-section-lg: 28px;
+  --home-gap-grid: var(--space-12);
+  --home-gap-grid-tight: var(--space-8);
+  --home-gap-inline: var(--space-16);
+  --home-card-inset-mobile: var(--space-12);
 }
 
 .visually-hidden-seo {
@@ -92,7 +100,7 @@
   
   @media (min-width: 768px) {
     body.page-home .site-main .main-container {
-      padding-bottom: 30px;
+      padding-bottom: var(--home-gap-section-lg);
     }
   }
   
@@ -101,43 +109,43 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-24);
+    gap: var(--home-gap-section);
   }
 
   @media (min-width: 768px) {
     body.page-home .main-container {
-      gap: 28px;
+      gap: var(--home-gap-section-lg);
     }
   }
 
-  
-  body.page-home .main-container > .section {
+  /*
+   * Full-bleed alignment: all primary blocks share the same left/right axis.
+   * Horizontal gutter comes from tokens.css .main-container only.
+   */
+  body.page-home .main-container > .section,
+  body.page-home .main-container > #openFinder,
+  body.page-home .main-container > #countdownBox {
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 0 var(--space-12);
+    padding: 0;
   }
 
-  /* Clean, consistent section separation without heavy cards */
-  body.page-home .main-container > .section + .section{
-    padding-top: 6px;
-    border-top: 1px solid var(--home-border-soft);
-  }
-  
-  /* Same vertical column width as .main-container (gutter from tokens.css only) */
   body.page-home .main-container .breaking-news,
   body.page-home .main-container .small-boxes,
-  body.page-home .main-container .cards-section {
+  body.page-home .main-container .cards-section,
+  body.page-home .main-container .taxonomy-discovery,
+  body.page-home .main-container .trending-section,
+  body.page-home .main-container #about-site {
     width: 100%;
     max-width: 100%;
-    margin:0 auto;
-    padding:0 ;
+    margin: 0;
+    padding: 0;
   }
-  
-  
-  /* Avoid double vertical spacing: section margin handles rhythm */
-  body.page-home .main-container > .section .card-grid {
+
+  body.page-home .main-container > .section .card-grid,
+  body.page-home .card-grid {
     margin-top: 0;
   }
   
@@ -251,20 +259,10 @@
     .small-boxes{
       display:grid;
       grid-template-columns:repeat(4,1fr);
-      max-width:900px;
-      margin:20px auto 40px;
-      gap:12px;
-      align-items:stretch;
-    }
-  
-    /* Homepage: align with main column (flex gap handles vertical rhythm) */
-    body.page-home .main-container > .section.small-boxes{
       max-width:100%;
-      margin:0 auto;
-    }
-
-    body.page-home .main-container > .cards-section.card-grid{
-      margin-top:0;
+      margin:0;
+      gap:var(--home-gap-grid);
+      align-items:stretch;
     }
     
     /* CARD */
@@ -349,8 +347,8 @@
   .page-home .card-grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
-    gap:10px;
-    margin-top:20px;
+    gap:var(--home-gap-grid);
+    margin-top:0;
   }
   
   @media (min-width:768px){
@@ -727,13 +725,17 @@
     /* Categories */
     .small-boxes{
       grid-template-columns:repeat(3,1fr);
-      gap:8px;
+      gap:var(--home-gap-grid-tight);
       font-size: 14px;
     }
      .small-boxes .cat:nth-child(4){
       display:none;
     }
      
+    body.page-home .cat{
+      padding:var(--home-gap-grid) var(--home-gap-grid-tight);
+    }
+
     .cat{
       padding:12px 10px;
       font-size:12px;
@@ -748,6 +750,10 @@
     .card{
       padding:20px 5px 26px;
       border-radius: 10px 10px 10px 10px;
+    }
+
+    body.page-home .card{
+      padding:20px var(--home-card-inset-mobile) 26px;
     }
     .ribbon{
       padding: 10px 18px;
@@ -767,6 +773,10 @@
     .job-list li{
       font-size:12px;
       padding:8px 0;
+    }
+
+    body.page-home .job-list li{
+      padding:10px 0;
     }
     
   
@@ -842,7 +852,11 @@
     margin:20px 0 15px;
     color:var(--site-primary);
     text-align:center;
-  }  
+  }
+
+  body.page-home .trending-section .section-title{
+    margin:0 0 var(--home-gap-grid);
+  }
   
    /* 🔥 Trending Jobs */
    .trending-section{
@@ -866,7 +880,7 @@
   body.page-home #about-site .sarkari-about{
     box-shadow:none;
     border-radius:0;
-    padding:0;
+    padding:var(--home-gap-section) 0 0;
   }
   
    
@@ -875,7 +889,11 @@
   .trending-list{
   list-style:none;
   padding:0;
-  margin:10px 0 0;
+  margin:var(--space-8) 0 0;
+  }
+
+  body.page-home .trending-list{
+    margin:0;
   }
   
   .trending-list li{
@@ -1117,15 +1135,15 @@
   /* Keep hidden by default; JS shows only for valid future eventTime. */
   display: none;
   align-items: center;
-  gap: 16px;
+  gap: var(--home-gap-inline);
 
-  margin: 16px auto;
+  margin: 0;
 
-  padding: 20px 22px;       /* 🔥 increased */
-  min-height: 90px;         /* 🔥 base height */
+  padding: var(--space-24) var(--home-gap-inline);
+  min-height: 90px;
 
   width: 100%;
-  max-width: 900px;
+  max-width: 100%;
 
   border-radius: var(--cd-radius);
   background: var(--cd-bg);
@@ -1489,11 +1507,6 @@
     padding-top: 0;
     border-top: none;
   }
-
-  body.page-home #about-site .sarkari-about{
-    padding:0;
-    border-radius:0;
-  }
 }
 
 /* Mobile search overlay (loads after duplicate .search-overlay rules above — full-width + touch targets) */
@@ -1588,7 +1601,7 @@ body.page-home .popular-categories {
 .popular-categories__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 10px;
+  gap: var(--home-gap-grid);
   align-items: stretch;
 }
 
@@ -1674,8 +1687,8 @@ body.page-categories .site-main .main-container {
 
 .taxonomy-tabs {
   display: flex;
-  gap: 8px;
-  margin: 0 0 12px;
+  gap: var(--home-gap-grid-tight);
+  margin: 0 0 var(--home-gap-grid);
   padding: 0;
 }
 
@@ -1769,8 +1782,8 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
 @media (min-width: 769px) {
   .taxonomy-tabs {
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: var(--home-gap-grid);
+    margin-bottom: var(--home-gap-grid);
   }
 
   .taxonomy-tabs__btn {
@@ -1796,7 +1809,7 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   body.page-home .taxonomy-discovery .popular-categories__grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-    gap: 10px;
+    gap: var(--home-gap-grid);
     align-items: stretch;
   }
 
@@ -1823,7 +1836,7 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   }
 
   .taxonomy-discovery .popular-categories__grid {
-    gap: 8px;
+    gap: var(--home-gap-grid-tight);
   }
 
   .taxonomy-discovery .popular-categories__grid,
@@ -1832,7 +1845,7 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   #popularStates .popular-categories__grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: var(--home-gap-grid-tight);
     align-items: stretch;
   }
 
@@ -1852,7 +1865,7 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
   /* Active taxonomy panel — structured section module (mobile) */
   body.page-home .taxonomy-discovery .taxonomy-tabs {
-    margin-bottom: 10px;
+    margin-bottom: var(--home-gap-grid-tight);
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {

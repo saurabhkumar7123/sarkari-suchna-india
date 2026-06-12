@@ -6,10 +6,10 @@
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:15px;
-  margin:10px auto;
+  gap:var(--space-16, 16px);
+  margin:0;
   max-width:100%;
-  padding:16px 12px;
+  padding:var(--space-16, 16px) var(--space-12, 12px);
   width:100%;
 
   background:linear-gradient(180deg,#ffffff,#fafcff);
@@ -28,9 +28,9 @@
 }
 @media(min-width:768px){
   .finder-banner{
-    max-width:900px;  
-    margin:15px auto;
-    padding:18px 22px; 
+    max-width:100%;
+    margin:0;
+    padding:var(--space-16, 16px) var(--home-gap-inline, var(--space-16, 16px));
   }
 }
 
