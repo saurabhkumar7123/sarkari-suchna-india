@@ -373,12 +373,21 @@
     box-sizing:border-box;
   }
   
-  @media (min-width:768px){
-    .page-section .main-container{
-      width:80%;
-      max-width:1200px;
-      margin-left:auto;
-      margin-right:auto;
+  @media (min-width: 1025px) {
+    .page-section .main-container {
+      width: var(--layout-desktop-width, 80%);
+      max-width: var(--layout-desktop-max, 1200px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .page-section .main-container {
+      width: var(--layout-tablet-width, 96%);
+      max-width: var(--layout-tablet-max, 100%);
+      margin-left: auto;
+      margin-right: auto;
     }
   }
   

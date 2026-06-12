@@ -160,11 +160,18 @@
   justify-content:flex-start;
   align-items:center;
   gap:18px;
-  width:80%;
-  max-width:1200px;
+  width:var(--layout-desktop-width, 80%);
+  max-width:var(--layout-desktop-max, 1200px);
   padding:14px 12px;
   margin:0 auto;
   box-sizing:border-box;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navbar {
+    width: var(--layout-tablet-width, 96%);
+    max-width: var(--layout-tablet-max, 100%);
+  }
 }
 
 .nav-item{

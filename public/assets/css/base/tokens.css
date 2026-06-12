@@ -53,6 +53,14 @@
   --space-24: 24px;
   --space-32: 32px;
 
+  /* Layout column tiers (viewport-only; no device detection) */
+  --layout-mobile-width: 100%;
+  --layout-mobile-max: 100%;
+  --layout-tablet-width: 96%;
+  --layout-tablet-max: 100%;
+  --layout-desktop-width: 80%;
+  --layout-desktop-max: 1200px;
+
   /* Legacy aliases kept for compatibility */
   --space-10: var(--space-8);
   --space-14: var(--space-12);
@@ -186,21 +194,32 @@ body {
   font-family: var(--site-font);
 }
 
-/* Centered content column: full width + horizontal padding mobile; ~80% desktop (max 1200px) */
+/* Centered content column — 3 tiers: mobile / tablet-wide / desktop column */
 .main-container,
 .page-container {
-  width: 80%;
-  max-width: 1200px;
+  width: var(--layout-desktop-width);
+  max-width: var(--layout-desktop-max);
   margin: 0 auto;
   padding: 0 var(--space-12);
   box-sizing: border-box;
 }
 
+/* Tier B: tablet / ~980px Desktop Site viewport */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-container,
+  .page-container {
+    width: var(--layout-tablet-width);
+    max-width: var(--layout-tablet-max);
+    padding: 0 var(--space-12);
+  }
+}
+
+/* Tier A: mobile */
 @media (max-width: 768px) {
   .main-container,
   .page-container {
-    width: 100%;
-    max-width: 100%;
+    width: var(--layout-mobile-width);
+    max-width: var(--layout-mobile-max);
     padding: 0;
   }
 }

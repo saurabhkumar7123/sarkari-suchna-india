@@ -858,9 +858,9 @@
   overflow: visible;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1025px) {
   .highlight-banner-root {
-    max-width: 80%;
+    max-width: var(--layout-desktop-width, 80%);
     padding: 0 12px;
   }
 }

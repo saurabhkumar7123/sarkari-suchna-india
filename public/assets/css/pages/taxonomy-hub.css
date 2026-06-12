@@ -51,12 +51,26 @@ body.taxonomy-page .listing-empty {
   margin: 0;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
   body.taxonomy-page .main-container.taxonomy-hub {
-    width: 80%;
+    width: var(--layout-desktop-width, 80%);
+    padding: 0 var(--space-12, 12px);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  body.taxonomy-page .main-container.taxonomy-hub {
+    width: var(--layout-tablet-width, 96%);
+    max-width: var(--layout-tablet-max, 100%);
     padding: 0 var(--space-12, 12px);
   }
 
+  body.taxonomy-page .taxonomy-hub__cards .card-content {
+    padding: 12px 16px 16px;
+  }
+}
+
+@media (min-width: 1025px) {
   body.taxonomy-page .taxonomy-hub__cards .card-content {
     padding: 12px 16px 16px;
   }
