@@ -495,9 +495,11 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   const panelAttrs = opts.panelAttrs || "";
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="Departments">
+  <div class="taxonomy-panel__inner">
   <div class="popular-categories__grid">
     ${pills}
     <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
+  </div>
   </div>
 </section>`;
 }
@@ -514,8 +516,10 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   const panelAttrs = opts.panelAttrs || "";
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-label="Qualifications">
+  <div class="taxonomy-panel__inner">
   <div class="popular-categories__grid">
     ${pills}
+  </div>
   </div>
 </section>`;
 }
@@ -532,8 +536,10 @@ function renderPopularStatesHtml(states, opts = {}) {
   const panelAttrs = opts.panelAttrs || "";
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-label="States">
+  <div class="taxonomy-panel__inner">
   <div class="popular-categories__grid">
     ${pills}
+  </div>
   </div>
 </section>`;
 }
@@ -579,7 +585,12 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
   const tabsHtml = activeTabs
     .map((tab, index) => {
       const isActive = index === 0;
-      return `<button type="button" class="taxonomy-tabs__btn${isActive ? " is-active" : ""}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-controls="${escapeHtml(panelIdByKey[tab.key] || "")}">${escapeHtml(tab.label)}</button>`;
+      const isOpen = index === 0;
+      const panelId = panelIdByKey[tab.key] || "";
+      const activeClass = isActive ? " is-active" : "";
+      const chevron = isActive ? '<span class="taxonomy-tabs__chevron" aria-hidden="true">▼</span>' : "";
+      const ariaExpanded = isActive && isOpen ? "true" : "false";
+      return `<button type="button" class="taxonomy-tabs__btn${activeClass}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-expanded="${ariaExpanded}" aria-controls="${escapeHtml(panelId)}"><span class="taxonomy-tabs__label">${escapeHtml(tab.label)}</span>${chevron}</button>`;
     })
     .join("");
 

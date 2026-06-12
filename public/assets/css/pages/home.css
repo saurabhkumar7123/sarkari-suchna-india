@@ -1701,6 +1701,10 @@ body.page-categories .site-main .main-container {
 
 .taxonomy-tabs__btn {
   flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4, 4px);
   min-height: 44px;
   padding: 10px 12px;
   border-radius: var(--site-radius-pill, 999px);
@@ -1716,6 +1720,17 @@ body.page-categories .site-main .main-container {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+.taxonomy-tabs__label {
+  min-width: 0;
+}
+
+.taxonomy-tabs__chevron {
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: 0.65em;
+  line-height: 1;
 }
 
 .taxonomy-tabs__btn.is-active {
@@ -1735,25 +1750,35 @@ body.page-categories .site-main .main-container {
   gap: 0;
 }
 
-.taxonomy-discovery .taxonomy-panel {
-  display: none;
+.taxonomy-panel__inner {
   min-height: 0;
+  overflow: hidden;
+}
+
+.taxonomy-discovery .taxonomy-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--home-radius-sm, 12px);
+  box-shadow: none;
+  box-sizing: border-box;
+  transition:
+    grid-template-rows 0.25s ease,
+    opacity 0.25s ease,
+    padding 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
-  display: block;
-  animation: taxonomy-panel-in 0.2s ease;
-}
-
-@keyframes taxonomy-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  grid-template-rows: 1fr;
+  opacity: 1;
+  animation: none;
 }
 
 body.page-home .taxonomy-discovery .popular-categories {
@@ -1801,11 +1826,9 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   /* Active panel — structured section module (desktop) */
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
-    border: 1px solid var(--home-border-soft, var(--site-border));
-    border-radius: var(--home-radius-sm, 12px);
+    border-color: var(--home-border-soft, var(--site-border));
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
     padding: 16px 18px 18px;
-    box-sizing: border-box;
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
@@ -1877,11 +1900,9 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
-    border: 1px solid var(--home-border-soft, var(--site-border));
-    border-radius: var(--home-radius-sm, 12px);
+    border-color: var(--home-border-soft, var(--site-border));
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
     padding: 12px;
-    box-sizing: border-box;
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
