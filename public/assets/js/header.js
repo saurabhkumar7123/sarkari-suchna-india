@@ -33,9 +33,56 @@
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
-  markCurrentMobileNavItem();
+  markCurrentNavItems();
+  initHeaderScrollState();
+  initToolsButtonA11y();
+  syncMobileNavOffset();
+  window.addEventListener("resize", syncMobileNavOffset, { passive: true });
   ensureSearchScriptLoaded();
 });
+
+function initToolsButtonA11y() {
+  document.querySelectorAll(".tools-btn").forEach((btn) => {
+    if (!btn.hasAttribute("aria-expanded")) {
+      btn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+function initHeaderScrollState() {
+  const header = document.querySelector(".main-header");
+  if (!header) return;
+
+  let ticking = false;
+  const update = () => {
+    header.classList.toggle("is-scrolled", window.scrollY > 8);
+    ticking = false;
+  };
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          update();
+          if (document.body.classList.contains("mobile-nav-open")) {
+            syncMobileNavOffset();
+          }
+        });
+        ticking = true;
+      }
+    },
+    { passive: true }
+  );
+  update();
+}
+
+function syncMobileNavOffset() {
+  const bar = document.querySelector(".mobile-nav");
+  if (!bar) return;
+  const offset = Math.ceil(bar.getBoundingClientRect().bottom);
+  document.documentElement.style.setProperty("--mobile-nav-offset", `${offset}px`);
+}
 
 function normalizePathnameForNav(pathname) {
   return String(pathname || "/")
@@ -44,11 +91,20 @@ function normalizePathnameForNav(pathname) {
 }
 
 function markCurrentMobileNavItem() {
+  markCurrentNavItems();
+}
+
+function markCurrentNavItems() {
   const current = normalizePathnameForNav(window.location.pathname);
-  const links = document.querySelectorAll("#navbar .nav-item[href]");
+  const links = document.querySelectorAll(".navbar .nav-item[href], #navbar .nav-item[href]");
   links.forEach((link) => {
-    const href = normalizePathnameForNav(link.getAttribute("href"));
-    if (href === current) link.classList.add("active");
+    const href = link.getAttribute("href");
+    if (!href || href === "#") {
+      link.classList.remove("active");
+      return;
+    }
+    const normalized = normalizePathnameForNav(href);
+    if (normalized === current) link.classList.add("active");
     else link.classList.remove("active");
   });
 }
@@ -74,11 +130,18 @@ function setMobileNavOpen(open) {
 
   if (!menu) return;
 
-  if (open) closeToolsMenu();
+  if (open) {
+    closeToolsMenu();
+    syncMobileNavOffset();
+  }
 
   menu.classList.toggle("active", open);
-  if (menuOverlay) menuOverlay.classList.toggle("active", open);
+  if (menuOverlay) {
+    menuOverlay.classList.toggle("active", open);
+    menuOverlay.setAttribute("aria-hidden", open ? "false" : "true");
+  }
 
+  menu.setAttribute("aria-hidden", open ? "false" : "true");
   document.body.classList.toggle("mobile-nav-open", open);
 
   if (icon) {
@@ -190,6 +253,11 @@ function setToolsMenuOpen(open) {
   menu.classList.toggle("active", open);
   overlay.classList.toggle("active", open);
   document.body.classList.toggle("tools-menu-open", open);
+
+  document.querySelectorAll(".tools-btn").forEach((btn) => {
+    btn.classList.toggle("is-open", open);
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
 }
 
 function closeToolsMenu() {
