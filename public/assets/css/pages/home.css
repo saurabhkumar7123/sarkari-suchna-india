@@ -210,7 +210,8 @@
     align-items:center;
     white-space:nowrap;
     padding-left:100%;
-    animation:tickerScroll 15s linear infinite;
+    animation:tickerScroll 26s linear infinite;
+    will-change:transform;
   }
   
   /* scrolling animation */
@@ -227,8 +228,10 @@
     font-size:15px;
     text-decoration:none;
     transition:color var(--duration-base) var(--ease-out);
-     text-transform: capitalize;
-    }
+    text-transform: capitalize;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
   
   
   /* separator */
@@ -243,8 +246,15 @@
     color:var(--home-link-hover);
   }
   
-  /* pause scroll */
-  .breaking-right:hover .breaking-scroll{
+  /* pause scroll — desktop hover */
+  @media (hover: hover) and (pointer: fine) {
+    .breaking-right:hover .breaking-scroll{
+      animation-play-state:paused;
+    }
+  }
+
+  /* pause scroll — touch hold (mobile tap accuracy) */
+  .breaking-right:active .breaking-scroll{
     animation-play-state:paused;
   }
   
@@ -696,9 +706,9 @@
     }
    
   
-    /* Slower than desktop ticker for readability on small screens */
+    /* Slower ticker for readability on small screens */
     .breaking-scroll{
-      animation:tickerScroll 20s linear infinite;
+      animation:tickerScroll 32s linear infinite;
     }
   
     .breaking-scroll a{

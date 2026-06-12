@@ -216,6 +216,21 @@ function readHomeBootstrap() {
   }
 }
 
+function bindBreakingTickerInteraction(container) {
+  if (!container || container.dataset.tickerBound === "1") return;
+  container.dataset.tickerBound = "1";
+
+  const setPaused = (paused) => {
+    const scroll = container.querySelector(".breaking-scroll");
+    if (!scroll) return;
+    scroll.style.animationPlayState = paused ? "paused" : "";
+  };
+
+  container.addEventListener("touchstart", () => setPaused(true), { passive: true });
+  container.addEventListener("touchend", () => setPaused(false), { passive: true });
+  container.addEventListener("touchcancel", () => setPaused(false), { passive: true });
+}
+
 function renderBreakingNewsIntoContainer(data) {
   const container = document.getElementById("breakingNews");
   if (!container) return;
@@ -232,6 +247,7 @@ function renderBreakingNewsIntoContainer(data) {
 
   container.innerHTML = "";
   container.appendChild(scrollDiv);
+  bindBreakingTickerInteraction(container);
 }
 
 function initBreakingFromBootstrap(data) {
@@ -249,6 +265,8 @@ function initBreakingFromBootstrap(data) {
 
   if (!container || !container.querySelector(".breaking-scroll")) {
     renderBreakingNewsIntoContainer(data);
+  } else {
+    bindBreakingTickerInteraction(container);
   }
 
   startCountdown(data);
