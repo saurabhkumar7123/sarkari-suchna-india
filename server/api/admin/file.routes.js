@@ -4,6 +4,7 @@ const router = express.Router();
 const upload = require("../../config/multer");
 const uploadPdfExtract = require("../../config/multerPdfExtract");
 const pdfExtractMulter = require("../../middleware/pdfExtractMulter.middleware");
+const dashboardUploadMulter = require("../../middleware/dashboardUploadMulter.middleware");
 
 const pdfController = require("../../controllers/admin/pdf.controller");
 const fileController = require("../../controllers/admin/file.controller");
@@ -11,7 +12,7 @@ const fileController = require("../../controllers/admin/file.controller");
 const asyncHandler = require("../../utils/asyncHandler");
 
 // Dashboard: persist PDF/image — storage/uploads/… (see config/multer.js)
-router.post("/pdf", upload.single("pdf"), asyncHandler(pdfController.uploadPDF));
+router.post("/pdf", dashboardUploadMulter(upload), asyncHandler(pdfController.uploadPDF));
 
 // Generator: temp file only — JSON errors (incl. 413) for multer; see pdfExtractMulter.middleware.js
 router.post(

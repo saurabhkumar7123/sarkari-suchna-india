@@ -1,15 +1,35 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { MAX_UPLOAD_BYTES } = require("./uploadLimits");
 
 const storageRoot = path.join(process.cwd(), "storage");
+
+const allowedTypes = new Set([
+  "application/pdf",
+  "application/x-pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png"
+]);
+const allowedExt = [".pdf", ".jpg", ".jpeg", ".png"];
+
+function isPdfMime(mimetype) {
+  const m = String(mimetype || "").toLowerCase();
+  return m === "application/pdf" || m === "application/x-pdf";
+}
+
+function isAllowedImageMime(mimetype) {
+  const m = String(mimetype || "").toLowerCase();
+  return m === "image/jpeg" || m === "image/jpg" || m === "image/png";
+}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     let uploadPath;
-    if (file.mimetype === "application/pdf") {
+    if (isPdfMime(file.mimetype)) {
       uploadPath = path.join(storageRoot, "uploads", "pdf");
-    } else if (file.mimetype.startsWith("image/")) {
+    } else if (isAllowedImageMime(file.mimetype)) {
       uploadPath = path.join(storageRoot, "uploads", "images");
     } else {
       uploadPath = path.join(storageRoot, "temp");
@@ -42,24 +62,26 @@ const storage = multer.diskStorage({
   }
 });
 
-const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
-const allowedExt = [".pdf", ".jpg", ".jpeg", ".png"];
-
 const upload = multer({
   storage: storage,
 
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: MAX_UPLOAD_BYTES
   },
 
   fileFilter: (req, file, cb) => {
     const ext = path.extname(String(file.originalname || "")).toLowerCase();
-    if (allowedTypes.includes(file.mimetype) && allowedExt.includes(ext)) {
+    const mime = String(file.mimetype || "").toLowerCase();
+    if (allowedTypes.has(mime) && allowedExt.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Only PDF, JPG, JPEG, PNG allowed"), false);
+      cb(new Error("Only PDF, JPG, JPEG and PNG files are allowed"), false);
     }
   }
 });
 
 module.exports = upload;
+module.exports.allowedTypes = allowedTypes;
+module.exports.allowedExt = allowedExt;
+module.exports.isPdfMime = isPdfMime;
+module.exports.isAllowedImageMime = isAllowedImageMime;

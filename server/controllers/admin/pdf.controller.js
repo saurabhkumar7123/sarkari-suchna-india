@@ -12,6 +12,14 @@ const { extractGeneratorPdfText } = require("../../services/pdfGeneratorExtract.
  * Must not be used by Generator extraction — extract uses temp paths only.
  */
 const pdfUploadDir = path.join(process.cwd(), "storage", "uploads", "pdf");
+const { isPdfMime, isAllowedImageMime } = require("../../config/multer");
+
+const MSG_INVALID_TYPE = "Only PDF, JPG, JPEG and PNG files are allowed";
+const MSG_INVALID_SIGNATURE = "Uploaded file appears corrupted or invalid";
+
+function uploadError(res, status, message) {
+  return res.status(status).json({ success: false, message, error: message });
+}
 
 function hasAllowedUploadExtension(fileName, isImage) {
   const name = String(fileName || "").toLowerCase();
@@ -49,26 +57,26 @@ function hasAllowedFileSignature(buffer, isImage) {
 const uploadPDF = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, error: "No file uploaded" });
+      return uploadError(res, 400, "No file uploaded");
     }
 
-    const isImage = req.file.mimetype.startsWith("image/");
-    const isPDF = req.file.mimetype === "application/pdf";
+    const isImage = isAllowedImageMime(req.file.mimetype);
+    const isPDF = isPdfMime(req.file.mimetype);
 
     if (!isImage && !isPDF) {
-      return res.status(400).json({ success: false, error: "Invalid file type" });
+      return uploadError(res, 400, MSG_INVALID_TYPE);
     }
 
     if (!hasAllowedUploadExtension(req.file.originalname, isImage)) {
       fileService.unlink(req.file.path).catch(() => {});
-      return res.status(400).json({ success: false, error: "Invalid file extension" });
+      return uploadError(res, 400, MSG_INVALID_TYPE);
     }
 
     const fileBytes = await fileService.readFile(req.file.path);
     const fileHeader = fileBytes.subarray(0, 16);
     if (!hasAllowedFileSignature(fileHeader, isImage)) {
       fileService.unlink(req.file.path).catch(() => {});
-      return res.status(400).json({ success: false, error: "Invalid file content signature" });
+      return uploadError(res, 400, MSG_INVALID_SIGNATURE);
     }
 
     const folder = isImage ? "image" : "pdf";

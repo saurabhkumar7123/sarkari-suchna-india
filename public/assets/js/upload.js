@@ -122,6 +122,15 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
     setUploadProgress((ev.loaded / ev.total) * 100);
   };
 
+  function uploadFailureMessage(status, data) {
+    const msg = String((data && (data.message || data.error)) || "").trim();
+    if (msg) return msg;
+    if (status === 413) return "File exceeds maximum upload size (10 MB)";
+    if (status === 403) return "Session expired — refresh the page and try again";
+    if (status === 401) return "Please log in again";
+    return "Upload failed";
+  }
+
   xhr.onload = () => {
     setUploadProgress(100);
     try {
@@ -158,11 +167,13 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
         invalidateFilesCache();
         loadFiles(true);
       } else {
-        throw new Error(data.message || "Upload failed");
+        const reason = uploadFailureMessage(xhr.status, data);
+        throw new Error(reason);
       }
     } catch (err) {
-      setUploadState("Upload failed", true);
-      window.AdminUI?.toastError("Something went wrong");
+      const reason = String(err && err.message ? err.message : "Upload failed");
+      setUploadState(reason, true);
+      window.AdminUI?.toastError(reason);
       console.error(err);
     }
     if (uploadBtn) {
@@ -173,8 +184,9 @@ document.getElementById("uploadForm").addEventListener("submit", async (e) => {
 
   xhr.onerror = () => {
     setUploadProgress(0);
-    setUploadState("Upload failed", true);
-    window.AdminUI?.toastError("Something went wrong");
+    const reason = "Network error — upload could not reach the server";
+    setUploadState(reason, true);
+    window.AdminUI?.toastError(reason);
     if (uploadBtn) {
       uploadBtn.disabled = false;
       uploadBtn.textContent = "Upload File";
