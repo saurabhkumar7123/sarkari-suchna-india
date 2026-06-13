@@ -502,7 +502,8 @@ function renderTrendingJobsHtml(items) {
 
 function renderPopularBoardsHtml(boards, opts = {}) {
   if (!Array.isArray(boards) || !boards.length) return "";
-  const pills = boards
+  const preview = boards.slice(0, 2);
+  const pills = preview
     .map((board) => {
       const count = Number(board.count) || 0;
       const label = count > 0 ? `${board.label} (${count})` : board.label;
@@ -514,7 +515,7 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="Departments">
   <div class="taxonomy-panel__inner">
-  <div class="popular-categories__grid">
+  <div class="popular-categories__row">
     ${pills}
     <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
@@ -524,7 +525,8 @@ function renderPopularBoardsHtml(boards, opts = {}) {
 
 function renderPopularQualificationsHtml(qualifications, opts = {}) {
   if (!Array.isArray(qualifications) || !qualifications.length) return "";
-  const pills = qualifications
+  const preview = qualifications.slice(0, 2);
+  const pills = preview
     .map((item) => {
       const label = `${item.label} (${item.count})`;
       return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
@@ -535,8 +537,9 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-label="Qualifications">
   <div class="taxonomy-panel__inner">
-  <div class="popular-categories__grid">
+  <div class="popular-categories__row">
     ${pills}
+    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
   </div>
 </section>`;
@@ -544,7 +547,8 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
 
 function renderPopularStatesHtml(states, opts = {}) {
   if (!Array.isArray(states) || !states.length) return "";
-  const pills = states
+  const preview = states.slice(0, 2);
+  const pills = preview
     .map((item) => {
       const label = `${item.label} (${item.count})`;
       return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
@@ -555,8 +559,9 @@ function renderPopularStatesHtml(states, opts = {}) {
   return `
 <section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-label="States">
   <div class="taxonomy-panel__inner">
-  <div class="popular-categories__grid">
+  <div class="popular-categories__row">
     ${pills}
+    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
   </div>
 </section>`;
@@ -603,12 +608,10 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
   const tabsHtml = activeTabs
     .map((tab, index) => {
       const isActive = index === 0;
-      const isOpen = index === 0;
       const panelId = panelIdByKey[tab.key] || "";
       const activeClass = isActive ? " is-active" : "";
-      const chevron = isActive ? '<span class="taxonomy-tabs__chevron" aria-hidden="true">▼</span>' : "";
-      const ariaExpanded = isActive && isOpen ? "true" : "false";
-      return `<button type="button" class="taxonomy-tabs__btn${activeClass}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-expanded="${ariaExpanded}" aria-controls="${escapeHtml(panelId)}"><span class="taxonomy-tabs__label">${escapeHtml(tab.label)}</span>${chevron}</button>`;
+      const ariaExpanded = isActive ? "true" : "false";
+      return `<button type="button" class="taxonomy-tabs__btn${activeClass}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-expanded="${ariaExpanded}" aria-controls="${escapeHtml(panelId)}"><span class="taxonomy-tabs__label">${escapeHtml(tab.label)}</span></button>`;
     })
     .join("");
 

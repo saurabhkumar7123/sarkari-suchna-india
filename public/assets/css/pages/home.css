@@ -1857,7 +1857,7 @@ body.page-categories .site-main .main-container {
   max-width: 42rem;
 }
 
-/* ---------- Homepage taxonomy tabs (mobile + desktop) ---------- */
+/* ---------- Homepage taxonomy tabs — compact single-row accordion ---------- */
 .taxonomy-discovery {
   width: 100%;
   max-width: 100%;
@@ -1868,13 +1868,23 @@ body.page-categories .site-main .main-container {
 
 .taxonomy-tabs {
   display: flex;
+  flex-wrap: nowrap;
   gap: var(--home-gap-grid-tight);
-  margin: 0 0 var(--home-gap-grid);
+  margin: 0 0 var(--home-gap-grid-tight);
   padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.taxonomy-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .taxonomy-tabs__btn {
   flex: 1 1 0;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1889,22 +1899,19 @@ body.page-categories .site-main .main-container {
   font-weight: 600;
   line-height: 1.2;
   text-align: center;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  flex-shrink: 0;
 }
 
 .taxonomy-tabs__label {
   min-width: 0;
-}
-
-.taxonomy-tabs__chevron {
-  display: inline-block;
-  flex-shrink: 0;
-  font-size: 0.65em;
-  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taxonomy-tabs__btn.is-active {
@@ -1919,58 +1926,65 @@ body.page-categories .site-main .main-container {
 }
 
 .taxonomy-panels {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  position: relative;
+  min-height: 52px;
 }
 
 .taxonomy-panel__inner {
   min-height: 0;
-  overflow: hidden;
 }
 
 .taxonomy-discovery .taxonomy-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  min-height: 0;
-  overflow: hidden;
-  opacity: 0;
+  display: none;
   margin: 0;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--home-radius-sm, 12px);
+  border: none;
   box-shadow: none;
   box-sizing: border-box;
-  transition:
-    grid-template-rows 0.25s ease,
-    opacity 0.25s ease,
-    padding 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
 }
 
 .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
-  grid-template-rows: 1fr;
-  opacity: 1;
-  animation: none;
+  display: block;
 }
 
 body.page-home .taxonomy-discovery .popular-categories {
   min-height: 0;
 }
 
-/* Departments — strict 3-column grid; items flow in DOM order (View All last) */
-body.page-home #popularBoards .popular-categories__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--home-gap-grid);
+/* Single-row content: 2 preview pills + View All (always 3rd) */
+body.page-home .taxonomy-discovery .popular-categories__row {
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
+  gap: var(--home-gap-grid-tight);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-height: 44px;
 }
 
-body.page-home #popularBoards .popular-categories__pill {
-  width: 100%;
+body.page-home .taxonomy-discovery .popular-categories__row::-webkit-scrollbar {
+  display: none;
+}
+
+body.page-home .taxonomy-discovery .popular-categories__pill {
+  flex: 1 1 0;
   min-width: 0;
   max-width: none;
+  width: auto;
+  height: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.page-home .taxonomy-discovery .popular-categories__pill--view-all {
+  flex: 1 1 0;
+  flex-shrink: 0;
+  min-width: 88px;
 }
 
 /* View All — fixed CTA in taxonomy discovery (never inherits tab/pill state) */
@@ -2004,91 +2018,60 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   .taxonomy-tabs {
     gap: var(--home-gap-grid);
     margin-bottom: var(--home-gap-grid);
+    overflow-x: visible;
   }
 
   .taxonomy-tabs__btn {
     font-size: 14px;
     padding: 12px 16px;
+    flex-shrink: 1;
   }
 
-  /* Active panel — structured section module (desktop) */
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
-    border-color: var(--home-border-soft, var(--site-border));
+    border: 1px solid var(--home-border-soft, var(--site-border));
+    border-radius: var(--home-radius-sm, 12px);
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
-    padding: 16px 18px 18px;
+    padding: 12px 14px;
   }
 
-  body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
-    margin-top: 0;
-  }
-
-  /* Multi-column pill grids — desktop scanning layout */
-  body.page-home .taxonomy-discovery .popular-categories__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  body.page-home .taxonomy-discovery .popular-categories__row {
     gap: var(--home-gap-grid);
-    align-items: stretch;
+    overflow-x: visible;
   }
 
   body.page-home .taxonomy-discovery .popular-categories__pill {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-  }
-
-  #popularQualifications .popular-categories__grid,
-  #popularStates .popular-categories__grid {
-    grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+    font-size: 14px;
+    padding: 10px 14px;
   }
 }
 
 @media (max-width: 768px) {
   .taxonomy-tabs__btn {
     font-size: 12px;
-    padding: 10px 8px;
+    padding: 10px 10px;
+    min-width: 96px;
   }
 
-  .taxonomy-discovery .popular-categories__grid {
-    gap: var(--home-gap-grid-tight);
+  body.page-home .taxonomy-discovery {
+    margin-top: 0;
   }
 
-  .taxonomy-discovery .popular-categories__grid,
-  #popularQualifications .popular-categories__grid,
-  #popularStates .popular-categories__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--home-gap-grid-tight);
-    align-items: stretch;
-  }
-
-  body.page-home #popularBoards .popular-categories__grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--home-gap-grid-tight);
-  }
-
-  .taxonomy-discovery .popular-categories__pill {
-    min-width: 0;
-    max-width: none;
-    padding: 10px 12px;
-    font-size: 13px;
-    min-height: var(--home-pill-2line-min-h-mobile);
-  }
-
-  /* Active taxonomy panel — structured section module (mobile) */
   body.page-home .taxonomy-discovery .taxonomy-tabs {
     margin-bottom: var(--home-gap-grid-tight);
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
-    border-color: var(--home-border-soft, var(--site-border));
+    border: 1px solid var(--home-border-soft, var(--site-border));
+    border-radius: var(--home-radius-sm, 12px);
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
-    padding: 12px;
+    padding: 10px;
   }
 
-  body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active .popular-categories__grid {
-    margin-top: 0;
+  body.page-home .taxonomy-discovery .popular-categories__pill {
+    font-size: 13px;
+    padding: 8px 10px;
   }
 
   .categories-page__title {
