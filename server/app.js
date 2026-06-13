@@ -506,8 +506,11 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   const pills = preview
     .map((board) => {
       const count = Number(board.count) || 0;
-      const label = count > 0 ? `${board.label} (${count})` : board.label;
-      return `<a href="${escapeHtml(board.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+      const label =
+        count > 0
+          ? `${escapeHtml(board.label)}<span class="popular-categories__pill-count"> (${count})</span>`
+          : escapeHtml(board.label);
+      return `<a href="${escapeHtml(board.href)}" class="popular-categories__pill">${label}</a>`;
     })
     .join("");
   const panelClass = opts.panelClass || "";
@@ -528,8 +531,8 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   const preview = qualifications.slice(0, 2);
   const pills = preview
     .map((item) => {
-      const label = `${item.label} (${item.count})`;
-      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+      const label = `${escapeHtml(item.label)}<span class="popular-categories__pill-count"> (${item.count})</span>`;
+      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${label}</a>`;
     })
     .join("");
   const panelClass = opts.panelClass || "";
@@ -550,8 +553,8 @@ function renderPopularStatesHtml(states, opts = {}) {
   const preview = states.slice(0, 2);
   const pills = preview
     .map((item) => {
-      const label = `${item.label} (${item.count})`;
-      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+      const label = `${escapeHtml(item.label)}<span class="popular-categories__pill-count"> (${item.count})</span>`;
+      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${label}</a>`;
     })
     .join("");
   const panelClass = opts.panelClass || "";

@@ -1969,12 +1969,14 @@ body.page-categories .categories-browse .popular-categories__grid--browse {
   display: flex;
   flex-wrap: nowrap;
   gap: var(--home-gap-grid-tight);
-  margin: 0 0 var(--home-gap-grid-tight);
+  margin: 0 0 0;
   padding: 0;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  position: relative;
+  z-index: 2;
 }
 
 .taxonomy-tabs::-webkit-scrollbar {
@@ -2020,8 +2022,16 @@ body.page-categories .categories-browse .popular-categories__grid--browse {
     var(--home-primary, var(--site-primary)),
     var(--home-primary-2, var(--site-primary-2))
   );
-  border-color: transparent;
-  box-shadow: var(--home-shadow, var(--site-shadow));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: none;
+  border-radius: var(--home-radius-sm, 12px) var(--home-radius-sm, 12px) 0 0;
+  margin-bottom: -1px;
+  padding-bottom: 11px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 4px 14px rgba(30, 64, 175, 0.24);
+  position: relative;
+  z-index: 3;
 }
 
 .taxonomy-tabs__btn.is-active::after {
@@ -2053,6 +2063,7 @@ body.page-categories .categories-browse .popular-categories__grid--browse {
 
 .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
   display: block;
+  margin-top: 0;
 }
 
 body.page-home .taxonomy-discovery .popular-categories {
@@ -2087,6 +2098,14 @@ body.page-home .taxonomy-discovery .popular-categories__pill {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+body.page-home .taxonomy-discovery .popular-categories__pill-count {
+  font-weight: 500;
+  font-size: 0.9em;
+  color: var(--site-muted, #64748b);
+  opacity: 0.92;
 }
 
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all {
@@ -2095,37 +2114,30 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all {
   min-width: 88px;
 }
 
-/* View All — fixed CTA in taxonomy discovery (never inherits tab/pill state) */
+/* View All — secondary CTA in taxonomy discovery (categories remain primary) */
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all,
 body.page-home .taxonomy-discovery .taxonomy-panel--active .popular-categories__pill--view-all,
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all:any-link {
-  color: var(--site-text-inverse, #fff);
-  background: linear-gradient(
-    45deg,
-    var(--home-primary, var(--site-primary)),
-    var(--home-primary-2, var(--site-primary-2))
-  );
-  border-color: transparent;
-  box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+  color: var(--site-primary, var(--home-primary));
+  background: var(--site-surface-2, #f8fafc);
+  border: 1px solid var(--home-border-soft, var(--site-border));
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 0.93em;
 }
 
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all:hover,
 body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-visible {
-  color: var(--site-text-inverse, #fff);
-  background: linear-gradient(
-    45deg,
-    var(--home-primary, var(--site-primary)),
-    var(--home-primary-2, var(--site-primary-2))
-  );
-  border-color: transparent;
-  transform: translateY(-1px);
-  box-shadow: var(--home-shadow, var(--site-shadow));
+  color: var(--site-primary, var(--home-primary));
+  background: var(--site-surface, #fff);
+  border-color: var(--site-primary-2, var(--home-primary-2));
+  transform: none;
+  box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
 }
 
 @media (min-width: 769px) {
   .taxonomy-tabs {
     gap: var(--home-gap-grid);
-    margin-bottom: var(--home-gap-grid);
     overflow-x: visible;
   }
 
@@ -2135,10 +2147,23 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
     flex-shrink: 1;
   }
 
+  .taxonomy-tabs__btn.is-active {
+    padding-bottom: 13px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.16) inset,
+      0 6px 16px rgba(30, 64, 175, 0.22);
+  }
+
+  .taxonomy-tabs__btn:not(.is-active):hover {
+    border-color: var(--site-primary-2, var(--home-primary-2));
+    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+  }
+
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
     border: 1px solid var(--home-border-soft, var(--site-border));
-    border-radius: var(--home-radius-sm, 12px);
+    border-top: none;
+    border-radius: 0 var(--home-radius-sm, 12px) var(--home-radius-sm, 12px) var(--home-radius-sm, 12px);
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
     padding: 12px 14px;
   }
@@ -2151,6 +2176,13 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   body.page-home .taxonomy-discovery .popular-categories__pill {
     font-size: 14px;
     padding: 10px 14px;
+  }
+
+  body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):hover,
+  body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    border-color: var(--site-primary-2, var(--home-primary-2));
   }
 }
 
@@ -2166,13 +2198,14 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   }
 
   body.page-home .taxonomy-discovery .taxonomy-tabs {
-    margin-bottom: var(--home-gap-grid-tight);
+    margin-bottom: 0;
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
     background: var(--home-surface, var(--site-surface, #fff));
     border: 1px solid var(--home-border-soft, var(--site-border));
-    border-radius: var(--home-radius-sm, 12px);
+    border-top: none;
+    border-radius: 0 var(--home-radius-sm, 12px) var(--home-radius-sm, 12px) var(--home-radius-sm, 12px);
     box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
     padding: 10px;
   }
@@ -2180,6 +2213,11 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   body.page-home .taxonomy-discovery .popular-categories__pill {
     font-size: 13px;
     padding: 8px 10px;
+  }
+
+  body.page-home .taxonomy-discovery .popular-categories__pill:hover,
+  body.page-home .taxonomy-discovery .popular-categories__pill:focus-visible {
+    transform: none;
   }
 
   .categories-page__title {
