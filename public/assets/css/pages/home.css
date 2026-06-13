@@ -704,6 +704,15 @@
     opacity:0.88;
   }
 
+  /* Wrapped-title rhythm: intra-line breathing + first-line scan anchor (dynamic cards only) */
+  body.page-home #dynamicSections .job-list li{
+    align-items:flex-start;
+  }
+
+  body.page-home #dynamicSections .job-list a{
+    line-height:1.3;
+  }
+
   body.page-home #dynamicSections .home-card-badge-group{
     display:inline;
     white-space:nowrap;
