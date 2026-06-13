@@ -266,6 +266,7 @@
   }
 
   .breaking-rotator__chip:hover{
+    color:var(--site-link);
     border-color:#cbd5e1;
     box-shadow:0 2px 8px rgba(15,23,42,0.08);
   }
@@ -675,13 +676,13 @@
     margin-right:10px;
     display:inline-block;
   
-    background:linear-gradient(135deg,#2a15e6,#6a5cff);
+    background:var(--site-link);
   }
   
   /* Links */
   .job-list a{
     text-decoration:none;
-    color:#2a15e6;
+    color:var(--site-link);
     flex:1;
     min-width:0;
     font-size:17px;
@@ -690,7 +691,7 @@
   }
   
   .job-list a:hover{
-    color:#eb2d2d;
+    color:var(--site-link-hover);
     text-decoration:underline;
   }
 
@@ -1071,11 +1072,11 @@
   
   .trending-list a{
   text-decoration:none;
-  color:var(--site-primary);
+  color:var(--site-link);
   }
   
   .trending-list a:hover{
-  color:#e83030;
+  color:var(--site-link-hover);
   text-decoration:underline;
   }
   
