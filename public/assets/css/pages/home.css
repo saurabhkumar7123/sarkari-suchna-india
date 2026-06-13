@@ -1648,8 +1648,16 @@
 @media (max-width:768px){
   /*
    * Mobile homepage visual order (SSR DOM unchanged; flex order only).
-   * Small Boxes → Finder → Departments → Listings → Trending → About
+   * Breaking → Small Boxes → Finder → Popular Categories → Listings → Trending → About
    */
+  body.page-home .main-container > .breaking-news {
+    order: 0;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
   body.page-home .main-container > #smallBoxes {
     order: 1;
   }
@@ -1676,11 +1684,6 @@
 
   body.page-home .main-container > #about-site {
     order: 6;
-  }
-
-  /* Breaking News hidden on mobile — removed from layout flow (no gap) */
-  body.page-home .main-container > .breaking-news {
-    display: none;
   }
 
   /* Adjacent-sibling borders follow DOM, not visual order — rely on flex gap */
@@ -1923,6 +1926,15 @@ body.page-categories .site-main .main-container {
   );
   border-color: transparent;
   box-shadow: var(--home-shadow, var(--site-shadow));
+}
+
+.taxonomy-tabs__btn.is-active::after {
+  content: "▼";
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: 0.65em;
+  line-height: 1;
+  margin-left: 2px;
 }
 
 .taxonomy-panels {
