@@ -184,7 +184,7 @@
   display:flex;
   justify-content:center;
   align-items:center;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   gap:6px 4px;
   width:var(--layout-desktop-width, 80%);
   max-width:var(--layout-desktop-max, 1200px);
@@ -201,12 +201,48 @@
   transition:box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+/* 9 nav items need ~1025px; default 80% bar is too narrow at 1024–1280 */
+@media (min-width: 769px) and (max-width: 1365px) {
+  .navbar {
+    width: min(calc(100% - 20px), var(--layout-desktop-max, 1200px));
+    max-width: calc(100% - 20px);
+    gap: 3px;
+    padding: 9px 12px;
+  }
+
+  .navbar .nav-item {
+    padding: 10px 10px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex: 0 1 auto;
+  }
+
+  .navbar .nav-item i {
+    margin-right: 5px;
+  }
+
+  .navbar .nav-item::after {
+    left: 10px;
+    right: 10px;
+  }
+}
+
 @media (min-width: 769px) and (max-width: 1024px) {
   .navbar {
-    width: var(--layout-tablet-width, 96%);
-    max-width: var(--layout-tablet-max, 100%);
-    gap: 4px 2px;
-    padding: 10px 12px;
+    width: calc(100% - 12px);
+    max-width: 100%;
+    gap: 2px;
+    padding: 8px 8px;
+  }
+
+  .navbar .nav-item {
+    padding: 10px 8px;
+    font-size: 12.5px;
+  }
+
+  .navbar .nav-item i {
+    margin-right: 4px;
+    font-size: 0.88em;
   }
 }
 
@@ -287,22 +323,34 @@
 =================================*/
 @media (max-width: 768px) {
 
+  .top-banner{
+    min-height:auto;
+    padding:8px 10px;
+  }
+
   .top-banner::before{
     backdrop-filter:none;
     background:rgba(255,255,255,.03);
   }
 
-.title .site-brand-title{font-size:24px;}
-.title p{font-size:14px;}
+.title .site-brand-title{
+  font-size:22px;
+  line-height:1.15;
+}
+.title p{
+  font-size:12px;
+  line-height:1.35;
+  margin:2px 0 0;
+}
 
 .top-banner-inner{
   width:100%;
   max-width:100%;
-  padding:0 12px;
+  padding:0 10px;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap:8px;
+  gap:4px;
 }
 
 .logo-section{
@@ -318,7 +366,7 @@
   position:static;
   transform:none;
 
-  margin-top:8px;
+  margin-top:4px;
 
   display:flex;
   justify-content:center;
@@ -327,6 +375,12 @@
 
 .social-icons{
   justify-content:center;
+  gap:8px;
+}
+
+.social-icons i{
+  width:30px;
+  height:30px;
 }
 
 /* HIDE DESKTOP NAV */
@@ -351,7 +405,7 @@
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:8px 12px;
+  padding:6px 12px;
 }
 
 /* TOGGLE */
@@ -746,7 +800,7 @@ body.tools-menu-open{
     transform:none !important;
   
     width:100%;
-    margin-top:10px;
+    margin-top:4px;
   
     display:flex;
     justify-content:center;

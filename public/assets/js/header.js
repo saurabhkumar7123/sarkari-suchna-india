@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initToolsButtonA11y();
   syncMobileNavOffset();
   window.addEventListener("resize", syncMobileNavOffset, { passive: true });
+  window.addEventListener("hashchange", markCurrentNavItems, { passive: true });
   ensureSearchScriptLoaded();
 });
 
@@ -96,6 +97,8 @@ function markCurrentMobileNavItem() {
 
 function markCurrentNavItems() {
   const current = normalizePathnameForNav(window.location.pathname);
+  const currentHash = String(window.location.hash || "").toLowerCase();
+  const onFinderHash = current === "/" && currentHash === "#openfinder";
   const links = document.querySelectorAll(".navbar .nav-item[href], #navbar .nav-item[href]");
   links.forEach((link) => {
     const href = link.getAttribute("href");
@@ -103,7 +106,21 @@ function markCurrentNavItems() {
       link.classList.remove("active");
       return;
     }
-    const normalized = normalizePathnameForNav(href);
+    const hashIdx = href.indexOf("#");
+    const pathPart = hashIdx >= 0 ? href.slice(0, hashIdx) : href;
+    const hashPart = hashIdx >= 0 ? href.slice(hashIdx).toLowerCase() : "";
+    const normalized = normalizePathnameForNav(pathPart || "/");
+
+    if (hashPart === "#openfinder") {
+      link.classList.toggle("active", onFinderHash);
+      return;
+    }
+
+    if (onFinderHash && normalized === "/") {
+      link.classList.remove("active");
+      return;
+    }
+
     if (normalized === current) link.classList.add("active");
     else link.classList.remove("active");
   });
