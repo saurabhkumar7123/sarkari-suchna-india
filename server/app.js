@@ -449,16 +449,34 @@ function breakingNewsLinkAttrsSsr(href) {
 
 function renderBreakingNewsHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
-  return `<div class="breaking-scroll">${items
+
+  const chips = items
     .map((item) => {
-      const href = item && item.url != null && String(item.url).trim()
-        ? String(item.url).trim()
-        : safePageHref(item);
+      const href =
+        item && item.url != null && String(item.url).trim()
+          ? String(item.url).trim()
+          : safePageHref(item);
       const badge = resolveHomepageBadgeHtmlFromItem(item);
+      const title = escapeHtml(item.title);
       const ext = breakingNewsLinkAttrsSsr(href);
-      return `<a href="${escapeHtml(href)}"${ext}>${escapeHtml(item.title)} ${badge}</a>`;
+      const badgeHtml = badge ? `<span class="breaking-rotator__badges">${badge}</span>` : "";
+      return `<a href="${escapeHtml(href)}" class="breaking-rotator__chip"${ext} title="${title}"><span class="breaking-rotator__chip-inner">${badgeHtml}<span class="breaking-rotator__title">${title}</span></span></a>`;
     })
-    .join("")}</div>`;
+    .join("");
+
+  const count = items.length;
+  const dots = items
+    .slice(0, 5)
+    .map(
+      (_, i) =>
+        `<button type="button" class="breaking-rotator__dot${i === 0 ? " is-active" : ""}" role="tab" aria-selected="${i === 0 ? "true" : "false"}" data-index="${i}" aria-label="Breaking update ${i + 1}"></button>`
+    )
+    .join("");
+  const dotsMore =
+    count > 5 ? `<span class="breaking-rotator__dots-more" hidden aria-hidden="true">+${count - 5}</span>` : "";
+  const controlsClass = count <= 1 ? " breaking-rotator__controls--hidden" : "";
+
+  return `<div class="breaking-rotator" data-breaking-rotator data-count="${count}" aria-live="polite"><div class="breaking-rotator__viewport"><div class="breaking-rotator__track">${chips}</div></div><div class="breaking-rotator__controls${controlsClass}"><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--prev" aria-label="Previous breaking update"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><div class="breaking-rotator__dots" role="tablist">${dots}${dotsMore}</div><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--next" aria-label="Next breaking update"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button></div></div>`;
 }
 
 function renderSmallBoxesHtml(items) {

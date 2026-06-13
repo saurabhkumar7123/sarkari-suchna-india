@@ -113,18 +113,19 @@ function rowEventTime(n) {
 }
 
 /**
- * Homepage badges — breaking news uses legacy `.tag`; cards use `.home-badge`.
- * Must stay in sync with server/lib/homepageBadges.js
+ * Homepage badges — breaking rotator uses unified `.home-badge` (max 1); cards use group + en-dash.
  */
 const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
 const BADGE_CODE_ALIASES = { DECLARED: "OUT" };
 
 const HOMEPAGE_BREAKING_BADGE_CSS = {
-  NEW: "tag new",
-  OUT: "tag out",
-  START: "tag start",
-  SOON: "tag soon"
+  NEW: "home-badge home-badge--new",
+  OUT: "home-badge home-badge--out",
+  START: "home-badge home-badge--start",
+  SOON: "home-badge home-badge--soon"
 };
+
+const HOMEPAGE_BREAKING_BADGE_MAX = 1;
 
 const HOMEPAGE_CARD_BADGE_CSS = {
   NEW: "home-badge home-badge--new",
@@ -141,12 +142,12 @@ function normalizeBadgeCode(raw) {
   return BADGE_CODE_ALIASES[code] || code;
 }
 
-function renderBadgesFromArray(badges, cssMap) {
+function renderBadgesFromArray(badges, cssMap, max = HOMEPAGE_BADGE_MAX) {
   if (!Array.isArray(badges) || badges.length === 0) return "";
   const seen = new Set();
   const html = [];
   for (const raw of badges) {
-    if (html.length >= HOMEPAGE_BADGE_MAX) break;
+    if (html.length >= max) break;
     const code = normalizeBadgeCode(raw);
     if (!code || seen.has(code)) continue;
     const cssClass = cssMap[code];
@@ -158,7 +159,7 @@ function renderBadgesFromArray(badges, cssMap) {
 }
 
 function renderHomepageBadgesFromArray(badges) {
-  return renderBadgesFromArray(badges, HOMEPAGE_BREAKING_BADGE_CSS);
+  return renderBadgesFromArray(badges, HOMEPAGE_BREAKING_BADGE_CSS, HOMEPAGE_BREAKING_BADGE_MAX);
 }
 
 function resolveHomepageBadgeHtml(item) {
@@ -216,38 +217,66 @@ function readHomeBootstrap() {
   }
 }
 
-function bindBreakingTickerInteraction(container) {
-  if (!container || container.dataset.tickerBound === "1") return;
-  container.dataset.tickerBound = "1";
+function buildBreakingRotatorHtml(data, staticMode) {
+  const items = Array.isArray(data) ? data : [];
+  if (!items.length) return "";
 
-  const setPaused = (paused) => {
-    const scroll = container.querySelector(".breaking-scroll");
-    if (!scroll) return;
-    scroll.style.animationPlayState = paused ? "paused" : "";
-  };
+  if (staticMode) {
+    const list = items
+      .slice(0, window.BreakingRotator?.STATIC_MAX ?? 3)
+      .map((n) => {
+        const badge = resolveHomepageBadgeHtml(n);
+        const href = safeExternalUrl(n.url);
+        const ext = breakingNewsLinkTargetRel(href);
+        const title = escapeHtml(n.title);
+        const badgeHtml = badge ? `<span class="breaking-rotator__badges">${badge}</span>` : "";
+        return `<li><a href="${escapeAttr(href)}" class="breaking-rotator__chip"${ext} title="${title}"><span class="breaking-rotator__chip-inner">${badgeHtml}<span class="breaking-rotator__title">${title}</span></span></a></li>`;
+      })
+      .join("");
+    return `<div class="breaking-rotator breaking-rotator--static" data-breaking-rotator data-count="${items.length}" aria-live="polite"><ul class="breaking-rotator__static-list">${list}</ul></div>`;
+  }
 
-  container.addEventListener("touchstart", () => setPaused(true), { passive: true });
-  container.addEventListener("touchend", () => setPaused(false), { passive: true });
-  container.addEventListener("touchcancel", () => setPaused(false), { passive: true });
+  const chips = items
+    .map((n) => {
+      const badge = resolveHomepageBadgeHtml(n);
+      const href = safeExternalUrl(n.url);
+      const ext = breakingNewsLinkTargetRel(href);
+      const title = escapeHtml(n.title);
+      const badgeHtml = badge ? `<span class="breaking-rotator__badges">${badge}</span>` : "";
+      return `<a href="${escapeAttr(href)}" class="breaking-rotator__chip"${ext} title="${title}"><span class="breaking-rotator__chip-inner">${badgeHtml}<span class="breaking-rotator__title">${title}</span></span></a>`;
+    })
+    .join("");
+
+  const count = items.length;
+  const dots = items
+    .slice(0, 5)
+    .map(
+      (_, i) =>
+        `<button type="button" class="breaking-rotator__dot${i === 0 ? " is-active" : ""}" role="tab" aria-selected="${i === 0 ? "true" : "false"}" data-index="${i}" aria-label="Breaking update ${i + 1}"></button>`
+    )
+    .join("");
+  const dotsMore =
+    count > 5 ? `<span class="breaking-rotator__dots-more" hidden aria-hidden="true">+${count - 5}</span>` : "";
+  const controlsClass = count <= 1 ? " breaking-rotator__controls--hidden" : "";
+
+  return `<div class="breaking-rotator" data-breaking-rotator data-count="${count}" aria-live="polite"><div class="breaking-rotator__viewport"><div class="breaking-rotator__track">${chips}</div></div><div class="breaking-rotator__controls${controlsClass}"><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--prev" aria-label="Previous breaking update"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><div class="breaking-rotator__dots" role="tablist">${dots}${dotsMore}</div><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--next" aria-label="Next breaking update"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button></div></div>`;
+}
+
+function mountBreakingRotator(container) {
+  if (!container) return;
+  const root = container.querySelector("[data-breaking-rotator]");
+  if (root && window.BreakingRotator) {
+    window.BreakingRotator.mount(root);
+  }
 }
 
 function renderBreakingNewsIntoContainer(data) {
   const container = document.getElementById("breakingNews");
   if (!container) return;
 
-  const scrollDiv = document.createElement("div");
-  scrollDiv.className = "breaking-scroll";
-
-  scrollDiv.innerHTML = data.map((n) => {
-    const badge = resolveHomepageBadgeHtml(n);
-    const href = safeExternalUrl(n.url);
-    const ext = breakingNewsLinkTargetRel(href);
-    return `<a href="${escapeAttr(href)}"${ext}>${escapeHtml(n.title)} ${badge}</a>`;
-  }).join("");
-
-  container.innerHTML = "";
-  container.appendChild(scrollDiv);
-  bindBreakingTickerInteraction(container);
+  const staticMode = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  container.innerHTML = buildBreakingRotatorHtml(data, staticMode);
+  mountBreakingRotator(container);
 }
 
 function initBreakingFromBootstrap(data) {
@@ -263,10 +292,12 @@ function initBreakingFromBootstrap(data) {
 
   if (container) container.style.display = "";
 
-  if (!container || !container.querySelector(".breaking-scroll")) {
+  const root = container && container.querySelector("[data-breaking-rotator]");
+  const wantsStatic = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!root || (wantsStatic && !root.classList.contains("breaking-rotator--static"))) {
     renderBreakingNewsIntoContainer(data);
   } else {
-    bindBreakingTickerInteraction(container);
+    mountBreakingRotator(container);
   }
 
   startCountdown(data);

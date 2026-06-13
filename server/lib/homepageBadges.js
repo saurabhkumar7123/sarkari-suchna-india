@@ -8,13 +8,15 @@ const BADGE_CODE_ALIASES = {
   DECLARED: "OUT"
 };
 
-/** Breaking news ticker — legacy `.tag` classes (unchanged styling scope). */
+/** Breaking news rotator — unified home-badge pills (max 1), same visual language as cards. */
 const HOMEPAGE_BREAKING_BADGE_CSS = {
-  NEW: "tag new",
-  OUT: "tag out",
-  START: "tag start",
-  SOON: "tag soon"
+  NEW: "home-badge home-badge--new",
+  OUT: "home-badge home-badge--out",
+  START: "home-badge home-badge--start",
+  SOON: "home-badge home-badge--soon"
 };
+
+const HOMEPAGE_BREAKING_BADGE_MAX = 1;
 
 /** Homepage card grid (#dynamicSections) — compact government-style pills. */
 const HOMEPAGE_CARD_BADGE_CSS = {
@@ -49,12 +51,12 @@ function normalizeBadgeCode(raw) {
  * @param {Record<string, string>} cssMap
  * @returns {string}
  */
-function renderBadgesHtmlWithMap(badges, cssMap) {
+function renderBadgesHtmlWithMap(badges, cssMap, max = HOMEPAGE_BADGE_MAX) {
   if (!Array.isArray(badges) || badges.length === 0) return "";
   const seen = new Set();
   const html = [];
   for (const raw of badges) {
-    if (html.length >= HOMEPAGE_BADGE_MAX) break;
+    if (html.length >= max) break;
     const code = normalizeBadgeCode(raw);
     if (!code || seen.has(code)) continue;
     const cssClass = cssMap[code];
@@ -66,12 +68,12 @@ function renderBadgesHtmlWithMap(badges, cssMap) {
 }
 
 /**
- * Breaking news — legacy tag badges, no en-dash separator.
+ * Breaking news rotator — single home-badge, no en-dash separator.
  * @param {unknown} badges
  * @returns {string}
  */
 function renderHomepageBadgesHtml(badges) {
-  return renderBadgesHtmlWithMap(badges, HOMEPAGE_BREAKING_BADGE_CSS);
+  return renderBadgesHtmlWithMap(badges, HOMEPAGE_BREAKING_BADGE_CSS, HOMEPAGE_BREAKING_BADGE_MAX);
 }
 
 /**
@@ -107,6 +109,7 @@ module.exports = {
   ALLOWED_BADGE_CODES,
   BADGE_CODE_ALIASES,
   HOMEPAGE_BREAKING_BADGE_CSS,
+  HOMEPAGE_BREAKING_BADGE_MAX,
   HOMEPAGE_CARD_BADGE_CSS,
   HOMEPAGE_BADGE_MAX,
   normalizeBadgeCode,

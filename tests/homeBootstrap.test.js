@@ -106,26 +106,26 @@ describe("homepageBadges normalizeBadgeCode", () => {
   });
 });
 
-describe("homepageBadges SSR — breaking news (legacy .tag)", () => {
-  it("renders NEW and OUT with legacy tag classes", () => {
+describe("homepageBadges SSR — breaking news rotator (.home-badge)", () => {
+  it("renders NEW with unified home-badge class (max 1)", () => {
     const html = renderHomepageBadgesHtml(["NEW", "OUT"]);
-    expect(html).toContain('class="tag new"');
-    expect(html).toContain('class="tag out"');
-    expect(html).not.toContain("home-badge");
-    expect(html).not.toContain("home-card-badge-sep");
+    expect(html).toContain('class="home-badge home-badge--new"');
+    expect(html).toContain("NEW");
+    expect(html).not.toContain("OUT");
+    expect(html).not.toContain("tag new");
   });
 
-  it("maps DECLARED to OUT label with tag out class", () => {
+  it("maps DECLARED to OUT label with home-badge--out", () => {
     const html = renderHomepageBadgesHtml(["DECLARED"]);
-    expect(html).toContain('class="tag out"');
+    expect(html).toContain('class="home-badge home-badge--out"');
     expect(html).toContain("OUT");
     expect(html).not.toContain("DECLARED");
   });
 
-  it("caps at 2 badges and dedupes", () => {
+  it("caps at 1 badge for breaking rotator", () => {
     const html = renderHomepageBadgesHtml(["NEW", "OUT", "START", "NEW"]);
     expect(html).toContain("NEW");
-    expect(html).toContain("OUT");
+    expect(html).not.toContain("OUT");
     expect(html).not.toContain("START");
     expect((html.match(/NEW/g) || []).length).toBe(1);
   });
