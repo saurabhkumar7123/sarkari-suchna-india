@@ -45,7 +45,7 @@ function renderJobListHtml(items) {
 }
 
 /**
- * Full SSR taxonomy hub page — no client JS, no Finder, no API calls.
+ * Full SSR taxonomy hub page — shared site chrome scripts for header/search/footer.
  * @param {{
  *   title: string,
  *   description: string,
@@ -91,6 +91,7 @@ function renderTaxonomySSRPage(opts) {
 <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
 <link rel="stylesheet" href="/css/pages/home.css?v=5">
 <link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=2">
+<link rel="stylesheet" href="/css/components/search-overlay.css?v=2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="listing-page page-section taxonomy-page">
@@ -106,6 +107,9 @@ ${headerHtml}
   </section>
 </div>
 ${footerHtml}
+<script src="/js/search.js" defer></script>
+<script src="/js/header.js" defer></script>
+<script src="/js/footer.js" defer></script>
 </body>
 </html>`;
 }

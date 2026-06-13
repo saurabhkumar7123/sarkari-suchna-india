@@ -3,7 +3,7 @@
 const { renderTaxonomySSRPage } = require("../server/lib/renderTaxonomySSRPage");
 
 describe("renderTaxonomySSRPage", () => {
-  it("renders full SSR HTML with H1, job cards, and no client scripts", () => {
+  it("renders full SSR HTML with H1, job cards, and shared chrome scripts", () => {
     const html = renderTaxonomySSRPage({
       title: "Railway Jobs 2026 | Sarkari Suchna India",
       description: "Latest railway jobs.",
@@ -35,6 +35,9 @@ describe("renderTaxonomySSRPage", () => {
     expect(html).not.toContain("taxonomy-hub__status");
     expect(html).not.toContain("home-badge");
     expect(html).not.toContain("home-card-badge-sep");
+    expect(html).toContain('src="/js/header.js"');
+    expect(html).toContain('src="/js/search.js"');
+    expect(html).toContain('src="/js/footer.js"');
     expect(html).not.toMatch(/index\.js/i);
     expect(html).not.toMatch(/board-hub\.js/i);
     expect(html).not.toMatch(/listing\.js/i);
