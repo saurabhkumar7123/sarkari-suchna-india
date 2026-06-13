@@ -591,15 +591,12 @@ function renderCategoriesPanelPills(items, labelFn) {
 function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw) {
   const activeTab = normalizeCategoryTabParam(activeTabRaw);
 
-  const countByDept = new Map(
-    (Array.isArray(boards) ? boards : []).map((b) => [b.slug, Number(b.count) || 0])
-  );
-  const departmentItems = allBoardHubs().map((hub) => ({
-    slug: hub.slug,
-    label: hub.label,
-    href: buildDepartmentPath(hub.slug),
-    count: countByDept.get(hub.slug) || 0
-  }));
+  const departmentItems = Array.isArray(boards) ? boards : [];
+  const qualificationItems = Array.isArray(qualifications) ? qualifications : [];
+  const stateItems = Array.isArray(states) ? states : [];
+
+  const formatBrowseLabel = (item) =>
+    Number(item.count) > 0 ? `${item.label} (${item.count})` : item.label;
 
   const tabDefs = [
     {
@@ -607,23 +604,21 @@ function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw
       label: "Departments",
       tabId: "categoriesTabDepartments",
       panelId: "categoriesBoards",
-      pills: renderCategoriesPanelPills(departmentItems, (item) =>
-        item.count > 0 ? `${item.label} (${item.count})` : item.label
-      )
+      pills: renderCategoriesPanelPills(departmentItems, formatBrowseLabel)
     },
     {
       key: "qualifications",
       label: "Qualifications",
       tabId: "categoriesTabQualifications",
       panelId: "categoriesQualifications",
-      pills: renderCategoriesPanelPills(qualifications, (item) => `${item.label} (${item.count})`)
+      pills: renderCategoriesPanelPills(qualificationItems, formatBrowseLabel)
     },
     {
       key: "states",
       label: "States",
       tabId: "categoriesTabStates",
       panelId: "categoriesStates",
-      pills: renderCategoriesPanelPills(states, (item) => `${item.label} (${item.count})`)
+      pills: renderCategoriesPanelPills(stateItems, formatBrowseLabel)
     }
   ];
 
@@ -1267,15 +1262,20 @@ const categoriesPageSeo = {
 
 app.get(["/categories", "/categories.html"], asyncHandler(async (req, res) => {
   const activeTab = normalizeCategoryTabParam(req.query.tab);
-  const stats = await homeStatsService.getTaxonomyStats().catch(() => ({
-    boards: [],
+  const browseLists = await homeStatsService.getBrowseCategoryLists().catch(() => ({
+    boards: allBoardHubs().map((hub) => ({
+      slug: hub.slug,
+      label: hub.label,
+      href: buildDepartmentPath(hub.slug),
+      count: 0
+    })),
     qualifications: [],
     states: []
   }));
   const browseHtml = renderCategoriesBrowseHtml(
-    stats.boards,
-    stats.qualifications,
-    stats.states,
+    browseLists.boards,
+    browseLists.qualifications,
+    browseLists.states,
     activeTab
   );
   const source = await fileService.readFile(categoriesPagePath, "utf8");

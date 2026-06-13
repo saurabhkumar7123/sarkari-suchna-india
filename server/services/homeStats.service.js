@@ -92,6 +92,75 @@ function buildPopularStatesFromCounts(rows) {
  * Aggregate taxonomy counts; keep whitelist values with count > 0.
  * @returns {Promise<{ generatedAt: string, boards: PopularBoardRow[], qualifications: PopularQualificationRow[], states: PopularStateRow[] }>}
  */
+function buildBrowseQualificationsFromCounts(rows) {
+  const countBySlug = new Map();
+
+  for (const row of rows) {
+    const slug = String(row.slug || "").trim().toLowerCase();
+    if (!slug || !ALLOWED_JOB_QUALIFICATIONS.has(slug)) continue;
+    countBySlug.set(slug, Number(row.page_count) || 0);
+  }
+
+  return QUALIFICATION_REGISTRY.map((entry) => ({
+    slug: entry.slug,
+    label: entry.label,
+    href: buildQualificationHref(entry.slug),
+    count: countBySlug.get(entry.slug) || 0
+  })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function buildBrowseStatesFromCounts(rows) {
+  const countBySlug = new Map();
+
+  for (const row of rows) {
+    const slug = String(row.slug || "").trim().toLowerCase();
+    if (!slug || !ALLOWED_JOB_STATES.has(slug)) continue;
+    countBySlug.set(slug, Number(row.page_count) || 0);
+  }
+
+  return STATE_REGISTRY.map((entry) => ({
+    slug: entry.slug,
+    label: entry.label,
+    href: buildStateHref(entry.slug),
+    count: countBySlug.get(entry.slug) || 0
+  })).sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function buildBrowseBoardsFromCounts(rows) {
+  const countByDept = new Map();
+  for (const row of rows) {
+    const slug = String(row.slug || "").trim().toLowerCase();
+    if (!slug || !BOARD_SLUG_SET.has(slug)) continue;
+    countByDept.set(slug, Number(row.page_count) || 0);
+  }
+
+  return allBoardHubs()
+    .map((hub) => ({
+      slug: hub.slug,
+      label: hub.label,
+      href: buildDepartmentPath(hub.slug),
+      count: countByDept.get(hub.slug) || 0
+    }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+/**
+ * Full browse lists for /categories — every registry item, not just count > 0.
+ */
+async function getBrowseCategoryLists() {
+  const [departmentRows, qualificationRows, stateRows] = await Promise.all([
+    pageRepository.selectDepartmentCounts(),
+    pageRepository.selectQualificationCounts(),
+    pageRepository.selectStateCounts()
+  ]);
+
+  return {
+    boards: buildBrowseBoardsFromCounts(departmentRows),
+    qualifications: buildBrowseQualificationsFromCounts(qualificationRows),
+    states: buildBrowseStatesFromCounts(stateRows)
+  };
+}
+
 async function recomputeTaxonomyStats() {
   const [departmentRows, qualificationRows, stateRows] = await Promise.all([
     pageRepository.selectDepartmentCounts(),
@@ -200,6 +269,10 @@ module.exports = {
   getPopularBoards,
   getPopularQualifications,
   getPopularStates,
+  getBrowseCategoryLists,
+  buildBrowseBoardsFromCounts,
+  buildBrowseQualificationsFromCounts,
+  buildBrowseStatesFromCounts,
   recomputeTaxonomyStats,
   invalidateTaxonomyStats
 };
