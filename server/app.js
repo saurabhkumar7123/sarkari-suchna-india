@@ -517,7 +517,7 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
-    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
+    <a href="/categories?tab=departments" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
   </div>
 </section>`;
@@ -539,7 +539,7 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
-    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
+    <a href="/categories?tab=qualifications" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
   </div>
 </section>`;
@@ -561,10 +561,91 @@ function renderPopularStatesHtml(states, opts = {}) {
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
-    <a href="/categories" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
+    <a href="/categories?tab=states" class="popular-categories__pill popular-categories__pill--view-all">View All</a>
   </div>
   </div>
 </section>`;
+}
+
+const VALID_CATEGORY_TABS = new Set(["departments", "qualifications", "states"]);
+
+function normalizeCategoryTabParam(raw) {
+  const tab = String(raw || "")
+    .trim()
+    .toLowerCase();
+  return VALID_CATEGORY_TABS.has(tab) ? tab : "departments";
+}
+
+function renderCategoriesPanelPills(items, labelFn) {
+  if (!Array.isArray(items) || !items.length) {
+    return `<p class="categories-browse__empty">No categories available yet.</p>`;
+  }
+  return items
+    .map((item) => {
+      const label = labelFn(item);
+      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
+    })
+    .join("");
+}
+
+function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw) {
+  const activeTab = normalizeCategoryTabParam(activeTabRaw);
+
+  const countByDept = new Map(
+    (Array.isArray(boards) ? boards : []).map((b) => [b.slug, Number(b.count) || 0])
+  );
+  const departmentItems = allBoardHubs().map((hub) => ({
+    slug: hub.slug,
+    label: hub.label,
+    href: buildDepartmentPath(hub.slug),
+    count: countByDept.get(hub.slug) || 0
+  }));
+
+  const tabDefs = [
+    {
+      key: "departments",
+      label: "Departments",
+      tabId: "categoriesTabDepartments",
+      panelId: "categoriesBoards",
+      pills: renderCategoriesPanelPills(departmentItems, (item) =>
+        item.count > 0 ? `${item.label} (${item.count})` : item.label
+      )
+    },
+    {
+      key: "qualifications",
+      label: "Qualifications",
+      tabId: "categoriesTabQualifications",
+      panelId: "categoriesQualifications",
+      pills: renderCategoriesPanelPills(qualifications, (item) => `${item.label} (${item.count})`)
+    },
+    {
+      key: "states",
+      label: "States",
+      tabId: "categoriesTabStates",
+      panelId: "categoriesStates",
+      pills: renderCategoriesPanelPills(states, (item) => `${item.label} (${item.count})`)
+    }
+  ];
+
+  const resolvedActive = tabDefs.some((tab) => tab.key === activeTab)
+    ? activeTab
+    : "departments";
+
+  const tabsHtml = tabDefs
+    .map((tab) => {
+      const isActive = tab.key === resolvedActive;
+      return `<button type="button" class="taxonomy-tabs__btn${isActive ? " is-active" : ""}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-expanded="${isActive ? "true" : "false"}" aria-controls="${escapeHtml(tab.panelId)}"><span class="taxonomy-tabs__label">${escapeHtml(tab.label)}</span></button>`;
+    })
+    .join("");
+
+  const panelsHtml = tabDefs
+    .map((tab) => {
+      const isActive = tab.key === resolvedActive;
+      return `<section class="popular-categories taxonomy-panel categories-browse__panel section${isActive ? " taxonomy-panel--active" : ""}" id="${escapeHtml(tab.panelId)}" data-taxonomy-panel="${escapeHtml(tab.key)}" role="tabpanel" aria-hidden="${isActive ? "false" : "true"}"><div class="taxonomy-panel__inner"><div class="popular-categories__grid popular-categories__grid--browse">${tab.pills}</div></div></section>`;
+    })
+    .join("");
+
+  return `<div class="taxonomy-discovery categories-browse" id="categoriesBrowse"><div class="taxonomy-tabs" role="tablist" aria-label="Browse job categories">${tabsHtml}</div><div class="taxonomy-panels">${panelsHtml}</div></div>`;
 }
 
 function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
@@ -1081,7 +1162,7 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
   }
 }));
 
-const { isBoardSlug, normalizeBoardSlug } = require("./lib/boardHubs");
+const { isBoardSlug, normalizeBoardSlug, allBoardHubs } = require("./lib/boardHubs");
 
 async function sendTaxonomyHubHtml(req, res, type) {
   const slug = String(req.params.slug || "").trim();
@@ -1180,12 +1261,47 @@ const categoriesPagePath = path.join(generatedDir, "static", "categories.html");
 const categoriesPageSeo = {
   title: "Browse Categories | Sarkari Suchna India",
   description:
-    "Browse government job categories by board — SSC, Railway, UPSC, Bank, Police, Teaching, Defence and Health on Sarkari Suchna India.",
+    "Browse government job categories by department, qualification and state on Sarkari Suchna India.",
   canonicalPath: "/categories"
 };
 
 app.get(["/categories", "/categories.html"], asyncHandler(async (req, res) => {
-  await sendSeoAugmentedHtml(req, res, categoriesPagePath, categoriesPageSeo);
+  const activeTab = normalizeCategoryTabParam(req.query.tab);
+  const stats = await homeStatsService.getTaxonomyStats().catch(() => ({
+    boards: [],
+    qualifications: [],
+    states: []
+  }));
+  const browseHtml = renderCategoriesBrowseHtml(
+    stats.boards,
+    stats.qualifications,
+    stats.states,
+    activeTab
+  );
+  const source = await fileService.readFile(categoriesPagePath, "utf8");
+  const html = String(source).replace(
+    /<div id="categoriesBrowse"[\s\S]*?<\/div>/,
+    browseHtml
+  );
+  const baseUrl = getPublicBaseUrl(req);
+  const canonicalPath = activeTab === "departments" ? "/categories" : `/categories?tab=${activeTab}`;
+  let out = html;
+  if (categoriesPageSeo.title) {
+    out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${categoriesPageSeo.title}</title>`);
+  }
+  if (categoriesPageSeo.description) {
+    out = out.replace(
+      /<meta name="description"[^>]*>/i,
+      `<meta name="description" content="${categoriesPageSeo.description}">`
+    );
+  }
+  const canonicalUrl = baseUrl ? `${baseUrl}${canonicalPath}` : canonicalPath;
+  out = out.replace(
+    /<link rel="canonical"[^>]*>/i,
+    `<link rel="canonical" href="${canonicalUrl}">`
+  );
+  out = normalizeSeoUrlsInHtml(out, baseUrl);
+  await sendHtmlString(req, res, out);
 }));
 
 Object.entries(staticPageRoutes).forEach(([route, file]) => {
