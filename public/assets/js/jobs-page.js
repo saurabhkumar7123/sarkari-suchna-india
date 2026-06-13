@@ -10,6 +10,9 @@
   }
 
   function getQueryFilters() {
+    if (window.JobFinderUrl) {
+      return window.JobFinderUrl.validateState(window.JobFinderUrl.parseUrl());
+    }
     const params = new URLSearchParams(window.location.search);
     return {
       qualification: normalizeFilterValue(params.get("qualification")),
@@ -155,11 +158,19 @@
     if (filters.department) params.set("department", filters.department);
     if (filters.jobType) params.set("jobType", filters.jobType);
     if (filters.status) params.set("status", filters.status);
-    if (filters.source === "finder") params.set("source", "finder");
+    if (window.JobFinderUrl) {
+      const active = window.JobFinderUrl.countActiveFilters(
+        window.JobFinderUrl.validateState(filters)
+      );
+      if (filters.source === "finder" && active >= window.JobFinderUrl.MIN_REQUIRED_FILTERS) {
+        params.set("source", "finder");
+      }
+    } else if (filters.source === "finder") {
+      params.set("source", "finder");
+    }
     params.set("page", String(page));
     params.set("limit", String(limit));
-    const query = params.toString();
-    return query ? `/api/jobs?${query}` : "/api/jobs";
+    return `/api/jobs?${params.toString()}`;
   }
 
   function renderPagination(meta) {

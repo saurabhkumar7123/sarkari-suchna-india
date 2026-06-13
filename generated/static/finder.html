@@ -39,7 +39,7 @@
 
 <select id="finderState" class="finder-input">
 
-<option value="">All India</option>
+<option value="">Select State</option>
 <option value="uttar pradesh">Uttar Pradesh</option>
 <option value="bihar">Bihar</option>
 <option value="madhya pradesh">Madhya Pradesh</option>
@@ -58,7 +58,7 @@
 
 <select id="finderDepartment" class="finder-input">
 
-<option value="">All Departments</option>
+<option value="">Select Department</option>
 <option value="police">Police</option>
 <option value="railway">Railway</option>
 <option value="bank">Bank</option>
@@ -73,7 +73,12 @@
 </div>
 
 
-<button type="submit" id="finderBtn" class="finder-submit">
+<p class="finder-hint finder-hint--warn" id="finderHint" aria-live="polite">
+Select at least 2 filters to search (0/2 selected).
+</p>
+
+
+<button type="submit" id="finderBtn" class="finder-submit" disabled aria-disabled="true">
 Find Jobs
 </button>
 

@@ -480,6 +480,31 @@ body.finder-modal-open{
   background:linear-gradient(135deg,#18358c,#365fd9);
 }
 
+.finder-submit:disabled,
+.finder-submit[aria-disabled="true"]{
+  cursor:not-allowed;
+  opacity:.55;
+  transform:none;
+  box-shadow:none;
+  background:linear-gradient(135deg,#94a3b8,#cbd5e1);
+}
+
+.finder-hint{
+  grid-column:1/-1;
+  margin:0;
+  font-size:13px;
+  line-height:1.4;
+  color:#64748b;
+}
+
+.finder-hint--warn{
+  color:#b45309;
+}
+
+.finder-hint--ok{
+  color:#15803d;
+}
+
 /* ===============================
    RESULTS
 =================================*/
