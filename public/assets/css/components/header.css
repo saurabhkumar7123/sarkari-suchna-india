@@ -19,8 +19,8 @@
 =================================*/
 .top-banner{
   position:relative;
-  padding:16px 16px;
-  min-height:118px;
+  padding:18px 16px;
+  min-height:126px;
 
   background:linear-gradient(
     90deg,
@@ -357,7 +357,7 @@
 @media (max-width: 768px) {
 
   .top-banner{
-    min-height:86px;
+    min-height:104px;
     padding:12px 12px;
   }
 
@@ -373,7 +373,14 @@
   line-height:1.15;
 }
 .title p{
-  display:none;
+  display:block;
+  font-size:11px;
+  font-weight:400;
+  line-height:1.35;
+  color:rgba(255,255,255,0.84);
+  margin:3px 0 0;
+  padding:0 8px;
+  max-width:100%;
 }
 
 .top-banner-inner{
@@ -383,7 +390,7 @@
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap:2px;
+  gap:4px;
 }
 
 .logo-section{
@@ -399,7 +406,7 @@
   position:static;
   transform:none;
 
-  margin-top:2px;
+  margin-top:4px;
 
   display:flex;
   justify-content:center;
@@ -835,7 +842,7 @@ body.tools-menu-open{
     transform:none !important;
   
     width:100%;
-    margin-top:2px;
+    margin-top:4px;
   
     display:flex;
     justify-content:center;
