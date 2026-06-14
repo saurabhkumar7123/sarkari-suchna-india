@@ -23,9 +23,9 @@
   --home-danger: var(--color-danger);
   --home-info: var(--color-info);
 
-  /* Small boxes + category pills — shared 2-line min-height (no truncation) */
+  /* Small boxes — 2-line min-height (no truncation); pills use --home-pill-* below */
   --home-cat-2line-min-h: calc(2 * 1.35em + 28px);
-  --home-cat-2line-min-h-mobile: calc(2 * 1.35em + 24px);
+  --home-cat-2line-min-h-mobile: calc(2 * 1.35em + 20px);
   --home-pill-2line-min-h: calc(2 * 1.25em + 20px);
   --home-pill-2line-min-h-mobile: calc(2 * 1.25em + 20px);
 
@@ -451,8 +451,8 @@
       align-items:stretch;
     }
     
-    /* CARD */
-    .cat{
+    /* CARD — scoped to Small Info Boxes only */
+    .small-boxes .cat{
       display:flex;
       align-items:center;
       justify-content:center;
@@ -464,7 +464,7 @@
     
       text-transform:capitalize;
       color:var(--site-text-inverse);
-      font-weight:600;
+      font-weight:700;
       font-size:14px;
       line-height:1.35;
     
@@ -496,7 +496,7 @@
       color:var(--site-text-inverse);
     }
 
-    .cat::before{
+    .small-boxes .cat::before{
       content:"";
       position:absolute;
       left:0;
@@ -510,14 +510,14 @@
     }
     
     /* HOVER */
-    .cat:hover{
+    .small-boxes .cat:hover{
       transform:translateY(-4px);
       box-shadow:var(--home-shadow);
       text-decoration:underline;
     }
     
     /* CLICK */
-    .cat:active{
+    .small-boxes .cat:active{
       transform:scale(0.97);
       box-shadow:var(--home-shadow-sm);
     }
@@ -895,13 +895,15 @@
       display:none;
     }
      
-    body.page-home .cat{
-      padding:var(--home-gap-grid) var(--home-gap-grid-tight);
+    body.page-home .small-boxes .cat{
+      padding:10px var(--home-gap-grid-tight);
+      font-weight:700;
     }
 
-    .cat{
-      padding:12px 10px;
+    .small-boxes .cat{
+      padding:10px 10px;
       font-size:12px;
+      font-weight:700;
       border-radius:8px;
       min-height:var(--home-cat-2line-min-h-mobile);
       display:flex;
