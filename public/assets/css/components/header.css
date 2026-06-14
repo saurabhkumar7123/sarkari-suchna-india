@@ -357,8 +357,8 @@
 @media (max-width: 768px) {
 
   .top-banner{
-    min-height:104px;
-    padding:12px 12px;
+    min-height:118px;
+    padding:16px 12px;
   }
 
   .top-banner::before{
