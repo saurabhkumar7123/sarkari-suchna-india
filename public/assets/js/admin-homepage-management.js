@@ -27,7 +27,7 @@
   }
 
   function skeletonHtml() {
-    return `<div class="page-table page-table--skeleton" aria-hidden="true">
+    return `<div class="page-table page-table--cols-3 page-table--skeleton" aria-hidden="true">
       <div class="page-head"><div>Title</div><div>Details</div><div>Actions</div></div>
       ${Array.from({ length: 3 })
         .map(() => '<div class="page-row skeleton-row"><div></div><div></div><div></div></div>')
@@ -35,15 +35,36 @@
     </div>`;
   }
 
-  function renderTable(hostId, headCols, rowsHtml, emptyMessage) {
+  function slotSkeletonHtml() {
+    return `<div class="hp-slot-grid" aria-hidden="true">
+      ${[1, 2, 3, 4]
+        .map(
+          () => `<div class="hp-slot-card hp-slot-card--empty">
+            <div class="skeleton-row"><div style="min-height:14px;width:40%;"></div></div>
+            <div class="skeleton-row"><div style="min-height:18px;width:70%;"></div></div>
+          </div>`
+        )
+        .join("")}
+    </div>`;
+  }
+
+  function emptyStateHtml(icon, title, hint) {
+    return `<div class="hp-empty-state">
+      <div class="hp-empty-state__icon" aria-hidden="true">${escapeHtml(icon)}</div>
+      <p class="hp-empty-state__title">${escapeHtml(title)}</p>
+      <p class="hp-empty-state__hint">${escapeHtml(hint)}</p>
+    </div>`;
+  }
+
+  function renderTable(hostId, headCols, rowsHtml, emptyConfig) {
     const host = document.getElementById(hostId);
     if (!host) return;
     if (!rowsHtml) {
-      host.innerHTML = `<p class="manager-hint">${escapeHtml(emptyMessage)}</p>`;
+      host.innerHTML = emptyStateHtml(emptyConfig.icon, emptyConfig.title, emptyConfig.hint);
       return;
     }
     host.innerHTML = `
-      <div class="page-table">
+      <div class="page-table page-table--cols-3">
         <div class="page-head">${headCols.map((c) => `<div>${escapeHtml(c)}</div>`).join("")}</div>
         ${rowsHtml}
       </div>`;
@@ -57,7 +78,14 @@
     window.AdminUI?.toastSuccess?.(message);
   }
 
-  async function patchPlacement(url, body) {
+  async function withSaveLoading(button, action, loadingText) {
+    if (window.AdminUI?.withLoading && button) {
+      return window.AdminUI.withLoading(button, action, loadingText || "Saving...");
+    }
+    return action();
+  }
+
+  async function patchPlacement(url, body, successMessage) {
     const res = await window.adminSafeFetch(url, {
       method: "PATCH",
       body: JSON.stringify(body)
@@ -67,7 +95,7 @@
       notifyError(msg);
       return false;
     }
-    notifySuccess("Saved");
+    notifySuccess(successMessage || "Saved");
     return true;
   }
 
@@ -76,7 +104,7 @@
     const selectedSet = new Set(Array.isArray(selected) ? selected : []);
     return codes
       .map(
-        (code) => `<label style="margin-right:10px;">
+        (code) => `<label>
           <input type="checkbox" name="${escapeHtml(prefix)}-badge" value="${escapeHtml(code)}"${
           selectedSet.has(code) ? " checked" : ""
         }> ${escapeHtml(code)}
@@ -109,47 +137,58 @@
     });
   }
 
-  function renderBreakingList(items) {
-    if (!items.length) {
-      renderTable("breakingList", [], "", "No pages are currently flagged for Breaking News.");
-    } else {
-      const rows = items
-        .map((item, index) => {
-          const onHomepage = index < 10;
-          const visibility = onHomepage ? "On homepage ticker" : "Flagged only (beyond ticker limit)";
-          return `<div class="page-row" data-breaking-slug="${escapeHtml(item.slug)}">
-          <div>${escapeHtml(item.title)}</div>
-          <div>
-            <div><strong>Order:</strong>
-              <input type="number" min="0" step="1" class="breaking-order-input" value="${escapeHtml(item.breakingOrder)}" style="width:72px;margin-left:4px;">
-              · <strong>Status:</strong> ${escapeHtml(item.status || "—")}
-            </div>
-            <div><strong>Slug:</strong> ${escapeHtml(item.slug)} · ${escapeHtml(visibility)}</div>
-            <div><strong>Badges:</strong> ${formatBadges(item.badges)}</div>
-          </div>
-          <div class="row-actions">
-            <button type="button" class="header-action-btn breaking-save-order">Save order</button>
-            <button type="button" class="header-action-btn breaking-remove">Remove</button>
-            <a href="${generatorEditLink(item.slug)}">Edit in Generator</a>
-            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">View</a>
-          </div>
-        </div>`;
-        })
-        .join("");
-      renderTable("breakingList", ["Title", "Details", "Actions"], rows, "");
-    }
+  function statusChip(type, label) {
+    return `<span class="hp-status-chip hp-status-chip--${escapeHtml(type)}">${escapeHtml(label)}</span>`;
+  }
 
+  function renderBreakingAddForm() {
     const addHost = document.getElementById("breakingAddForm");
-    if (addHost) {
-      addHost.innerHTML = `
-        <p class="manager-hint" style="margin-bottom:8px;"><strong>Add page to Breaking</strong></p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-          <input type="text" id="breakingAddSlug" placeholder="page-slug" aria-label="Page slug" style="min-width:220px;">
-          <label>Order <input type="number" id="breakingAddOrder" min="0" step="1" value="0" style="width:72px;"></label>
-          <button type="button" class="header-action-btn" id="breakingAddBtn">Add to Breaking</button>
-        </div>`;
-    }
+    if (!addHost) return;
+    addHost.innerHTML = `
+      <p class="homepage-mgmt-form__title">Add page to Breaking</p>
+      <div class="homepage-mgmt-form__row">
+        <input type="text" id="breakingAddSlug" placeholder="page-slug" aria-label="Page slug">
+        <label class="homepage-mgmt-form__label-inline">Order
+          <input type="number" id="breakingAddOrder" min="0" step="1" value="0">
+        </label>
+        <button type="button" class="header-action-btn header-action-btn--primary" id="breakingAddBtn">Add to Breaking</button>
+      </div>`;
+  }
 
+  function renderBadgesAddForm() {
+    const addHost = document.getElementById("badgesAddForm");
+    if (!addHost) return;
+    addHost.innerHTML = `
+      <p class="homepage-mgmt-form__title">Add badges to a page</p>
+      <div class="homepage-mgmt-form__row">
+        <input type="text" id="badgesAddSlug" placeholder="page-slug" aria-label="Page slug">
+      </div>
+      <div class="badge-edit-row" id="badgesAddChecks">${badgeCheckboxesHtml("add", [])}</div>
+      <button type="button" class="header-action-btn header-action-btn--primary" id="badgesAddBtn">Save badges</button>`;
+    const addChecks = document.getElementById("badgesAddChecks");
+    if (addChecks) wireBadgeCheckboxLimit(addChecks);
+  }
+
+  function renderSmallBoxesAssignForm() {
+    const host = document.getElementById("smallBoxesAssignForm");
+    if (!host) return;
+    const slots = [1, 2, 3, 4];
+    host.innerHTML = `
+      <p class="homepage-mgmt-form__title">Assign pages to slots</p>
+      <div class="homepage-mgmt-assign-grid">
+        ${slots
+          .map(
+            (slot) => `<div class="homepage-mgmt-assign-row">
+            <span class="homepage-mgmt-assign-label">Slot ${slot}${slot === 4 ? " (desktop only)" : ""}</span>
+            <input type="text" class="smallbox-slug-input" data-slot="${slot}" placeholder="page-slug" aria-label="Slug for slot ${slot}">
+            <button type="button" class="header-action-btn header-action-btn--primary smallbox-assign" data-slot="${slot}">Assign</button>
+          </div>`
+          )
+          .join("")}
+      </div>`;
+  }
+
+  function wireBreakingActions() {
     document.querySelectorAll(".breaking-save-order").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const row = btn.closest("[data-breaking-slug]");
@@ -157,11 +196,14 @@
         const slug = row.getAttribute("data-breaking-slug");
         const orderInput = row.querySelector(".breaking-order-input");
         const breakingOrder = Math.max(0, parseInt(orderInput?.value, 10) || 0);
-        const ok = await patchPlacement(`/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`, {
-          breaking: true,
-          breakingOrder
-        });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`,
+            { breaking: true, breakingOrder },
+            "Breaking order updated"
+          );
+          if (ok) loadOverview();
+        }, "Saving...");
       });
     });
 
@@ -171,53 +213,37 @@
         if (!row) return;
         const slug = row.getAttribute("data-breaking-slug");
         if (!window.confirm(`Remove "${slug}" from Breaking News?`)) return;
-        const ok = await patchPlacement(`/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`, {
-          breaking: false,
-          breakingOrder: 0
-        });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`,
+            { breaking: false, breakingOrder: 0 },
+            "Removed from Breaking News"
+          );
+          if (ok) loadOverview();
+        }, "Removing...");
       });
     });
 
-    document.getElementById("breakingAddBtn")?.addEventListener("click", async () => {
+    document.getElementById("breakingAddBtn")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
       const slug = normalizeSlugInput(document.getElementById("breakingAddSlug")?.value);
       const breakingOrder = Math.max(0, parseInt(document.getElementById("breakingAddOrder")?.value, 10) || 0);
       if (!slug) {
         notifyError("Enter a page slug");
         return;
       }
-      const ok = await patchPlacement(`/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`, {
-        breaking: true,
-        breakingOrder
-      });
-      if (ok) loadOverview();
+      await withSaveLoading(btn, async () => {
+        const ok = await patchPlacement(
+          `/api/admin/homepage-management/breaking/${encodeURIComponent(slug)}`,
+          { breaking: true, breakingOrder },
+          "Added to Breaking News"
+        );
+        if (ok) loadOverview();
+      }, "Adding...");
     });
   }
 
-  function renderBadgesList(items) {
-    if (!items.length) {
-      renderTable("badgesList", [], "", "No pages currently have homepage badges.");
-    } else {
-      const rows = items
-        .map(
-          (item) => `<div class="page-row" data-badge-slug="${escapeHtml(item.slug)}">
-          <div>${escapeHtml(item.title)}</div>
-          <div>
-            <div class="badge-edit-row">${badgeCheckboxesHtml(`row-${item.slug}`, item.badges)}</div>
-            <div><strong>Status:</strong> ${escapeHtml(item.status || "—")} · <strong>Slug:</strong> ${escapeHtml(item.slug)}</div>
-          </div>
-          <div class="row-actions">
-            <button type="button" class="header-action-btn badge-save">Save badges</button>
-            <button type="button" class="header-action-btn badge-clear">Remove all</button>
-            <a href="${generatorEditLink(item.slug)}">Edit in Generator</a>
-            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">View</a>
-          </div>
-        </div>`
-        )
-        .join("");
-      renderTable("badgesList", ["Title", "Details", "Actions"], rows, "");
-    }
-
+  function wireBadgesActions() {
     document.querySelectorAll("[data-badge-slug] .badge-edit-row").forEach((container) => {
       wireBadgeCheckboxLimit(container);
     });
@@ -229,8 +255,14 @@
         const slug = row.getAttribute("data-badge-slug");
         const container = row.querySelector(".badge-edit-row");
         const badges = readBadgeSelections(container);
-        const ok = await patchPlacement(`/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`, { badges });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`,
+            { badges },
+            "Badges saved"
+          );
+          if (ok) loadOverview();
+        }, "Saving...");
       });
     });
 
@@ -240,25 +272,19 @@
         if (!row) return;
         const slug = row.getAttribute("data-badge-slug");
         if (!window.confirm(`Remove all badges from "${slug}"?`)) return;
-        const ok = await patchPlacement(`/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`, { badges: [] });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`,
+            { badges: [] },
+            "Badges cleared"
+          );
+          if (ok) loadOverview();
+        }, "Removing...");
       });
     });
 
-    const addHost = document.getElementById("badgesAddForm");
-    if (addHost) {
-      addHost.innerHTML = `
-        <p class="manager-hint" style="margin-bottom:8px;"><strong>Add badges to a page</strong></p>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
-          <input type="text" id="badgesAddSlug" placeholder="page-slug" aria-label="Page slug" style="min-width:220px;">
-        </div>
-        <div class="badge-edit-row" id="badgesAddChecks">${badgeCheckboxesHtml("add", [])}</div>
-        <button type="button" class="header-action-btn" id="badgesAddBtn" style="margin-top:8px;">Save badges</button>`;
-      const addChecks = document.getElementById("badgesAddChecks");
-      if (addChecks) wireBadgeCheckboxLimit(addChecks);
-    }
-
-    document.getElementById("badgesAddBtn")?.addEventListener("click", async () => {
+    document.getElementById("badgesAddBtn")?.addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
       const slug = normalizeSlugInput(document.getElementById("badgesAddSlug")?.value);
       const container = document.getElementById("badgesAddChecks");
       const badges = container ? readBadgeSelections(container) : [];
@@ -266,46 +292,18 @@
         notifyError("Enter a page slug");
         return;
       }
-      const ok = await patchPlacement(`/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`, { badges });
-      if (ok) loadOverview();
+      await withSaveLoading(btn, async () => {
+        const ok = await patchPlacement(
+          `/api/admin/homepage-management/badges/${encodeURIComponent(slug)}`,
+          { badges },
+          "Badges saved"
+        );
+        if (ok) loadOverview();
+      }, "Saving...");
     });
   }
 
-  function renderSmallBoxesList(items) {
-    const slots = [1, 2, 3, 4];
-    const bySlot = {};
-    (items || []).forEach((row) => {
-      if (row && row.slot != null) bySlot[String(row.slot)] = row;
-    });
-    const rows = slots
-      .map((slot) => {
-        const row = bySlot[String(slot)];
-        const title = row ? row.title || row.slug : "Empty";
-        const slug = row ? row.slug : "";
-        const assignControls = `
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">
-            <input type="text" class="smallbox-slug-input" data-slot="${slot}" placeholder="page-slug" aria-label="Slug for slot ${slot}" style="min-width:160px;">
-            <button type="button" class="header-action-btn smallbox-assign" data-slot="${slot}">Assign</button>
-            ${
-              slug
-                ? `<button type="button" class="header-action-btn smallbox-clear" data-slug="${escapeHtml(slug)}">Clear slot</button>`
-                : ""
-            }
-          </div>`;
-        const actions = row
-          ? `<a href="${generatorEditLink(slug)}">Edit in Generator</a>
-             <a href="/${escapeHtml(slug)}" target="_blank" rel="noopener">View</a>
-             ${assignControls}`
-          : `<span class="manager-hint">Unassigned</span>${assignControls}`;
-        return `<div class="page-row">
-          <div>Slot ${slot}${slot === 4 ? " (desktop only)" : ""}</div>
-          <div>${escapeHtml(title)}${slug ? ` · <strong>Slug:</strong> ${escapeHtml(slug)}` : ""}</div>
-          <div class="row-actions">${actions}</div>
-        </div>`;
-      })
-      .join("");
-    renderTable("smallBoxesList", ["Slot", "Occupant", "Actions"], rows, "");
-
+  function wireSmallBoxesActions() {
     document.querySelectorAll(".smallbox-assign").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const slot = btn.getAttribute("data-slot");
@@ -315,10 +313,14 @@
           notifyError("Enter a page slug");
           return;
         }
-        const ok = await patchPlacement(`/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`, {
-          smallBoxSlot: Number(slot)
-        });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`,
+            { smallBoxSlot: Number(slot) },
+            "Slot assigned"
+          );
+          if (ok) loadOverview();
+        }, "Assigning...");
       });
     });
 
@@ -326,12 +328,136 @@
       btn.addEventListener("click", async () => {
         const slug = btn.getAttribute("data-slug");
         if (!slug || !window.confirm(`Clear small box slot for "${slug}"?`)) return;
-        const ok = await patchPlacement(`/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`, {
-          smallBoxSlot: null
-        });
-        if (ok) loadOverview();
+        await withSaveLoading(btn, async () => {
+          const ok = await patchPlacement(
+            `/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`,
+            { smallBoxSlot: null },
+            "Slot cleared"
+          );
+          if (ok) loadOverview();
+        }, "Clearing...");
       });
     });
+  }
+
+  function renderBreakingList(items) {
+    renderBreakingAddForm();
+
+    if (!items.length) {
+      renderTable("breakingList", [], "", {
+        icon: "📰",
+        title: "No Breaking News pages yet",
+        hint: "Use the form above to add a page slug and flag it for the homepage ticker."
+      });
+    } else {
+      const rows = items
+        .map((item, index) => {
+          const onHomepage = index < 10;
+          const chip = onHomepage ? statusChip("ticker", "Ticker") : statusChip("overflow", "Overflow");
+          return `<div class="page-row" data-breaking-slug="${escapeHtml(item.slug)}">
+          <div>${escapeHtml(item.title)}</div>
+          <div>
+            <div class="row-detail-line">${chip}<strong>Order:</strong>
+              <input type="number" min="0" step="1" class="breaking-order-input" value="${escapeHtml(item.breakingOrder)}">
+              · <strong>Status:</strong> ${escapeHtml(item.status || "—")}
+            </div>
+            <div class="row-detail-line"><strong>Slug:</strong> ${escapeHtml(item.slug)}</div>
+            <div class="row-detail-line"><strong>Badges:</strong> ${formatBadges(item.badges)}</div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="header-action-btn header-action-btn--primary breaking-save-order">Save order</button>
+            <button type="button" class="header-action-btn header-action-btn--danger breaking-remove">Remove</button>
+            <a href="${generatorEditLink(item.slug)}">Edit in Generator</a>
+            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">View</a>
+          </div>
+        </div>`;
+        })
+        .join("");
+      renderTable("breakingList", ["Title", "Details", "Actions"], rows, {});
+    }
+
+    wireBreakingActions();
+  }
+
+  function renderBadgesList(items) {
+    renderBadgesAddForm();
+
+    if (!items.length) {
+      renderTable("badgesList", [], "", {
+        icon: "🏷",
+        title: "No badge pages yet",
+        hint: "Use the form above to enter a page slug and choose up to two homepage badges."
+      });
+    } else {
+      const rows = items
+        .map(
+          (item) => `<div class="page-row" data-badge-slug="${escapeHtml(item.slug)}">
+          <div>${escapeHtml(item.title)}</div>
+          <div>
+            <div class="badge-edit-row">${badgeCheckboxesHtml(`row-${item.slug}`, item.badges)}</div>
+            <div class="row-detail-line"><strong>Status:</strong> ${escapeHtml(item.status || "—")} · <strong>Slug:</strong> ${escapeHtml(item.slug)}</div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="header-action-btn header-action-btn--primary badge-save">Save badges</button>
+            <button type="button" class="header-action-btn header-action-btn--danger badge-clear">Remove all</button>
+            <a href="${generatorEditLink(item.slug)}">Edit in Generator</a>
+            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">View</a>
+          </div>
+        </div>`
+        )
+        .join("");
+      renderTable("badgesList", ["Title", "Details", "Actions"], rows, {});
+    }
+
+    wireBadgesActions();
+  }
+
+  function renderSmallBoxesList(items) {
+    renderSmallBoxesAssignForm();
+
+    const host = document.getElementById("smallBoxesList");
+    if (!host) return;
+
+    const slots = [1, 2, 3, 4];
+    const bySlot = {};
+    (items || []).forEach((row) => {
+      if (row && row.slot != null) bySlot[String(row.slot)] = row;
+    });
+
+    host.innerHTML = `<div class="hp-slot-grid">${slots
+      .map((slot) => {
+        const row = bySlot[String(slot)];
+        const slug = row ? row.slug : "";
+        const title = row ? row.title || row.slug : "";
+        const filled = Boolean(slug);
+        const chip = filled ? statusChip("filled", "Filled") : statusChip("empty", "Empty");
+        const slotLabel = `Slot ${slot}`;
+        const desktopNote = slot === 4 ? '<span class="hp-slot-card__label-note">Desktop only</span>' : "";
+        const body = filled
+          ? `<p class="hp-slot-card__title">${escapeHtml(title)}</p>
+             <p class="hp-slot-card__slug">${escapeHtml(slug)}</p>`
+          : `<p class="hp-slot-card__empty-text">No page assigned to this slot.</p>`;
+        const actions = filled
+          ? `<button type="button" class="header-action-btn header-action-btn--danger smallbox-clear" data-slug="${escapeHtml(slug)}">Clear slot</button>
+             <a href="${generatorEditLink(slug)}">Edit in Generator</a>
+             <a href="/${escapeHtml(slug)}" target="_blank" rel="noopener">View</a>`
+          : "";
+
+        return `<article class="hp-slot-card hp-slot-card--${filled ? "filled" : "empty"}">
+          <div class="hp-slot-card__head">
+            <div>
+              <span class="hp-slot-card__label">${slotLabel}</span>
+              ${desktopNote}
+            </div>
+            ${chip}
+          </div>
+          ${body}
+          ${actions ? `<div class="hp-slot-card__actions">${actions}</div>` : ""}
+        </article>`;
+      })
+      .join("")}</div>`;
+
+    wireSmallBoxesActions();
   }
 
   function setText(id, text) {
@@ -340,10 +466,12 @@
   }
 
   async function loadOverview() {
-    ["breakingList", "badgesList", "smallBoxesList"].forEach((id) => {
+    ["breakingList", "badgesList"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.innerHTML = skeletonHtml();
     });
+    const smallBoxesEl = document.getElementById("smallBoxesList");
+    if (smallBoxesEl) smallBoxesEl.innerHTML = slotSkeletonHtml();
 
     const res = await window.adminSafeFetch("/api/admin/homepage-management");
     if (!res || !res.success || !res.data) {
@@ -366,19 +494,24 @@
     renderSmallBoxesList(smallBoxes);
 
     setText(
-      "homepageMgmtMeta",
-      "Placement updates save directly to the database — no Generator publish required."
-    );
-    setText(
       "breakingMeta",
-      `${meta.breakingTotal || 0} flagged · ${meta.breakingOnHomepage || 0} on homepage ticker (max ${meta.homepageTickerLimit || 10})${
-        meta.breakingOverflow ? ` · ${meta.breakingOverflow} beyond ticker` : ""
+      `${meta.breakingTotal || 0} flagged · ${meta.breakingOnHomepage || 0} on ticker (max ${meta.homepageTickerLimit || 10})${
+        meta.breakingOverflow ? ` · ${meta.breakingOverflow} overflow` : ""
       }`
     );
-    setText("badgesMeta", `${meta.badgePagesTotal || 0} pages with badges · max ${overviewMeta.maxBadgesPerPage} per page`);
-    setText("smallBoxesMeta", `${meta.smallBoxSlotsTotal || 0} occupied slots · assigning displaces the previous occupant`);
+    setText(
+      "badgesMeta",
+      `${meta.badgePagesTotal || 0} pages · max ${overviewMeta.maxBadgesPerPage} badges each`
+    );
+    setText(
+      "smallBoxesMeta",
+      `${meta.smallBoxSlotsTotal || 0} of 4 slots filled · assign above to change occupant`
+    );
   }
 
-  document.getElementById("homepageMgmtRefreshBtn")?.addEventListener("click", loadOverview);
+  document.getElementById("homepageMgmtRefreshBtn")?.addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    await withSaveLoading(btn, loadOverview, "Refreshing...");
+  });
   loadOverview();
 })();

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/homepage-management.css">
 </head>
 <body data-admin-breadcrumbs="Admin,Homepage Management">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -37,41 +38,42 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">🌐 Homepage Management</div>
+    <h1 class="admin-title">Homepage Management</h1>
     <div class="admin-header-actions">
       <button type="button" class="header-action-btn" id="homepageMgmtRefreshBtn">Refresh</button>
     </div>
   </div>
-  <section class="page-manager" aria-label="Homepage placement overview">
-    <div class="manager-header">
-      <h1 class="manager-title">Homepage Management</h1>
-      <p class="manager-hint">Manage Breaking News, homepage badges, and small box slots without opening Generator or republishing content. Generator controls remain available for backward compatibility.</p>
-      <p class="manager-hint" id="homepageMgmtMeta" aria-live="polite"></p>
-    </div>
+  <section class="page-manager homepage-mgmt" aria-label="Homepage placement overview">
+    <nav class="hp-section-nav" aria-label="Jump to section">
+      <a class="hp-section-nav__link" href="#hp-section-breaking">Breaking News</a>
+      <a class="hp-section-nav__link" href="#hp-section-badges">Badges</a>
+      <a class="hp-section-nav__link" href="#hp-section-small-boxes">Small Boxes</a>
+    </nav>
 
-    <div class="page-list-panel" style="margin-bottom:20px;">
-      <div class="panel-head">
-        <h3 class="panel-title">Breaking News</h3>
-        <span class="manager-hint" id="breakingMeta"></span>
+    <div class="page-list-panel hp-section" id="hp-section-breaking">
+      <div class="panel-head panel-head--stacked">
+        <h2 class="panel-title">Breaking News</h2>
+        <p class="panel-meta" id="breakingMeta" aria-live="polite"></p>
       </div>
+      <div class="homepage-mgmt-form" id="breakingAddForm"></div>
       <div id="breakingList" class="page-list-host" aria-live="polite"></div>
-      <div class="homepage-mgmt-form" id="breakingAddForm" style="margin-top:12px;"></div>
     </div>
 
-    <div class="page-list-panel" style="margin-bottom:20px;">
-      <div class="panel-head">
-        <h3 class="panel-title">Badges</h3>
-        <span class="manager-hint" id="badgesMeta"></span>
+    <div class="page-list-panel hp-section" id="hp-section-badges">
+      <div class="panel-head panel-head--stacked">
+        <h2 class="panel-title">Badges</h2>
+        <p class="panel-meta" id="badgesMeta" aria-live="polite"></p>
       </div>
+      <div class="homepage-mgmt-form" id="badgesAddForm"></div>
       <div id="badgesList" class="page-list-host" aria-live="polite"></div>
-      <div class="homepage-mgmt-form" id="badgesAddForm" style="margin-top:12px;"></div>
     </div>
 
-    <div class="page-list-panel">
-      <div class="panel-head">
-        <h3 class="panel-title">Small Boxes</h3>
-        <span class="manager-hint" id="smallBoxesMeta"></span>
+    <div class="page-list-panel hp-section" id="hp-section-small-boxes">
+      <div class="panel-head panel-head--stacked">
+        <h2 class="panel-title">Small Boxes</h2>
+        <p class="panel-meta" id="smallBoxesMeta" aria-live="polite"></p>
       </div>
+      <div class="homepage-mgmt-form" id="smallBoxesAssignForm"></div>
       <div id="smallBoxesList" class="page-list-host" aria-live="polite"></div>
     </div>
   </section>
