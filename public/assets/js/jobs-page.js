@@ -1,6 +1,13 @@
 (function () {
   "use strict";
+
   const DEFAULT_LIMIT = 10;
+  const FILTER_CHIP_KEYS = ["qualification", "state", "department", "jobType", "status"];
+  const SORT_STORAGE_KEY = "jobsPageSort";
+
+  let currentFilters = {};
+  let currentJobs = [];
+  let currentPagination = null;
 
   function normalizeFilterValue(value) {
     return String(value || "")
@@ -39,6 +46,14 @@
       .join(" ");
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
   function safeUrl(raw) {
     const s = String(raw ?? "").trim();
     if (!s || s === "#") return "#";
@@ -61,9 +76,6 @@
     return "#";
   }
 
-  /**
-   * Status match for Last Date row: lowercase, trim, collapse spaces (handles "New Form", "new  form").
-   */
   function normalizeJobStatus(status) {
     return String(status ?? "")
       .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -73,9 +85,6 @@
       .replace(/\s+/g, " ");
   }
 
-  /**
-   * API lastDate is YYYY-MM-DD. DD/MM/YYYY via slice + split only (no Date parsing).
-   */
   function formatLastDateDdMmYyyy(lastDate) {
     if (typeof lastDate !== "string" || lastDate.length < 10) return null;
     const [year, month, day] = lastDate.slice(0, 10).split("-");
@@ -92,62 +101,325 @@
     return `${day}/${month}/${year}`;
   }
 
-  function renderJobs(container, jobs) {
-    if (!jobs.length) {
-      container.innerHTML = '<p class="jobs-empty">No jobs found</p>';
+  function getActiveFilterParts(filters) {
+    const parts = [];
+    FILTER_CHIP_KEYS.forEach((key) => {
+      if (filters[key]) {
+        parts.push({ key, label: titleCase(filters[key]) });
+      }
+    });
+    return parts;
+  }
+
+  function buildContextualHeading(filters) {
+    const qual = filters.qualification ? titleCase(filters.qualification) : "";
+    const state = filters.state ? titleCase(filters.state) : "";
+    const dept = filters.department ? titleCase(filters.department) : "";
+
+    if (qual && state) return `${qual} Jobs in ${state}`;
+    if (qual && dept) return `${qual} Jobs in ${dept}`;
+    if (dept && state) return `${dept} Jobs in ${state}`;
+    if (qual) return `${qual} Jobs`;
+    if (dept) return `${dept} Jobs`;
+    if (state) return `Jobs in ${state}`;
+    if (filters.source === "finder") return "Jobs matching your search";
+    return "All Jobs";
+  }
+
+  function buildCountLine(totalCount, filters) {
+    const parts = getActiveFilterParts(filters);
+    if (!parts.length) {
+      return `<strong>${totalCount}</strong> job${totalCount === 1 ? "" : "s"} found`;
+    }
+    const filterText = parts.map((p) => p.label).join(" · ");
+    return `<strong>${totalCount}</strong> job${totalCount === 1 ? "" : "s"} found for ${escapeHtml(filterText)}`;
+  }
+
+  function buildSeoTitle(filters) {
+    const heading = buildContextualHeading(filters);
+    return `${heading} | Sarkari Suchna India`;
+  }
+
+  function buildSeoDescription(filters) {
+    const heading = buildContextualHeading(filters);
+    return `Browse ${heading.toLowerCase()} — latest government recruitment, results and admit card updates on Sarkari Suchna India.`;
+  }
+
+  function updatePageMeta(filters) {
+    const title = buildSeoTitle(filters);
+    const desc = buildSeoDescription(filters);
+    document.title = title;
+
+    const titleEl = document.getElementById("jobsPageTitle");
+    if (titleEl) titleEl.textContent = title;
+
+    const descEl = document.getElementById("jobsPageDesc");
+    if (descEl) descEl.setAttribute("content", desc);
+
+    const canonicalEl = document.getElementById("jobsCanonical");
+    if (canonicalEl) canonicalEl.setAttribute("href", window.location.pathname + window.location.search);
+  }
+
+  function updatePageChrome(filters) {
+    const headingEl = document.getElementById("jobsHeading");
+    const subEl = document.getElementById("jobsSubheading");
+    const stripEl = document.getElementById("jobsFinderStrip");
+    const breadcrumbEl = document.getElementById("jobsBreadcrumb");
+    const inclusiveEl = document.getElementById("jobsInclusiveNote");
+
+    const heading = buildContextualHeading(filters);
+    if (headingEl) headingEl.textContent = heading;
+
+    const parts = getActiveFilterParts(filters);
+    if (subEl) {
+      subEl.textContent = parts.length
+        ? `Filtered by ${parts.map((p) => p.label).join(", ")}`
+        : "Browse latest government job updates";
+    }
+
+    if (stripEl) {
+      const showStrip = filters.source === "finder" && parts.length >= 2;
+      stripEl.hidden = !showStrip;
+    }
+
+    if (breadcrumbEl) {
+      const finderCrumb = filters.source === "finder"
+        ? `<span class="breadcrumb__sep" aria-hidden="true">›</span><span class="breadcrumb__current">Job Finder</span>`
+        : "";
+      breadcrumbEl.innerHTML = `
+        <a href="/" class="breadcrumb__brand"><i class="fa-solid fa-house breadcrumb__icon" aria-hidden="true"></i>Home</a>
+        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+        ${finderCrumb}
+        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+        <span class="breadcrumb__current">Results</span>
+      `;
+    }
+
+    if (inclusiveEl) {
+      inclusiveEl.hidden = !(filters.state && filters.state !== "all india");
+    }
+
+    updatePageMeta(filters);
+  }
+
+  function buildFilterChipUrl(filters, removeKey) {
+    const next = { ...filters };
+    if (removeKey) next[removeKey] = "";
+    if (window.JobFinderUrl) {
+      const validated = window.JobFinderUrl.validateState(next);
+      const active = window.JobFinderUrl.countActiveFilters(validated);
+      if (validated.source === "finder" && active < window.JobFinderUrl.MIN_REQUIRED_FILTERS) {
+        validated.source = active >= 1 ? "finder" : "";
+      }
+      const query = window.JobFinderUrl.serializeUrl(validated, { fromFinder: validated.source === "finder" });
+      return query ? `/jobs.html?${query}` : "/jobs.html";
+    }
+    const params = new URLSearchParams();
+    FILTER_CHIP_KEYS.forEach((key) => {
+      if (validatedKey(next, key)) params.set(key, next[key]);
+    });
+    if (next.source === "finder") params.set("source", "finder");
+    const qs = params.toString();
+    return qs ? `/jobs.html?${qs}` : "/jobs.html";
+
+    function validatedKey(obj, key) {
+      return Boolean(obj[key]);
+    }
+  }
+
+  function renderFilterChips(filters) {
+    const host = document.getElementById("jobsFilterChips");
+    if (!host) return;
+
+    const parts = getActiveFilterParts(filters);
+    if (!parts.length) {
+      host.innerHTML = "";
       return;
     }
 
-    container.innerHTML = jobs
+    const chips = parts
       .map(
-        (job) => {
-          console.log("JOB:", job.title, job.status, job.lastDate);
-          const normalizedStatus = normalizeJobStatus(job.status);
-          const lastDateOk =
-            typeof job.lastDate === "string" && job.lastDate.length >= 10;
-          const formattedDate = lastDateOk ? formatLastDateDdMmYyyy(job.lastDate) : null;
-          const showLastDate = normalizedStatus === "new form" && formattedDate != null;
-          return `
-      <article class="job-card">
-        <div class="job-card-head job-title-box">
-          <h3 class="job-title">
-            <a class="job-title-link" href="${safeUrl(job.page || "#")}">${job.title}</a>
-          </h3>
-        </div>
-        <p class="job-meta">
-          <span>${titleCase(job.department || "General")}</span>
-          <span class="job-meta-sep">•</span>
-          <span>${titleCase(job.state || "All India")}</span>
-        </p>
-        ${
-          showLastDate
-            ? `<p class="job-date"><span class="job-last-date-badge"> Apply Last Date: ${formattedDate}</span></p>`
-            : ""
-        }
-      </article>
-    `;
-        }
+        (part) => `
+        <span class="jobs-chip">
+          <span>${escapeHtml(part.label)}</span>
+          <button type="button" class="jobs-chip__remove" data-remove-filter="${part.key}" aria-label="Remove ${escapeHtml(part.label)} filter">×</button>
+        </span>
+      `
       )
       .join("");
+
+    host.innerHTML = `
+      ${chips}
+      <button type="button" class="jobs-chip jobs-chip--add" id="jobsAddFilterChip">+ Add filter</button>
+    `;
+
+    host.querySelectorAll("[data-remove-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-remove-filter");
+        window.location.href = buildFilterChipUrl(filters, key);
+      });
+    });
+
+    const addBtn = document.getElementById("jobsAddFilterChip");
+    if (addBtn) {
+      addBtn.addEventListener("click", () => openEditSearch(filters));
+    }
   }
 
-  function renderSummary(filters, totalCount) {
+  function renderSummary(filters, totalCount, pagination) {
     const countEl = document.getElementById("jobsCount");
-    const activeEl = document.getElementById("jobsActiveFilters");
-    if (!countEl || !activeEl) return;
+    if (countEl) {
+      countEl.innerHTML = buildCountLine(totalCount, filters);
+    }
+    renderFilterChips(filters);
+    updatePageChrome(filters);
 
-    countEl.textContent = `${totalCount} Jobs Found`;
+    const sortEl = document.getElementById("jobsSort");
+    if (sortEl && filters.source === "finder") {
+      const relevanceOpt = sortEl.querySelector('option[value="relevance"]');
+      if (relevanceOpt) relevanceOpt.textContent = "Relevance (recommended)";
+    }
+  }
 
-    const parts = [];
-    if (filters.qualification) parts.push(titleCase(filters.qualification));
-    if (filters.state) parts.push(titleCase(filters.state));
-    if (filters.department) parts.push(titleCase(filters.department));
-    if (filters.jobType) parts.push(titleCase(filters.jobType));
-    if (filters.status) parts.push(titleCase(filters.status));
+  function getStatusBadgeClass(status) {
+    const n = normalizeJobStatus(status);
+    if (n === "new form" || n.startsWith("new form ")) return "job-status-badge--new-form";
+    if (n === "result" || n.includes("result")) return "job-status-badge--result";
+    if (n === "admit card" || n === "admit") return "job-status-badge--admit";
+    if (n === "answer key" || n.includes("answer")) return "job-status-badge--answer";
+    if (n === "syllabus") return "job-status-badge--syllabus";
+    if (n === "document") return "job-status-badge--document";
+    if (n === "admission") return "job-status-badge--admission";
+    return "job-status-badge--default";
+  }
 
-    activeEl.textContent = parts.length
-      ? `Showing: ${parts.join(" | ")}`
-      : "Showing: All";
+  function getStatusLabel(status) {
+    const n = normalizeJobStatus(status);
+    if (!n) return "Update";
+    if (n === "new form") return "New Form";
+    return titleCase(n);
+  }
+
+  function shouldShowAllIndiaTag(job, filters) {
+    if (!filters.state || filters.state === "all india") return false;
+    return normalizeFilterValue(job.state) === "all india";
+  }
+
+  function sortJobs(jobs, sortMode) {
+    const list = [...jobs];
+    if (sortMode === "latest") {
+      return list.reverse();
+    }
+    if (sortMode === "closing") {
+      return list.sort((a, b) => {
+        const aDate = typeof a.lastDate === "string" ? a.lastDate : "";
+        const bDate = typeof b.lastDate === "string" ? b.lastDate : "";
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        return aDate.localeCompare(bDate);
+      });
+    }
+    return list;
+  }
+
+  function getSortMode() {
+    const sortEl = document.getElementById("jobsSort");
+    return sortEl ? sortEl.value : "relevance";
+  }
+
+  function renderJobs(container, jobs, filters) {
+    const sorted = sortJobs(jobs, getSortMode());
+
+    if (!sorted.length) {
+      container.innerHTML = renderEmptyState(filters);
+      bindEmptyStateActions(filters);
+      return;
+    }
+
+    container.innerHTML = sorted
+      .map((job) => {
+        const normalizedStatus = normalizeJobStatus(job.status);
+        const lastDateOk = typeof job.lastDate === "string" && job.lastDate.length >= 10;
+        const formattedDate = lastDateOk ? formatLastDateDdMmYyyy(job.lastDate) : null;
+        const showLastDate = normalizedStatus === "new form" && formattedDate != null;
+        const href = safeUrl(job.page || "#");
+        const qualMeta = job.qualification ? titleCase(job.qualification) : "";
+        const allIndiaTag = shouldShowAllIndiaTag(job, filters)
+          ? `<span class="job-all-india-tag">Also open: All India</span>`
+          : "";
+
+        const metaParts = [
+          `<span>${escapeHtml(titleCase(job.department || "General"))}</span>`,
+          `<span class="job-meta-sep">•</span>`,
+          `<span>${escapeHtml(titleCase(job.state || "All India"))}</span>`
+        ];
+        if (qualMeta) {
+          metaParts.push(`<span class="job-meta-sep">•</span>`, `<span>${escapeHtml(qualMeta)}</span>`);
+        }
+
+        return `
+      <article class="job-card" data-href="${escapeHtml(href)}">
+        <h3 class="job-title">
+          <a class="job-title-link" href="${href}">${escapeHtml(job.title)}</a>
+        </h3>
+        <p class="job-meta">${metaParts.join("")}</p>
+        <div class="job-card-foot">
+          <span class="job-status-badge ${getStatusBadgeClass(job.status)}">${escapeHtml(getStatusLabel(job.status))}</span>
+          ${allIndiaTag}
+          ${
+            showLastDate
+              ? `<p class="job-date"><span class="job-last-date-badge">Last Date: ${formattedDate}</span></p>`
+              : ""
+          }
+        </div>
+      </article>
+    `;
+      })
+      .join("");
+
+    container.querySelectorAll(".job-card[data-href]").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("a")) return;
+        const href = card.getAttribute("data-href");
+        if (href && href !== "#") window.location.href = href;
+      });
+    });
+  }
+
+  function renderEmptyState(filters) {
+    const parts = getActiveFilterParts(filters);
+    const filterLine = parts.length
+      ? `No jobs match <strong>${escapeHtml(parts.map((p) => p.label).join(", "))}</strong> right now.`
+      : "No jobs found right now.";
+
+    return `
+      <div class="jobs-empty">
+        <p class="jobs-empty__title">No jobs match these filters yet</p>
+        <p class="jobs-empty__text">${filterLine} Try removing a filter, choosing <strong>All India</strong>, or search again.</p>
+        <div class="jobs-empty__actions">
+          <button type="button" class="jobs-btn jobs-btn--primary" id="jobsEmptyEditBtn">Search again</button>
+          <a href="/" class="jobs-btn jobs-btn--ghost">Go to Home</a>
+          <a href="/categories" class="jobs-btn jobs-btn--ghost">Browse Categories</a>
+        </div>
+      </div>
+    `;
+  }
+
+  function bindEmptyStateActions(filters) {
+    const btn = document.getElementById("jobsEmptyEditBtn");
+    if (btn) btn.addEventListener("click", () => openEditSearch(filters));
+  }
+
+  function renderSkeleton(container) {
+    container.innerHTML = `
+      <div class="jobs-skeleton-list" aria-hidden="true">
+        <div class="jobs-skeleton-card"></div>
+        <div class="jobs-skeleton-card"></div>
+        <div class="jobs-skeleton-card"></div>
+        <div class="jobs-skeleton-card"></div>
+      </div>
+    `;
   }
 
   function buildJobsApiUrl(filters) {
@@ -173,79 +445,86 @@
     return `/api/jobs?${params.toString()}`;
   }
 
+  function buildPageUrl(page) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(Math.max(1, page)));
+    if (!params.get("limit")) params.set("limit", String(DEFAULT_LIMIT));
+    return `${window.location.pathname}?${params.toString()}`;
+  }
+
+  function renderPageNumbers(currentPage, totalPages) {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+    const out = [];
+    let prev = 0;
+    sorted.forEach((p) => {
+      if (p - prev > 1) out.push("…");
+      out.push(p);
+      prev = p;
+    });
+    return out;
+  }
+
   function renderPagination(meta) {
     const host = document.getElementById("jobsPagination");
     if (!host) return;
+
     const currentPage = Math.max(1, Number(meta?.currentPage) || 1);
     const totalPages = Math.max(0, Number(meta?.totalPages) || 0);
+    const total = Number(meta?.total) || 0;
+    const limit = Number(meta?.limit) || DEFAULT_LIMIT;
 
     if (totalPages <= 1) {
-      host.innerHTML = "";
+      if (total > 0) {
+        const end = Math.min(total, limit);
+        host.innerHTML = `<p class="jobs-pagination__range">Showing 1–${end} of ${total}</p>`;
+      } else {
+        host.innerHTML = "";
+      }
       return;
     }
 
+    const start = (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, total);
+    const pageItems = renderPageNumbers(currentPage, totalPages);
+
+    const pageButtons = pageItems
+      .map((item) => {
+        if (item === "…") return `<span class="jobs-pagination__ellipsis">…</span>`;
+        const active = item === currentPage ? " is-active" : "";
+        return `<button type="button" data-page="${item}" class="jobs-page-btn${active}" ${item === currentPage ? 'aria-current="page"' : ""}>${item}</button>`;
+      })
+      .join("");
+
     host.innerHTML = `
-      <button type="button" id="jobsPrevBtn" ${currentPage <= 1 ? "disabled" : ""}>Previous</button>
-      <span>Page ${currentPage} of ${totalPages}</span>
-      <button type="button" id="jobsNextBtn" ${currentPage >= totalPages ? "disabled" : ""}>Next</button>
+      <p class="jobs-pagination__range">Showing ${start}–${end} of ${total}</p>
+      <button type="button" id="jobsPrevBtn" ${currentPage <= 1 ? "disabled" : ""} aria-label="Previous page">‹</button>
+      ${pageButtons}
+      <button type="button" id="jobsNextBtn" ${currentPage >= totalPages ? "disabled" : ""} aria-label="Next page">›</button>
     `;
 
     const prevBtn = document.getElementById("jobsPrevBtn");
     const nextBtn = document.getElementById("jobsNextBtn");
-    if (prevBtn) {
-      prevBtn.addEventListener("click", () => updatePageInUrl(currentPage - 1));
-    }
-    if (nextBtn) {
-      nextBtn.addEventListener("click", () => updatePageInUrl(currentPage + 1));
-    }
-  }
+    if (prevBtn) prevBtn.addEventListener("click", () => { window.location.href = buildPageUrl(currentPage - 1); });
+    if (nextBtn) nextBtn.addEventListener("click", () => { window.location.href = buildPageUrl(currentPage + 1); });
 
-  function updatePageInUrl(page) {
-    const params = new URLSearchParams(window.location.search);
-    params.set("page", String(Math.max(1, page)));
-    if (!params.get("limit")) params.set("limit", String(DEFAULT_LIMIT));
-    window.location.search = params.toString();
+    host.querySelectorAll(".jobs-page-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const page = parseInt(btn.getAttribute("data-page"), 10);
+        if (page && page !== currentPage) window.location.href = buildPageUrl(page);
+      });
+    });
   }
 
   async function loadJobsData(filters) {
     const apiUrl = buildJobsApiUrl(filters);
-    console.log("[JobsPage] selected values", {
-      qualification: filters.qualification,
-      state: filters.state,
-      department: filters.department
-    });
-    console.log("[JobsPage] API request payload", {
-      url: apiUrl,
-      payload: {
-        qualification: filters.qualification,
-        state: filters.state,
-        department: filters.department,
-        jobType: filters.jobType,
-        status: filters.status,
-        ...getPaginationQuery()
-      }
-    });
     try {
       const res = await fetch(apiUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      console.log("[JobsPage] API response data", data);
-      if (Array.isArray(data?.jobs)) {
-        console.log("[JobsPage] API lastDate verification", data.jobs.slice(0, 12).map((job) => ({
-          title: job.title,
-          status: job.status,
-          lastDate: job.lastDate
-        })));
-        console.log("[JobsPage] formatted lastDate verification", data.jobs.slice(0, 12).map((job) => ({
-          title: job.title,
-          status: job.status,
-          normalizedStatus: normalizeJobStatus(job.status),
-          apiLastDate: job.lastDate,
-          formattedLastDate: formatLastDateDdMmYyyy(
-            typeof job.lastDate === "string" && job.lastDate.length >= 10 ? job.lastDate : ""
-          )
-        })));
-      }
       if (Array.isArray(data)) return { ok: true, jobs: data, pagination: null };
       if (Array.isArray(data?.jobs)) return { ok: true, jobs: data.jobs, pagination: data.pagination || null };
       throw new Error("Invalid jobs payload");
@@ -255,39 +534,104 @@
     }
   }
 
+  function openEditSearch(filters) {
+    if (typeof window.openFinderWithFilters === "function") {
+      window.openFinderWithFilters(filters || currentFilters);
+      return;
+    }
+    if (typeof window.openFinder === "function") {
+      window.openFinder();
+    }
+  }
+
+  async function copyShareLink() {
+    const btn = document.getElementById("jobsShareBtn");
+    const url = window.location.href;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      if (btn) {
+        btn.classList.add("is-copied");
+        const label = btn.querySelector("span");
+        if (label) label.textContent = "Copied!";
+        setTimeout(() => {
+          btn.classList.remove("is-copied");
+          if (label) label.textContent = "Share";
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("[JobsPage] share copy failed", err);
+    }
+  }
+
+  function bindToolbarActions(filters) {
+    const editBtn = document.getElementById("jobsEditBtn");
+    if (editBtn) editBtn.addEventListener("click", () => openEditSearch(filters));
+
+    const shareBtn = document.getElementById("jobsShareBtn");
+    if (shareBtn) shareBtn.addEventListener("click", copyShareLink);
+
+    const sortEl = document.getElementById("jobsSort");
+    if (sortEl) {
+      const saved = sessionStorage.getItem(SORT_STORAGE_KEY);
+      if (saved && sortEl.querySelector(`option[value="${saved}"]`)) {
+        sortEl.value = saved;
+      }
+      sortEl.addEventListener("change", () => {
+        sessionStorage.setItem(SORT_STORAGE_KEY, sortEl.value);
+        const list = document.getElementById("jobsList");
+        if (list && currentJobs.length) renderJobs(list, currentJobs, currentFilters);
+      });
+    }
+  }
+
+  function renderErrorState(container) {
+    container.innerHTML = `
+      <div class="jobs-empty">
+        <p class="jobs-empty__title">Could not load jobs</p>
+        <p class="jobs-empty__text">Server error — please try again in a moment.</p>
+        <div class="jobs-empty__actions">
+          <button type="button" class="jobs-btn jobs-btn--primary" onclick="location.reload()">Retry</button>
+        </div>
+      </div>
+    `;
+  }
+
   async function initJobsPage() {
     const list = document.getElementById("jobsList");
     if (!list) return;
 
-    list.innerHTML = '<p class="jobs-empty">Loading jobs...</p>';
+    currentFilters = getQueryFilters();
+    renderSkeleton(list);
+    updatePageChrome(currentFilters);
+    bindToolbarActions(currentFilters);
 
-    const filters = getQueryFilters();
-    const result = await loadJobsData(filters);
+    const result = await loadJobsData(currentFilters);
     const jobsData = Array.isArray(result.jobs) ? result.jobs : [];
-    const totalCount = Number(result.pagination?.total) || jobsData.length;
-    renderSummary(filters, totalCount);
+    const totalCount = Number(result.pagination?.total) ?? jobsData.length;
+
+    currentJobs = jobsData;
+    currentPagination = result.pagination;
+    renderSummary(currentFilters, totalCount, result.pagination);
     renderPagination(result.pagination);
 
     if (!result.ok) {
-      list.innerHTML = '<p class="jobs-empty">Server error, please try again</p>';
+      renderErrorState(list);
       return;
     }
 
-    if (!jobsData.length) {
-      list.innerHTML = '<p class="jobs-empty">No jobs found</p>';
-      return;
-    }
-
-    console.log("[JobsPage] rendering jobs", {
-      count: jobsData.length,
-      sample: jobsData.slice(0, 5).map((job) => ({
-        title: job.title,
-        qualification: normalizeFilterValue(job.qualification),
-        state: normalizeFilterValue(job.state),
-        department: normalizeFilterValue(job.department)
-      }))
-    });
-    renderJobs(list, jobsData);
+    renderJobs(list, jobsData, currentFilters);
   }
 
   if (document.readyState === "loading") {

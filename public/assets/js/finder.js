@@ -84,6 +84,24 @@ function bindFinderFormValidation() {
   updateFinderSubmitState();
 }
 
+function applyFinderFilters(filters) {
+  const url = window.JobFinderUrl;
+  const els = getFinderFormEls();
+  if (!url || !els) return;
+
+  const validated = url.validateState(filters || {});
+  if (els.qualification) {
+    els.qualification.value = validated.qualification || "";
+  }
+  if (els.state) {
+    els.state.value = validated.state || "";
+  }
+  if (els.department) {
+    els.department.value = validated.department || "";
+  }
+  updateFinderSubmitState();
+}
+
 function setFinderTriggerExpanded(expanded) {
   const t = document.getElementById("openFinder");
   if (t) t.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -140,6 +158,13 @@ async function openFinder() {
 }
 
 window.openFinder = openFinder;
+
+async function openFinderWithFilters(filters) {
+  await openFinder();
+  applyFinderFilters(filters);
+}
+
+window.openFinderWithFilters = openFinderWithFilters;
 
 function ensureFinderHostDelegation() {
   const host = document.getElementById("jobFinderBox");

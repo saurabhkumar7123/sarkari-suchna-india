@@ -310,8 +310,7 @@ function shouldSkipChromeInjection(req) {
   const pathOnly = String((req && req.originalUrl) || "")
     .split("?")[0]
     .replace(/\/+$/, "") || "/";
-  const source = String(req && req.query ? req.query.source || "" : "").toLowerCase();
-  return pathOnly === "/login" || pathOnly === "/jobs.html" || source === "finder";
+  return pathOnly === "/login";
 }
 
 async function sendHtmlString(req, res, html, statusCode) {
