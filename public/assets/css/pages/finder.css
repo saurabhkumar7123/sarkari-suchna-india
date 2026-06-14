@@ -196,8 +196,8 @@ body.finder-modal-open{
 
 @media(min-width:768px){
   .finder-modal .finder-box{
-    width:80%;
-    max-width:900px;
+    width:100%;
+    max-width:520px;
     margin:auto;
   }
 }
@@ -206,10 +206,10 @@ body.finder-modal-open{
   width:100%;
   max-width:100%;
 
-  background:linear-gradient(180deg,#ffffff,#fcfdff);
+  background:#fff;
   border:1px solid rgba(0,0,0,0.06);
   border-radius:12px;
-  padding:25px;
+  padding:22px 24px;
 
   box-shadow:0 6px 24px rgba(0,0,0,0.08);
 
@@ -227,35 +227,67 @@ body.finder-modal-open{
 /* HEADER */
 .finder-header{
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:space-between;
+  gap:12px;
 
-  border-bottom:1px solid #eee;
-  padding-bottom:10px;
-  margin-bottom:20px;
+  border-bottom:1px solid #e2e8f0;
+  padding-bottom:12px;
+  margin-bottom:18px;
+}
+
+.finder-header-text{
+  flex:1 1 auto;
+  min-width:0;
 }
 
 .finder-modal .job-finder .finder-title{
   font-size:22px;
-  color:#080808;
+  font-weight:700;
+  line-height:1.2;
+  color:#1e3c72;
+  margin:0;
+}
+
+.finder-subtitle{
+  margin:4px 0 0;
+  font-size:13px;
+  font-weight:400;
+  line-height:1.4;
+  color:#64748b;
 }
 
 .finder-close{
-  width:34px;
-  height:34px;
+  flex:0 0 auto;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
 
-  border:none;
-  border-radius:8px;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
 
-  background:#dbdfdf;
+  background:#f8fafc;
+  color:#475569;
   cursor:pointer;
 
   font-size:18px;
-  transition:.2s;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .finder-close:hover{
-  background:#e4e6eb;
+  background:#f1f5f9;
+  border-color:#cbd5e1;
+  color:#1e293b;
+}
+
+.finder-close:focus-visible{
+  outline:2px solid #2563eb;
+  outline-offset:2px;
 }
 
 /* ===============================
@@ -263,12 +295,19 @@ body.finder-modal-open{
 =================================*/
 .finder-form{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px;
-  padding:14px;
-  border-radius:12px;
-  border:1px solid rgba(0,0,0,0.06);
-  background:linear-gradient(180deg,#ffffff,#fafbff);
+  grid-template-columns:1fr;
+  gap:14px;
+  padding:0;
+  border:none;
+  border-radius:0;
+  background:transparent;
+}
+
+@media(min-width:768px){
+  .finder-form{
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
 }
 
 .finder-field{
@@ -278,26 +317,48 @@ body.finder-modal-open{
 }
 
 .finder-label{
-  font-size:13px;
+  font-size:14px;
   font-weight:600;
-  color:#444;
+  color:#334155;
 }
 
 .finder-input{
-  padding:12px 14px;
+  padding:10px 36px 10px 14px;
   border:1px solid #ddd;
-  border-radius:6px;
+  border-radius:8px;
   font-size:14px;
   outline:none;
-  min-height:42px;
+  min-height:44px;
   box-sizing:border-box;
   width:100%;
+  background-color:#fff;
+  color:#0f172a;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:12px;
+}
+
+.finder-form select.finder-input option{
+  color:#0f172a;
   background:#fff;
+}
+
+.finder-form select.finder-input option[value=""]{
+  color:#64748b;
+}
+
+.finder-form select.finder-input.finder-input--empty{
+  color:#64748b;
 }
 
 .finder-input:focus{
   border-color:#3f6ed6;
   box-shadow:0 0 0 2px rgba(63,110,214,.12);
+  background-color:#fff;
 }
 
 .finder-dob-wrap{
@@ -454,10 +515,12 @@ body.finder-modal-open{
 /* BUTTON */
 .finder-submit{
   grid-column:1/-1;
+  width:100%;
   padding:12px 18px;
+  min-height:44px;
 
   border:none;
-  border-radius:6px;
+  border-radius:8px;
 
   background:linear-gradient(135deg,#1d3ea6,#4d73ff);
   color:#fff;
@@ -495,6 +558,14 @@ body.finder-modal-open{
   font-size:13px;
   line-height:1.4;
   color:#64748b;
+}
+
+.finder-hint--neutral{
+  color:#64748b;
+}
+
+.finder-hint--pending{
+  color:#b45309;
 }
 
 .finder-hint--warn{
@@ -770,43 +841,39 @@ body.finder-modal-open{
 }
 
 .finder-modal .job-finder{
-  padding:18px;
+  padding:16px;
+}
+
+.finder-header{
+  margin-bottom:14px;
+  padding-bottom:10px;
+}
+
+.finder-subtitle{
+  font-size:12px;
 }
 
 .finder-form{
-  grid-template-columns:1fr;
+  gap:12px;
 }
 
-/* Mobile: compact options list for selection dropdowns only */
-#finderQualification,
-#finderState,
-#finderDepartment{
-  width:100%;
-  max-width:100%;
-  height:auto;
-  max-height:250px;
-  overflow-y:auto;
-  border:1px solid #ddd;
-  border-radius:6px;
-  padding:10px;
-  font-size:14px;
-  box-sizing:border-box;
-  background:#fff;
+/* Mobile: native OS picker for all selects (Qualification, Department, State) */
+.finder-form select.finder-input{
+  font-size:16px;
+  min-height:44px;
+  height:44px;
+  max-height:none;
+  overflow:visible;
+  line-height:normal;
+  touch-action:manipulation;
+  appearance:menulist;
+  -webkit-appearance:menulist;
+  background-image:none;
+  padding:10px 14px;
 }
 
-#finderQualification option,
-#finderState option,
-#finderDepartment option{
-  white-space:normal;
-  padding:10px;
-  font-size:14px;
-  background:#fff;
-}
-
-#finderQualification option:hover,
-#finderState option:hover,
-#finderDepartment option:hover{
-  background:#f3f7ff;
+.finder-form select.finder-input.finder-input--empty{
+  color:#64748b;
 }
 
 .dept-options{

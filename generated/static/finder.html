@@ -4,7 +4,10 @@
 
 <div class="finder-header">
 
+<div class="finder-header-text">
 <h2 class="finder-title" id="finderDialogTitle">Job Finder</h2>
+<p class="finder-subtitle" id="finderDialogSubtitle">Select your criteria to see matching govt jobs.</p>
+</div>
 
 <button type="button" class="finder-close" aria-label="Close">✕</button>
 
@@ -13,13 +16,13 @@
 
 <!-- FORM -->
 
-<form class="finder-form" id="finderForm">
+<form class="finder-form" id="finderForm" aria-describedby="finderHint">
 
 <div class="finder-field">
 
-<label class="finder-label">Qualification</label>
+<label class="finder-label" for="finderQualification">Qualification</label>
 
-<select id="finderQualification" class="finder-input">
+<select id="finderQualification" class="finder-input" name="qualification">
 <option value="">Select Qualification</option>
 <option value="10th">10th</option>
 <option value="12th">12th</option>
@@ -35,35 +38,16 @@
 
 <div class="finder-field">
 
-<label class="finder-label">State</label>
+<label class="finder-label" for="finderDepartment">Department</label>
 
-<select id="finderState" class="finder-input">
-
-<option value="">Select State</option>
-<option value="uttar pradesh">Uttar Pradesh</option>
-<option value="bihar">Bihar</option>
-<option value="madhya pradesh">Madhya Pradesh</option>
-<option value="rajasthan">Rajasthan</option>
-<option value="delhi">Delhi</option>
-<option value="uttarakhand">Uttarakhand</option>
-
-</select>
-
-</div>
-
-
-<div class="finder-field">
-
-<label class="finder-label">Department</label>
-
-<select id="finderDepartment" class="finder-input">
+<select id="finderDepartment" class="finder-input" name="department">
 
 <option value="">Select Department</option>
-<option value="police">Police</option>
-<option value="railway">Railway</option>
-<option value="bank">Bank</option>
 <option value="ssc">SSC</option>
+<option value="railway">Railway</option>
 <option value="upsc">UPSC</option>
+<option value="bank">Bank</option>
+<option value="police">Police</option>
 <option value="teaching">Teaching</option>
 <option value="defence">Defence</option>
 <option value="health">Health</option>
@@ -73,8 +57,29 @@
 </div>
 
 
-<p class="finder-hint finder-hint--warn" id="finderHint" aria-live="polite">
-Select at least 2 filters to search (0/2 selected).
+<div class="finder-field">
+
+<label class="finder-label" for="finderState">State</label>
+
+<select id="finderState" class="finder-input" name="state">
+
+<option value="">Select State</option>
+<option value="all india">All India</option>
+<option value="uttar pradesh">Uttar Pradesh</option>
+<option value="bihar">Bihar</option>
+<option value="madhya pradesh">Madhya Pradesh</option>
+<option value="rajasthan">Rajasthan</option>
+<option value="delhi">Delhi</option>
+<option value="uttarakhand">Uttarakhand</option>
+<option value="other">Other</option>
+
+</select>
+
+</div>
+
+
+<p class="finder-hint finder-hint--neutral" id="finderHint" aria-live="polite">
+Choose any 2 filters to find matching jobs.
 </p>
 
 

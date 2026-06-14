@@ -1,4 +1,5 @@
-const FINDER_FRAGMENT_URL = "/static/finder.html";
+const FINDER_FRAGMENT_VERSION = "4";
+const FINDER_FRAGMENT_URL = `/static/finder.html?v=${FINDER_FRAGMENT_VERSION}`;
 
 function getFinderModalEls() {
   return {
@@ -32,10 +33,21 @@ function readFinderFormState() {
   });
 }
 
+function updateFinderSelectAppearance() {
+  const els = getFinderFormEls();
+  if (!els) return;
+  [els.qualification, els.state, els.department].forEach((sel) => {
+    if (!sel) return;
+    sel.classList.toggle("finder-input--empty", !String(sel.value || "").trim());
+  });
+}
+
 function updateFinderSubmitState() {
   const url = window.JobFinderUrl;
   const els = getFinderFormEls();
   if (!url || !els) return;
+
+  updateFinderSelectAppearance();
 
   const state = readFinderFormState();
   const count = state ? url.countActiveFilters(state) : 0;
@@ -47,11 +59,18 @@ function updateFinderSubmitState() {
   }
 
   if (els.hint) {
-    els.hint.textContent = valid
-      ? `${count} filters selected — ready to search.`
-      : `Select at least ${url.MIN_REQUIRED_FILTERS} filters to search (${count}/${url.MIN_REQUIRED_FILTERS} selected).`;
+    if (valid) {
+      els.hint.textContent = `Ready — ${count} filters selected.`;
+    } else if (count === 1) {
+      els.hint.textContent = "1 more filter needed.";
+    } else {
+      els.hint.textContent = "Choose any 2 filters to find matching jobs.";
+    }
+
     els.hint.classList.toggle("finder-hint--ok", valid);
-    els.hint.classList.toggle("finder-hint--warn", !valid);
+    els.hint.classList.toggle("finder-hint--pending", !valid && count === 1);
+    els.hint.classList.toggle("finder-hint--neutral", !valid && count === 0);
+    els.hint.classList.toggle("finder-hint--warn", false);
   }
 }
 
@@ -90,11 +109,15 @@ async function openFinder() {
       return;
     }
 
-    if (!box.innerHTML.trim()) {
+    const needLoad =
+      !box.innerHTML.trim() || box.dataset.finderVersion !== FINDER_FRAGMENT_VERSION;
+
+    if (needLoad) {
       try {
         const res = await fetch(FINDER_FRAGMENT_URL, { cache: "no-store" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         box.innerHTML = await res.text();
+        box.dataset.finderVersion = FINDER_FRAGMENT_VERSION;
         ensureFinderHostDelegation();
         bindFinderFormValidation();
       } catch (err) {
