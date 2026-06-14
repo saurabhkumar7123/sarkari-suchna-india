@@ -47,6 +47,9 @@ function initToolsButtonA11y() {
     if (!btn.hasAttribute("aria-expanded")) {
       btn.setAttribute("aria-expanded", "false");
     }
+    if (!btn.hasAttribute("aria-haspopup")) {
+      btn.setAttribute("aria-haspopup", "true");
+    }
   });
 }
 
@@ -254,6 +257,8 @@ document.addEventListener("click", function (e) {
 });
 
 /* ---------- Tools menu ---------- */
+let toolsMenuOpenedAt = 0;
+
 function getToolsElements() {
   return {
     menu: document.getElementById("toolsMenu"),
@@ -261,11 +266,65 @@ function getToolsElements() {
   };
 }
 
+function getVisibleToolsButton() {
+  return (
+    Array.from(document.querySelectorAll(".tools-btn")).find((el) => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && el.getClientRects().length > 0;
+    }) || null
+  );
+}
+
+function isToolsButtonHit(event) {
+  if (!event) return false;
+  if (event.target && event.target.closest && event.target.closest(".tools-btn")) return true;
+
+  const btn = getVisibleToolsButton();
+  if (!btn || typeof event.clientX !== "number" || typeof event.clientY !== "number") return false;
+
+  const rect = btn.getBoundingClientRect();
+  return (
+    event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY <= rect.bottom
+  );
+}
+
+function positionToolsMenu(menu) {
+  const btn = getVisibleToolsButton();
+  if (!btn || !menu) return;
+
+  const btnRect = btn.getBoundingClientRect();
+  const header = menu.closest(".main-header");
+  if (!header) return;
+
+  const headerRect = header.getBoundingClientRect();
+  menu.style.position = "absolute";
+  menu.style.top = `${Math.round(btnRect.bottom - headerRect.top + 6)}px`;
+  menu.style.right = `${Math.round(headerRect.right - btnRect.right)}px`;
+  menu.style.left = "auto";
+}
+
+function resetToolsMenuPosition(menu) {
+  if (!menu) return;
+  menu.style.removeProperty("top");
+  menu.style.removeProperty("right");
+  menu.style.removeProperty("left");
+  menu.style.removeProperty("position");
+}
+
 function setToolsMenuOpen(open) {
   const { menu, overlay } = getToolsElements();
   if (!menu || !overlay) return;
 
-  if (open) closeMobileNav();
+  if (open) {
+    closeMobileNav();
+    positionToolsMenu(menu);
+    toolsMenuOpenedAt = performance.now();
+  } else {
+    resetToolsMenuPosition(menu);
+  }
 
   menu.classList.toggle("active", open);
   overlay.classList.toggle("active", open);
@@ -297,6 +356,15 @@ function toggleTools(event) {
   setToolsMenuOpen(next);
 }
 
+function syncToolsMenuPosition() {
+  const { menu } = getToolsElements();
+  if (menu && menu.classList.contains("active")) {
+    positionToolsMenu(menu);
+  }
+}
+
+window.addEventListener("resize", syncToolsMenuPosition, { passive: true });
+
 /* Tools overlay click → close */
 document.addEventListener("click", function (e) {
   const t = e.target;
@@ -311,9 +379,10 @@ document.addEventListener("click", function (e) {
   const { menu, overlay } = getToolsElements();
   if (!menu || !overlay || !menu.classList.contains("active")) return;
 
-  const onToolsBtn = e.target.closest(".tools-btn");
+  if (performance.now() - toolsMenuOpenedAt < 80) return;
+
+  const onToolsBtn = isToolsButtonHit(e);
   const onMenu = menu.contains(e.target);
-  const onOverlay = overlay.contains(e.target) && e.target === overlay;
 
   if (onMenu || onToolsBtn) return;
 
@@ -551,7 +620,7 @@ document.addEventListener(
       return;
     }
 
-    if (e.target.closest(".tools-btn")) {
+    if (isToolsButtonHit(e)) {
       e.preventDefault();
       toggleTools(e);
       return;
@@ -577,6 +646,13 @@ document.addEventListener(
   },
   true
 );
+
+document.addEventListener("keydown", function (e) {
+  const btn = e.target && e.target.closest && e.target.closest(".tools-btn");
+  if (!btn || (e.key !== "Enter" && e.key !== " ")) return;
+  e.preventDefault();
+  toggleTools(e);
+});
 
 document.addEventListener(
   "click",
