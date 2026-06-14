@@ -257,3 +257,31 @@
     margin-right: auto;
   }
 }
+
+/* Desktop-only: balanced input/button proportions (mobile untouched above) */
+@media (min-width: 769px) {
+  .search-overlay .search-box {
+    height: 54px;
+    min-height: 54px;
+    align-items: stretch;
+  }
+
+  .search-overlay .search-icon {
+    align-self: center;
+  }
+
+  .search-overlay .search-box input,
+  .search-overlay .search-box #searchInput,
+  .search-overlay .search-input {
+    min-height: 40px;
+    padding: 8px 12px;
+    line-height: 1.25;
+    align-self: stretch;
+  }
+
+  .search-overlay .search-box button {
+    font-size: 15px;
+    line-height: 1.2;
+    align-self: stretch;
+  }
+}
