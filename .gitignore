@@ -16,3 +16,11 @@ data/related-analytics.json
 
 # Generator PDF extract temp uploads (multerPdfExtract)
 storage/temp/
+
+# Local backups and audit artifacts (Phase deploy prep — do not commit)
+.backup-*/
+audit-screenshots/
+.deploy/
+
+# Uploaded PDFs (runtime user content)
+storage/uploads/

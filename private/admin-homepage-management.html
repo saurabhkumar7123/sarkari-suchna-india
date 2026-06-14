@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Activity</title>
+<title>Homepage Management</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 </head>
-<body data-admin-breadcrumbs="Admin,Activity">
+<body data-admin-breadcrumbs="Admin,Homepage Management">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -30,48 +30,57 @@
   <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
   <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
   <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
+  <a href="/admin/homepage-management" aria-current="page"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
   <div class="nav-group-title">System</div>
   <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
   <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">📝 Admin Activity</div>
+    <div class="admin-title">🌐 Homepage Management</div>
     <div class="admin-header-actions">
-      <button type="button" class="header-action-btn" id="refreshActivityBtn">Refresh</button>
+      <button type="button" class="header-action-btn" id="homepageMgmtRefreshBtn">Refresh</button>
     </div>
   </div>
-  <section class="monitoring-section">
+  <section class="page-manager" aria-label="Homepage placement overview">
     <div class="manager-header">
-      <h1 class="manager-title">Audit Activity</h1>
-      <p class="manager-hint">Track recent admin actions with filters.</p>
+      <h1 class="manager-title">Homepage Management</h1>
+      <p class="manager-hint">Manage Breaking News, homepage badges, and small box slots without opening Generator or republishing content. Generator controls remain available for backward compatibility.</p>
+      <p class="manager-hint" id="homepageMgmtMeta" aria-live="polite"></p>
     </div>
-    <div class="filters-toolbar">
-      <div class="filter-group">
-        <label for="activityAction">Action</label>
-        <input type="text" id="activityAction" placeholder="e.g. login, page_delete">
+
+    <div class="page-list-panel" style="margin-bottom:20px;">
+      <div class="panel-head">
+        <h3 class="panel-title">Breaking News</h3>
+        <span class="manager-hint" id="breakingMeta"></span>
       </div>
-      <div class="filter-group">
-        <label for="activityFrom">From</label>
-        <input type="date" id="activityFrom">
-      </div>
-      <div class="filter-group">
-        <label for="activityTo">To</label>
-        <input type="date" id="activityTo">
-      </div>
-      <div class="filter-group">
-        <button type="button" class="header-action-btn" id="applyActivityFilter">Apply</button>
-      </div>
+      <div id="breakingList" class="page-list-host" aria-live="polite"></div>
+      <div class="homepage-mgmt-form" id="breakingAddForm" style="margin-top:12px;"></div>
     </div>
-    <div id="activityTable" class="sites-table-host"></div>
+
+    <div class="page-list-panel" style="margin-bottom:20px;">
+      <div class="panel-head">
+        <h3 class="panel-title">Badges</h3>
+        <span class="manager-hint" id="badgesMeta"></span>
+      </div>
+      <div id="badgesList" class="page-list-host" aria-live="polite"></div>
+      <div class="homepage-mgmt-form" id="badgesAddForm" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="page-list-panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Small Boxes</h3>
+        <span class="manager-hint" id="smallBoxesMeta"></span>
+      </div>
+      <div id="smallBoxesList" class="page-list-host" aria-live="polite"></div>
+    </div>
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-shell.js"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js"></script>
-<script src="/js/admin-activity.js"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-homepage-management.js"></script>
 </body>
 </html>

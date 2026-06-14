@@ -1439,6 +1439,9 @@ app.get(["/admin/sessions", "/admin/sessions/", "/admin/sessions.html"], verifyT
 app.get(["/admin/activity", "/admin/activity/", "/admin/activity.html"], verifyToken, (req, res) => {
   return sendPrivatePage(res, "admin-activity.html");
 });
+app.get(["/admin/homepage-management", "/admin/homepage-management/", "/admin/homepage-management.html"], verifyToken, (req, res) => {
+  return sendPrivatePage(res, "admin-homepage-management.html");
+});
 app.get("/admin", verifyToken, (req, res) => {
   res.redirect(302, "/admin/dashboard");
 });

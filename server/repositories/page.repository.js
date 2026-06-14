@@ -2,6 +2,7 @@
 
 const db = require("../config/db");
 const logger = require("../utils/logger");
+const { pageContentFieldsChanged } = require("../lib/contentFreshness");
 const IS_NON_PROD = process.env.NODE_ENV !== "production";
 
 function stripInvisible(s) {
@@ -187,7 +188,7 @@ async function selectPublicListPage(
   const { baseQuery, params } = buildPublicListWhere(section, status);
   const rawSql = includeRawText ? ", raw_text" : "";
   const orderBySql = freshnessSort
-    ? "ORDER BY COALESCE(updated_at, created_at) DESC, id DESC"
+    ? "ORDER BY COALESCE(content_updated_at, created_at) DESC, id DESC"
     : "ORDER BY created_at DESC";
   const [rows] = await executor.query(
     `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ${orderBySql} LIMIT ? OFFSET ?`,
@@ -473,6 +474,53 @@ async function selectBreakingNews(executor = db) {
   return rows;
 }
 
+/** Admin read-only: all active breaking rows (includes order; homepage ticker caps at 10). */
+async function selectHomepageBreakingAdmin(executor = db) {
+  const [rows] = await executor.query(
+    `SELECT title, slug, status, badges, breaking_order AS breakingOrder, event_time AS eventTime, created_at AS createdAt
+     FROM pages
+     WHERE breaking = 1 AND deleted = 0
+     ORDER BY breaking_order DESC, id DESC`
+  );
+  return rows;
+}
+
+/** Admin read-only: pages with manual homepage badges stored. */
+async function selectPagesWithBadges(executor = db) {
+  const [rows] = await executor.query(
+    `SELECT title, slug, status, badges, created_at AS createdAt
+     FROM pages
+     WHERE deleted = 0
+       AND badges IS NOT NULL
+       AND TRIM(CAST(badges AS CHAR)) <> ''
+       AND TRIM(CAST(badges AS CHAR)) NOT IN ('[]', 'null')
+     ORDER BY created_at DESC, id DESC
+     LIMIT 200`
+  );
+  return rows;
+}
+
+/** Placement-only update — does not touch updated_at, content_updated_at, or content fields. */
+async function updateBreakingFieldsBySlug(slug, breaking, breakingOrder, executor = db) {
+  const [result] = await executor.query(
+    `UPDATE pages
+     SET breaking = ?, breaking_order = ?
+     WHERE slug = ? AND deleted = 0`,
+    [breaking ? 1 : 0, breakingOrder ?? 0, slug]
+  );
+  return result;
+}
+
+/** Placement-only update — does not touch updated_at, content_updated_at, or content fields. */
+async function updateBadgesBySlug(slug, badges, executor = db) {
+  const badgesSql = badgesToDbValue(badges);
+  const [result] = await executor.query(
+    `UPDATE pages SET badges = ? WHERE slug = ? AND deleted = 0`,
+    [badgesSql, slug]
+  );
+  return result;
+}
+
 async function selectByCategory(tag, executor = db) {
   const [rows] = await executor.query(
     "SELECT title, slug FROM pages WHERE deleted=0 AND category=?",
@@ -744,6 +792,15 @@ async function restoreBySlug(slug, executor = db) {
   return result;
 }
 
+/** Restore flow: regenerated HTML + bump content freshness (not updated_at). */
+async function updateRestoredPageContent(slug, contentHtml, executor = db) {
+  const [result] = await executor.query(
+    `UPDATE pages SET content = ?, content_updated_at = NOW() WHERE slug = ? AND deleted = 0`,
+    [contentHtml, slug]
+  );
+  return result;
+}
+
 async function hardDeleteBySlug(slug, executor = db) {
   const [result] = await executor.query("DELETE FROM pages WHERE slug=?", [slug]);
   return result;
@@ -922,8 +979,8 @@ async function insertPage(
 
   const [insResult] = await conn.query(
     `INSERT INTO \`pages\` 
-     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at, updated_at) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at, updated_at, content_updated_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
     insertParams
   );
 
@@ -1128,10 +1185,36 @@ async function updatePageBySlug(
   }
   logger.info("updatePageBySlug saving last_date", { slug, last_date: lastDate ?? null });
 
+  const [[existingRow]] = await conn.query(
+    `SELECT title, status, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text
+     FROM \`pages\` WHERE slug = ? AND deleted = 0 LIMIT 1`,
+    [slug]
+  );
+  const contentChanged = pageContentFieldsChanged(existingRow, {
+    title,
+    normalizedStatus,
+    category,
+    qualification,
+    state,
+    department,
+    postName,
+    totalPosts,
+    lastDate,
+    finalHTML,
+    text
+  });
+  const contentUpdatedAtSql = contentChanged ? ", content_updated_at = NOW()" : "";
+
+  logger.info("updatePageBySlug content freshness", {
+    slug,
+    contentChanged,
+    bumpsContentUpdatedAt: contentChanged
+  });
+
   const [result] = await conn.query(
     `UPDATE \`pages\`
      SET title = ?, status = ?, \`badges\` = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
-         breaking = ?, breaking_order = ?, event_time = ?, updated_at = NOW()
+         breaking = ?, breaking_order = ?, event_time = ?, updated_at = NOW()${contentUpdatedAtSql}
      WHERE slug = ? AND deleted = 0`,
     updateParams
   );
@@ -1229,6 +1312,10 @@ module.exports = {
   setSmallBoxSlotForPage,
   clearSmallBoxSlotForPage,
   selectBreakingNews,
+  selectHomepageBreakingAdmin,
+  selectPagesWithBadges,
+  updateBreakingFieldsBySlug,
+  updateBadgesBySlug,
   selectByCategory,
   selectAllSlugsPublic,
   findRelatedAnchorBySlug,
@@ -1247,6 +1334,7 @@ module.exports = {
   selectTrashPagesPaginated,
   softDeleteBySlug,
   restoreBySlug,
+  updateRestoredPageContent,
   hardDeleteBySlug,
   selectDashboardAggregate,
   findAdminPageBySlug,

@@ -1,14 +1,14 @@
 const Joi = require("joi");
+const { sanitizeBadgeCodesForStorage, ALLOWED_BADGE_CODES, HOMEPAGE_BADGE_MAX } = require("../lib/homepageBadges");
 
 /** Slug segment: non-empty only; empty is validated separately on pageUrl/oldSlug. */
 const SLUG_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
  * Manual badge codes admin can attach to a page (homepage row tags only).
- * Must stay in sync with server/lib/homepageBadges.js ALLOWED_BADGE_CODES.
+ * Canonical list lives in server/lib/homepageBadges.js
  */
-const ALLOWED_BADGE_CODES = ["NEW", "OUT", "START", "SOON"];
-const MAX_BADGES_PER_PAGE = 2;
+const MAX_BADGES_PER_PAGE = HOMEPAGE_BADGE_MAX;
 
 const adminPagePayloadSchema = Joi.object({
   title: Joi.string().trim().max(150).required(),
@@ -109,31 +109,7 @@ const adminPagePayloadSchema = Joi.object({
       Joi.valid(null)
     )
     .optional()
-    .custom((value) => {
-      if (value == null || value === "") return [];
-      let arr = value;
-      if (typeof value === "string") {
-        try {
-          const parsed = JSON.parse(value);
-          arr = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          arr = [];
-        }
-      }
-      if (!Array.isArray(arr)) return [];
-      const normalized = [];
-      const seen = new Set();
-      for (const raw of arr) {
-        const code = String(raw || "").trim().toUpperCase();
-        if (!code) continue;
-        if (!ALLOWED_BADGE_CODES.includes(code)) continue;
-        if (seen.has(code)) continue;
-        seen.add(code);
-        normalized.push(code);
-        if (normalized.length >= MAX_BADGES_PER_PAGE) break;
-      }
-      return normalized;
-    }, "badges")
+    .custom((value) => sanitizeBadgeCodesForStorage(value), "badges")
 })
   .required()
   .custom((value) => value)
@@ -157,12 +133,57 @@ const adminLogoutSchema = Joi.object({
   logoutAll: Joi.boolean().optional()
 }).optional().default({}).unknown(false);
 
+const homepageBreakingPatchSchema = Joi.object({
+  breaking: Joi.boolean().required(),
+  breakingOrder: Joi.alternatives()
+    .try(Joi.number(), Joi.string().allow(""))
+    .optional()
+    .custom((v) => {
+      if (v === undefined || v === null || v === "") return 0;
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) {
+        throw new Error("breakingOrder must be a non-negative integer");
+      }
+      return Math.floor(n);
+    }, "breakingOrder")
+})
+  .required()
+  .unknown(false);
+
+const homepageBadgesPatchSchema = Joi.object({
+  badges: Joi.alternatives()
+    .try(
+      Joi.array().items(Joi.string().trim().uppercase().max(32)),
+      Joi.string().trim().allow(""),
+      Joi.valid(null)
+    )
+    .optional()
+    .custom((value) => sanitizeBadgeCodesForStorage(value), "badges")
+})
+  .required()
+  .unknown(false);
+
+const homepageSmallBoxPatchSchema = Joi.object({
+  smallBoxSlot: Joi.alternatives()
+    .try(
+      Joi.number().integer().min(1).max(4),
+      Joi.string().trim().valid("1", "2", "3", "4", "", "normal"),
+      Joi.valid(null)
+    )
+    .required()
+})
+  .required()
+  .unknown(false);
+
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
   analyzeContentBodySchema,
   emptyBodySchema,
   adminLogoutSchema,
+  homepageBreakingPatchSchema,
+  homepageBadgesPatchSchema,
+  homepageSmallBoxPatchSchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

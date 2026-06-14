@@ -47,6 +47,36 @@ function normalizeBadgeCode(raw) {
 }
 
 /**
+ * Whitelist + max count for storage (Generator + Homepage Management).
+ * @param {unknown} value
+ * @returns {string[]}
+ */
+function sanitizeBadgeCodesForStorage(value) {
+  if (value == null || value === "") return [];
+  let arr = value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      arr = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      arr = [];
+    }
+  }
+  if (!Array.isArray(arr)) return [];
+  const normalized = [];
+  const seen = new Set();
+  for (const raw of arr) {
+    const code = normalizeBadgeCode(raw);
+    if (!code || !ALLOWED_BADGE_CODES.includes(code)) continue;
+    if (seen.has(code)) continue;
+    seen.add(code);
+    normalized.push(code);
+    if (normalized.length >= HOMEPAGE_BADGE_MAX) break;
+  }
+  return normalized;
+}
+
+/**
  * @param {unknown} badges
  * @param {Record<string, string>} cssMap
  * @returns {string}
@@ -113,6 +143,7 @@ module.exports = {
   HOMEPAGE_CARD_BADGE_CSS,
   HOMEPAGE_BADGE_MAX,
   normalizeBadgeCode,
+  sanitizeBadgeCodesForStorage,
   renderHomepageBadgesHtml,
   renderHomeCardBadgesHtml,
   resolveHomepageBadgeHtmlFromItem,

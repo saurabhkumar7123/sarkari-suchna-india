@@ -5,7 +5,7 @@ const controller = require("../../controllers/admin/page.controller");
 const asyncHandler = require("../../utils/asyncHandler");
 const { validateSlugParam } = require("../../validations/page.validation");
 const validateJoi = require("../../middleware/validateJoi.middleware");
-const { emptyBodySchema } = require("../../validations/admin.validation");
+const { emptyBodySchema, homepageBreakingPatchSchema, homepageBadgesPatchSchema, homepageSmallBoxPatchSchema } = require("../../validations/admin.validation");
 const { adminSensitiveLimiter } = require("../../config/rateLimits");
 
 // Auth: app.use("/api/admin", verifyToken) already applied
@@ -18,6 +18,31 @@ router.get("/dashboard", asyncHandler(controller.getDashboardStats));
 
 // 🎯 Homepage small-box slot occupancy (admin generator UI)
 router.get("/small-box-slots", asyncHandler(controller.getSmallBoxSlots));
+
+// 🌐 Homepage Management — overview + lightweight placement updates (Phase 2)
+const homepageManagementController = require("../../controllers/admin/homepageManagement.controller");
+router.get("/homepage-management", asyncHandler(homepageManagementController.getHomepageManagementOverview));
+router.patch(
+  "/homepage-management/breaking/:slug",
+  adminSensitiveLimiter,
+  validateSlugParam,
+  validateJoi(homepageBreakingPatchSchema, "body"),
+  asyncHandler(homepageManagementController.patchHomepageBreaking)
+);
+router.patch(
+  "/homepage-management/badges/:slug",
+  adminSensitiveLimiter,
+  validateSlugParam,
+  validateJoi(homepageBadgesPatchSchema, "body"),
+  asyncHandler(homepageManagementController.patchHomepageBadges)
+);
+router.patch(
+  "/homepage-management/small-box/:slug",
+  adminSensitiveLimiter,
+  validateSlugParam,
+  validateJoi(homepageSmallBoxPatchSchema, "body"),
+  asyncHandler(homepageManagementController.patchHomepageSmallBox)
+);
 
 // 📜 Activity log (admin alias; same data as public /api/activity-log)
 router.get("/activity", asyncHandler(controller.getAdminActivity));

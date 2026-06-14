@@ -213,7 +213,7 @@ const restorePage = async (req, res) => {
       // non-blocking
     }
     await fileService.writeFile(filePath, finalHtml, "utf8");
-    await db.query("UPDATE pages SET content = ? WHERE slug = ? AND deleted = 0", [finalHtml, slug]);
+    await pageRepository.updateRestoredPageContent(slug, finalHtml);
 
     await invalidatePageCaches([slug]);
     await recordActivity({
