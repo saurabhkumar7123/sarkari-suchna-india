@@ -386,14 +386,12 @@
     }
     
     /* ================= TABLE ================= */
-    .table-responsive{
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    max-width:100%;
-    }
-
-    /* Default: mobile-first fit — wrap text, no forced min-width */
     .table{
+    --table-head-bg:linear-gradient(90deg, #1e3a5f 0%, #0f766e 100%);
+    --table-head-color:#f8fafc;
+    --table-border:#d4e3f0;
+    --table-row-even:#f0f7fc;
+    --table-row-odd:#ffffff;
     width:100%;
     max-width:100%;
     border-collapse:collapse;
@@ -401,6 +399,13 @@
     min-width:0;
     }
 
+    .table-responsive{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
+    }
+
+    /* Default: mobile-first fit — wrap text, no forced min-width */
     .table th,
     .table td{
     overflow-wrap:anywhere;
@@ -411,21 +416,32 @@
     }
 
     .table th{
-    background:var(--primary);
-    color:var(--site-text-inverse);
-    padding:10px;
+    background:var(--table-head-bg);
+    color:var(--table-head-color);
+    padding:10px 12px;
     font-size:15px;
+    font-weight:600;
     text-align:left;
     line-height:1.4;
+    border:1px solid color-mix(in srgb, #0f766e 35%, #1e3a5f);
     }
     
     .table td{
-    padding:10px;
+    padding:10px 12px;
     font-size:15px;
-    border:1px solid #eee;
+    border:1px solid var(--table-border);
     text-align:left;
     line-height:1.45;
     font-variant-numeric:tabular-nums;
+    color:var(--text);
+    }
+
+    .table tr:nth-child(even) td{
+    background:var(--table-row-even);
+    }
+
+    .table tr:nth-child(odd) td{
+    background:var(--table-row-odd);
     }
 
     .table a.table-cell-link{
@@ -464,14 +480,6 @@
     .table td:last-child{
     text-align:center;
     }
-    
-    .table tr:nth-child(even){
-    background:#f9f9f9;
-    }
-
-    .table tr:nth-child(odd) td{
-    background:#fff;
-    }
 
     .table-responsive--wide::after{
     content:"Swipe →";
@@ -496,13 +504,20 @@
     position:sticky;
     left:0;
     z-index:1;
-    background:inherit;
     box-shadow:2px 0 4px rgba(15,23,42,0.06);
     }
 
     .table-responsive--wide .table th:first-child{
-    background:var(--primary);
+    background:var(--table-head-bg);
     z-index:2;
+    }
+
+    .table-responsive--wide .table tr:nth-child(even) td:first-child{
+    background:var(--table-row-even);
+    }
+
+    .table-responsive--wide .table tr:nth-child(odd) td:first-child{
+    background:var(--table-row-odd);
     }
     
     /* ================= RELATED ================= */
