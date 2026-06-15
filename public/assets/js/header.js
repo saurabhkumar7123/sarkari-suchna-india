@@ -36,11 +36,60 @@ document.addEventListener("DOMContentLoaded", () => {
   markCurrentNavItems();
   initHeaderScrollState();
   initToolsButtonA11y();
+  initUpdatedIndicator();
   syncMobileNavOffset();
   window.addEventListener("resize", syncMobileNavOffset, { passive: true });
   window.addEventListener("hashchange", markCurrentNavItems, { passive: true });
   ensureSearchScriptLoaded();
 });
+
+function initUpdatedIndicator() {
+  const indicators = document.querySelectorAll("[data-updated-indicator]");
+  if (!indicators.length) return;
+
+  const mobileMq = window.matchMedia("(max-width: 768px)");
+
+  indicators.forEach((el) => {
+    el.addEventListener("click", (e) => {
+      if (!mobileMq.matches) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      indicators.forEach((other) => {
+        if (other !== el) other.classList.remove("is-tooltip-visible");
+      });
+
+      const show = !el.classList.contains("is-tooltip-visible");
+      el.classList.toggle("is-tooltip-visible", show);
+
+      clearTimeout(el._updatedTooltipTimer);
+      if (show) {
+        el._updatedTooltipTimer = setTimeout(() => {
+          el.classList.remove("is-tooltip-visible");
+        }, 2600);
+      }
+    });
+
+    el.addEventListener("keydown", (e) => {
+      if (!mobileMq.matches) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      el.click();
+    });
+  });
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (e.target.closest("[data-updated-indicator]")) return;
+      indicators.forEach((el) => {
+        el.classList.remove("is-tooltip-visible");
+        clearTimeout(el._updatedTooltipTimer);
+      });
+    },
+    true
+  );
+}
 
 function initToolsButtonA11y() {
   document.querySelectorAll(".tools-btn").forEach((btn) => {
