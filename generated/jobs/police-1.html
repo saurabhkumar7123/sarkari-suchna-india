@@ -29,7 +29,7 @@
     <!-- CSS (always apply to screen; avoid print+JS flip for mobile compatibility) -->
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=2">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=3">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=18">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -71,8 +71,6 @@
     <h2 class="key-facts-heading">Key Facts</h2>
     <div class="key-facts-grid" id="keyFactsGrid"></div>
   </section>
-
-  <div class="top-apply-cta-wrap" id="topApplyCtaWrap" hidden></div>
 
   <!-- ================= META INFO ================= -->
   <section class="meta-info-section" aria-label="Post metadata">
@@ -391,34 +389,6 @@ document.addEventListener("DOMContentLoaded", () => {
     byLabel[finalTitle] = card;
     if (icon) icon.textContent = "➜";
   });
-
-  const getApplyLink = () => {
-    const linksCard = byLabel["Important Links"];
-    if (!linksCard) return "";
-    const candidates = Array.from(linksCard.querySelectorAll(".link-box")).map((box) => {
-      const left = cleanText(box.querySelector(".left-text")?.textContent);
-      const href = box.querySelector(".right-link a")?.getAttribute("href") || "";
-      return { left: left.toLowerCase(), href: href.trim() };
-    });
-    const picked = candidates.find((item) => /apply|registration|online form/.test(item.left) && /^https?:\/\//i.test(item.href));
-    return picked ? picked.href : "";
-  };
-
-  const applyHref = getApplyLink();
-  if (applyHref) {
-    const topWrap = document.getElementById("topApplyCtaWrap");
-    topWrap.hidden = false;
-    topWrap.innerHTML = '<a class="apply-online-cta apply-online-cta-top" href="' + applyHref + '" target="_blank" rel="noopener noreferrer">Apply Online</a>';
-
-    const linksCard = byLabel["Important Links"];
-    const linksContent = linksCard?.querySelector(".card-content");
-    if (linksContent && !linksContent.querySelector(".apply-online-cta-inline")) {
-      const inlineWrap = document.createElement("div");
-      inlineWrap.className = "apply-online-inline-wrap";
-      inlineWrap.innerHTML = '<a class="apply-online-cta apply-online-cta-inline" href="' + applyHref + '" target="_blank" rel="noopener noreferrer">Apply Online</a>';
-      linksContent.insertBefore(inlineWrap, linksContent.firstChild);
-    }
-  }
 
   const findValueInRows = (card, labelRe) => {
     if (!card) return "";
