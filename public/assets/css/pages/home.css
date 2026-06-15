@@ -1591,42 +1591,68 @@
   
   /* Homepage — View more under each section card */
   .card-view-more{
-    margin-top:14px;
-    padding-top:14px;
-    border-top:1px solid #e6eaf0;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid #eef2f7;
     text-align:center;
   }
-  
+
   .card-view-more .view-more{
-    display:block;
-    text-align:center;
-    padding:10px 14px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    min-height:40px;
+    padding:8px 14px;
     font-size:14px;
-    border-radius:6px;
-    margin:10px auto;
-    width:fit-content;
-    max-width:100%;
-    box-sizing:border-box;
-    font-weight:700;
+    font-weight:600;
+    line-height:1.2;
+    border-radius:8px;
     text-decoration:none;
-    color:var(--site-text-inverse);
-    background:var(--home-gradient-primary);
-    box-shadow:0 4px 14px rgba(30,60,114,0.25);
-    transition:transform .2s ease, box-shadow .2s ease;
+    background:transparent;
+    border:1px solid transparent;
+    box-shadow:none;
+    color:#1e40af;
+    transition:color .2s ease, background-color .2s ease;
   }
-  
+
+  .view-more__arrow{
+    font-size:15px;
+    line-height:1;
+    transition:transform .2s ease;
+  }
+
   .card-view-more .view-more:hover{
-    transform:translateY(-1px);
-    box-shadow:0 8px 20px rgba(30,60,114,0.3);
+    transform:none;
   }
-  
+
+  .card-view-more .view-more:hover .view-more__arrow{
+    transform:translateX(3px);
+  }
+
+  .view-more--navy{ color:#1e3a8a; }
+  .view-more--navy:hover{ background:#eff6ff; }
+
+  .view-more--green{ color:#065f46; }
+  .view-more--green:hover{ background:#ecfdf5; }
+
+  .view-more--orange{ color:#9a3412; }
+  .view-more--orange:hover{ background:#fff7ed; }
+
+  .view-more--purple{ color:#5b21b6; }
+  .view-more--purple:hover{ background:#f5f3ff; }
+
+  .view-more--blue{ color:#1d4ed8; }
+  .view-more--blue:hover{ background:#eff6ff; }
+
   @media (max-width:768px){
     .card-view-more .view-more{
-      width:50%;
-      font-size:12px;
-      padding:8px;
+      width:100%;
+      max-width:100%;
+      min-height:44px;
+      font-size:13px;
+      padding:10px 12px;
     }
-  
   }
 
 @media (max-width:768px){

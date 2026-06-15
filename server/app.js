@@ -34,6 +34,7 @@ const {
   resolveHomepageBadgeHtmlFromItem,
   resolveHomeCardBadgeHtmlFromItem
 } = require("./lib/homepageBadges");
+const { buildHomeViewMoreLinkHtml } = require("./lib/homeViewMore");
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -733,9 +734,7 @@ function renderHomeCardsHtml(sectionResults) {
         </div>
         <div class="card-content">
           <ul class="job-list">${linksHtml}</ul>
-          <div class="card-view-more">
-            <a href="${escapeHtml(def.href)}" class="view-more">View More</a>
-          </div>
+          ${buildHomeViewMoreLinkHtml(def, payload, escapeHtml)}
         </div>
       </div>
     `);

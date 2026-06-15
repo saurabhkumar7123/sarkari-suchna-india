@@ -525,9 +525,7 @@ async function loadHomeCards() {
       </div>
       <div class="card-content">
         ${html}
-        <div class="card-view-more">
-          <a href="${escapeAttr(def.href)}" class="view-more">View More</a>
-        </div>
+        ${window.HomeViewMore ? window.HomeViewMore.buildHomeViewMoreLinkHtml(def, res, escapeHtml, escapeAttr) : `<div class="card-view-more"><a href="${escapeAttr(def.href)}" class="view-more view-more--green">View all</a></div>`}
       </div>
     `;
     frag.appendChild(div);
