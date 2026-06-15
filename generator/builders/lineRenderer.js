@@ -8,6 +8,7 @@ const {
 } = require("../lib/inlineMarkdownLinks");
 const { hasRichInlineTags, renderRichBodyDisplayHtml } = require("../lib/richInlineText");
 const { parseLineBlocks, renderContentListHtml } = require("../lib/listBlocks");
+const { parseLinkLineParts } = require("../lib/parseLinkLineParts");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -36,12 +37,14 @@ function renderLinkBox(left, rightHtml) {
           `;
 }
 
-function renderLinkBoxAnchor(label, href) {
-  const left = escapeBodyDisplayText(label, { mode: "title" });
+function renderLinkBoxAnchor(leftOfEq, href) {
+  const { displayLabel, buttonText } = parseLinkLineParts(leftOfEq, { fallbackLabel: "Link" });
+  const left = escapeBodyDisplayText(displayLabel, { mode: "title" });
+  const button = escapeBodyDisplayText(buttonText, { mode: "title" });
   const safeHref = sanitizeUrl(resolveUrl(href));
   return renderLinkBox(
     left,
-    `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">Click Here</a>`
+    `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${button}</a>`
   );
 }
 
@@ -96,11 +99,11 @@ function renderOneLine(line, options = {}) {
   }
 
   if (isUrlOnlyLine) {
-    return renderLinkBoxAnchor("Link", rawLine);
+    return renderLinkBoxAnchor("", rawLine);
   }
 
   if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
-    return renderLinkBoxAnchor(leftOfEq || "Link", rightOfEq);
+    return renderLinkBoxAnchor(leftOfEq, rightOfEq);
   }
 
   const paraMode =

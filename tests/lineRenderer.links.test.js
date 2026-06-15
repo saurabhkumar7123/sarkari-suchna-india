@@ -68,4 +68,35 @@ Official Website=https://ssc.gov.in`;
     expect(html).toContain("Link Activate Soon");
     expect(html).toContain("Click Here");
   });
+
+  test("legacy format keeps Click Here button", () => {
+    const official = renderLinesToHtml(["Official Website=https://example.com"], {
+      sectionName: "ImportantLinks"
+    });
+    expect(official).toContain('<div class="left-text">Official Website</div>');
+    expect(official).toContain(">Click Here</a>");
+    expect(official).not.toContain(">Official Website</a>");
+
+    const apply = renderLinesToHtml(["Apply Online=https://example.com"], {
+      sectionName: "ImportantLinks"
+    });
+    expect(apply).toContain('<div class="left-text">Apply Online</div>');
+    expect(apply).toContain(">Click Here</a>");
+  });
+
+  test("pipe format uses custom button text", () => {
+    const apply = renderLinesToHtml(["Apply Online|Apply Now=https://example.com"], {
+      sectionName: "ImportantLinks"
+    });
+    expect(apply).toContain('<div class="left-text">Apply Online</div>');
+    expect(apply).toContain(">Apply Now</a>");
+    expect(apply).not.toContain(">Click Here</a>");
+
+    const official = renderLinesToHtml(["Official Website|Visit Site=https://example.com"], {
+      sectionName: "ImportantLinks"
+    });
+    expect(official).toContain('<div class="left-text">Official Website</div>');
+    expect(official).toContain(">Visit Site</a>");
+    expect(official).not.toContain(">Click Here</a>");
+  });
 });
