@@ -390,11 +390,6 @@
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
     max-width:100%;
-    margin:10px 0 14px;
-    border:1px solid var(--vac-border);
-    border-radius:var(--site-radius-sm);
-    background:var(--bg1);
-    box-shadow:var(--vac-shadow-sm);
     }
 
     /* Default: mobile-first fit — wrap text, no forced min-width */
@@ -404,7 +399,6 @@
     border-collapse:collapse;
     table-layout:fixed;
     min-width:0;
-    background:var(--bg1);
     }
 
     .table th,
@@ -414,32 +408,24 @@
     white-space:normal;
     hyphens:auto;
     vertical-align:middle;
-    border:1px solid var(--vac-border);
     }
 
     .table th{
-    background:color-mix(in srgb, var(--primary) 92%, #0f172a);
+    background:var(--primary);
     color:var(--site-text-inverse);
-    padding:10px 12px;
+    padding:10px;
     font-size:15px;
-    font-weight:600;
     text-align:left;
     line-height:1.4;
-    border-color:color-mix(in srgb, var(--primary) 75%, #0f172a);
     }
     
     .table td{
-    padding:10px 12px;
+    padding:10px;
     font-size:15px;
+    border:1px solid #eee;
     text-align:left;
     line-height:1.45;
     font-variant-numeric:tabular-nums;
-    background:var(--bg1);
-    color:var(--text);
-    }
-
-    .table tr:nth-child(even) td{
-    background:var(--bg2);
     }
 
     .table a.table-cell-link{
@@ -465,11 +451,6 @@
     .table-responsive--wide{
     overflow-x:auto;
     position:relative;
-    margin:10px 0 14px;
-    border:1px solid var(--vac-border);
-    border-radius:var(--site-radius-sm);
-    background:var(--bg1);
-    box-shadow:var(--vac-shadow-sm);
     }
 
     .table.table--wide{
@@ -482,6 +463,14 @@
     .table th:last-child,
     .table td:last-child{
     text-align:center;
+    }
+    
+    .table tr:nth-child(even){
+    background:#f9f9f9;
+    }
+
+    .table tr:nth-child(odd) td{
+    background:#fff;
     }
 
     .table-responsive--wide::after{
@@ -507,20 +496,13 @@
     position:sticky;
     left:0;
     z-index:1;
+    background:inherit;
     box-shadow:2px 0 4px rgba(15,23,42,0.06);
     }
 
     .table-responsive--wide .table th:first-child{
-    background:color-mix(in srgb, var(--primary) 92%, #0f172a);
+    background:var(--primary);
     z-index:2;
-    }
-
-    .table-responsive--wide .table td:first-child{
-    background:var(--bg1);
-    }
-
-    .table-responsive--wide .table tr:nth-child(even) td:first-child{
-    background:var(--bg2);
     }
     
     /* ================= RELATED ================= */
