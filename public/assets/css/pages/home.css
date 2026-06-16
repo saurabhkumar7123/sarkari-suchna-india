@@ -25,7 +25,7 @@
 
   /* Small boxes — 2-line min-height (no truncation); pills use --home-pill-* below */
   --home-cat-2line-min-h: calc(2 * 1.35em + 28px);
-  --home-cat-2line-min-h-mobile: calc(2 * 1.35em + 20px);
+  --home-cat-2line-min-h-mobile: calc(2 * 1.3em + 16px);
   --home-pill-2line-min-h: calc(2 * 1.25em + 20px);
   --home-pill-2line-min-h-mobile: calc(2 * 1.25em + 20px);
 
@@ -926,28 +926,40 @@
     /* Categories */
     .small-boxes{
       grid-template-columns:repeat(3,1fr);
-      gap:var(--home-gap-grid-tight);
-      font-size: 14px;
+      gap:7px;
+      font-size:12px;
     }
      .small-boxes .cat:nth-child(4){
       display:none;
     }
      
     body.page-home .small-boxes .cat{
-      padding:10px var(--home-gap-grid-tight);
-      font-weight:700;
+      padding:8px 5px;
+      font-weight:800;
+      line-height:1.2;
+      letter-spacing:-0.02em;
     }
 
     .small-boxes .cat{
-      padding:10px 10px;
+      padding:8px 5px;
       font-size:12px;
-      font-weight:700;
-      border-radius:8px;
+      font-weight:800;
+      line-height:1.2;
+      letter-spacing:-0.02em;
+      border-radius:7px;
       min-height:var(--home-cat-2line-min-h-mobile);
       display:flex;
       align-items:center;
       justify-content:center;
-      word-break:break-word;
+      overflow-wrap:break-word;
+      word-break:normal;
+      hyphens:none;
+    }
+
+    .small-boxes .cat::before{
+      width:2px;
+      border-top-left-radius:7px;
+      border-bottom-left-radius:7px;
     }
   
     .card{
