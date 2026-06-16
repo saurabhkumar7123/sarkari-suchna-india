@@ -7,10 +7,23 @@ body {
 a {
   color: var(--site-link);
   text-underline-offset: 2px;
+  transition: var(--hover-transition);
 }
 
 a:hover {
   color: var(--site-link-hover);
+}
+
+@media (hover: hover) {
+  a:hover {
+    text-decoration: underline;
+    text-decoration-color: rgba(37, 99, 235, 0.35);
+  }
+
+  .main-header .navbar .nav-item:hover,
+  .main-header #navbar .nav-item:hover {
+    text-decoration: none;
+  }
 }
 
 a:visited {

@@ -96,8 +96,8 @@ body.search-page {
 }
 
 .search-page .result-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  border-color: var(--hover-border);
+  box-shadow: var(--hover-shadow);
   transform: none;
 }
 

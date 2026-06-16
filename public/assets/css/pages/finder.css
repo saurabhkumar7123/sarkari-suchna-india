@@ -133,14 +133,15 @@
 }
 
 .finder-cta:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 16px rgba(29,78,216,.28);
+  transform:none;
+  box-shadow:0 6px 16px rgba(29,78,216,.24);
   background:linear-gradient(135deg,#1d4ed8,#1e40af);
 }
 
 .finder-banner:hover{
-  transform:translateY(-2px);
-  box-shadow:0 6px 22px rgba(37,99,235,0.16);
+  transform:none;
+  box-shadow:0 8px 22px rgba(37,99,235,0.14);
+  border-color:var(--hover-border-strong);
 }
 
 /* ===============================
@@ -728,8 +729,9 @@ body.finder-modal-open{
 }
 
 .finder-card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 12px 28px rgba(15,23,42,0.1);
+  transform:none;
+  border-color:var(--hover-border);
+  box-shadow:var(--hover-shadow);
 }
 
 .finder-card.closed{
@@ -747,7 +749,10 @@ body.finder-modal-open{
 }
 
 .finder-card-title a:hover{
-  color:#e11d48;
+  color:var(--hover-text);
+  text-decoration:underline;
+  text-decoration-color:rgba(37,99,235,0.35);
+  text-underline-offset:3px;
 }
 
 .finder-card-meta{

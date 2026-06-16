@@ -16,7 +16,7 @@
   --site-primary-2: #2a5298;
   --site-accent: #dc2626;
   --site-link: #2563eb;
-  --site-link-hover: #b91c1c;
+  --site-link-hover: #1d4ed8;
   --site-focus: rgba(37, 99, 235, 0.2);
   --site-text-inverse: #ffffff;
 
@@ -93,6 +93,20 @@
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 0.18s;
   --duration-base: 0.25s;
+
+  /* Hover (public UI — header nav uses its own rules) */
+  --hover-bg-subtle: #eff6ff;
+  --hover-bg-muted: #f8fafc;
+  --hover-border: #bfdbfe;
+  --hover-border-strong: #93c5fd;
+  --hover-text: #1d4ed8;
+  --hover-text-strong: #1e40af;
+  --hover-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  --hover-transition: color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    filter var(--duration-fast) var(--ease-out);
 
   /* Layering */
   --z-base: 0;

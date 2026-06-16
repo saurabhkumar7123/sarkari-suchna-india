@@ -1,0 +1,59 @@
+/*
+  Public-site hover polish (header primary nav unchanged — see header.css).
+*/
+
+@media (hover: hover) {
+  /* Header: tools / social / drawer legal — not .navbar or #navbar .nav-item */
+  .main-header .social-icons a:hover i {
+    transform: none;
+    background: rgba(255, 255, 255, 0.32);
+    border-color: rgba(255, 255, 255, 0.42);
+  }
+
+  .main-header .tools-btn:hover {
+    background: rgba(255, 255, 255, 0.34);
+    transform: none;
+  }
+
+  .main-header .tools-menu a:hover {
+    background: var(--hover-bg-subtle);
+    color: var(--hover-text-strong);
+    text-decoration: none;
+  }
+
+  .main-header .mobile-legal-link:hover {
+    border-color: var(--hover-border);
+    background: var(--hover-bg-subtle);
+    color: var(--hover-text-strong);
+  }
+
+  /* Footer */
+  .footer-social a:hover {
+    transform: none;
+    filter: brightness(1.1);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  }
+
+  .footer-col ul li a:hover,
+  .footer-col p a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    text-decoration: none;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb a.breadcrumb__brand:hover,
+  .breadcrumb a.breadcrumb__brand:focus-visible {
+    color: var(--hover-text);
+    text-decoration: underline;
+    text-decoration-color: rgba(37, 99, 235, 0.4);
+  }
+
+  /* Listing pagination */
+  .pager-btn:hover:not(:disabled) {
+    background: var(--hover-bg-subtle);
+    border-color: var(--hover-border);
+    color: var(--hover-text-strong);
+    box-shadow: var(--hover-shadow);
+  }
+}

@@ -266,9 +266,10 @@
   }
 
   .breaking-rotator__chip:hover{
-    color:var(--site-link);
-    border-color:#cbd5e1;
-    box-shadow:0 2px 8px rgba(15,23,42,0.08);
+    color:var(--hover-text);
+    border-color:var(--hover-border-strong);
+    background:#f8fafc;
+    box-shadow:var(--hover-shadow);
   }
 
   .breaking-rotator__chip:active{
@@ -305,9 +306,9 @@
   }
 
   .breaking-rotator__arrow:hover{
-    background:#f8fafc;
-    border-color:#cbd5e1;
-    color:#1e40af;
+    background:var(--hover-bg-subtle);
+    border-color:var(--hover-border);
+    color:var(--hover-text-strong);
   }
 
   .breaking-rotator__dots{
@@ -511,9 +512,10 @@
     
     /* HOVER */
     .small-boxes .cat:hover{
-      transform:translateY(-4px);
-      box-shadow:var(--home-shadow);
-      text-decoration:underline;
+      transform:none;
+      box-shadow:0 6px 18px rgba(15,23,42,0.14);
+      filter:brightness(1.05);
+      text-decoration:none;
     }
     
     /* CLICK */
@@ -708,8 +710,10 @@
   }
   
   .job-list a:hover{
-    color:var(--site-link-hover);
+    color:var(--hover-text);
     text-decoration:underline;
+    text-decoration-color:rgba(37,99,235,0.35);
+    text-underline-offset:3px;
   }
 
   /* Homepage card rows (#dynamicSections): title – BADGE hierarchy */
@@ -1185,8 +1189,10 @@
   }
   
   .trending-list a:hover{
-  color:var(--site-link-hover);
+  color:var(--hover-text);
   text-decoration:underline;
+  text-decoration-color:rgba(37,99,235,0.35);
+  text-underline-offset:3px;
   }
   
   
@@ -1657,7 +1663,8 @@
   }
   
   .page-btn:hover{
-    background:#0056b3;
+    background:#1d4ed8;
+    box-shadow:var(--hover-shadow);
   }
   
   .page-info{
@@ -2043,10 +2050,11 @@ body.page-home .popular-categories {
 
 .popular-categories__pill:hover,
 .popular-categories__pill:focus-visible {
-  color: var(--site-primary);
-  border-color: var(--site-primary);
-  box-shadow: var(--home-shadow, var(--site-shadow));
-  transform: translateY(-1px);
+  color: var(--hover-text-strong);
+  background: var(--hover-bg-subtle);
+  border-color: var(--hover-border);
+  box-shadow: var(--hover-shadow);
+  transform: none;
   text-decoration: none;
 }
 
@@ -2060,6 +2068,9 @@ body.page-home .popular-categories {
 .popular-categories__pill--view-all:focus-visible {
   color: var(--site-text-inverse, #fff);
   border-color: transparent;
+  filter: brightness(1.06);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.28);
+  transform: none;
 }
 
 /* Browse Categories page */
@@ -2317,8 +2328,10 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   }
 
   .taxonomy-tabs__btn:not(.is-active):hover {
-    border-color: var(--site-primary-2, var(--home-primary-2));
-    box-shadow: var(--home-shadow-sm, var(--site-shadow-sm));
+    border-color: var(--hover-border);
+    background: var(--hover-bg-subtle);
+    color: var(--hover-text-strong);
+    box-shadow: none;
   }
 
   body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
@@ -2342,9 +2355,11 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
   body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):hover,
   body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):focus-visible {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    border-color: var(--site-primary-2, var(--home-primary-2));
+    transform: none;
+    background: var(--hover-bg-subtle);
+    border-color: var(--hover-border);
+    box-shadow: var(--hover-shadow);
+    color: var(--hover-text-strong);
   }
 }
 

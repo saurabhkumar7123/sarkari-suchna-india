@@ -241,9 +241,9 @@ body.jobs-page {
 }
 
 .job-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
-  border-color: #cbd5e1;
+  transform: none;
+  box-shadow: var(--hover-shadow);
+  border-color: var(--hover-border);
 }
 
 .job-card:active {
