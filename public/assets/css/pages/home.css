@@ -734,14 +734,10 @@
   }
 
   body.page-home #dynamicSections .job-list a{
-    display:flex;
+    display:block;
     flex:1 1 0%;
     min-width:0;
     width:0;
-    align-items:center;
-    flex-wrap:wrap;
-    column-gap:6px;
-    row-gap:2px;
     box-sizing:border-box;
   }
 
@@ -749,6 +745,7 @@
     display:inline;
     white-space:nowrap;
     margin-left:0.1em;
+    vertical-align:baseline;
   }
 
   body.page-home #dynamicSections .home-card-badge-sep{
@@ -767,7 +764,7 @@
   body.page-home #dynamicSections .home-badge{
     display:inline-flex;
     align-items:center;
-    vertical-align:middle;
+    vertical-align:baseline;
     font-size:10px;
     font-weight:600;
     line-height:1.2;
