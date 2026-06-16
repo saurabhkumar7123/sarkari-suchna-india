@@ -536,10 +536,27 @@
     gap:var(--home-gap-grid);
     margin-top:0;
   }
+
+  /* Homepage dynamic sections: thin borders as separators */
+  body.page-home #dynamicSections.card-grid{
+    column-gap:0;
+    row-gap:0;
+    gap:0;
+  }
+
+  body.page-home #dynamicSections > .card{
+    border:1px solid #e6eaf0;
+    box-sizing:border-box;
+  }
   
   @media (min-width:768px){
     .page-home .card-grid{
       grid-template-columns:repeat(3,1fr);
+    }
+
+    body.page-home #dynamicSections.card-grid{
+      column-gap:8px;
+      row-gap:var(--home-gap-grid-tight);
     }
   }
   
@@ -696,12 +713,36 @@
   }
 
   /* Homepage card rows (#dynamicSections): title – BADGE hierarchy */
+  body.page-home #dynamicSections .job-list{
+    width:100%;
+  }
+
+  body.page-home #dynamicSections .job-list li{
+    width:100%;
+    align-items:stretch;
+    box-sizing:border-box;
+  }
+
   body.page-home #dynamicSections .job-list li::before{
     width:6px;
     height:6px;
     margin-right:9px;
     background:#94a3b8;
     opacity:0.88;
+    flex-shrink:0;
+    align-self:center;
+  }
+
+  body.page-home #dynamicSections .job-list a{
+    display:flex;
+    flex:1 1 0%;
+    min-width:0;
+    width:0;
+    align-items:center;
+    flex-wrap:wrap;
+    column-gap:6px;
+    row-gap:2px;
+    box-sizing:border-box;
   }
 
   body.page-home #dynamicSections .home-card-badge-group{
@@ -712,7 +753,7 @@
 
   body.page-home #dynamicSections .home-card-badge-sep{
     color:#9ca3af;
-    margin-left:0.35em;
+    margin-left:0.2em;
     margin-right:4px;
     font-weight:400;
     text-decoration:none;
@@ -959,6 +1000,21 @@
       padding:2px 4px;
     }
 
+    body.page-home #dynamicSections > .card{
+      padding-left:8px;
+      padding-right:8px;
+    }
+
+    body.page-home #dynamicSections .job-list li{
+      padding:10px 0;
+      min-height:40px;
+    }
+
+    body.page-home #dynamicSections .job-list a{
+      align-self:stretch;
+      padding:2px 0;
+    }
+
     body.page-home #dynamicSections .job-list li::before{
       width:3px;
       height:3px;
@@ -968,13 +1024,23 @@
     }
 
     body.page-home #dynamicSections .home-card-badge-sep{
-      margin-left:0.3em;
+      margin-left:0.2em;
       margin-right:3px;
     }
 
     body.page-home #dynamicSections .home-badge{
       font-size:9px;
       padding:1px 6px;
+    }
+
+    body.page-home .trending-list li::before{
+      width:3px;
+      height:3px;
+      margin-right:6px;
+    }
+
+    body.page-home .trending-list a{
+      font-size:14px;
     }
 
     .tag.live {
@@ -1059,6 +1125,35 @@
 
   body.page-home .trending-list{
     margin:0;
+  }
+
+  /* Homepage: align trending rows with #dynamicSections list rhythm */
+  body.page-home .trending-list li{
+    display:flex;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid #e6eaf0;
+    font-weight:600;
+  }
+
+  body.page-home .trending-list li::before{
+    content:"";
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    margin-right:9px;
+    display:inline-block;
+    background:#94a3b8;
+    opacity:0.88;
+    flex-shrink:0;
+  }
+
+  body.page-home .trending-list a{
+    flex:1;
+    min-width:0;
+    font-size:17px;
+    font-weight:600;
+    transition:.25s;
   }
   
   .trending-list li{
