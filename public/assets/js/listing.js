@@ -182,9 +182,15 @@
     }
   }
 
+  function formatRibbonLabelText(status) {
+    const line = String(status ?? "").trim() || "SECTION";
+    const upper = line.toUpperCase();
+    if (upper.endsWith("S")) return upper;
+    return `${upper}S`;
+  }
+
   function buildRibbonTitleNodes(want) {
     const frag = document.createDocumentFragment();
-    const raw = String(want || "").trim();
     if (isNewFormRibbonStatus(want)) {
       const badge = document.createElement("span");
       badge.className = "mini-badge";
@@ -192,13 +198,13 @@
       frag.appendChild(badge);
       const title = document.createElement("span");
       title.className = "title";
-      title.textContent = "FORM";
+      title.textContent = "FORMS";
       frag.appendChild(title);
       return frag;
     }
     const title = document.createElement("span");
     title.className = "title";
-    title.textContent = raw.toUpperCase() || "SECTION";
+    title.textContent = formatRibbonLabelText(want);
     frag.appendChild(title);
     return frag;
   }

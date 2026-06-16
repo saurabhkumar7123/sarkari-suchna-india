@@ -192,16 +192,22 @@ function isNewFormRibbonStatus(status) {
   return t === "new form" || t.startsWith("new form ");
 }
 
+/** Ribbon label plural, e.g. RESULT → RESULTS, ADMIT CARD → ADMIT CARDS. */
+function formatRibbonLabelText(status) {
+  const line = String(status ?? "").trim() || "SECTION";
+  const upper = line.toUpperCase();
+  if (upper.endsWith("S")) return upper;
+  return `${upper}S`;
+}
+
 /**
- * Ribbon title HTML. "New Form" → mini-badge "New" + title "FORM"; others unchanged (uppercase line).
+ * Ribbon title HTML. "New Form" → mini-badge "New" + title "FORMS"; others uppercase + s.
  */
 function buildRibbonTitleHtml(status) {
   if (isNewFormRibbonStatus(status)) {
-    return `<span class="mini-badge">New</span><span class="title">${escapeRibbonInnerText("FORM")}</span>`;
+    return `<span class="mini-badge">New</span><span class="title">${escapeRibbonInnerText("FORMS")}</span>`;
   }
-  const line = String(status ?? "").trim() || "SECTION";
-  const t = line.toUpperCase();
-  return `<span class="title">${escapeRibbonInnerText(t)}</span>`;
+  return `<span class="title">${escapeRibbonInnerText(formatRibbonLabelText(status))}</span>`;
 }
 
 // ================= HOME BOOTSTRAP =================
@@ -471,31 +477,16 @@ async function getHomeSectionDefs() {
 }
 
 // ================= MAIN CARDS =================
-async function loadHomeCards() {
+function renderHomeSectionCards(sectionResults) {
   const container = document.getElementById("dynamicSections");
   if (!container) return;
 
-  const sectionDefs = await getHomeSectionDefs();
-  if (!sectionDefs.length) {
-    container.innerHTML = "";
-    return;
-  }
-
-  const results = await Promise.all(
-    sectionDefs.map(async (def) => {
-      const mode = def.queryMode === "status" ? "status" : "section";
-      const queryValue = mode === "status" ? def.queryValue : def.section;
-      const url = `/api/pages?${mode}=${encodeURIComponent(queryValue)}&limit=${HOME_SECTION_LIMIT}&page=1`;
-      const res = await safeFetch(url);
-      return { def, res };
-    })
-  );
-
   const frag = document.createDocumentFragment();
+  let rendered = 0;
 
-  results.forEach(({ def, res }) => {
-    if (!res || !Array.isArray(res.data) || res.data.length === 0) {
-      console.log("[home] section empty — skip render:", def.section);
+  sectionResults.forEach(({ def, res }) => {
+    if (!def || !res || !Array.isArray(res.data) || res.data.length === 0) {
+      console.log("[home] section empty — skip render:", def && def.section);
       return;
     }
     console.log(
@@ -529,10 +520,46 @@ async function loadHomeCards() {
       </div>
     `;
     frag.appendChild(div);
+    rendered += 1;
   });
 
   container.innerHTML = "";
-  container.appendChild(frag);
+  if (rendered > 0) {
+    container.appendChild(frag);
+  }
+}
+
+function initHomeCardsFromBootstrap(boot) {
+  if (!boot || !Array.isArray(boot.sectionPages) || !boot.sectionPages.length) {
+    return false;
+  }
+  const results = boot.sectionPages.map((entry) => ({
+    def: entry.def,
+    res: entry.payload || null
+  }));
+  renderHomeSectionCards(results);
+  return true;
+}
+
+async function loadHomeCards() {
+  const sectionDefs = await getHomeSectionDefs();
+  if (!sectionDefs.length) {
+    const container = document.getElementById("dynamicSections");
+    if (container) container.innerHTML = "";
+    return;
+  }
+
+  const results = await Promise.all(
+    sectionDefs.map(async (def) => {
+      const mode = def.queryMode === "status" ? "status" : "section";
+      const queryValue = mode === "status" ? def.queryValue : def.section;
+      const url = `/api/pages?${mode}=${encodeURIComponent(queryValue)}&limit=${HOME_SECTION_LIMIT}&page=1`;
+      const res = await safeFetch(url);
+      return { def, res };
+    })
+  );
+
+  renderHomeSectionCards(results);
 }
 
 // ================= TRENDING =================
@@ -579,6 +606,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const boot = readHomeBootstrap();
     if (boot) {
       initBreakingFromBootstrap(boot.breakingNews);
+      if (!initHomeCardsFromBootstrap(boot)) {
+        loadHomeCards();
+      }
     } else {
       loadBreaking();
       loadTopCategories();

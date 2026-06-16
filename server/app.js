@@ -431,12 +431,19 @@ function isNewFormRibbonStatus(status) {
   return t === "new form" || t.startsWith("new form ");
 }
 
+function formatRibbonLabelText(status) {
+  const line = String(status ?? "").trim() || "SECTION";
+  const upper = line.toUpperCase();
+  if (upper.endsWith("S")) return upper;
+  return `${upper}S`;
+}
+
 function buildRibbonTitleHtml(status) {
   if (isNewFormRibbonStatus(status)) {
-    return '<span class="mini-badge">New</span><span class="title">FORM</span>';
+    return '<span class="mini-badge">New</span><span class="title">FORMS</span>';
   }
-  const line = String(status ?? "").trim() || "SECTION";
-  return `<span class="title">${escapeHtml(line.toUpperCase())}</span>`;
+  const line = formatRibbonLabelText(status);
+  return `<span class="title">${escapeHtml(line)}</span>`;
 }
 
 function breakingNewsLinkAttrsSsr(href) {
