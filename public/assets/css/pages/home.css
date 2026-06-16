@@ -1010,6 +1010,9 @@
     body.page-home #dynamicSections .job-list a{
       align-self:stretch;
       padding:2px 0;
+      font-size:13px;
+      font-weight:700;
+      line-height:1.28;
     }
 
     body.page-home #dynamicSections .job-list li::before{
