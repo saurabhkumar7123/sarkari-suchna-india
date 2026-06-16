@@ -519,9 +519,15 @@
 =================================*/
 @media (max-width: 768px) {
 
+  .main-header{
+    margin-bottom:0;
+  }
+
   .top-banner{
-    min-height:122px;
-    padding:16px 12px;
+    min-height:112px;
+    padding:16px 12px 14px;
+    display:flex;
+    align-items:center;
   }
 
   .top-banner::before{
@@ -530,20 +536,24 @@
   }
 
 .title .site-brand-title{
-  font-size:22px;
-  font-weight:700;
-  letter-spacing:-0.02em;
-  line-height:1.15;
+  font-size:26px;
+  font-weight:800;
+  letter-spacing:-0.025em;
+  line-height:1.08;
+  text-shadow:0 1px 3px rgba(15,23,42,0.14);
 }
 .title p{
   display:block;
-  font-size:11px;
+  font-size:10px;
   font-weight:400;
-  line-height:1.35;
-  color:rgba(255,255,255,0.84);
+  line-height:1.25;
+  color:rgba(255,255,255,0.58);
   margin:3px 0 0;
-  padding:0 8px;
+  padding:0 16px;
   max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .top-banner-inner{
@@ -553,7 +563,7 @@
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  gap:4px;
+  gap:0;
 }
 
 .logo-section{
@@ -566,37 +576,30 @@
 }
 
 .right-section{
-  position:static;
-  top:auto;
-  right:auto;
-  transform:none;
-  width:100%;
-  margin-top:6px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
+  display:none;
 }
 
-.site-updated-indicator--title{
+.top-banner .social-icons{
   display:none !important;
 }
 
+.site-updated-indicator--title{
+  display:inline-flex !important;
+  margin:6px auto 0;
+  opacity:0.92;
+}
+
 .site-updated-indicator--below-social{
-  display:inline-flex;
+  display:none !important;
 }
 
-.social-icons{
-  justify-content:center;
-  gap:8px;
+.site-updated-indicator--title .site-updated-indicator__dot{
+  width:9px;
+  height:9px;
 }
 
-.social-icons i{
-  width:28px;
-  height:28px;
-  font-size:13px;
-  background:rgba(255,255,255,0.14);
+.site-updated-indicator--title .site-updated-indicator__label{
+  font-size:10px;
 }
 
 /* HIDE DESKTOP NAV */
@@ -621,7 +624,9 @@
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:6px 12px;
+  padding:4px 12px;
+  min-height:52px;
+  box-sizing:border-box;
 }
 
 /* TOGGLE */
@@ -998,9 +1003,12 @@ body.tools-menu-open{
 
 @media (max-width: 768px) {
 
-  /* 🔥 FORCE MOVE SOCIAL BELOW TITLE */
+  /* Mobile banner: taller gradient block; toolbar stays compact below */
   .top-banner{
-    display:block;
+    display:flex;
+    align-items:center;
+    min-height:112px;
+    padding:16px 12px 14px;
   }
 
   .top-banner::before{
@@ -1008,35 +1016,20 @@ body.tools-menu-open{
     background:rgba(255,255,255,.03);
   }
   
-  /* 🔥 RESET RIGHT SECTION COMPLETELY */
   .right-section{
-    position:static !important;
-    top:auto !important;
-    right:auto !important;
-    transform:none !important;
-    width:100%;
-    margin-top:6px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    gap:8px;
-  }
-
-  .site-updated-indicator--title{
     display:none !important;
   }
 
+  .site-updated-indicator--title{
+    display:inline-flex !important;
+  }
+
   .site-updated-indicator--below-social{
-    display:inline-flex;
+    display:none !important;
   }
   
-  /* 🔥 CENTER ICONS */
-  .social-icons{
-    width:100%;
-    display:flex;
-    justify-content:center;
-    gap:8px;
+  .top-banner .social-icons{
+    display:none !important;
   }
 
   /* Header shell: full-width flex row, no horizontal overflow */
@@ -1062,7 +1055,8 @@ body.tools-menu-open{
     gap:10px;
     width:100%;
     max-width:100%;
-    padding:8px max(12px, env(safe-area-inset-left)) 8px max(12px, env(safe-area-inset-right));
+    min-height:52px;
+    padding:4px max(12px, env(safe-area-inset-left)) 4px max(12px, env(safe-area-inset-right));
   }
 
   .mobile-actions{
@@ -1072,12 +1066,12 @@ body.tools-menu-open{
     flex:0 0 auto;
   }
 
-  .site-updated-indicator--below-social .site-updated-indicator__dot{
+  .site-updated-indicator--title .site-updated-indicator__dot{
     width:9px;
     height:9px;
   }
 
-  .site-updated-indicator--below-social .site-updated-indicator__label{
+  .site-updated-indicator--title .site-updated-indicator__label{
     font-size:10px;
   }
 
