@@ -762,16 +762,6 @@ function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function getSearchStatusClass(status) {
-  const s = String(status || "").toLowerCase();
-  if (s.includes("new")) return "badge-green";
-  if (s.includes("result")) return "badge-blue";
-  if (s.includes("admit")) return "badge-orange";
-  if (s.includes("answer")) return "badge-purple";
-  if (s.includes("syllabus")) return "badge-teal";
-  return "badge-default";
-}
-
 function renderSearchResultsHtml(query, items) {
   if (!query) {
     return `
@@ -790,11 +780,11 @@ function renderSearchResultsHtml(query, items) {
       const title = escapeHtml(item.title || "Untitled");
       const href = escapeHtml(safePageHref(item));
       const highlightedTitle = title.replace(rx, "<span class=\"highlight\">$1</span>");
-      const status = escapeHtml(item.status || "");
       return `
         <div class="result-card">
-          <h2><a href="${href}">${highlightedTitle}</a></h2>
-          ${status ? `<span class="badge ${getSearchStatusClass(item.status)}">${status}</span>` : ""}
+          <div class="result-card__main">
+            <h2><a href="${href}">${highlightedTitle}</a></h2>
+          </div>
         </div>
       `;
     })

@@ -31,7 +31,7 @@ if(!query){
 
   titleEl.innerText = `Search Results for "${query}"`;
 
-  loader.style.display = "block";
+  loader.classList.remove("is-hidden");
   resultDiv.innerHTML = "";
 
  fetch(`/api/search?q=${encodeURIComponent(query)}`)
@@ -41,7 +41,7 @@ if(!query){
   })
   .then(data => {
 
-    loader.style.display = "none";
+    loader.classList.add("is-hidden");
 
     if(!Array.isArray(data)){
       resultDiv.innerHTML = "<p>Invalid response</p>";
@@ -60,7 +60,7 @@ if(!query){
 
   })
   .catch(err => {
-    loader.style.display = "none";
+    loader.classList.add("is-hidden");
     resultDiv.innerHTML = "<p>Error loading results</p>";
     console.error(err);
   });
@@ -76,18 +76,13 @@ function displayResults(){
 
   resultDiv.innerHTML = "";
 
-  paginatedItems.forEach(item => {
+  const listWrap = document.createElement("div");
+  listWrap.className = "search-results-list";
 
-    let preview = item.rawText
-      ? item.rawText.substring(0, 200) + "..."
-      : "";
+  paginatedItems.forEach(item => {
 
     const esc = String(query || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = esc ? new RegExp(`(${esc})`, "gi") : null;
-
-    if (regex) {
-      preview = preview.replace(regex, `<span class="highlight">$1</span>`);
-    }
 
     const titleStr = String(item.title || "");
     const highlightedTitle = regex ? titleStr.replace(regex, `<span class="highlight">$1</span>`) : titleStr;
@@ -103,18 +98,24 @@ function displayResults(){
       .replace(/"/g, "&quot;")
       .replace(/</g, "&lt;");
 
-    const badgeHtml = RENDER_BADGES_IN_SEARCH
+    const badgeHtml = RENDER_BADGES_IN_SEARCH && item.status
       ? `<span class="badge ${getStatusClass(item.status)}">${item.status}</span>`
       : "";
     const chunk = `
       <div class="result-card">
-        <h2><a href="${escHref}">${highlightedTitle}</a></h2>
-        <p>${preview}</p>
-       ${badgeHtml}
+        <div class="result-card__main">
+          <h2><a href="${escHref}">${highlightedTitle}</a></h2>
+        </div>
+        ${badgeHtml}
       </div>
     `;
-    resultDiv.innerHTML += window.DOMPurify ? window.DOMPurify.sanitize(chunk) : chunk;
+    listWrap.insertAdjacentHTML(
+      "beforeend",
+      window.DOMPurify ? window.DOMPurify.sanitize(chunk) : chunk
+    );
   });
+
+  resultDiv.appendChild(listWrap);
 
   setupPagination();
 }

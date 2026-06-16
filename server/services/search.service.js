@@ -7,11 +7,17 @@ function normalizeText(text) {
   return (text || "").toLowerCase().trim();
 }
 
+function titleMatchesQuery(title, query) {
+  const q = normalizeText(query);
+  if (!q) return false;
+  return normalizeText(title).includes(q);
+}
+
 async function search(query) {
   const q = normalizeText(query);
   if (!q || q.length < 2) return [];
 
-  const cacheKey = `search:${q}`;
+  const cacheKey = `search:title:${q}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     try {
@@ -33,11 +39,13 @@ async function search(query) {
     rows = await pageRepository.searchByLike(likeQuery);
   }
 
-  const result = rows.map((p) => ({
-    title: p.title,
-    url: "/" + p.slug,
-    status: (p.status || "").toUpperCase()
-  }));
+  const result = rows
+    .filter((p) => titleMatchesQuery(p.title, q))
+    .map((p) => ({
+      title: p.title,
+      url: "/" + p.slug,
+      status: (p.status || "").toUpperCase()
+    }));
 
   if (result.length) await setCache(cacheKey, result, 300);
   return result;
@@ -72,7 +80,7 @@ async function searchSuggest(query) {
 async function clearSearchCache() {
   if (!redis.isOpen) return;
   try {
-    for (const match of ["search:*", "suggest:*"]) {
+    for (const match of ["search:title:*", "search:*", "suggest:*"]) {
       const batch = [];
       for await (const key of redis.scanIterator({ MATCH: match, COUNT: 100 })) {
         batch.push(key);

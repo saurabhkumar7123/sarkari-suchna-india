@@ -281,25 +281,6 @@
     }
   }
 
-  function getStatusBadgeClass(status) {
-    const n = normalizeJobStatus(status);
-    if (n === "new form" || n.startsWith("new form ")) return "job-status-badge--new-form";
-    if (n === "result" || n.includes("result")) return "job-status-badge--result";
-    if (n === "admit card" || n === "admit") return "job-status-badge--admit";
-    if (n === "answer key" || n.includes("answer")) return "job-status-badge--answer";
-    if (n === "syllabus") return "job-status-badge--syllabus";
-    if (n === "document") return "job-status-badge--document";
-    if (n === "admission") return "job-status-badge--admission";
-    return "job-status-badge--default";
-  }
-
-  function getStatusLabel(status) {
-    const n = normalizeJobStatus(status);
-    if (!n) return "Update";
-    if (n === "new form") return "New Form";
-    return titleCase(n);
-  }
-
   function shouldShowAllIndiaTag(job, filters) {
     if (!filters.state || filters.state === "all india") return false;
     return normalizeFilterValue(job.state) === "all india";
@@ -348,6 +329,11 @@
         const allIndiaTag = shouldShowAllIndiaTag(job, filters)
           ? `<span class="job-all-india-tag">Also open: All India</span>`
           : "";
+        const lastDateHtml =
+          showLastDate
+            ? `<p class="job-date"><span class="job-last-date-badge">Last Date: ${formattedDate}</span></p>`
+            : "";
+        const footHtml = [allIndiaTag, lastDateHtml].filter(Boolean).join("");
 
         const metaParts = [
           `<span>${escapeHtml(titleCase(job.department || "General"))}</span>`,
@@ -364,15 +350,7 @@
           <a class="job-title-link" href="${href}">${escapeHtml(job.title)}</a>
         </h3>
         <p class="job-meta">${metaParts.join("")}</p>
-        <div class="job-card-foot">
-          <span class="job-status-badge ${getStatusBadgeClass(job.status)}">${escapeHtml(getStatusLabel(job.status))}</span>
-          ${allIndiaTag}
-          ${
-            showLastDate
-              ? `<p class="job-date"><span class="job-last-date-badge">Last Date: ${formattedDate}</span></p>`
-              : ""
-          }
-        </div>
+        ${footHtml ? `<div class="job-card-foot">${footHtml}</div>` : ""}
       </article>
     `;
       })

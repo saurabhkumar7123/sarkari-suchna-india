@@ -328,10 +328,10 @@ async function searchByLike(likeQuery, executor = db) {
     `SELECT title, slug, status 
      FROM pages 
      WHERE deleted=0 
-     AND (title LIKE ? OR slug LIKE ? OR category LIKE ?)
+     AND title LIKE ?
      ORDER BY created_at DESC
      LIMIT 20`,
-    [likeQuery, likeQuery, likeQuery]
+    [likeQuery]
   );
   return rows;
 }
@@ -354,7 +354,7 @@ async function searchByFullText(query, executor = db) {
       `SELECT title, slug, status
        FROM pages
        WHERE deleted = 0
-         AND MATCH(title, content) AGAINST (? IN NATURAL LANGUAGE MODE)
+         AND MATCH(title) AGAINST (? IN NATURAL LANGUAGE MODE)
        ORDER BY created_at DESC
        LIMIT 20`,
       [q]
