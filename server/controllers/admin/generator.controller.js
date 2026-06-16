@@ -9,7 +9,6 @@ const logger = require("../../utils/logger");
 const { auditInvalidBoardDepartment } = require("../../lib/structuredFields");
 const pipeline = require("../../../generator/pipeline/generatePage");
 const { analyzeJobContent } = require("../../../generator/analysis/contentAnalysis");
-const { validatePageContentIdentity } = require("../../../generator/analysis/contentQualityGuard");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
@@ -306,38 +305,6 @@ const generatePage = async (req, res) => {
       return res.status(400).json({
         status: "error",
         message: "Content too short"
-      });
-    }
-
-    const contentQuality = validatePageContentIdentity({
-      title,
-      text,
-      postName: normalizedPostName,
-      department: normalizedDepartment,
-      category,
-      slug: pageUrl || oldSlug || ""
-    });
-
-    if (!contentQuality.ok) {
-      logger.warn("generator content quality blocked", {
-        title,
-        postName: normalizedPostName,
-        department: normalizedDepartment,
-        violations: contentQuality.violations,
-        warnings: contentQuality.warnings
-      });
-      return res.status(400).json({
-        status: "error",
-        message: contentQuality.message,
-        code: "CONTENT_IDENTITY_MISMATCH",
-        violations: contentQuality.violations
-      });
-    }
-
-    if (contentQuality.warnings.length) {
-      logger.warn("generator content quality warnings", {
-        title,
-        warnings: contentQuality.warnings
       });
     }
 
