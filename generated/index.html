@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="/css/main.min.css?v=12">
 
 <!-- PAGE (screen styles — do NOT use media="print" + JS flip; breaks on some real mobile browsers) -->
-<link rel="stylesheet" href="/css/pages/home.css?v=29">
+<link rel="stylesheet" href="/css/pages/home.css?v=33">
 <link rel="stylesheet" href="/css/components/search-overlay.css?v=5">
 <link rel="stylesheet" href="/css/pages/finder.css?v=8">
 <link rel="stylesheet" href="/css/pages/about-site.css?v=3">
@@ -59,10 +59,9 @@
 <div class="main-container">
 <!-- 🔥 Breaking News -->
 <div class="breaking section breaking-news">
-  <div class="breaking-left">
-    
-    <i class="fa-solid fa-bullhorn speaker"></i>
-    <span>Breaking</span> News
+  <div class="breaking-left" aria-label="Breaking news">
+    <i class="fa-solid fa-bullhorn breaking-left__icon" aria-hidden="true"></i>
+    <span class="breaking-left__label">Breaking News</span>
   </div>
 
   <div class="breaking-right" id="breakingNews">
