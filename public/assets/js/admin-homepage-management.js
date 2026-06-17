@@ -26,6 +26,125 @@
       .replace(/\.html$/i, "");
   }
 
+  function pageSearchFieldHtml(idPrefix) {
+    return `<div class="hp-page-search" data-picker-root="${escapeHtml(idPrefix)}">
+      <div class="hp-page-search__box">
+        <input type="search" id="${escapeHtml(idPrefix)}Query" class="hp-page-search__input" placeholder="Search by page title…" autocomplete="off" aria-label="Search page by title" aria-controls="${escapeHtml(idPrefix)}Suggestions" aria-expanded="false">
+        <input type="hidden" id="${escapeHtml(idPrefix)}Slug" value="">
+        <ul id="${escapeHtml(idPrefix)}Suggestions" class="hp-page-search__suggestions" role="listbox" hidden></ul>
+      </div>
+      <p class="hp-page-search__hint" id="${escapeHtml(idPrefix)}Hint">Type at least 2 characters, then select a page.</p>
+    </div>`;
+  }
+
+  function wirePageSearchPicker(idPrefix) {
+    const queryEl = document.getElementById(`${idPrefix}Query`);
+    const slugEl = document.getElementById(`${idPrefix}Slug`);
+    const suggestEl = document.getElementById(`${idPrefix}Suggestions`);
+    const hintEl = document.getElementById(`${idPrefix}Hint`);
+    const rootEl = document.querySelector(`[data-picker-root="${idPrefix}"]`);
+    if (!queryEl || !slugEl || !suggestEl) {
+      return {
+        getSelectedSlug: () => "",
+        clear: () => {}
+      };
+    }
+
+    let debounceTimer = null;
+    let items = [];
+
+    function setHint(text, isError) {
+      if (!hintEl) return;
+      hintEl.textContent = text;
+      hintEl.classList.toggle("hp-page-search__hint--error", Boolean(isError));
+    }
+
+    function closeSuggestions() {
+      suggestEl.hidden = true;
+      suggestEl.innerHTML = "";
+      queryEl.setAttribute("aria-expanded", "false");
+    }
+
+    function selectPage(page) {
+      if (!page || !page.slug) return;
+      slugEl.value = String(page.slug);
+      queryEl.value = String(page.title || page.slug);
+      setHint(`Selected: ${page.title || page.slug}`, false);
+      closeSuggestions();
+    }
+
+    function renderSuggestions(list) {
+      items = list;
+      if (!list.length) {
+        suggestEl.innerHTML = `<li class="hp-page-search__empty" role="presentation">No pages found</li>`;
+        suggestEl.hidden = false;
+        queryEl.setAttribute("aria-expanded", "true");
+        return;
+      }
+      suggestEl.innerHTML = list
+        .map(
+          (p, i) => `<li role="presentation">
+            <button type="button" class="hp-page-search__option" role="option" data-index="${i}">
+              <span class="hp-page-search__option-title">${escapeHtml(p.title || p.slug)}</span>
+              <span class="hp-page-search__option-meta">${escapeHtml(p.slug || "")}${p.status ? ` · ${escapeHtml(p.status)}` : ""}</span>
+            </button>
+          </li>`
+        )
+        .join("");
+      suggestEl.hidden = false;
+      queryEl.setAttribute("aria-expanded", "true");
+    }
+
+    queryEl.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      slugEl.value = "";
+      const q = queryEl.value.trim();
+      if (q.length < 2) {
+        closeSuggestions();
+        setHint("Type at least 2 characters, then select a page.", false);
+        return;
+      }
+      setHint("Searching…", false);
+      debounceTimer = setTimeout(async () => {
+        const res = await window.adminSafeFetch(
+          `/api/admin/pages?q=${encodeURIComponent(q)}&page=1&limit=12&sort=desc`
+        );
+        if (!res || !res.success || !Array.isArray(res.data)) {
+          renderSuggestions([]);
+          setHint("Search failed. Try again.", true);
+          return;
+        }
+        renderSuggestions(res.data);
+        setHint(res.data.length ? "Pick a page from the list." : "No pages found for this title.", !res.data.length);
+      }, 280);
+    });
+
+    suggestEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".hp-page-search__option");
+      if (!btn) return;
+      const idx = parseInt(btn.getAttribute("data-index"), 10);
+      if (items[idx]) selectPage(items[idx]);
+    });
+
+    queryEl.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSuggestions();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (rootEl && !rootEl.contains(e.target)) closeSuggestions();
+    });
+
+    return {
+      getSelectedSlug: () => normalizeSlugInput(slugEl.value),
+      clear: () => {
+        slugEl.value = "";
+        queryEl.value = "";
+        closeSuggestions();
+        setHint("Type at least 2 characters, then select a page.", false);
+      }
+    };
+  }
+
   function skeletonHtml() {
     return `<div class="page-table page-table--cols-3 page-table--skeleton" aria-hidden="true">
       <div class="page-head"><div>Title</div><div>Details</div><div>Actions</div></div>
@@ -146,8 +265,8 @@
     if (!addHost) return;
     addHost.innerHTML = `
       <p class="homepage-mgmt-form__title">Add page to Breaking</p>
-      <div class="homepage-mgmt-form__row">
-        <input type="text" id="breakingAddSlug" placeholder="page-slug" aria-label="Page slug">
+      <div class="homepage-mgmt-form__row homepage-mgmt-form__row--search">
+        ${pageSearchFieldHtml("breakingAdd")}
         <label class="homepage-mgmt-form__label-inline">Order
           <input type="number" id="breakingAddOrder" min="0" step="1" value="0">
         </label>
@@ -160,8 +279,8 @@
     if (!addHost) return;
     addHost.innerHTML = `
       <p class="homepage-mgmt-form__title">Add badges to a page</p>
-      <div class="homepage-mgmt-form__row">
-        <input type="text" id="badgesAddSlug" placeholder="page-slug" aria-label="Page slug">
+      <div class="homepage-mgmt-form__row homepage-mgmt-form__row--search">
+        ${pageSearchFieldHtml("badgesAdd")}
       </div>
       <div class="badge-edit-row" id="badgesAddChecks">${badgeCheckboxesHtml("add", [])}</div>
       <button type="button" class="header-action-btn header-action-btn--primary" id="badgesAddBtn">Save badges</button>`;
@@ -180,7 +299,7 @@
           .map(
             (slot) => `<div class="homepage-mgmt-assign-row">
             <span class="homepage-mgmt-assign-label">Slot ${slot}${slot === 4 ? " (desktop only)" : ""}</span>
-            <input type="text" class="smallbox-slug-input" data-slot="${slot}" placeholder="page-slug" aria-label="Slug for slot ${slot}">
+            ${pageSearchFieldHtml(`smallboxSlot${slot}`)}
             <button type="button" class="header-action-btn header-action-btn--primary smallbox-assign" data-slot="${slot}">Assign</button>
           </div>`
           )
@@ -189,6 +308,8 @@
   }
 
   function wireBreakingActions() {
+    const breakingPicker = wirePageSearchPicker("breakingAdd");
+
     document.querySelectorAll(".breaking-save-order").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const row = btn.closest("[data-breaking-slug]");
@@ -226,10 +347,10 @@
 
     document.getElementById("breakingAddBtn")?.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
-      const slug = normalizeSlugInput(document.getElementById("breakingAddSlug")?.value);
+      const slug = breakingPicker.getSelectedSlug();
       const breakingOrder = Math.max(0, parseInt(document.getElementById("breakingAddOrder")?.value, 10) || 0);
       if (!slug) {
-        notifyError("Enter a page slug");
+        notifyError("Search by title and select a page from the list");
         return;
       }
       await withSaveLoading(btn, async () => {
@@ -238,12 +359,17 @@
           { breaking: true, breakingOrder },
           "Added to Breaking News"
         );
-        if (ok) loadOverview();
+        if (ok) {
+          breakingPicker.clear();
+          loadOverview();
+        }
       }, "Adding...");
     });
   }
 
   function wireBadgesActions() {
+    const badgesPicker = wirePageSearchPicker("badgesAdd");
+
     document.querySelectorAll("[data-badge-slug] .badge-edit-row").forEach((container) => {
       wireBadgeCheckboxLimit(container);
     });
@@ -285,11 +411,11 @@
 
     document.getElementById("badgesAddBtn")?.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
-      const slug = normalizeSlugInput(document.getElementById("badgesAddSlug")?.value);
+      const slug = badgesPicker.getSelectedSlug();
       const container = document.getElementById("badgesAddChecks");
       const badges = container ? readBadgeSelections(container) : [];
       if (!slug) {
-        notifyError("Enter a page slug");
+        notifyError("Search by title and select a page from the list");
         return;
       }
       await withSaveLoading(btn, async () => {
@@ -298,19 +424,29 @@
           { badges },
           "Badges saved"
         );
-        if (ok) loadOverview();
+        if (ok) {
+          badgesPicker.clear();
+          loadOverview();
+        }
       }, "Saving...");
     });
   }
 
   function wireSmallBoxesActions() {
+    const slotPickers = {
+      1: wirePageSearchPicker("smallboxSlot1"),
+      2: wirePageSearchPicker("smallboxSlot2"),
+      3: wirePageSearchPicker("smallboxSlot3"),
+      4: wirePageSearchPicker("smallboxSlot4")
+    };
+
     document.querySelectorAll(".smallbox-assign").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const slot = btn.getAttribute("data-slot");
-        const input = document.querySelector(`.smallbox-slug-input[data-slot="${slot}"]`);
-        const slug = normalizeSlugInput(input?.value);
+        const picker = slotPickers[slot];
+        const slug = picker ? picker.getSelectedSlug() : "";
         if (!slug) {
-          notifyError("Enter a page slug");
+          notifyError("Search by title and select a page from the list");
           return;
         }
         await withSaveLoading(btn, async () => {
@@ -319,7 +455,10 @@
             { smallBoxSlot: Number(slot) },
             "Slot assigned"
           );
-          if (ok) loadOverview();
+          if (ok) {
+            picker.clear();
+            loadOverview();
+          }
         }, "Assigning...");
       });
     });
@@ -347,7 +486,7 @@
       renderTable("breakingList", [], "", {
         icon: "📰",
         title: "No Breaking News pages yet",
-        hint: "Use the form above to add a page slug and flag it for the homepage ticker."
+        hint: "Search by page title above and add it to the homepage ticker."
       });
     } else {
       const rows = items
@@ -386,7 +525,7 @@
       renderTable("badgesList", [], "", {
         icon: "🏷",
         title: "No badge pages yet",
-        hint: "Use the form above to enter a page slug and choose up to two homepage badges."
+        hint: "Search by page title above and choose up to two homepage badges."
       });
     } else {
       const rows = items
@@ -505,7 +644,7 @@
     );
     setText(
       "smallBoxesMeta",
-      `${meta.smallBoxSlotsTotal || 0} of 4 slots filled · assign above to change occupant`
+      `${meta.smallBoxSlotsTotal || 0} of 4 slots filled · search by title above to assign`
     );
   }
 
