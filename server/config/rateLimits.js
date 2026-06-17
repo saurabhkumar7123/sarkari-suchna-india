@@ -21,7 +21,9 @@ const publicWindowMs = parseInt(process.env.RATE_LIMIT_PUBLIC_WINDOW_MS || "6000
 const loginWindowMs = parseInt(process.env.RATE_LIMIT_LOGIN_WINDOW_MS || String(15 * 60 * 1000), 10);
 const apiDefaultMax = parseInt(process.env.RATE_LIMIT_API_MAX || "1200", 10);
 const apiBurstMax = parseInt(process.env.RATE_LIMIT_API_BURST_MAX || "12000", 10);
-const apiStrictMax = parseInt(process.env.RATE_LIMIT_API_STRICT_MAX || "60", 10);
+const apiStrictMax = parseInt(process.env.RATE_LIMIT_API_STRICT_MAX || "15", 10);
+const aiParseMax = parseInt(process.env.RATE_LIMIT_AI_PARSE_MAX || "15", 10);
+const previewPageMax = parseInt(process.env.RATE_LIMIT_PREVIEW_PAGE_MAX || "20", 10);
 
 const skipHealth = (req) =>
   req.path === "/health" ||
@@ -48,8 +50,8 @@ function apiRouteMax(req) {
   ) {
     return apiBurstMax;
   }
-  // Costly parsing endpoint remains strict to reduce abuse.
-  if (pathOnly === "/api/ai-parse") {
+  // Costly parsing endpoints remain strict to reduce abuse.
+  if (pathOnly === "/api/ai-parse" || pathOnly === "/api/preview-page") {
     return apiStrictMax;
   }
   return apiDefaultMax;
@@ -110,10 +112,38 @@ const adminSensitiveLimiter = rateLimit({
   keyGenerator: (req) => `${getClientIp(req)}:${String(req.path || "").split("?")[0]}`
 });
 
+const rateLimitTooManyMessage = { success: false, message: "Too many requests. Try again later." };
+
+/** Public AI parse — conservative per-IP cap (OpenAI cost abuse) */
+const aiParseLimiter = rateLimit({
+  windowMs,
+  max: aiParseMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: buildStore("ai-parse"),
+  skip: skipHealth,
+  keyGenerator: (req) => getClientIp(req),
+  message: rateLimitTooManyMessage
+});
+
+/** Public preview HTML — conservative per-IP cap */
+const previewPageLimiter = rateLimit({
+  windowMs,
+  max: previewPageMax,
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: buildStore("preview-page"),
+  skip: skipHealth,
+  keyGenerator: (req) => getClientIp(req),
+  message: rateLimitTooManyMessage
+});
+
 module.exports = {
   globalLimiter,
   apiLimiter,
   adminLoginLimiter,
   adminApiLimiter,
-  adminSensitiveLimiter
+  adminSensitiveLimiter,
+  aiParseLimiter,
+  previewPageLimiter
 };

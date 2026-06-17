@@ -21,6 +21,7 @@ const { getNotifications } = require("../../controllers/public/notification.cont
 
 const validate = require("../../middleware/validate.middleware");
 const requireDb = require("../../middleware/dbReady.middleware");
+const { aiParseLimiter, previewPageLimiter } = require("../../config/rateLimits");
 const {
   tagParamSchema,
   relatedSlugParamSchema,
@@ -34,7 +35,7 @@ router.get("/breaking-news", requireDb, getBreakingNews);
 router.get("/public/notifications", getNotifications);
 router.get("/tag/:tag", requireDb, validate(tagParamSchema, "params"), getTagPage);
 
-router.post("/preview-page", validate(previewBodySchema, "body"), previewPage);
+router.post("/preview-page", previewPageLimiter, validate(previewBodySchema, "body"), previewPage);
 
 function maybeAiParseMultipart(req, res, next) {
   const ct = req.get("content-type") || "";
@@ -44,7 +45,7 @@ function maybeAiParseMultipart(req, res, next) {
   return next();
 }
 
-router.post("/ai-parse", maybeAiParseMultipart, validate(aiParseBodySchema, "body"), aiParse);
+router.post("/ai-parse", maybeAiParseMultipart, aiParseLimiter, validate(aiParseBodySchema, "body"), aiParse);
 
 router.get("/sections", requireDb, getSections);
 router.get(
