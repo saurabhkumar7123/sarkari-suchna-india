@@ -423,7 +423,7 @@ async function loadTopCategories(){
 
   container.innerHTML = "";
 
-  const colors = ["blue","green","purple","red"];
+  const colors = ["blue","green","orange","purple"];
 
   data.slice(0, 4).forEach((item, i) => {
     const slot = item && item.smallBoxSlot != null ? Number(item.smallBoxSlot) : null;

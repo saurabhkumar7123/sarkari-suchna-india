@@ -488,7 +488,7 @@ function renderBreakingNewsHtml(items) {
 
 function renderSmallBoxesHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
-  const colors = ["blue", "green", "purple", "red"];
+  const colors = ["blue", "green", "orange", "purple"];
   const { colorIndexForSlot } = require("./lib/smallBoxSlots");
   return items
     .slice(0, 4)
