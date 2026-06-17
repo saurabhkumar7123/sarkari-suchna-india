@@ -14,9 +14,9 @@
   --home-radius: var(--site-radius);
   --home-primary: var(--site-primary);
   --home-primary-2: var(--site-primary-2);
-  --home-select-bg: #2563eb;
-  --home-select-bg-deep: #1e40af;
-  --home-breaking-bg: #1e40af;
+  --home-select-bg: #3b82f6;
+  --home-select-bg-deep: #60a5fa;
+  --home-breaking-bg: #4d8ef7;
   --home-gradient-primary: var(--gradient-primary);
   --home-gradient-accent: var(--gradient-accent);
   --home-link: var(--site-link);
@@ -2355,7 +2355,7 @@ body.page-categories .categories-browse .popular-categories__grid--browse {
 .taxonomy-tabs__btn.is-active {
   color: var(--site-text-inverse, #fff);
   background: var(--home-select-bg);
-  border: 1px solid #1d4ed8;
+  border: 1px solid #60a5fa;
   border-bottom: none;
   border-radius: var(--home-radius-sm, 12px) var(--home-radius-sm, 12px) 0 0;
   margin-bottom: -1px;

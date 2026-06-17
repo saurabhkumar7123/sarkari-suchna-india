@@ -85,13 +85,13 @@ function renderTaxonomySSRPage(opts) {
 <meta property="og:url" content="${escapeHtml(absoluteUrl)}">
 <meta property="og:image" content="/assets/image/logo/favicon.png">
 <meta name="robots" content="index, follow">
-<link rel="preload" href="/css/main.min.css?v=11" as="style">
-<link rel="stylesheet" href="/css/main.min.css?v=11">
+<link rel="preload" href="/css/main.min.css?v=12" as="style">
+<link rel="stylesheet" href="/css/main.min.css?v=12">
 <link rel="stylesheet" href="/css/pages/listing-layout.css?v=2">
 <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
 <link rel="stylesheet" href="/css/pages/home.css?v=5">
 <link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=2">
-<link rel="stylesheet" href="/css/components/search-overlay.css?v=4">
+<link rel="stylesheet" href="/css/components/search-overlay.css?v=5">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="listing-page page-section taxonomy-page">

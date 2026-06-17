@@ -19,20 +19,17 @@
 =================================*/
 .top-banner{
   position:relative;
-  padding:20px 16px;
-  min-height:136px;
+  padding:18px 16px;
+  min-height:132px;
   overflow:hidden;
 
   background:linear-gradient(
-    165deg,
-    #172f5c 0%,
-    #1e3c72 34%,
-    #2563eb 68%,
-    #1e3a6e 100%
+    90deg,
+    #1e3c72 0%,
+    #2563eb 50%,
+    #2a5298 100%
   );
-  box-shadow:
-    0 1px 0 rgba(255,255,255,0.12) inset,
-    0 4px 14px rgba(30,60,114,0.14);
+  box-shadow:0 1px 0 rgba(255,255,255,0.1) inset;
 }
 
 .top-banner::before{
@@ -40,7 +37,7 @@
   display:block;
   position:absolute;
   inset:0;
-  background:radial-gradient(ellipse 72% 58% at 50% -8%, rgba(255,255,255,0.11) 0%, transparent 58%);
+  background:radial-gradient(ellipse 68% 52% at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 55%);
   pointer-events:none;
   z-index:0;
 }
@@ -575,7 +572,7 @@
   bottom:7px;
   height:2px;
   border-radius:1px;
-  background:#2563eb;
+  background:#60a5fa;
   transform:scaleX(0);
   transform-origin:center;
   transition:transform 0.2s ease;
@@ -583,7 +580,7 @@
 
 .navbar .nav-item:hover:not(.active){
   background:#f8fafc;
-  color:#1e40af;
+  color:#3b82f6;
 }
 
 .navbar .nav-item:hover:not(.active)::after{
@@ -591,9 +588,9 @@
 }
 
 .navbar .nav-item.active{
-  background:#2563eb;
+  background:#3b82f6;
   color:#fff;
-  box-shadow:0 2px 8px rgba(37,99,235,0.2);
+  box-shadow:0 2px 8px rgba(59,130,246,0.18);
 }
 
 .navbar .nav-item.active::after{
@@ -918,7 +915,7 @@ body.mobile-nav-open .mobile-nav{
 }
 
 #navbar .nav-item.active i{
-  color:#2563eb;
+  color:#3b82f6;
 }
 
 .mobile-legal{

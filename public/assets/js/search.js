@@ -48,7 +48,7 @@ function ensureSearchOverlayStyles() {
   if (document.querySelector('link[href*="search-overlay.css"]')) return;
   var link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = "/css/components/search-overlay.css?v=4";
+  link.href = "/css/components/search-overlay.css?v=5";
   document.head.appendChild(link);
 }
 
