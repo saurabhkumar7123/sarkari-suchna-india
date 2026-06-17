@@ -19,21 +19,30 @@
 =================================*/
 .top-banner{
   position:relative;
-  padding:18px 16px;
-  min-height:132px;
+  padding:20px 16px;
+  min-height:136px;
+  overflow:hidden;
 
   background:linear-gradient(
-    90deg,
-    #1e3c72 0%,
-    #2563eb 52%,
-    #2a5298 100%
+    165deg,
+    #172f5c 0%,
+    #1e3c72 34%,
+    #2563eb 68%,
+    #1e3a6e 100%
   );
-  box-shadow:0 1px 0 rgba(255,255,255,0.1) inset;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 4px 14px rgba(30,60,114,0.14);
 }
 
 .top-banner::before{
-  content:none;
-  display:none;
+  content:"";
+  display:block;
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse 72% 58% at 50% -8%, rgba(255,255,255,0.11) 0%, transparent 58%);
+  pointer-events:none;
+  z-index:0;
 }
 
 .top-banner > *{
@@ -566,7 +575,7 @@
   bottom:7px;
   height:2px;
   border-radius:1px;
-  background:linear-gradient(135deg,#4F79D6,#2BB6B0);
+  background:#2563eb;
   transform:scaleX(0);
   transform-origin:center;
   transition:transform 0.2s ease;
@@ -582,9 +591,9 @@
 }
 
 .navbar .nav-item.active{
-  background:linear-gradient(135deg,#4F79D6,#2BB6B0);
+  background:#2563eb;
   color:#fff;
-  box-shadow:0 4px 12px rgba(79,121,214,0.22);
+  box-shadow:0 2px 8px rgba(37,99,235,0.2);
 }
 
 .navbar .nav-item.active::after{
@@ -900,16 +909,16 @@ body.mobile-nav-open .mobile-nav{
 }
 
 #navbar .nav-item.active{
-  background:#eef2ff;
-  border-color:#a5b4fc;
+  background:#eff6ff;
+  border-color:#93c5fd;
   color:#1e3a8a;
   font-weight:600;
   font-size:15px;
-  box-shadow:0 1px 3px rgba(79,121,214,0.12);
+  box-shadow:0 1px 3px rgba(37,99,235,0.12);
 }
 
 #navbar .nav-item.active i{
-  color:#4F79D6;
+  color:#2563eb;
 }
 
 .mobile-legal{
