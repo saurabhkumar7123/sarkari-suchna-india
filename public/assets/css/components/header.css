@@ -330,10 +330,22 @@
   justify-content:center;
   font-size:14px;
   border-radius:10px;
-  border:1px solid rgba(255,255,255,0.22);
+  border:1px solid var(--social-icon-border);
   background:rgba(255,255,255,0.16);
   color:#fff;
-  transition:background 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition:background 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.social-icons a.social-telegram i{
+  background:var(--social-telegram-bg);
+}
+
+.social-icons a.social-whatsapp i{
+  background:var(--social-whatsapp-bg);
+}
+
+.social-icons a.social-facebook i{
+  background:var(--social-facebook-bg);
 }
 
 @media (min-width: 769px) {
@@ -348,23 +360,7 @@
     min-height:38px;
     font-size:16px;
     border-radius:11px;
-    border:1px solid rgba(255,255,255,0.22);
     box-shadow:0 2px 6px rgba(15,23,42,0.14);
-  }
-
-  .social-icons a[href*="t.me"] i{
-    background:linear-gradient(145deg, #2aabee, #229ed9);
-    border-color:rgba(255,255,255,0.28);
-  }
-
-  .social-icons a[href*="whatsapp"] i{
-    background:linear-gradient(145deg, #34d369, #25d366);
-    border-color:rgba(255,255,255,0.28);
-  }
-
-  .social-icons a[href*="facebook"] i{
-    background:linear-gradient(145deg, #3b8af0, #1877f2);
-    border-color:rgba(255,255,255,0.28);
   }
 
   .social-icons a:hover i{
@@ -549,6 +545,7 @@
   padding:10px 14px;
   min-height:44px;
   border-radius:10px;
+  border:1px solid transparent;
   font-weight:600;
   font-size:14px;
   line-height:1.2;
@@ -588,9 +585,10 @@
 }
 
 .navbar .nav-item.active{
-  background:#3b82f6;
-  color:#fff;
-  box-shadow:0 2px 8px rgba(59,130,246,0.18);
+  background:var(--mobile-tools-bg);
+  color:var(--mobile-tools-text);
+  border:1px solid var(--mobile-tools-border);
+  box-shadow:var(--mobile-tools-shadow);
 }
 
 .navbar .nav-item.active::after{
@@ -599,6 +597,7 @@
 
 .navbar .nav-item.active i{
   opacity:1;
+  color:var(--mobile-tools-text);
 }
 
 /* ===============================
@@ -727,26 +726,25 @@
   min-width:44px;
   min-height:44px;
   border-radius:11px;
-  border:1px solid rgba(255,255,255,0.22);
-  background:linear-gradient(145deg, #2563eb, #1e3c72);
-  color:#fff;
+  border:1px solid var(--mobile-tools-border);
+  background:var(--mobile-tools-bg);
+  color:var(--mobile-tools-text);
   font-size:18px;
   line-height:1;
   cursor:pointer;
-  box-shadow:0 2px 8px rgba(30,64,175,0.28);
-  transition:box-shadow 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+  box-shadow:var(--mobile-tools-shadow);
+  transition:background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   -webkit-tap-highlight-color:transparent;
 }
 
 .hamburger:hover{
-  filter:brightness(1.06);
-  box-shadow:0 4px 12px rgba(30,64,175,0.32);
+  background:var(--mobile-tools-bg-hover);
+  border-color:var(--mobile-tools-border-hover);
 }
 
 .hamburger:active{
-  filter:brightness(0.96);
   transform:scale(0.98);
-  box-shadow:0 1px 4px rgba(30,64,175,0.22);
+  box-shadow:0 1px 2px rgba(15,23,42,0.08);
 }
 
 /* RIGHT */
@@ -794,20 +792,20 @@
   justify-content:center;
   gap:6px;
   border-radius:11px;
-  border:1px solid #bfdbfe;
-  background:linear-gradient(145deg, #eff6ff, #dbeafe);
-  color:#1e3c72;
+  border:1px solid var(--mobile-tools-border);
+  background:var(--mobile-tools-bg);
+  color:var(--mobile-tools-text);
   font-size:13px;
   font-weight:600;
   line-height:1.2;
-  box-shadow:0 1px 3px rgba(15,23,42,0.06);
+  box-shadow:var(--mobile-tools-shadow);
   transition:background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   -webkit-tap-highlight-color:transparent;
 }
 
 .mobile-tools:hover{
-  background:linear-gradient(145deg, #dbeafe, #bfdbfe);
-  border-color:#93c5fd;
+  background:var(--mobile-tools-bg-hover);
+  border-color:var(--mobile-tools-border-hover);
 }
 
 .mobile-tools:active{
@@ -906,16 +904,16 @@ body.mobile-nav-open .mobile-nav{
 }
 
 #navbar .nav-item.active{
-  background:#eff6ff;
-  border-color:#93c5fd;
-  color:#1e3a8a;
+  background:var(--mobile-tools-bg);
+  border-color:var(--mobile-tools-border);
+  color:var(--mobile-tools-text);
   font-weight:600;
   font-size:15px;
-  box-shadow:0 1px 3px rgba(37,99,235,0.12);
+  box-shadow:var(--mobile-tools-shadow);
 }
 
 #navbar .nav-item.active i{
-  color:#3b82f6;
+  color:var(--mobile-tools-text);
 }
 
 .mobile-legal{

@@ -136,8 +136,9 @@
   position:relative;
   z-index:1;
   flex:0 0 auto;
-  background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
-  color:#fff;
+  background:var(--home-cta-bg);
+  color:var(--home-cta-text);
+  border:1px solid var(--home-cta-border);
 
   font-weight:700;
   font-size:13px;
@@ -150,11 +151,12 @@
   gap:6px;
   white-space:nowrap;
 
-  box-shadow:0 2px 6px rgba(29,78,216,0.2);
+  box-shadow:var(--home-cta-shadow);
   transition:
     transform var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out),
-    background var(--duration-base) var(--ease-out);
+    background var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
 }
 
 .finder-cta::before{
@@ -172,8 +174,9 @@
 }
 
 .finder-cta:hover{
-  box-shadow:0 3px 10px rgba(29,78,216,0.24);
-  background:linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  box-shadow:var(--home-cta-shadow);
+  background:var(--home-cta-bg-hover);
+  border-color:var(--home-cta-border);
 }
 
 .finder-banner:hover{

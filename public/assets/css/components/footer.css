@@ -85,14 +85,14 @@
   color:#fff;
   text-decoration:none;
   font-size:17px;
-  border:1px solid rgba(255,255,255,0.14);
+  border:1px solid var(--social-icon-border);
   box-shadow:0 4px 14px rgba(0,0,0,0.18);
   transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
 }
 
-.footer-social .social-facebook{ background:linear-gradient(145deg, #1877f2, #0f5bd7); }
-.footer-social .social-telegram{ background:linear-gradient(145deg, #229ed9, #0088cc); }
-.footer-social .social-whatsapp{ background:linear-gradient(145deg, #34d369, #25d366); }
+.footer-social .social-facebook{ background:var(--social-facebook-bg); }
+.footer-social .social-telegram{ background:var(--social-telegram-bg); }
+.footer-social .social-whatsapp{ background:var(--social-whatsapp-bg); }
 
 .footer-social a:hover{
   transform:translateY(-3px);

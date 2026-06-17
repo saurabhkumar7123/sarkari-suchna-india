@@ -97,12 +97,24 @@ function toggleSidebar() {
   setSidebarOpen(!sidebar.classList.contains("active"));
 }
 
+function syncSidebarCollapseButton() {
+  const sidebar = document.getElementById("sidebar");
+  const btn = document.getElementById("sidebarCollapseBtn");
+  if (!sidebar || !btn) return;
+  const collapsed = sidebar.classList.contains("collapsed");
+  btn.textContent = collapsed ? "☰" : "⟨⟩";
+  const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
+  btn.setAttribute("aria-label", label);
+  btn.setAttribute("title", label);
+}
+
 function toggleSidebarCollapsed() {
   const sidebar = document.getElementById("sidebar");
   if (!sidebar) return;
   sidebar.classList.toggle("collapsed");
   document.body.classList.toggle("sidebar-collapsed", sidebar.classList.contains("collapsed"));
   localStorage.setItem("dashboardSidebarCollapsed", sidebar.classList.contains("collapsed") ? "1" : "0");
+  syncSidebarCollapseButton();
 }
 
 function applySidebarStateFromStorage() {
@@ -112,6 +124,7 @@ function applySidebarStateFromStorage() {
     sidebar.classList.add("collapsed");
     document.body.classList.add("sidebar-collapsed");
   }
+  syncSidebarCollapseButton();
 }
 
 function markActiveSidebarLink() {

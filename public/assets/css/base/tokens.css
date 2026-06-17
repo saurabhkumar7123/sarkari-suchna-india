@@ -45,6 +45,27 @@
   --gradient-primary: linear-gradient(135deg, var(--site-primary), var(--site-link));
   --gradient-accent: linear-gradient(135deg, var(--site-link), var(--site-primary-2));
 
+  /* Mobile header tools-style CTA (soft blue pill) */
+  --mobile-tools-border: #bfdbfe;
+  --mobile-tools-bg: linear-gradient(145deg, #eff6ff, #dbeafe);
+  --mobile-tools-bg-hover: linear-gradient(145deg, #dbeafe, #bfdbfe);
+  --mobile-tools-text: #1e3c72;
+  --mobile-tools-border-hover: #93c5fd;
+  --mobile-tools-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+
+  /* Homepage CTA accent — finder Check Now, category tab select (richer than tools pill) */
+  --home-cta-border: #60a5fa;
+  --home-cta-bg: linear-gradient(145deg, #3b82f6, #2563eb);
+  --home-cta-bg-hover: linear-gradient(145deg, #2563eb, #1d4ed8);
+  --home-cta-text: #ffffff;
+  --home-cta-shadow: 0 2px 8px rgba(37, 99, 235, 0.22);
+
+  /* Brand social icon fills */
+  --social-icon-border: rgba(255, 255, 255, 0.28);
+  --social-telegram-bg: linear-gradient(145deg, #2aabee, #229ed9);
+  --social-whatsapp-bg: linear-gradient(145deg, #34d369, #25d366);
+  --social-facebook-bg: linear-gradient(145deg, #3b8af0, #1877f2);
+
   /* Spacing scale (standardized) */
   --space-4: 4px;
   --space-8: 8px;

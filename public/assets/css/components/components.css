@@ -35,7 +35,6 @@ a:focus-visible {
 }
 
 .btn-primary,
-.finder-cta,
 .finder-submit {
   background: linear-gradient(135deg, var(--site-primary-2), var(--site-primary));
   color: #fff;
