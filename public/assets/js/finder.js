@@ -152,6 +152,9 @@ async function openFinder() {
     modal.setAttribute("aria-hidden", "false");
     document.body.classList.add("finder-modal-open");
     setFinderTriggerExpanded(true);
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      window.scrollTo(0, 0);
+    }
   } catch (e) {
     console.error("[JobFinder] openFinder error", e);
   }

@@ -9,31 +9,39 @@
   gap:var(--space-16, 16px);
   margin:0;
   max-width:100%;
-  padding:18px var(--space-12, 12px);
+  padding:14px var(--space-16, 16px);
   width:100%;
-  min-height:calc(48px + 36px);
+  min-height:0;
 
-  background:linear-gradient(180deg,#ffffff,#fafcff);
-
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,251,255,0.98) 55%, rgba(239,246,255,0.95) 100%);
   border-radius:var(--site-radius-sm);
-  color:#1e293b;
+  color:#0f172a;
   cursor:pointer;
   overflow:hidden;
 
-  box-shadow:var(--site-shadow);
-  border:1px solid rgba(0,0,0,0.06);
-  border-left:4px solid #2563eb;
-  transition:transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), background-color var(--duration-base) var(--ease-out);
+  box-shadow:
+    0 1px 2px rgba(15,23,42,0.04),
+    0 6px 18px rgba(37,99,235,0.08);
+  border:1px solid rgba(37,99,235,0.14);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-@media(min-width:768px){
-  .finder-banner{
-    max-width:100%;
-    margin:0;
-    padding:18px var(--home-gap-inline, var(--space-16, 16px));
-    min-height:calc(48px + 36px);
-  }
+
+.finder-banner::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background:linear-gradient(180deg, #3b82f6 0%, #1e3c72 100%);
+  border-radius:var(--site-radius-sm) 0 0 var(--site-radius-sm);
+  pointer-events:none;
 }
 
 .finder-banner:focus{
@@ -41,11 +49,10 @@
 }
 
 .finder-banner:focus-visible{
-  outline:2px solid #fff;
-  outline-offset:3px;
+  outline:2px solid #2563eb;
+  outline-offset:2px;
 }
 
-/* PARTICLES (disabled for clean UI) */
 .finder-banner::after{
   content:none;
   display:none;
@@ -53,43 +60,77 @@
 
 /* LEFT ICON */
 .finder-left{
-  width:48px;
-  height:48px;
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
   display:flex;
   align-items:center;
   justify-content:center;
 
-  background:#eff6ff;
-  border-radius:12px;
+  background:linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+  border-radius:11px;
 
-  font-size:22px;
-  border:1px solid #dbeafe;
-  box-shadow:none;
-  transition:.25s;
+  font-size:19px;
+  border:1px solid rgba(37,99,235,0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.85),
+    0 2px 6px rgba(37,99,235,0.12);
+  transition:transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   color:#1d4ed8;
 }
 
 .finder-banner:hover .finder-left{
-  box-shadow:0 2px 8px rgba(37,99,235,.18);
+  border-color:rgba(37,99,235,0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 4px 12px rgba(37,99,235,0.18);
+  transform:scale(1.03);
 }
 
 /* TEXT */
 .finder-text{
+  position:relative;
+  z-index:1;
   display:flex;
   flex-direction:column;
-  flex:1;
-  gap:var(--space-4, 4px);
+  flex:1 1 auto;
+  gap:6px;
+  min-width:0;
 }
 
 .finder-banner-title{
-  font-size:21px;
-  font-weight:700;
+  font-size:19px;
+  font-weight:800;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  color:#0f172a;
 }
 
 .finder-sub{
-  font-size:14px;
-  opacity:1;
-  color:#475569;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  font-size:0;
+  line-height:1;
+}
+
+.finder-tag{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 9px;
+  border-radius:var(--site-radius-pill);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.01em;
+  color:#1d4ed8;
+  background:rgba(37,99,235,0.08);
+  border:1px solid rgba(37,99,235,0.14);
+  white-space:nowrap;
 }
 
 .finder-sub b{
@@ -98,21 +139,28 @@
 
 /* CTA */
 .finder-cta{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
   color:#fff;
 
   font-weight:700;
-  padding:10px 16px;
-  border-radius:var(--site-radius-sm);
+  font-size:13px;
+  letter-spacing:0.02em;
+  padding:9px 16px;
+  border-radius:var(--site-radius-pill);
 
-  display:flex;
+  display:inline-flex;
   align-items:center;
   gap:6px;
+  white-space:nowrap;
 
-  position:relative;
-  overflow:hidden;
-
-  transition:transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), background-color var(--duration-base) var(--ease-out);
+  box-shadow:0 4px 14px rgba(29,78,216,0.28);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out),
+    background var(--duration-base) var(--ease-out);
 }
 
 .finder-cta::before{
@@ -120,28 +168,59 @@
   display:none;
 }
 
-.finder-cta:hover::before{
-  left:auto;
-}
-
 .finder-cta i{
-  transition:.25s;
+  font-size:12px;
+  transition:transform 0.2s ease;
 }
 
 .finder-cta:hover i{
-  transform:translateX(4px);
+  transform:translateX(3px);
 }
 
 .finder-cta:hover{
-  transform:none;
-  box-shadow:0 6px 16px rgba(29,78,216,.24);
-  background:linear-gradient(135deg,#1d4ed8,#1e40af);
+  box-shadow:0 6px 18px rgba(29,78,216,0.34);
+  background:linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
 }
 
 .finder-banner:hover{
-  transform:none;
-  box-shadow:0 8px 22px rgba(37,99,235,0.14);
-  border-color:var(--hover-border-strong);
+  border-color:rgba(37,99,235,0.28);
+  box-shadow:
+    0 2px 4px rgba(15,23,42,0.04),
+    0 10px 26px rgba(37,99,235,0.14);
+}
+
+.finder-banner:active{
+  transform:scale(0.995);
+}
+
+@media (min-width: 769px){
+  .finder-banner{
+    padding:16px 20px;
+    gap:18px;
+  }
+
+  .finder-left{
+    width:48px;
+    height:48px;
+    min-width:48px;
+    min-height:48px;
+    font-size:21px;
+    border-radius:12px;
+  }
+
+  .finder-banner-title{
+    font-size:21px;
+  }
+
+  .finder-tag{
+    font-size:12px;
+    padding:4px 10px;
+  }
+
+  .finder-cta{
+    padding:10px 18px;
+    font-size:14px;
+  }
 }
 
 /* ===============================
@@ -159,7 +238,9 @@
   padding:20px;
   box-sizing:border-box;
 
-  background:rgba(0,0,0,0.3);
+  background:transparent;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
   z-index:var(--z-modal);
 
   opacity:0;
@@ -208,16 +289,27 @@ body.finder-modal-open{
   max-width:100%;
 
   background:#fff;
-  border:1px solid rgba(0,0,0,0.06);
-  border-radius:12px;
+  border:1px solid rgba(37,99,235,0.12);
+  border-radius:14px;
   padding:22px 24px;
 
-  box-shadow:0 6px 24px rgba(0,0,0,0.08);
+  box-shadow:
+    0 8px 12px rgba(15,23,42,0.08),
+    0 24px 48px rgba(15,23,42,0.18);
 
   max-height:90vh;
   overflow-y:auto;
 
   animation:finderPop .25s ease;
+}
+
+.finder-modal .job-finder::before{
+  content:"";
+  display:block;
+  height:3px;
+  margin:-22px -24px 18px;
+  border-radius:14px 14px 0 0;
+  background:linear-gradient(90deg, #2563eb, #1e3c72);
 }
 
 @keyframes finderPop{
@@ -232,8 +324,8 @@ body.finder-modal-open{
   justify-content:space-between;
   gap:12px;
 
-  border-bottom:1px solid #e2e8f0;
-  padding-bottom:12px;
+  border-bottom:1px solid #e8eef7;
+  padding-bottom:14px;
   margin-bottom:18px;
 }
 
@@ -325,14 +417,14 @@ body.finder-modal-open{
 
 .finder-input{
   padding:10px 36px 10px 14px;
-  border:1px solid #ddd;
-  border-radius:8px;
+  border:1px solid #dbe3f0;
+  border-radius:10px;
   font-size:14px;
   outline:none;
   min-height:44px;
   box-sizing:border-box;
   width:100%;
-  background-color:#fff;
+  background-color:#f8fafc;
   color:#0f172a;
   cursor:pointer;
   appearance:none;
@@ -341,6 +433,7 @@ body.finder-modal-open{
   background-repeat:no-repeat;
   background-position:right 12px center;
   background-size:12px;
+  transition:border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
 .finder-form select.finder-input option{
@@ -518,24 +611,24 @@ body.finder-modal-open{
   grid-column:1/-1;
   width:100%;
   padding:12px 18px;
-  min-height:44px;
+  min-height:46px;
 
   border:none;
-  border-radius:8px;
+  border-radius:var(--site-radius-pill);
 
-  background:linear-gradient(135deg,#1d3ea6,#4d73ff);
+  background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #1e40af 100%);
   color:#fff;
 
   font-size:15px;
-  font-weight:600;
+  font-weight:700;
 
   cursor:pointer;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:8px;
-  box-shadow:0 6px 18px rgba(29,62,166,.35);
-  transition:background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
+  box-shadow:0 6px 18px rgba(29,78,216,0.28);
+  transition:background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
 .finder-submit:hover{
@@ -817,44 +910,80 @@ body.finder-modal-open{
 =================================*/
 @media (max-width: 768px) {
 .finder-banner{
-  padding:12px var(--space-12, 12px);
-  min-height:calc(36px + 22px);
+  padding:11px 12px;
   gap:10px;
+  align-items:center;
 }
 
 .finder-banner-title{
-  font-size:17px;
-  line-height:1.2;
+  font-size:16px;
+  line-height:1.15;
 }
 
 .finder-sub{
-  font-size:11px;
-  line-height:1.15;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  gap:4px;
+}
+
+.finder-tag{
+  font-size:10px;
+  padding:2px 7px;
 }
 
 .finder-left{
+  width:34px;
+  height:34px;
+  min-width:34px;
+  min-height:34px;
+  font-size:15px;
+  border-radius:9px;
+}
+
+.finder-cta{
+  padding:8px 12px;
+  font-size:12px;
+}
+
+.finder-modal{
+  padding:12px;
+  align-items:center;
+  justify-content:center;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.finder-modal .finder-box{
+  width:100%;
+  max-width:100%;
+  margin:auto;
+  flex:0 1 auto;
+  max-height:calc(100dvh - 24px);
+}
+
+.finder-modal .job-finder{
+  padding:14px 16px;
+  border-radius:14px;
+  max-height:min(85dvh, 900px);
+}
+
+.finder-modal .job-finder::before{
+  margin:-14px -16px 12px;
+  border-radius:14px 14px 0 0;
+}
+
+.finder-modal .job-finder .finder-title{
+  font-size:18px;
+}
+
+.finder-close{
   width:36px;
   height:36px;
   min-width:36px;
   min-height:36px;
   font-size:16px;
-  border-radius:10px;
-}
-
-.finder-cta{
-  padding:7px 10px;
-  font-size:12px;
-}
-
-.finder-modal .job-finder{
-  padding:16px;
 }
 
 .finder-header{
-  margin-bottom:14px;
+  margin-bottom:12px;
   padding-bottom:10px;
 }
 
@@ -863,26 +992,46 @@ body.finder-modal-open{
 }
 
 .finder-form{
-  gap:12px;
+  gap:10px;
 }
 
-/* Mobile: native OS picker for all selects (Qualification, Department, State) */
-.finder-form select.finder-input{
-  font-size:16px;
-  min-height:44px;
-  height:44px;
-  max-height:none;
-  overflow:visible;
-  line-height:normal;
+.finder-modal .finder-field{
+  gap:4px;
+}
+
+.finder-modal .finder-label{
+  font-size:12px;
+  font-weight:600;
+  color:#475569;
+}
+
+/* Compact custom selects — not native menulist (too large on mobile) */
+.finder-modal .finder-form select.finder-input{
+  font-size:14px;
+  min-height:36px;
+  height:36px;
+  padding:6px 30px 6px 10px;
+  border-radius:8px;
+  line-height:1.25;
   touch-action:manipulation;
-  appearance:menulist;
-  -webkit-appearance:menulist;
-  background-image:none;
-  padding:10px 14px;
+  appearance:none;
+  -webkit-appearance:none;
+  background-color:#fff;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 10px center;
+  background-size:10px;
 }
 
-.finder-form select.finder-input.finder-input--empty{
+.finder-modal .finder-form select.finder-input.finder-input--empty{
   color:#64748b;
+  font-size:13px;
+}
+
+.finder-modal .finder-submit{
+  min-height:42px;
+  padding:10px 16px;
+  font-size:14px;
 }
 
 .dept-options{
@@ -909,15 +1058,23 @@ body.finder-modal-open{
 .finder-dob-wrap{
   gap:6px;
 }
-/* 🔥 REMOVE LEFT ICON */
-.finder-left{
-  display:none !important;
-}
 
 .finder-text{
   min-width:0;
 }
 
+}
+
+@media (max-width: 380px) {
+.finder-cta{
+  padding:8px 10px;
+  font-size:0;
+  gap:0;
+}
+
+.finder-cta i{
+  font-size:14px;
+}
 }
 
 
