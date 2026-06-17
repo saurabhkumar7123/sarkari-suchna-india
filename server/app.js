@@ -16,6 +16,11 @@ const logger = require("./utils/logger");
 const { globalLimiter, apiLimiter } = require("./config/rateLimits");
 const { sendSitemap } = require("./controllers/public/sitemap.controller");
 const fileService = require("./services/file.service");
+const {
+  normalizeFilesystemSlug,
+  isValidFilesystemSlug,
+  resolveInsideRoot
+} = require("./lib/safeFilesystemPath");
 const miscService = require("./services/misc.service");
 const pageService = require("./services/page.service");
 const homeStatsService = require("./services/homeStats.service");
@@ -1003,9 +1008,8 @@ app.get("/sitemap.xml", sendSitemap);
 app.get("/sitemap/:name", asyncHandler(async (req, res, next) => {
   const name = String(req.params.name || "").trim();
   if (!/^sitemap-[a-z0-9-]+\.xml$/i.test(name)) return next();
-  const filePath = path.join(generatedDir, "sitemap", name);
-  const sitemapRoot = path.join(generatedDir, "sitemap");
-  if (!filePath.startsWith(sitemapRoot) || !fileService.existsSync(filePath)) return next();
+  const filePath = resolveInsideRoot(generatedDir, "sitemap", name);
+  if (!filePath || !fileService.existsSync(filePath)) return next();
   if (isProd) {
     res.set("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
   }
@@ -1029,9 +1033,8 @@ app.use("/static", asyncHandler(async (req, res, next) => {
   const reqPath = String(req.path || "");
   if (!/\.html$/i.test(reqPath)) return next();
   const rel = reqPath.replace(/^\/+/, "");
-  const abs = path.join(generatedDir, "static", rel);
-  const staticRoot = path.join(generatedDir, "static");
-  if (!abs.startsWith(staticRoot) || !fileService.existsSync(abs)) return next();
+  const abs = resolveInsideRoot(generatedDir, "static", rel);
+  if (!abs || !fileService.existsSync(abs)) return next();
   const source = await fileService.readFile(abs, "utf8");
   const html = normalizeSeoUrlsInHtml(String(source || ""), getPublicBaseUrl(req));
   return sendHtmlString(req, res, html);
@@ -1490,8 +1493,8 @@ app.use(asyncHandler(async (req, res, next) => {
   const reqPath = String(req.path || "");
   if (!/\.html$/i.test(reqPath)) return next();
   const rel = reqPath.replace(/^\/+/, "");
-  const abs = path.join(generatedDir, rel);
-  if (!abs.startsWith(generatedDir) || !fileService.existsSync(abs)) return next();
+  const abs = resolveInsideRoot(generatedDir, rel);
+  if (!abs || !fileService.existsSync(abs)) return next();
   const source = await fileService.readFile(abs, "utf8");
   const html = normalizeSeoUrlsInHtml(String(source || ""), getPublicBaseUrl(req));
   return sendHtmlString(req, res, html);
@@ -1499,7 +1502,7 @@ app.use(asyncHandler(async (req, res, next) => {
 app.use(express.static(generatedDir, { ...generatedStaticOpts, index: false }));
 
 app.get("/:slug", async (req, res, next) => {
-  const slug = req.params.slug.replace(".html", "");
+  const slug = normalizeFilesystemSlug(req.params.slug);
 
   const ignore = [
     "api",
@@ -1536,8 +1539,10 @@ app.get("/:slug", async (req, res, next) => {
 
   if (ignore.includes(slug)) return next();
 
-  const postPath = path.join(generatedDir, "jobs", `${slug}.html`);
-  if (fileService.existsSync(postPath)) {
+  if (!isValidFilesystemSlug(slug)) return next();
+
+  const postPath = resolveInsideRoot(generatedDir, "jobs", `${slug}.html`);
+  if (postPath && fileService.existsSync(postPath)) {
     try {
       const { trackJobPageView } = require("./services/pageViews.service");
       setImmediate(() => {
@@ -1552,8 +1557,8 @@ app.get("/:slug", async (req, res, next) => {
     }
   }
 
-  const pagePath = path.join(generatedDir, "pages", `${slug}.html`);
-  if (fileService.existsSync(pagePath)) {
+  const pagePath = resolveInsideRoot(generatedDir, "pages", `${slug}.html`);
+  if (pagePath && fileService.existsSync(pagePath)) {
     try {
       const raw = await fileService.readFile(pagePath, "utf8");
       const baseUrl = getPublicBaseUrl(req);
