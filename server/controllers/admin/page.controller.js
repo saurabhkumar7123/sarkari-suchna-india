@@ -80,6 +80,8 @@ const getAllPages = async (req, res) => {
     const categories = await pageRepository.selectDistinctCategories();
     const statuses = await pageRepository.selectDistinctStatusesAll();
 
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
     return res.json({
       success: true,
       data: rows,
@@ -87,7 +89,7 @@ const getAllPages = async (req, res) => {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
+        totalPages
       },
       meta: {
         categories,

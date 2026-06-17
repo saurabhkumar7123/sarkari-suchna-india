@@ -1,6 +1,8 @@
 let activePages = [];
 let currentPage = 1;
 let totalPageCount = 1;
+let totalItemCount = 0;
+let pageLimit = 20;
 let sortOrder = "desc";
 let currentFilters = { search: "", category: "", status: "" };
 let selectedSlugs = new Set();
@@ -133,29 +135,58 @@ function renderBulkBar() {
 }
 
 function renderPagination(pagination) {
-  totalPageCount = pagination.totalPages || 1;
+  const total = Number(pagination.total) || 0;
+  totalItemCount = total;
+  pageLimit = Number(pagination.limit) || 20;
+  totalPageCount = Math.max(1, Number(pagination.totalPages) || 1);
+  if (total === 0) totalPageCount = 1;
+
   const prev = document.getElementById("prevBtn");
   const next = document.getElementById("nextBtn");
   const nums = document.getElementById("pageNumbers");
-  if (prev) prev.disabled = currentPage <= 1;
-  if (next) next.disabled = currentPage >= totalPageCount;
+  const summary = document.getElementById("paginationSummary");
+  const nav = document.getElementById("pageManagerPagination");
+
+  if (nav) {
+    nav.classList.toggle("is-hidden", total === 0);
+  }
+
+  if (summary) {
+    if (!total) {
+      summary.textContent = "No pages match the current filters.";
+    } else {
+      const start = (currentPage - 1) * pageLimit + 1;
+      const end = Math.min(currentPage * pageLimit, total);
+      summary.textContent = `Showing ${start}–${end} of ${total} · Page ${currentPage} of ${totalPageCount}`;
+    }
+  }
+
+  if (prev) prev.disabled = currentPage <= 1 || total === 0;
+  if (next) next.disabled = currentPage >= totalPageCount || total === 0;
   if (!nums) return;
   nums.innerHTML = "";
+  if (total === 0 || totalPageCount <= 1) return;
+
   const maxButtons = 7;
-  let start = Math.max(1, currentPage - 3);
-  let end = Math.min(totalPageCount, start + maxButtons - 1);
-  start = Math.max(1, end - maxButtons + 1);
-  for (let i = start; i <= end; i++) {
+  let startPage = Math.max(1, currentPage - 3);
+  let endPage = Math.min(totalPageCount, startPage + maxButtons - 1);
+  startPage = Math.max(1, endPage - maxButtons + 1);
+  for (let i = startPage; i <= endPage; i++) {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = String(i);
     if (i === currentPage) b.classList.add("is-active");
     b.addEventListener("click", () => {
+      if (currentPage === i) return;
       currentPage = i;
-      loadPageManager();
+      loadPageManager({ scrollToTop: true });
     });
     nums.appendChild(b);
   }
+}
+
+function scrollPageListIntoView() {
+  document.querySelector(".page-list-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function populateFiltersFromMeta(meta) {
@@ -294,20 +325,31 @@ async function deletePage(slug, triggerEl) {
   }
 }
 
-async function loadPageManager() {
+async function loadPageManager(opts = {}) {
   const box = document.getElementById("pageList");
   if (!box) return;
   box.innerHTML = pageListSkeletonHtml();
   const data = await window.adminSafeFetch(`/api/admin/pages?${buildPagesQuery()}`);
   if (!data || !data.success) {
     box.innerHTML = `<p class="dashboard-error">Could not load pages.</p>`;
+    renderPagination({ total: 0, totalPages: 0, limit: pageLimit });
     return;
   }
   activePages = data.data || [];
+  const pagination = data.pagination || { totalPages: 1, page: 1, total: 0, limit: pageLimit };
+  const total = Number(pagination.total) || 0;
+  if (activePages.length === 0 && currentPage > 1 && total > 0) {
+    currentPage = Math.max(1, currentPage - 1);
+    return loadPageManager(opts);
+  }
+  if (pagination.page) {
+    currentPage = Math.max(1, Number(pagination.page) || 1);
+  }
   renderPages(activePages);
   populateFiltersFromMeta(data.meta);
-  renderPagination(data.pagination || { totalPages: 1, page: 1 });
+  renderPagination(pagination);
   renderBulkBar();
+  if (opts.scrollToTop) scrollPageListIntoView();
 }
 
 function initSearch() {
@@ -351,13 +393,13 @@ function initSearch() {
 document.getElementById("prevBtn")?.addEventListener("click", () => {
   if (currentPage > 1) {
     currentPage--;
-    loadPageManager();
+    loadPageManager({ scrollToTop: true });
   }
 });
 document.getElementById("nextBtn")?.addEventListener("click", () => {
   if (currentPage < totalPageCount) {
     currentPage++;
-    loadPageManager();
+    loadPageManager({ scrollToTop: true });
   }
 });
 document.getElementById("managerRefreshBtn")?.addEventListener("click", () => loadPageManager());

@@ -959,8 +959,32 @@ body.dark .row-actions a:hover{
   margin-top:18px;
   display:flex;
   flex-wrap:wrap;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.pagination.is-hidden{
+  display:none;
+}
+
+.pagination-summary{
+  margin:0;
+  flex:1 1 200px;
+  font-size:13px;
+  color:#64748b;
+}
+
+.pagination-controls{
+  display:flex;
+  flex-wrap:wrap;
   gap:8px;
   align-items:center;
+  justify-content:flex-end;
+}
+
+body.dark .pagination-summary{
+  color:#94a3b8;
 }
 
 .pagination button{

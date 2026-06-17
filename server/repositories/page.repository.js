@@ -738,11 +738,12 @@ async function countAdminPages(where, params, executor = db) {
 }
 
 async function selectAdminPageList(where, params, orderDir, limit, offset, executor = db) {
+  const dir = String(orderDir || "DESC").toUpperCase() === "ASC" ? "ASC" : "DESC";
   const [rows] = await executor.query(
-    `SELECT id, title, slug, category, status, created_at, views 
+    `SELECT id, title, slug, category, status, created_at, updated_at, content_updated_at, views 
      FROM pages 
      ${where}
-     ORDER BY created_at ${orderDir}
+     ORDER BY COALESCE(content_updated_at, updated_at, created_at) ${dir}, id ${dir}
      LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
