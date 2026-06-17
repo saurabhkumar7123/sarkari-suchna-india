@@ -33,8 +33,8 @@ async function getRelatedPages(slug) {
 async function getHomepageSections() {
   const predefined = [
     { key: "new-form", label: "new form", href: "/new-form" },
-    { key: "admit-card", label: "admit card", href: "/admit-card" },
     { key: "result", label: "result", href: "/result" },
+    { key: "admit-card", label: "admit card", href: "/admit-card" },
     { key: "answer-key", label: "answer key", href: "/answer-key" },
     { key: "syllabus", label: "syllabus", href: "/syllabus" },
     { key: "admission", label: "admission", href: "/admission" },
