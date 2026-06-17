@@ -19,7 +19,9 @@ const {
 } = require("./homeStats.service");
 
 const footerTemplatePath = path.join(process.cwd(), "generated", "static", "footer.html");
+const aboutSiteTemplatePath = path.join(process.cwd(), "generated", "static", "about-site.html");
 let cachedFooter = "";
+let cachedAboutSite = "";
 
 function loadFooterIntoCache() {
   try {
@@ -29,10 +31,28 @@ function loadFooterIntoCache() {
   }
 }
 
-loadFooterIntoCache();
+function loadAboutSiteIntoCache() {
+  try {
+    cachedAboutSite = String(fs.readFileSync(aboutSiteTemplatePath, "utf8") || "");
+  } catch {
+    cachedAboutSite = "";
+  }
+}
+
+function loadStaticFragmentsIntoCache() {
+  loadFooterIntoCache();
+  loadAboutSiteIntoCache();
+}
+
+loadStaticFragmentsIntoCache();
 
 function getFooterHtml() {
-  return cachedFooter;
+  const year = new Date().getFullYear();
+  return cachedFooter.replace("<span id=\"year\"></span>", String(year));
+}
+
+function getAboutSiteHtml() {
+  return cachedAboutSite;
 }
 
 function getQualificationMeta(slug) {
@@ -157,5 +177,6 @@ module.exports = {
   buildTaxonomyPage,
   listTaxonomyPages,
   getFooterHtml,
+  getAboutSiteHtml,
   mapJobToCard
 };

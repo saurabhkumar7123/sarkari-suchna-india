@@ -1,105 +1,239 @@
 .sarkari-about{
   max-width:100%;
   margin:0 auto;
-  padding:45px;
-  background:#ffffff;
-  border-radius:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,0.06);
-  font-family:'Segoe UI', Arial, sans-serif;
-  line-height:1.9;
-  color:#444;
+  padding:32px 28px;
+  background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border:1px solid #e8edf4;
+  border-radius:16px;
+  box-shadow:0 8px 28px rgba(15, 23, 42, 0.05);
+  font-family:var(--site-font, 'Segoe UI', Arial, sans-serif);
+  line-height:1.75;
+  color:var(--site-text-secondary, #334155);
   box-sizing:border-box;
 }
 
-/* Main Heading */
+.sarkari-about__intro{
+  margin-bottom:4px;
+}
 
 .sarkari-about h2{
-  font-size:30px;
-  font-weight:700;
-  margin-bottom:25px;
-  color:#1e2a38;
-  border-left:5px solid #5B5FEF;
-  padding-left:12px;
+  font-size:clamp(1.35rem, 2.8vw, 1.75rem);
+  font-weight:800;
+  margin:0 0 14px;
+  color:var(--site-primary, #1e3c72);
+  letter-spacing:-0.02em;
+  line-height:1.25;
+  border-left:4px solid var(--site-primary-2, #2a5298);
+  padding-left:14px;
 }
-
-/* Sub Heading */
 
 .sarkari-about h3{
-  margin-top:40px;
-  margin-bottom:15px;
-  font-size:21px;
-  color:#2f4df5;
-  font-weight:600;
+  margin:28px 0 10px;
+  font-size:clamp(1.05rem, 2.2vw, 1.2rem);
+  color:var(--site-primary, #1e3c72);
+  font-weight:700;
+  letter-spacing:-0.01em;
 }
-
-/* Paragraph */
 
 .sarkari-about p{
-  font-size:15.5px;
-  margin-bottom:16px;
-  color:#444;
+  font-size:15px;
+  margin:0 0 14px;
+  color:var(--site-text-secondary, #334155);
 }
-
-/* Lists */
 
 .sarkari-about ul,
 .sarkari-about ol{
+  padding-left:0;
+  margin:0 0 18px;
+  list-style:none;
+}
+
+.sarkari-about ul li,
+.sarkari-about ol li{
+  position:relative;
+  margin-bottom:8px;
   padding-left:22px;
-  margin-bottom:22px;
+  font-size:15px;
 }
 
-.sarkari-about li{
-  margin-bottom:9px;
-  font-size:15.5px;
+.sarkari-about ul li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0.62em;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:linear-gradient(135deg, var(--site-primary, #1e3c72), var(--site-link, #2563eb));
+  transform:translateY(-50%);
 }
 
-/* Highlight Quote */
+.sarkari-about ol{
+  counter-reset:about-step;
+}
+
+.sarkari-about ol li{
+  counter-increment:about-step;
+  padding-left:30px;
+}
+
+.sarkari-about ol li::before{
+  content:counter(about-step);
+  position:absolute;
+  left:0;
+  top:0.15em;
+  width:20px;
+  height:20px;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:800;
+  color:#fff;
+  background:linear-gradient(135deg, var(--site-primary, #1e3c72), var(--site-primary-2, #2a5298));
+}
 
 .sarkari-about blockquote{
-  margin:30px 0;
-  padding:22px;
-  background:linear-gradient(120deg,#5B5FEF,#2BB6B0);
-  color:#ffffff;
-  border-radius:14px;
-  font-weight:600;
+  margin:22px 0;
+  padding:18px 20px;
+  background:var(--gradient-primary, linear-gradient(135deg, #1e3c72, #2563eb));
+  color:#fff;
+  border-radius:12px;
+  font-weight:700;
   text-align:center;
-  font-size:16px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  font-size:15px;
+  line-height:1.5;
+  box-shadow:0 8px 22px rgba(30, 60, 114, 0.18);
 }
 
-/* Links inside content */
-
 .sarkari-about a{
-  color:#2f4df5;
+  color:var(--site-link, #2563eb);
   text-decoration:none;
-  font-weight:500;
+  font-weight:600;
 }
 
 .sarkari-about a:hover{
+  color:var(--site-link-hover, #1d4ed8);
   text-decoration:underline;
+  text-underline-offset:3px;
 }
 
-/* Mobile Responsive */
+.sarkari-about__collapsible[hidden]{
+  display:none !important;
+}
 
-@media(max-width:768px){
+.sarkari-about__collapsible:not([hidden]){
+  animation:about-expand-in .35s ease;
+}
 
+@keyframes about-expand-in{
+  from{
+    opacity:0;
+    transform:translateY(-6px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* Homepage collapsible about block */
+body.page-home .about-site-slot--collapsible .sarkari-about{
+  padding:20px 0 0;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about h2{
+  font-size:clamp(1.2rem, 2.5vw, 1.5rem);
+  border-left-width:3px;
+  padding-left:12px;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__intro p{
+  font-size:15px;
+  line-height:1.7;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:44px;
+  width:100%;
+  max-width:360px;
+  margin-top:16px;
+  padding:11px 18px;
+  border:1px solid #dbe3f0;
+  border-radius:12px;
+  background:linear-gradient(180deg, #ffffff, #f8fafc);
+  color:var(--site-primary, #1e3c72);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 2px 8px rgba(15, 23, 42, 0.04);
+  transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__toggle::after{
+  content:"";
+  width:8px;
+  height:8px;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translateY(-2px);
+  transition:transform .2s ease;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__toggle[aria-expanded="true"]::after{
+  transform:rotate(-135deg) translateY(2px);
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__toggle:hover{
+  background:#eff6ff;
+  border-color:#bfdbfe;
+  box-shadow:0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__toggle:focus-visible{
+  outline:2px solid var(--site-focus, rgba(37, 99, 235, 0.35));
+  outline-offset:2px;
+}
+
+body.page-home .about-site-slot--collapsible .sarkari-about__intro h3{
+  margin-top:0;
+}
+
+@media (max-width: 768px){
   .sarkari-about{
-    padding:28px;
-    margin:0 auto;
-    border-radius:16px;
+    padding:22px 18px;
+    border-radius:14px;
   }
 
   .sarkari-about h2{
-    font-size:24px;
-  }
-
-  .sarkari-about h3{
-    font-size:19px;
+    padding-left:12px;
   }
 
   .sarkari-about p,
   .sarkari-about li{
-    font-size:15px;
+    font-size:14.5px;
   }
 
+  body.page-home .about-site-slot--collapsible .sarkari-about__toggle{
+    max-width:none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .sarkari-about__collapsible:not([hidden]){
+    animation:none;
+  }
+
+  body.page-home .about-site-slot--collapsible .sarkari-about__toggle,
+  body.page-home .about-site-slot--collapsible .sarkari-about__toggle::after{
+    transition:none;
+  }
 }

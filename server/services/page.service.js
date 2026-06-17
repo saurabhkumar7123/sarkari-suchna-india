@@ -183,8 +183,20 @@ async function getPublicPageBySlug(slug) {
   return payload;
 }
 
-async function getTopViews() {
-  const cacheKey = "pages:topviews";
+function mapTopViewRow(p) {
+  return {
+    title: p.title,
+    slug: p.slug,
+    url: "/" + p.slug,
+    status: (p.status || "").toLowerCase(),
+    badges: parseBadges(p.badges),
+    views: Number(p.views) || 0
+  };
+}
+
+async function getTopViews(limit = 10) {
+  const safeLimit = Math.min(20, Math.max(1, parseInt(limit, 10) || 10));
+  const cacheKey = `pages:topviews:v2:${safeLimit}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     try {
@@ -194,10 +206,22 @@ async function getTopViews() {
     }
   }
 
-  const rows = await pageRepository.selectTopViews(10);
+  const recentDays = parseInt(process.env.TRENDING_RECENT_DAYS || "30", 10);
+  let rows = await pageRepository.selectTopViews(safeLimit, undefined, { recentDays });
+  if (rows.length < safeLimit) {
+    const fallback = await pageRepository.selectTopViews(safeLimit);
+    const seen = new Set(rows.map((r) => r.slug));
+    for (const row of fallback) {
+      if (seen.has(row.slug)) continue;
+      rows.push(row);
+      seen.add(row.slug);
+      if (rows.length >= safeLimit) break;
+    }
+  }
 
-  await setCache(cacheKey, rows, 120);
-  return rows;
+  const data = rows.map(mapTopViewRow);
+  await setCache(cacheKey, data, 120);
+  return data;
 }
 
 async function getActivityLogSlice() {

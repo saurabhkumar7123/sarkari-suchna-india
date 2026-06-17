@@ -563,26 +563,88 @@ async function loadHomeCards() {
 }
 
 // ================= TRENDING =================
-async function loadTrendingJobs(){
+function setTrendingSectionVisible(visible) {
+  const section =
+    document.getElementById("trendingSection") ||
+    document.querySelector(".trending-section");
+  if (!section) return;
+  section.classList.toggle("is-hidden", !visible);
+  section.setAttribute("aria-hidden", visible ? "false" : "true");
+}
 
-  const res = await safeFetch("/api/top-views");
-  if(!res) return;
+function ensureTrendingViewMore(section) {
+  if (!section || section.querySelector(".trending-view-more")) return;
+  const wrap = document.createElement("div");
+  wrap.className = "trending-view-more";
+  const link = document.createElement("a");
+  link.href = "/search";
+  link.className = "view-more view-more--green";
+  link.textContent = "View all trending jobs";
+  wrap.appendChild(link);
+  section.appendChild(wrap);
+}
 
-  const list = Array.isArray(res.data) ? res.data : [];
+function renderTrendingJobsList(list) {
   const container = document.getElementById("trendingJobs");
-  if(!container) return;
+  if (!container) return;
 
+  const items = Array.isArray(list) ? list : [];
+  setTrendingSectionVisible(items.length > 0);
   container.innerHTML = "";
+  if (!items.length) return;
+
+  const section =
+    document.getElementById("trendingSection") ||
+    container.closest(".trending-section");
   const frag = document.createDocumentFragment();
-  list.forEach((item) => {
+
+  items.forEach((item) => {
     const li = document.createElement("li");
     const a = document.createElement("a");
     a.href = safePageHref(item);
-    a.textContent = item.title;
+    a.textContent = item.title || "";
+    const badge = resolveHomeCardBadgeHtml(item);
+    if (badge) a.insertAdjacentHTML("beforeend", badge);
     li.appendChild(a);
     frag.appendChild(li);
   });
+
   container.appendChild(frag);
+  ensureTrendingViewMore(section);
+}
+
+function initTrendingFromBootstrap(boot) {
+  const container = document.getElementById("trendingJobs");
+  if (!container) return false;
+
+  if (container.children.length > 0) {
+    setTrendingSectionVisible(true);
+    const section =
+      document.getElementById("trendingSection") ||
+      container.closest(".trending-section");
+    ensureTrendingViewMore(section);
+    return true;
+  }
+
+  const trending = boot && boot.trending;
+  if (!trending || !Array.isArray(trending.data) || !trending.data.length) {
+    setTrendingSectionVisible(false);
+    return false;
+  }
+
+  renderTrendingJobsList(trending.data);
+  return true;
+}
+
+async function loadTrendingJobs() {
+  const res = await safeFetch("/api/top-views");
+  if (!res) {
+    setTrendingSectionVisible(false);
+    return;
+  }
+
+  const list = Array.isArray(res.data) ? res.data : [];
+  renderTrendingJobsList(list);
 }
 
 // ================= SECTION =================
@@ -606,6 +668,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const boot = readHomeBootstrap();
     if (boot) {
       initBreakingFromBootstrap(boot.breakingNews);
+      initTrendingFromBootstrap(boot);
       if (!initHomeCardsFromBootstrap(boot)) {
         loadHomeCards();
       }

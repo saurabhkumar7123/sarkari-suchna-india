@@ -1,6 +1,6 @@
 <section class="sarkari-about" aria-labelledby="about-title">
 
-    <header>
+    <header class="sarkari-about__intro">
         <h2 id="about-title">Sarkari Result 2026 - Sarkari Suchna India</h2>
         <p>
             Since childhood, every young person dreams of getting a government job. The biggest reasons are
@@ -9,6 +9,7 @@
         </p>
     </header>
 
+    <div class="sarkari-about__collapsible" id="aboutCollapsible" hidden>
     <section aria-labelledby="about-purpose">
         <h3 id="about-purpose">Our Purpose</h3>
         <p>
@@ -70,5 +71,10 @@
             so that no candidate is left behind due to lack of information.
         </p>
     </section>
+    </div>
+
+    <button type="button" class="sarkari-about__toggle" id="aboutToggle" aria-controls="aboutCollapsible" aria-expanded="false">
+        Read more about Sarkari Suchna India
+    </button>
 
 </section>

@@ -249,11 +249,26 @@ async function findPublicRowBySlug(slug, executor = db) {
 /**
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
  */
-async function selectTopViews(limit, executor = db) {
+/**
+ * Top viewed pages. When `recentDays` is set, prefers pages from that window (views > 0).
+ * @param {number} limit
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ * @param {{ recentDays?: number }} [opts]
+ */
+async function selectTopViews(limit, executor = db, opts = {}) {
+  const recentDays = Number(opts.recentDays) || 0;
+  const params = [];
+  let recencySql = "";
+  if (recentDays > 0) {
+    recencySql = " AND views > 0 AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
+    params.push(recentDays);
+  }
+  params.push(limit);
   const [rows] = await executor.query(
-    `SELECT id, title, slug, status, category, views, created_at 
-     FROM pages WHERE deleted=0 ORDER BY views DESC LIMIT ?`,
-    [limit]
+    `SELECT id, title, slug, status, badges, category, views, created_at
+     FROM pages WHERE deleted = 0${recencySql}
+     ORDER BY views DESC, created_at DESC LIMIT ?`,
+    params
   );
   return rows;
 }

@@ -500,11 +500,25 @@ function renderSmallBoxesHtml(items) {
     .join("");
 }
 
-function renderTrendingJobsHtml(items) {
-  if (!Array.isArray(items) || !items.length) return "";
-  return items
-    .map((item) => `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}</a></li>`)
+function renderTrendingSectionHtml(items) {
+  const list = Array.isArray(items) ? items : [];
+  if (!list.length) {
+    return `<div class="trending-section section is-hidden" id="trendingSection" aria-hidden="true">
+<h2 class="section-title">🔥 Trending Jobs</h2>
+<ul id="trendingJobs" class="trending-list"></ul>
+</div>`;
+  }
+  const listHtml = list
+    .map((item) => {
+      const badge = resolveHomeCardBadgeHtmlFromItem(item);
+      return `<li><a href="${escapeHtml(safePageHref(item))}">${escapeHtml(item.title)}${badge}</a></li>`;
+    })
     .join("");
+  return `<div class="trending-section section" id="trendingSection">
+<h2 class="section-title">🔥 Trending Jobs</h2>
+<ul id="trendingJobs" class="trending-list">${listHtml}</ul>
+<div class="trending-view-more"><a href="/search" class="view-more view-more--green">View all trending jobs</a></div>
+</div>`;
 }
 
 function renderPopularBoardsHtml(boards, opts = {}) {
@@ -887,7 +901,7 @@ async function buildHomepageInitialSections() {
   return {
     breakingNewsHtml: renderBreakingNewsHtml(breakingNews),
     smallBoxesHtml: renderSmallBoxesHtml(smallBoxes),
-    trendingJobsHtml: renderTrendingJobsHtml(trendingJobs),
+    trendingSectionHtml: renderTrendingSectionHtml(trendingJobs),
     popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
     popularQualificationsHtml: renderPopularQualificationsHtml(popularQualifications),
     popularStatesHtml: renderPopularStatesHtml(popularStates),
@@ -1134,8 +1148,16 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
         `<div class="cards card-grid section cards-section" id="dynamicSections">${homeSections.dynamicSectionsHtml}</div>`
       )
       .replace(
-        /<ul id="trendingJobs" class="trending-list">[\s\S]*?<\/ul>/,
-        `<ul id="trendingJobs" class="trending-list">${homeSections.trendingJobsHtml}</ul>`
+        /<div class="trending-section section"[\s\S]*?<\/div>\s*(?=<div id="about-site")/,
+        homeSections.trendingSectionHtml
+      )
+      .replace(
+        /<div id="about-site" class="section about-site-slot"[^>]*><\/div>/,
+        `<div id="about-site" class="section about-site-slot about-site-slot--collapsible" aria-label="About this site">${taxonomyPageService.getAboutSiteHtml()}</div>`
+      )
+      .replace(
+        '<div id="footer"></div>',
+        taxonomyPageService.getFooterHtml()
       )
       .replace(
         '<script src="/js/index.js" defer></script>',
@@ -1149,7 +1171,13 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
       message: err && err.message ? err.message : String(err)
     });
     const source = await fileService.readFile(path.join(generatedDir, "static", "index.html"), "utf8");
-    let html = String(source).replace('<div id="header"></div>', String(cachedHeader || ""));
+    let html = String(source)
+      .replace('<div id="header"></div>', String(cachedHeader || ""))
+      .replace(
+        /<div id="about-site" class="section about-site-slot"[^>]*><\/div>/,
+        `<div id="about-site" class="section about-site-slot about-site-slot--collapsible" aria-label="About this site">${taxonomyPageService.getAboutSiteHtml()}</div>`
+      )
+      .replace('<div id="footer"></div>', taxonomyPageService.getFooterHtml());
     html = normalizeSeoUrlsInHtml(html, getPublicBaseUrl(req));
     await sendHtmlString(req, res, html);
   }
