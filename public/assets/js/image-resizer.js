@@ -442,6 +442,23 @@
       resizeByPercent();
     });
   });
+
+  document.querySelectorAll(".img-tool__preset-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const w = Number(btn.getAttribute("data-w"));
+      const h = Number(btn.getAttribute("data-h"));
+      if (!w || !h) return;
+      ui.widthInput.value = String(w);
+      ui.heightInput.value = String(h);
+      ui.lockAspect.checked = false;
+      if (state.viewW && state.viewH) {
+        const pct = Math.round((w / state.viewW) * 100);
+        ui.percentInput.value = String(Math.min(500, Math.max(1, pct)));
+      }
+      debounceEstimate();
+    });
+  });
+
   ui.zoomSlider.addEventListener("input", () => {
     if (!state.image) return;
     const rect = canvas.getBoundingClientRect();

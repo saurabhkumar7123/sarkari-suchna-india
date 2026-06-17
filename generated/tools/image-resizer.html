@@ -4,256 +4,182 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Image Resizer | Sarkari Suchna India</title>
-<meta name="description" content="Use the image resizer tool to resize, crop, rotate, compress and download images for forms, uploads and documents.">
+<meta name="description" content="Free image resizer for government job forms — resize, crop, compress and download photos for SSC, Railway, UPSC and state recruitment uploads.">
 <link rel="canonical" href="/tools/image-resizer">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/base/reset.css">
 <link rel="stylesheet" href="/css/base/base.css">
 <link rel="stylesheet" href="/css/components/header.css">
-<link rel="stylesheet" href="/css/components/footer.css">
+<link rel="stylesheet" href="/css/components/footer.css?v=2">
 <link rel="stylesheet" href="/css/components/buttons.css">
-<link rel="stylesheet" href="/css/pages/image-resizer.css">
+<link rel="stylesheet" href="/css/pages/tools.css?v=1">
+<link rel="stylesheet" href="/css/pages/image-resizer.css?v=2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
-<header class="main-header">
+<body class="tool-page tool-page--image-resizer">
 
-  <!-- TOP -->
-  <div class="top-banner">
-    <div class="top-banner-inner">
-      <div class="logo-section">
-        <div class="title">
-          <h1 class="site-brand-title">
-            Sarkari <span>Suchna</span> India
-          </h1>
-          <p>
-            India's Trusted Portal for Sarkari Results, Government Jobs, Admit Cards & Updates
-          </p>
-          <div
-            class="site-updated-indicator site-updated-indicator--title"
-            data-updated-indicator
-            tabindex="0"
-            role="status"
-            aria-label="Fresh government job updates added regularly"
-          >
-            <span class="site-updated-indicator__dot" aria-hidden="true"></span>
-            <span class="site-updated-indicator__label">Updated</span>
-            <span class="site-updated-indicator__tooltip" role="tooltip">Fresh govt job updates added regularly</span>
+<div id="header"></div>
+
+<main class="site-main tool-main">
+  <div class="tool-page-wrap">
+    <nav class="legal-breadcrumb tool-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/tools/age-calculator">Tools</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Image Resizer</span>
+    </nav>
+
+    <header class="tool-hero">
+      <p class="tool-eyebrow">Free Online Tool</p>
+      <h1>Image Resizer &amp; Compressor</h1>
+      <p class="tool-lead">Resize passport-size photos, compress file size to KB limits, and download JPG/PNG/WEBP — ready for Sarkari form uploads. Works fully in your browser; images are not uploaded to our server.</p>
+    </header>
+
+    <nav class="tool-switcher" aria-label="Tools">
+      <a href="/tools/age-calculator">Age Calculator</a>
+      <a href="/tools/image-resizer" class="is-active" aria-current="page">Image Resizer</a>
+    </nav>
+
+    <div class="main-container image-tool-main">
+      <section class="img-tool" id="imgTool">
+        <aside class="img-tool__controls">
+          <h2>Editor Controls</h2>
+          <p class="img-tool__subtitle">Upload an image, adjust size and quality, then download.</p>
+
+          <label class="img-tool__dropzone" id="dropZone" for="upload">
+            <input type="file" id="upload" accept="image/jpeg,image/png,image/webp" hidden>
+            <strong>Drag &amp; drop image here</strong>
+            <span>or click to upload (JPG, PNG, WEBP)</span>
+          </label>
+
+          <div class="img-tool__meta" id="metaInfo">No image selected</div>
+
+          <div class="img-tool__group">
+            <div class="img-tool__group-title">Quick Presets</div>
+            <div class="img-tool__presets">
+              <button type="button" class="img-tool__preset-btn" data-w="200" data-h="230">Passport 200×230</button>
+              <button type="button" class="img-tool__preset-btn" data-w="240" data-h="320">Photo 240×320</button>
+              <button type="button" class="img-tool__preset-btn" data-w="300" data-h="300">Square 300×300</button>
+              <button type="button" class="img-tool__preset-btn" data-w="600" data-h="600">Signature 600×600</button>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- RIGHT (DESKTOP ONLY) -->
-      <div class="right-section">
-        <div class="social-icons">
-          <a href="https://t.me/sarkarisuchnaindia" class="social-icon-link" aria-label="Telegram" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i></a>
-          <a href="https://whatsapp.com/channel/0029VbCtmOJIiRoqIP4wgN1n" class="social-icon-link" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i></a>
-          <a href="https://www.facebook.com/share/1cQMwV2STp/" class="social-icon-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i></a>
-        </div>
+          <div class="img-tool__group">
+            <div class="img-tool__group-title">Zoom &amp; Viewport Crop</div>
+            <label>Zoom <input type="range" id="zoomSlider" min="50" max="350" value="100"></label>
+            <div class="img-tool__meta" id="zoomInfo">Zoom: 100%</div>
+            <div class="img-tool__row">
+              <label>Aspect
+                <select id="cropPreset">
+                  <option value="free">Free</option>
+                  <option value="1:1">1:1</option>
+                  <option value="16:9">16:9</option>
+                  <option value="4:3">4:3</option>
+                </select>
+              </label>
+              <button type="button" id="resetViewBtn">Reset View</button>
+            </div>
+          </div>
 
-        <div
-          class="site-updated-indicator site-updated-indicator--below-social"
-          data-updated-indicator
-          tabindex="0"
-          role="status"
-          aria-label="Updated regularly"
-        >
-          <span class="site-updated-indicator__dot" aria-hidden="true"></span>
-          <span class="site-updated-indicator__label">Updated</span>
-          <span class="site-updated-indicator__tooltip" role="tooltip">Updated regularly</span>
-        </div>
+          <div class="img-tool__group">
+            <div class="img-tool__group-title">Resize Output</div>
+            <div class="img-tool__row">
+              <label>Width <input type="number" id="widthInput" min="1"></label>
+              <label>Height <input type="number" id="heightInput" min="1"></label>
+            </div>
+            <div class="img-tool__row">
+              <label>Percent <input type="number" id="percentInput" min="1" max="500" value="100"></label>
+              <label class="img-tool__checkbox"><input type="checkbox" id="lockAspect" checked> Maintain ratio</label>
+            </div>
+            <div class="img-tool__row">
+              <button type="button" class="img-tool__pct-btn" data-percent="25">25%</button>
+              <button type="button" class="img-tool__pct-btn" data-percent="50">50%</button>
+              <button type="button" class="img-tool__pct-btn" data-percent="75">75%</button>
+              <button type="button" class="img-tool__pct-btn" data-percent="100">100%</button>
+            </div>
+            <button type="button" id="applyResizeBtn">Apply Resize</button>
+          </div>
 
-        <div class="tools-btn" role="button" tabindex="0" aria-label="Open tools menu">
-          Tools
-        </div>
-      </div>
+          <div class="img-tool__group">
+            <div class="img-tool__group-title">Transform</div>
+            <div class="img-tool__row">
+              <button type="button" id="rotateLeftBtn">Rotate Left</button>
+              <button type="button" id="rotateRightBtn">Rotate Right</button>
+            </div>
+            <div class="img-tool__row">
+              <button type="button" id="flipHBtn">Flip Horizontal</button>
+              <button type="button" id="flipVBtn">Flip Vertical</button>
+            </div>
+          </div>
+
+          <div class="img-tool__group">
+            <div class="img-tool__group-title">Target Size &amp; Export</div>
+            <div class="img-tool__row">
+              <label>Target Size <input type="number" id="targetSizeInput" min="1" placeholder="e.g. 120"></label>
+              <label>Unit
+                <select id="targetUnitSelect">
+                  <option value="KB">KB</option>
+                  <option value="MB">MB</option>
+                </select>
+              </label>
+            </div>
+            <div class="img-tool__row">
+              <label>Format
+                <select id="formatSelect">
+                  <option value="image/jpeg">JPG</option>
+                  <option value="image/png">PNG</option>
+                  <option value="image/webp">WEBP</option>
+                </select>
+              </label>
+              <label>Background
+                <select id="bgSelect">
+                  <option value="transparent">Transparent</option>
+                  <option value="#ffffff">White</option>
+                  <option value="#000000">Black</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </label>
+            </div>
+            <div class="img-tool__row">
+              <label class="img-tool__grow">Custom Color <input type="color" id="bgColor" value="#ffffff"></label>
+            </div>
+            <label>Quality <input type="range" id="qualityRange" min="10" max="100" value="90"></label>
+            <label>Compression % <input type="range" id="compressionRange" min="10" max="100" value="90"></label>
+            <div class="img-tool__meta" id="estimateInfo">Estimated file size: --</div>
+          </div>
+
+          <div class="img-tool__row">
+            <button type="button" id="undoBtn">Undo</button>
+            <button type="button" id="resetBtn">Reset</button>
+          </div>
+          <button type="button" id="downloadBtn">Download Processed Image</button>
+        </aside>
+
+        <section class="img-tool__preview" id="previewContainer">
+          <div class="img-tool__canvas-wrap" id="canvasWrap">
+            <canvas id="previewCanvas"></canvas>
+            <div class="img-tool__viewport-grid" aria-hidden="true"></div>
+            <div class="img-tool__loading hidden" id="loadingState">Loading preview...</div>
+          </div>
+        </section>
+      </section>
     </div>
-  </div>
 
-  <!-- MOBILE HEADER -->
-  <div class="mobile-header">
-
-  <div class="mobile-nav">
-
-  <div class="hamburger" role="button" tabindex="0" aria-label="Open navigation menu">
-  <i class="fa-solid fa-bars"></i>
-  </div>
-
-  <div class="mobile-actions">
-
-  <button type="button" class="header-search-mobile-btn" aria-label="Open search">
-  <i class="fa-solid fa-magnifying-glass"></i>
-  </button>
-
-  <div class="tools-btn mobile-tools" role="button" tabindex="0" aria-label="Open tools menu">
-  Tools
-  </div>
-
-  </div>
-
-  </div>
-
-  <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
-
-  <!-- MOBILE MENU -->
-  <div id="navbar">
-  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
-  <a href="/new-form" class="nav-item"><i class="fa-solid fa-briefcase"></i> New Form</a>
-  <a href="/result" class="nav-item"><i class="fa-solid fa-chart-line"></i> Result</a>
-  <a href="/admit-card" class="nav-item"><i class="fa-solid fa-id-card"></i> Admit Card</a>
-  <a href="/answer-key" class="nav-item"><i class="fa-solid fa-key"></i> Answer Key</a>
-  <a href="/syllabus" class="nav-item"><i class="fa-solid fa-book-open"></i> Syllabus</a>
-  <div class="mobile-legal">
-    <button type="button" class="mobile-legal-toggle" aria-expanded="false">
-      <span><i class="fa-solid fa-scale-balanced"></i> Legal</span>
-      <i class="fa-solid fa-chevron-down legal-chevron"></i>
-    </button>
-    <div class="mobile-legal-menu" id="mobileLegalMenu">  
-      <a href="/privacy-policy" class="mobile-legal-link">Privacy Policy</a> 
-      <a href="/terms-and-conditions" class="mobile-legal-link">Terms & Conditions</a>
-      <a href="/disclaimer-policy" class="mobile-legal-link">Disclaimer</a>
-      <a href="/contact-us" class="mobile-legal-link">Contact Us</a>
-    </div>
-  </div>
-  </div>
-
-  </div>
-
-  <!-- DESKTOP NAV -->
-  <nav class="navbar">
-  <a href="/" class="nav-item active"><i class="fa-solid fa-house"></i> Home</a>
-  <a href="/new-form" class="nav-item"><i class="fa-solid fa-briefcase"></i> NEW FORM</a>
-  <a href="/result" class="nav-item"><i class="fa-solid fa-chart-line"></i> Results</a>
-  <a href="/admit-card" class="nav-item"><i class="fa-solid fa-id-card"></i> Admit Card</a>
-  <a href="/answer-key" class="nav-item"><i class="fa-solid fa-key"></i> Answer Key</a>
-  <a href="/syllabus" class="nav-item"><i class="fa-solid fa-book-open"></i> Syllabus</a>
-  <a href="#" class="nav-item nav-search-open"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
-  </nav>
-
-  <!-- TOOLS MENU -->
-  <div class="tools-menu" id="toolsMenu">
-  <a href="/tools/age-calculator">Age Calculator</a>
-  <a href="/tools/image-resizer">Image Resizer</a>
-  </div>
-
-  <div class="tools-overlay" id="toolsOverlay"></div>
-
-</header>
-
-<div class="main-container image-tool-main">
-  <section class="img-tool" id="imgTool">
-    <section class="img-tool__preview" id="previewContainer">
-      <div class="img-tool__canvas-wrap" id="canvasWrap">
-        <canvas id="previewCanvas"></canvas>
-        <div class="img-tool__viewport-grid" aria-hidden="true"></div>
-        <div class="img-tool__loading hidden" id="loadingState">Loading preview...</div>
-      </div>
-    </section>
-
-    <aside class="img-tool__controls">
-      <h2>Image Resizer Pro</h2>
-      <p class="img-tool__subtitle">Resize, crop, rotate, flip, compress, and export instantly.</p>
-
-      <label class="img-tool__dropzone" id="dropZone" for="upload">
-        <input type="file" id="upload" accept="image/jpeg,image/png,image/webp" hidden>
-        <strong>Drag & drop image here</strong>
-        <span>or click to upload (JPG, PNG, WEBP)</span>
-      </label>
-
-      <div class="img-tool__meta" id="metaInfo">No image selected</div>
-
-      <div class="img-tool__group">
-        <div class="img-tool__group-title">Zoom & Viewport Crop</div>
-        <label>Zoom <input type="range" id="zoomSlider" min="50" max="350" value="100"></label>
-        <div class="img-tool__meta" id="zoomInfo">Zoom: 100%</div>
-        <div class="img-tool__row">
-          <label>Aspect
-            <select id="cropPreset">
-              <option value="free">Free</option>
-              <option value="1:1">1:1</option>
-              <option value="16:9">16:9</option>
-              <option value="4:3">4:3</option>
-            </select>
-          </label>
-          <button type="button" id="resetViewBtn">Reset View</button>
-        </div>
-      </div>
-
-      <div class="img-tool__group">
-        <div class="img-tool__group-title">Resize Output</div>
-        <div class="img-tool__row">
-          <label>Width <input type="number" id="widthInput" min="1"></label>
-          <label>Height <input type="number" id="heightInput" min="1"></label>
-        </div>
-        <div class="img-tool__row">
-          <label>Percent <input type="number" id="percentInput" min="1" max="500" value="100"></label>
-          <label class="img-tool__checkbox"><input type="checkbox" id="lockAspect" checked> Maintain ratio</label>
-        </div>
-        <div class="img-tool__row">
-          <button type="button" class="img-tool__pct-btn" data-percent="25">25%</button>
-          <button type="button" class="img-tool__pct-btn" data-percent="50">50%</button>
-          <button type="button" class="img-tool__pct-btn" data-percent="75">75%</button>
-          <button type="button" class="img-tool__pct-btn" data-percent="100">100%</button>
-        </div>
-        <button type="button" id="applyResizeBtn">Apply Resize</button>
-      </div>
-
-      <div class="img-tool__group">
-        <div class="img-tool__group-title">Transform</div>
-        <div class="img-tool__row">
-          <button type="button" id="rotateLeftBtn">Rotate Left</button>
-          <button type="button" id="rotateRightBtn">Rotate Right</button>
-        </div>
-        <div class="img-tool__row">
-          <button type="button" id="flipHBtn">Flip Horizontal</button>
-          <button type="button" id="flipVBtn">Flip Vertical</button>
-        </div>
-      </div>
-
-      <div class="img-tool__group">
-        <div class="img-tool__group-title">Target Size & Export</div>
-        <div class="img-tool__row">
-          <label>Target Size <input type="number" id="targetSizeInput" min="1" placeholder="e.g. 120"></label>
-          <label>Unit
-            <select id="targetUnitSelect">
-              <option value="KB">KB</option>
-              <option value="MB">MB</option>
-            </select>
-          </label>
-        </div>
-        <div class="img-tool__row">
-          <label>Format
-            <select id="formatSelect">
-              <option value="image/jpeg">JPG</option>
-              <option value="image/png">PNG</option>
-              <option value="image/webp">WEBP</option>
-            </select>
-          </label>
-          <label>Background
-            <select id="bgSelect">
-              <option value="transparent">Transparent</option>
-              <option value="#ffffff">White</option>
-              <option value="#000000">Black</option>
-              <option value="custom">Custom</option>
-            </select>
-          </label>
-        </div>
-        <div class="img-tool__row">
-          <label class="img-tool__grow">Custom Color <input type="color" id="bgColor" value="#ffffff"></label>
-        </div>
-        <label>Quality <input type="range" id="qualityRange" min="10" max="100" value="90"></label>
-        <label>Compression % <input type="range" id="compressionRange" min="10" max="100" value="90"></label>
-        <div class="img-tool__meta" id="estimateInfo">Estimated file size: --</div>
-      </div>
-
-      <div class="img-tool__row">
-        <button type="button" id="undoBtn">Undo</button>
-        <button type="button" id="resetBtn">Reset</button>
-      </div>
-      <button type="button" id="downloadBtn">Download Processed Image</button>
+    <aside class="tool-tips" aria-label="Tips">
+      <h2>Common uses for Sarkari forms</h2>
+      <ul>
+        <li>Resize passport photo to required pixels (often 200×230 or similar) before online apply.</li>
+        <li>Compress image to stay under 20 KB, 50 KB or 100 KB upload limits.</li>
+        <li>Convert PNG to JPG with white background when transparent files are not accepted.</li>
+        <li>Crop and straighten scanned documents before uploading signature or ID proofs.</li>
+      </ul>
     </aside>
-  </section>
-</div>
+  </div>
+</main>
 
 <div id="footer"></div>
 

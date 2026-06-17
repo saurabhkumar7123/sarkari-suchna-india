@@ -72,7 +72,7 @@
   function update() {
     const dobDate = parseDate(els.dob.value);
     if (!dobDate) {
-      els.headline.textContent = "Enter DOB to see age";
+      els.headline.textContent = "Enter date of birth to calculate age";
       els.summary.textContent = "";
       els.stats.innerHTML = "";
       els.nextBirthday.textContent = "";
@@ -147,12 +147,15 @@
     const text = `${els.headline.textContent}\n${els.summary.textContent}\n${els.nextBirthday.textContent}`;
     try {
       await navigator.clipboard.writeText(text.trim());
-      els.copyBtn.textContent = "Copied";
+      els.copyBtn.textContent = "Copied!";
+      els.copyBtn.classList.add("is-copied");
       setTimeout(() => {
         els.copyBtn.textContent = "Copy Result";
-      }, 900);
+        els.copyBtn.classList.remove("is-copied");
+      }, 1200);
     } catch {
       els.copyBtn.textContent = "Copy Failed";
+      els.copyBtn.classList.remove("is-copied");
     }
   });
 

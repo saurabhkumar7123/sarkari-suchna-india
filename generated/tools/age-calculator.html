@@ -4,178 +4,103 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Age Calculator | Sarkari Suchna India</title>
-<meta name="description" content="Use the age calculator tool to calculate exact age from date of birth with accurate year, month, day and next birthday details.">
+<meta name="description" content="Calculate exact age from date of birth for government job eligibility — years, months, days, and next birthday. Free age calculator for SSC, UPSC, Railway and state exams.">
 <link rel="canonical" href="/tools/age-calculator">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/base/reset.css">
 <link rel="stylesheet" href="/css/base/base.css">
 <link rel="stylesheet" href="/css/components/header.css">
-<link rel="stylesheet" href="/css/components/footer.css">
+<link rel="stylesheet" href="/css/components/footer.css?v=2">
 <link rel="stylesheet" href="/css/components/buttons.css">
-<link rel="stylesheet" href="/css/pages/age-calculator.css">
+<link rel="stylesheet" href="/css/pages/tools.css?v=1">
+<link rel="stylesheet" href="/css/pages/age-calculator.css?v=2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
-<header class="main-header">
+<body class="tool-page tool-page--age-calculator">
 
-  <!-- TOP -->
-  <div class="top-banner">
-    <div class="top-banner-inner">
-      <div class="logo-section">
-        <div class="title">
-          <h1 class="site-brand-title">
-            Sarkari <span>Suchna</span> India
-          </h1>
-          <p>
-            India's Trusted Portal for Sarkari Results, Government Jobs, Admit Cards & Updates
-          </p>
-          <div
-            class="site-updated-indicator site-updated-indicator--title"
-            data-updated-indicator
-            tabindex="0"
-            role="status"
-            aria-label="Fresh government job updates added regularly"
-          >
-            <span class="site-updated-indicator__dot" aria-hidden="true"></span>
-            <span class="site-updated-indicator__label">Updated</span>
-            <span class="site-updated-indicator__tooltip" role="tooltip">Fresh govt job updates added regularly</span>
+<div id="header"></div>
+
+<main class="site-main tool-main">
+  <div class="tool-page-wrap">
+    <nav class="legal-breadcrumb tool-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span aria-hidden="true">/</span>
+      <a href="/tools/age-calculator">Tools</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Age Calculator</span>
+    </nav>
+
+    <header class="tool-hero">
+      <p class="tool-eyebrow">Free Online Tool</p>
+      <h1>Age Calculator</h1>
+      <p class="tool-lead">Calculate your exact age in years, months and days — or check age on a future cut-off date for SSC, UPSC, Railway and state government job eligibility.</p>
+    </header>
+
+    <nav class="tool-switcher" aria-label="Tools">
+      <a href="/tools/age-calculator" class="is-active" aria-current="page">Age Calculator</a>
+      <a href="/tools/image-resizer">Image Resizer</a>
+    </nav>
+
+    <div class="main-container age-tool-main">
+      <section class="age-tool">
+        <div class="age-tool__panel">
+          <div class="age-tool__panel-head">
+            <div>
+              <h2>Enter your details</h2>
+              <p>Leap-year safe calculation using your local date and time.</p>
+            </div>
+          </div>
+
+          <div class="age-tool__grid">
+            <label>Date of Birth
+              <input type="date" id="dobInput" required>
+            </label>
+            <label>Time of Birth (optional)
+              <input type="time" id="dobTimeInput">
+            </label>
+            <label>Calculation Mode
+              <select id="modeInput">
+                <option value="current">Current Age (today)</option>
+                <option value="future">Age on Future Date</option>
+                <option value="past">Age on Past Date</option>
+              </select>
+            </label>
+            <label>Target Date
+              <input type="date" id="targetDateInput">
+            </label>
+            <label>Target Time (optional)
+              <input type="time" id="targetTimeInput">
+            </label>
+          </div>
+
+          <div class="age-tool__actions">
+            <button type="button" id="copyResultBtn">Copy Result</button>
           </div>
         </div>
-      </div>
 
-      <!-- RIGHT (DESKTOP ONLY) -->
-      <div class="right-section">
-        <div class="social-icons">
-          <a href="https://t.me/sarkarisuchnaindia" class="social-icon-link" aria-label="Telegram" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-telegram"></i></a>
-          <a href="https://whatsapp.com/channel/0029VbCtmOJIiRoqIP4wgN1n" class="social-icon-link" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp"></i></a>
-          <a href="https://www.facebook.com/share/1cQMwV2STp/" class="social-icon-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-facebook-f"></i></a>
+        <div class="age-tool__results">
+          <article class="age-tool__hero" id="headlineResult">Enter date of birth to calculate age</article>
+          <div class="age-tool__summary" id="summaryResult"></div>
+          <div class="age-tool__stats" id="statsResult"></div>
+          <div class="age-tool__next" id="nextBirthdayResult"></div>
         </div>
-
-        <div
-          class="site-updated-indicator site-updated-indicator--below-social"
-          data-updated-indicator
-          tabindex="0"
-          role="status"
-          aria-label="Updated regularly"
-        >
-          <span class="site-updated-indicator__dot" aria-hidden="true"></span>
-          <span class="site-updated-indicator__label">Updated</span>
-          <span class="site-updated-indicator__tooltip" role="tooltip">Updated regularly</span>
-        </div>
-
-        <div class="tools-btn" role="button" tabindex="0" aria-label="Open tools menu">
-          Tools
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MOBILE HEADER -->
-  <div class="mobile-header">
-
-  <div class="mobile-nav">
-
-  <div class="hamburger" role="button" tabindex="0" aria-label="Open navigation menu">
-  <i class="fa-solid fa-bars"></i>
-  </div>
-
-  <div class="mobile-actions">
-
-  <button type="button" class="header-search-mobile-btn" aria-label="Open search">
-  <i class="fa-solid fa-magnifying-glass"></i>
-  </button>
-
-  <div class="tools-btn mobile-tools" role="button" tabindex="0" aria-label="Open tools menu">
-  Tools
-  </div>
-
-  </div>
-
-  </div>
-
-  <div class="menu-overlay" id="menuOverlay" aria-hidden="true"></div>
-
-  <!-- MOBILE MENU -->
-  <div id="navbar">
-  <a href="/" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
-  <a href="/new-form" class="nav-item"><i class="fa-solid fa-briefcase"></i> New Form</a>
-  <a href="/result" class="nav-item"><i class="fa-solid fa-chart-line"></i> Result</a>
-  <a href="/admit-card" class="nav-item"><i class="fa-solid fa-id-card"></i> Admit Card</a>
-  <a href="/answer-key" class="nav-item"><i class="fa-solid fa-key"></i> Answer Key</a>
-  <a href="/syllabus" class="nav-item"><i class="fa-solid fa-book-open"></i> Syllabus</a>
-  <div class="mobile-legal">
-    <button type="button" class="mobile-legal-toggle" aria-expanded="false">
-      <span><i class="fa-solid fa-scale-balanced"></i> Legal</span>
-      <i class="fa-solid fa-chevron-down legal-chevron"></i>
-    </button>
-    <div class="mobile-legal-menu" id="mobileLegalMenu">  
-      <a href="/privacy-policy" class="mobile-legal-link">Privacy Policy</a> 
-      <a href="/terms-and-conditions" class="mobile-legal-link">Terms & Conditions</a>
-      <a href="/disclaimer-policy" class="mobile-legal-link">Disclaimer</a>
-      <a href="/contact-us" class="mobile-legal-link">Contact Us</a>
-    </div>
-  </div>
-  </div>
-
-  </div>
-
-  <!-- DESKTOP NAV -->
-  <nav class="navbar">
-  <a href="/" class="nav-item active"><i class="fa-solid fa-house"></i> Home</a>
-  <a href="/new-form" class="nav-item"><i class="fa-solid fa-briefcase"></i> NEW FORM</a>
-  <a href="/result" class="nav-item"><i class="fa-solid fa-chart-line"></i> Results</a>
-  <a href="/admit-card" class="nav-item"><i class="fa-solid fa-id-card"></i> Admit Card</a>
-  <a href="/answer-key" class="nav-item"><i class="fa-solid fa-key"></i> Answer Key</a>
-  <a href="/syllabus" class="nav-item"><i class="fa-solid fa-book-open"></i> Syllabus</a>
-  <a href="#" class="nav-item nav-search-open"><i class="fa-solid fa-magnifying-glass"></i> Search</a>
-  </nav>
-
-  <!-- TOOLS MENU -->
-  <div class="tools-menu" id="toolsMenu">
-  <a href="/tools/age-calculator">Age Calculator</a>
-  <a href="/tools/image-resizer">Image Resizer</a>
-  </div>
-
-  <div class="tools-overlay" id="toolsOverlay"></div>
-
-</header>
-
-<div class="main-container age-tool-main">
-  <section class="age-tool">
-    <h2>Age Calculator Pro</h2>
-    <p class="age-tool__subtitle">Accurate age timeline with leap-year safe local calculations.</p>
-
-    <div class="age-tool__panel">
-      <div class="age-tool__grid">
-        <label>Date of Birth
-          <input type="date" id="dobInput" required>
-        </label>
-        <label>Time of Birth (optional)
-          <input type="time" id="dobTimeInput">
-        </label>
-        <label>Mode
-          <select id="modeInput">
-            <option value="current">Current Age</option>
-            <option value="future">Age On Future Date</option>
-            <option value="past">Age On Past Date</option>
-          </select>
-        </label>
-        <label>Target Date
-          <input type="date" id="targetDateInput">
-        </label>
-        <label>Target Time (optional)
-          <input type="time" id="targetTimeInput">
-        </label>
-      </div>
-      <button type="button" id="copyResultBtn">Copy Result</button>
+      </section>
     </div>
 
-    <article class="age-tool__hero" id="headlineResult">Enter DOB to see age</article>
-    <div class="age-tool__summary" id="summaryResult"></div>
-    <div class="age-tool__stats" id="statsResult"></div>
-    <div class="age-tool__next" id="nextBirthdayResult"></div>
-  </section>
-</div>
+    <aside class="tool-tips" aria-label="Tips">
+      <h2>How to use for government jobs</h2>
+      <ul>
+        <li>Select <strong>Current Age</strong> to know your age as of today for general reference.</li>
+        <li>Use <strong>Age on Future Date</strong> when a notification mentions age counted on a specific cut-off date.</li>
+        <li>Check official notification for minimum/maximum age rules — this tool only calculates duration between dates.</li>
+        <li>Tap <strong>Copy Result</strong> to paste age details into forms or notes quickly.</li>
+      </ul>
+    </aside>
+  </div>
+</main>
 
 <div id="footer"></div>
 

@@ -1421,15 +1421,15 @@ listingSegments.forEach((seg) => {
 app.get("/tools/age-calculator", asyncHandler(async (req, res) => {
   await sendSeoAugmentedHtml(req, res, path.join(generatedDir, "tools", "age-calculator.html"), {
     title: "Age Calculator | Sarkari Suchna India",
-    description: "Use the age calculator tool to compute exact age from date of birth.",
+    description: "Calculate exact age from date of birth for SSC, UPSC, Railway and state government job eligibility — years, months, days and cut-off date support.",
     canonicalPath: "/tools/age-calculator"
   });
 }));
 
 app.get("/tools/image-resizer", asyncHandler(async (req, res) => {
   await sendSeoAugmentedHtml(req, res, path.join(generatedDir, "tools", "image-resizer.html"), {
-    title: "Image Resizer | Sarkari Suchna India",
-    description: "Resize images quickly for forms, documents and uploads.",
+    title: "Image Resizer & Compressor | Sarkari Suchna India",
+    description: "Free image resizer for government job forms — resize passport photos, compress to KB limits and download JPG, PNG or WEBP.",
     canonicalPath: "/tools/image-resizer"
   });
 }));
