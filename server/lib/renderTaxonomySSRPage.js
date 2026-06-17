@@ -85,8 +85,8 @@ function renderTaxonomySSRPage(opts) {
 <meta property="og:url" content="${escapeHtml(absoluteUrl)}">
 <meta property="og:image" content="/assets/image/logo/favicon.png">
 <meta name="robots" content="index, follow">
-<link rel="preload" href="/css/main.min.css?v=3" as="style">
-<link rel="stylesheet" href="/css/main.min.css?v=3">
+<link rel="preload" href="/css/main.min.css?v=5" as="style">
+<link rel="stylesheet" href="/css/main.min.css?v=5">
 <link rel="stylesheet" href="/css/pages/listing-layout.css?v=2">
 <link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
 <link rel="stylesheet" href="/css/pages/home.css?v=5">

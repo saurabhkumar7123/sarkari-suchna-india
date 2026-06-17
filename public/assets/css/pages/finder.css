@@ -817,32 +817,36 @@ body.finder-modal-open{
 =================================*/
 @media (max-width: 768px) {
 .finder-banner{
-  padding:16px var(--space-12, 12px);
-  min-height:calc(40px + 32px);
+  padding:12px var(--space-12, 12px);
+  min-height:calc(36px + 22px);
+  gap:10px;
 }
 
 .finder-banner-title{
-  font-size:18px;
-  line-height:1.25;
+  font-size:17px;
+  line-height:1.2;
 }
 
 .finder-sub{
-  font-size:12px;
-  line-height:1.2;
+  font-size:11px;
+  line-height:1.15;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
 .finder-left{
-  width:40px;
-  height:40px;
-  font-size:18px;
+  width:36px;
+  height:36px;
+  min-width:36px;
+  min-height:36px;
+  font-size:16px;
+  border-radius:10px;
 }
 
 .finder-cta{
-  padding:8px 12px;
-  font-size:13px;
+  padding:7px 10px;
+  font-size:12px;
 }
 
 .finder-modal .job-finder{
