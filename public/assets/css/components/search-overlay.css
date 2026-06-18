@@ -9,7 +9,7 @@
   align-items: center;
   padding: 100px 15px 20px;
   z-index: var(--z-overlay);
-  background: rgba(248, 250, 252, 0.92);
+  background: #f8fafc;
 }
 
 .search-overlay.active {
@@ -32,7 +32,7 @@
   background: #fff;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  box-shadow: none;
   z-index: var(--z-toast);
   transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
@@ -55,8 +55,8 @@
   display: flex;
   align-items: center;
   gap: 0;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-  transition: transform 0.25s ease, opacity 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: none;
+  transition: transform 0.25s ease, opacity 0.25s ease, border-color 0.2s ease;
   transform: translateY(-24px);
   opacity: 0;
 }
@@ -68,7 +68,9 @@
 
 .search-overlay .search-box:focus-within {
   border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16), 0 4px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: none;
+  outline: 2px solid rgba(37, 99, 235, 0.2);
+  outline-offset: 0;
 }
 
 .search-overlay .search-box input,
@@ -129,7 +131,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  box-shadow: none;
   overflow: hidden;
   z-index: var(--z-overlay);
 }

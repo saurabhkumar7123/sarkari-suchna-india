@@ -22,7 +22,7 @@ body.jobs-page {
   margin: 0 0 14px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: linear-gradient(90deg, #eff6ff, #f0f9ff);
+  background: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1e40af;
   font-size: 14px;
@@ -74,9 +74,9 @@ body.jobs-page {
   padding: 12px 14px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  background: #fff;
+  backdrop-filter: none;
+  box-shadow: none;
 }
 
 .jobs-toolbar__top {
@@ -151,13 +151,14 @@ body.jobs-page {
 }
 
 .jobs-btn--primary {
-  background: linear-gradient(90deg, #1e40af, #2563eb);
+  background: #2563eb;
+  border-color: #1d4ed8;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  box-shadow: none;
 }
 
 .jobs-btn--primary:hover {
-  background: linear-gradient(90deg, #1e3a8a, #1d4ed8);
+  background: #1d4ed8;
 }
 
 .jobs-btn.is-copied {
@@ -209,7 +210,7 @@ body.jobs-page {
 }
 
 .jobs-chip__remove:hover {
-  background: rgba(30, 64, 175, 0.12);
+  background: #dbeafe;
 }
 
 .jobs-chip--add {
@@ -235,15 +236,16 @@ body.jobs-page {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
   cursor: pointer;
 }
 
 .job-card:hover {
   transform: none;
-  box-shadow: var(--hover-shadow);
+  box-shadow: none;
   border-color: var(--hover-border);
+  background: #f8fafc;
 }
 
 .job-card:active {
@@ -409,14 +411,14 @@ body.jobs-page {
 .jobs-skeleton-card {
   height: 118px;
   border-radius: 14px;
-  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 45%, #e2e8f0 90%);
-  background-size: 200% 100%;
-  animation: jobs-skeleton-shimmer 1.2s ease-in-out infinite;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  animation: jobs-skeleton-pulse 1.2s ease-in-out infinite;
 }
 
-@keyframes jobs-skeleton-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
+@keyframes jobs-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }
 
 .jobs-pagination {

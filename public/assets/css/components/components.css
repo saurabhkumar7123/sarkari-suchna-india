@@ -36,8 +36,14 @@ a:focus-visible {
 
 .btn-primary,
 .finder-submit {
-  background: linear-gradient(135deg, var(--site-primary-2), var(--site-primary));
-  color: #fff;
+  background: var(--ui-cta-bg);
+  border-color: var(--ui-cta-border);
+  color: var(--ui-cta-text);
+}
+
+.btn-primary:hover,
+.finder-submit:hover {
+  background: var(--ui-cta-bg-hover);
 }
 
 .btn-secondary {
@@ -61,7 +67,7 @@ a:focus-visible {
   background: var(--site-surface);
   border: 1px solid var(--site-border);
   border-radius: var(--site-radius);
-  box-shadow: var(--site-shadow-sm);
+  box-shadow: none;
 }
 
 .input,
@@ -85,8 +91,9 @@ textarea {
   min-height: 44px;
   padding: var(--space-4) var(--space-12);
   border-radius: var(--site-radius-pill);
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--site-link);
+  background: var(--ui-chip-bg);
+  color: var(--ui-chip-text);
+  border: 1px solid var(--ui-chip-border);
   font-size: var(--font-size-small);
   font-weight: 600;
 }

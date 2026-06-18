@@ -2,10 +2,10 @@
   max-width:100%;
   margin:0 auto;
   padding:32px 28px;
-  background:linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  background:#fff;
   border:1px solid #e8edf4;
   border-radius:16px;
-  box-shadow:0 8px 28px rgba(15, 23, 42, 0.05);
+  box-shadow:none;
   font-family:var(--site-font, 'Segoe UI', Arial, sans-serif);
   line-height:1.75;
   color:var(--site-text-secondary, #334155);
@@ -64,7 +64,7 @@
   width:7px;
   height:7px;
   border-radius:50%;
-  background:linear-gradient(135deg, var(--site-primary, #1e3c72), var(--site-link, #2563eb));
+  background:#2563eb;
   transform:translateY(-50%);
 }
 
@@ -91,20 +91,20 @@
   font-size:11px;
   font-weight:800;
   color:#fff;
-  background:linear-gradient(135deg, var(--site-primary, #1e3c72), var(--site-primary-2, #2a5298));
+  background:#1e3c72;
 }
 
 .sarkari-about blockquote{
   margin:22px 0;
   padding:18px 20px;
-  background:var(--gradient-primary, linear-gradient(135deg, #1e3c72, #2563eb));
+  background:#1e3c72;
   color:#fff;
   border-radius:12px;
   font-weight:700;
   text-align:center;
   font-size:15px;
   line-height:1.5;
-  box-shadow:0 8px 22px rgba(30, 60, 114, 0.18);
+  box-shadow:none;
 }
 
 .sarkari-about a{
@@ -169,13 +169,13 @@ body.page-home .about-site-slot--collapsible .sarkari-about__toggle{
   padding:11px 18px;
   border:1px solid #dbe3f0;
   border-radius:12px;
-  background:linear-gradient(180deg, #ffffff, #f8fafc);
+  background:#fff;
   color:var(--site-primary, #1e3c72);
   font-size:14px;
   font-weight:700;
   cursor:pointer;
-  box-shadow:0 2px 8px rgba(15, 23, 42, 0.04);
-  transition:background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  box-shadow:none;
+  transition:background-color .2s ease, border-color .2s ease, transform .2s ease;
 }
 
 body.page-home .about-site-slot--collapsible .sarkari-about__toggle::after{
@@ -195,7 +195,7 @@ body.page-home .about-site-slot--collapsible .sarkari-about__toggle[aria-expande
 body.page-home .about-site-slot--collapsible .sarkari-about__toggle:hover{
   background:#eff6ff;
   border-color:#bfdbfe;
-  box-shadow:0 4px 12px rgba(37, 99, 235, 0.08);
+  box-shadow:none;
 }
 
 body.page-home .about-site-slot--collapsible .sarkari-about__toggle:focus-visible{

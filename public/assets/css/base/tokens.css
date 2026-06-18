@@ -8,7 +8,7 @@
   --site-text: #0f172a;
   --site-text-secondary: #334155;
   --site-muted: #64748b;
-  --site-border: rgba(148, 163, 184, 0.35);
+  --site-border: #e2e8f0;
   --site-bg-page: #ffffff;
 
   /* Brand */
@@ -45,26 +45,73 @@
   --gradient-primary: linear-gradient(135deg, var(--site-primary), var(--site-link));
   --gradient-accent: linear-gradient(135deg, var(--site-link), var(--site-primary-2));
 
-  /* Mobile header tools-style CTA (soft blue pill) */
-  --mobile-tools-border: #bfdbfe;
-  --mobile-tools-bg: linear-gradient(145deg, #eff6ff, #dbeafe);
-  --mobile-tools-bg-hover: linear-gradient(145deg, #dbeafe, #bfdbfe);
-  --mobile-tools-text: #1e3c72;
-  --mobile-tools-border-hover: #93c5fd;
-  --mobile-tools-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  /* Unified UI palette — nav, tools, breaking, finder, categories */
+  --brand-navy: #1e3c72;
+  --brand-navy-dark: #1a3470;
+  --brand-blue: #2563eb;
+  --brand-blue-dark: #1d4ed8;
 
-  /* Homepage CTA accent — finder Check Now, category tab select (richer than tools pill) */
-  --home-cta-border: #60a5fa;
-  --home-cta-bg: linear-gradient(145deg, #3b82f6, #2563eb);
-  --home-cta-bg-hover: linear-gradient(145deg, #2563eb, #1d4ed8);
-  --home-cta-text: #ffffff;
-  --home-cta-shadow: 0 2px 8px rgba(37, 99, 235, 0.22);
+  /* Toolbar controls — search, tools, hamburger */
+  --ui-control-bg: #ffffff;
+  --ui-control-border: #cbd5e1;
+  --ui-control-text: #1e3c72;
+  --ui-control-icon: #2563eb;
+  --ui-control-bg-hover: #f0f4fa;
+  --ui-control-border-hover: #94a3b8;
 
-  /* Brand social icon fills */
-  --social-icon-border: rgba(255, 255, 255, 0.28);
-  --social-telegram-bg: linear-gradient(145deg, #2aabee, #229ed9);
-  --social-whatsapp-bg: linear-gradient(145deg, #34d369, #25d366);
-  --social-facebook-bg: linear-gradient(145deg, #3b8af0, #1877f2);
+  /* Soft highlight — view-all, finder icon, category hover */
+  --ui-soft-bg: #f0f4fa;
+  --ui-soft-bg-hover: #e4ebf5;
+  --ui-soft-border: #c5d4eb;
+  --ui-soft-text: #1e3c72;
+
+  /* Solid accent — nav active, breaking label */
+  --ui-accent-bg: #1e3c72;
+  --ui-accent-bg-hover: #1a3470;
+  --ui-accent-border: #1a3470;
+  --ui-accent-text: #ffffff;
+
+  /* Primary CTA — finder Check Now */
+  --ui-cta-border: #1d4ed8;
+  --ui-cta-bg: #2563eb;
+  --ui-cta-bg-hover: #1d4ed8;
+  --ui-cta-text: #ffffff;
+
+  /* Legacy chip aliases */
+  --ui-chip-border: var(--ui-soft-border);
+  --ui-chip-bg: var(--ui-soft-bg);
+  --ui-chip-bg-hover: var(--ui-soft-bg-hover);
+  --ui-chip-text: var(--ui-soft-text);
+  --ui-chip-border-hover: var(--ui-control-border-hover);
+
+  /* Desktop nav */
+  --nav-text: #475569;
+  --nav-text-hover: #1e3c72;
+  --nav-hover-bg: #f8fafc;
+  --nav-active-bg: var(--ui-accent-bg);
+  --nav-active-border: var(--ui-accent-border);
+  --nav-active-text: var(--ui-accent-text);
+
+  /* Mobile header controls */
+  --mobile-tools-border: var(--ui-control-border);
+  --mobile-tools-bg: var(--ui-control-bg);
+  --mobile-tools-bg-hover: var(--ui-control-bg-hover);
+  --mobile-tools-text: var(--ui-control-text);
+  --mobile-tools-border-hover: var(--ui-control-border-hover);
+  --mobile-tools-shadow: none;
+
+  /* Homepage CTA */
+  --home-cta-border: var(--ui-cta-border);
+  --home-cta-bg: var(--ui-cta-bg);
+  --home-cta-bg-hover: var(--ui-cta-bg-hover);
+  --home-cta-text: var(--ui-cta-text);
+  --home-cta-shadow: none;
+
+  /* Brand social icon fills — solid */
+  --social-icon-border: #4a7ab8;
+  --social-telegram-bg: #2aabee;
+  --social-whatsapp-bg: #25d366;
+  --social-facebook-bg: #1877f2;
 
   /* Spacing scale (standardized) */
   --space-4: 4px;
@@ -94,11 +141,11 @@
   --site-radius-lg: 16px;
   --site-radius-pill: 999px;
 
-  /* Shadows */
-  --site-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --site-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-  --site-shadow-md: 0 10px 24px rgba(15, 23, 42, 0.1);
-  --site-shadow-hover: 0 14px 30px rgba(15, 23, 42, 0.12);
+  /* Shadows — flat surfaces (no glass depth) */
+  --site-shadow-sm: none;
+  --site-shadow: none;
+  --site-shadow-md: none;
+  --site-shadow-hover: none;
 
   /* Typography */
   --font-size-xs: 0.75rem;
@@ -116,13 +163,13 @@
   --duration-base: 0.25s;
 
   /* Hover (public UI — header nav uses its own rules) */
-  --hover-bg-subtle: #eff6ff;
+  --hover-bg-subtle: #f0f4fa;
   --hover-bg-muted: #f8fafc;
-  --hover-border: #bfdbfe;
-  --hover-border-strong: #93c5fd;
-  --hover-text: #1d4ed8;
-  --hover-text-strong: #1e40af;
-  --hover-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  --hover-border: #c5d4eb;
+  --hover-border-strong: #94a3b8;
+  --hover-text: #2563eb;
+  --hover-text-strong: #1e3c72;
+  --hover-shadow: none;
   --hover-transition: color var(--duration-fast) var(--ease-out),
     background-color var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
@@ -160,7 +207,7 @@
   --site-text: #0f172a;
   --site-text-secondary: #334155;
   --site-muted: #64748b;
-  --site-border: rgba(148, 163, 184, 0.35);
+  --site-border: #e2e8f0;
   --site-bg-page: #ffffff;
 
   --section-header-bg: var(--site-surface-2);

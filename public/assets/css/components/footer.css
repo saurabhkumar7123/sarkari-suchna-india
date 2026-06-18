@@ -1,21 +1,17 @@
 .main-footer{
   margin-top:36px;
-  background:linear-gradient(145deg, #1a3568 0%, #1e3c72 38%, #2a5298 72%, #4c1d95 100%);
+  background:#1e3c72;
   color:#fff;
   border-top-left-radius:22px;
   border-top-right-radius:22px;
   overflow:hidden;
   position:relative;
-  box-shadow:0 -8px 32px rgba(15, 23, 42, 0.12);
+  box-shadow:none;
+  border-top:1px solid #1a3470;
 }
 
 .main-footer::before{
-  content:"";
-  position:absolute;
-  inset:0 0 auto 0;
-  height:1px;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
-  pointer-events:none;
+  display:none;
 }
 
 .footer-top{
@@ -43,7 +39,7 @@
   font-weight:700;
   letter-spacing:0.04em;
   text-transform:uppercase;
-  color:rgba(255,255,255,0.95);
+  color:#f8fafc;
 }
 
 .footer-col h4::after{
@@ -54,7 +50,7 @@
   width:32px;
   height:3px;
   border-radius:999px;
-  background:linear-gradient(90deg, #fbbf24, #f59e0b);
+  background:#f59e0b;
 }
 
 .footer-col p{
@@ -86,8 +82,8 @@
   text-decoration:none;
   font-size:17px;
   border:1px solid var(--social-icon-border);
-  box-shadow:0 4px 14px rgba(0,0,0,0.18);
-  transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  box-shadow:none;
+  transition:filter .2s ease;
 }
 
 .footer-social .social-facebook{ background:var(--social-facebook-bg); }
@@ -95,8 +91,8 @@
 .footer-social .social-whatsapp{ background:var(--social-whatsapp-bg); }
 
 .footer-social a:hover{
-  transform:translateY(-3px);
-  box-shadow:0 8px 20px rgba(0,0,0,0.22);
+  transform:none;
+  box-shadow:none;
   filter:brightness(1.06);
 }
 
@@ -117,7 +113,7 @@
 
 .footer-col ul li a,
 .footer-col p a{
-  color:rgba(255,255,255,0.92);
+  color:#e2e8f0;
   text-decoration:none;
   font-size:14px;
   font-weight:600;
@@ -136,7 +132,7 @@
   height:5px;
   border-radius:50%;
   margin-right:10px;
-  background:rgba(251, 191, 36, 0.9);
+  background:#fbbf24;
   flex-shrink:0;
   transition:transform .2s ease;
 }
@@ -144,7 +140,7 @@
 .footer-col ul li a:hover,
 .footer-col p a:hover{
   color:#fde68a;
-  background:rgba(255,255,255,0.08);
+  background:#2a5298;
   padding-left:6px;
 }
 
@@ -159,11 +155,11 @@
 .footer-bottom{
   text-align:center;
   padding:16px clamp(16px, 4vw, 24px);
-  background:rgba(0,0,0,0.22);
-  border-top:1px solid rgba(255,255,255,0.08);
+  background:#1a3470;
+  border-top:1px solid #2a5298;
   font-size:13px;
   letter-spacing:0.03em;
-  color:rgba(255,255,255,0.88);
+  color:#e2e8f0;
 }
 
 .footer-site-brand{
@@ -171,7 +167,7 @@
   font-size:14px;
   font-weight:600;
   line-height:1.5;
-  color:rgba(255,255,255,0.95);
+  color:#f8fafc;
 }
 
 .footer-site-brand strong{
