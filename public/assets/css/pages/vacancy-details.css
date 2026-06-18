@@ -31,7 +31,7 @@
     border:1px solid var(--vac-border);
     border-left:5px solid var(--primary);
     background:linear-gradient(135deg,var(--bg1),var(--bg2));
-    box-shadow:var(--vac-shadow-sm);
+    box-shadow:none;
     }
   
     .job-title{
@@ -60,7 +60,7 @@
     border-radius:var(--radius);
     border:1px solid var(--vac-border);
     background:var(--bg2);
-    box-shadow:var(--vac-shadow-sm);
+    box-shadow:none;
     }
   
     .meta-info{
@@ -119,8 +119,9 @@
     border-radius:var(--site-radius, 14px);
     padding:18px 22px;
     margin-bottom:24px;
+    border:1px solid var(--vac-border);
     border-left:4px solid var(--primary);
-    box-shadow:var(--vac-shadow);
+    box-shadow:none;
     }
     
     /* ================= CARD HEADER ================= */
@@ -576,8 +577,9 @@
     border-radius:var(--site-radius, 14px);
     padding:18px 22px;
     margin:0 0 24px;
+    border:1px solid var(--vac-border);
     border-left:4px solid var(--primary);
-    box-shadow:var(--vac-shadow);
+    box-shadow:none;
     }
 
     .related-header{
@@ -628,7 +630,7 @@
     border:1px solid var(--border);
     border-radius:12px;
     background:#f8fafc;
-    box-shadow:0 4px 16px rgba(15,23,42,0.06);
+    box-shadow:none;
     }
   
     .social-share-actions{
