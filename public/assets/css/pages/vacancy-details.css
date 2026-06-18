@@ -239,28 +239,84 @@
     }
     
     /* ================= LINKS ================= */
+    .links-grid,
+    .card-content:has(> .link-box){
+    margin-top:10px;
+    border:1px solid var(--vac-border);
+    border-radius:var(--site-radius-sm);
+    background:var(--bg1);
+    overflow:hidden;
+    }
+
     .links-grid{
     display:flex;
     flex-direction:column;
-    gap:8px;
-    margin-top:10px;
+    gap:0;
+    }
+
+    .links-grid .link-box,
+    .card-content:has(> .link-box) > .link-box{
+    border:none;
+    border-radius:0;
+    background:transparent;
+    border-bottom:1px solid var(--vac-border);
+    }
+
+    .links-grid .link-box:last-child,
+    .card-content:has(> .link-box) > .link-box:last-child{
+    border-bottom:none;
     }
     
     .link-box{
-    display:flex;
-    justify-content:space-between;
+    display:grid;
+    grid-template-columns:1fr 1px 1fr;
+    grid-template-areas:"label divider action";
     align-items:center;
-    gap:8px;
-    padding:10px 12px;
-    border-radius:var(--site-radius-sm);
-    border:1px solid var(--vac-border);
-    background:var(--bg1);
-    transition:border-color 0.2s ease, background-color 0.2s ease;
+    padding:8px 12px;
     }
-    
-    .link-box:hover{
-    border-color:#cbd5e1;
-    background:var(--bg2);
+
+    .link-box::after{
+    content:"";
+    grid-area:divider;
+    width:1px;
+    background:var(--vac-border);
+    align-self:stretch;
+    justify-self:center;
+    min-height:100%;
+    }
+
+    .left-text{
+    grid-area:label;
+    text-align:center;
+    justify-self:stretch;
+    min-width:0;
+    }
+
+    .right-link{
+    grid-area:action;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    justify-self:stretch;
+    }
+
+    .link-box-status{
+    grid-area:action;
+    text-align:center;
+    }
+
+    @media (max-width: 768px) {
+    .left-text{
+    text-align:left;
+    }
+
+    .right-link{
+    justify-content:flex-end;
+    }
+
+    .link-box-status{
+    text-align:right;
+    }
     }
     
     .left-text{
@@ -313,12 +369,6 @@
     font-weight:600;
     line-height:1.3;
     color:var(--color-info);
-    text-align:right;
-    }
-
-    .link-box:not(:has(.right-link a)):hover{
-    border-color:color-mix(in srgb, var(--color-info) 28%, var(--vac-border));
-    background:var(--bg2);
     }
     
     /* ================= FAQ ================= */
@@ -775,31 +825,17 @@
     }
 
     .links-grid{
-    gap:6px;
     margin-top:8px;
     }
     
     .link-box{
-    flex-direction:row;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
     padding:8px 10px;
     }
 
     .left-text{
-    flex:1 1 auto;
-    min-width:0;
     font-size:15px;
     line-height:1.4;
-    text-align:left;
     word-break:break-word;
-    }
-    
-    .right-link{
-    width:auto;
-    flex:0 0 auto;
-    align-self:center;
     }
     
     .right-link a{
