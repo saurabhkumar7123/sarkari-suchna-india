@@ -45,7 +45,7 @@ body.standalone-admin-page .main-container{
 
 /* ---- Generator page ---- */
 body.standalone-admin-page.generator-page{
-  background:linear-gradient(180deg,#f8fbff 0%,var(--gen-bg,#f3f6fb) 100%);
+  background:#eef2f8;
 }
 
 body.standalone-admin-page.generator-page .admin-header{
@@ -106,7 +106,7 @@ body.standalone-admin-page.generator-page.sidebar-collapsed .action-bar.is-stick
 
 /* ---- Upload page ---- */
 body.standalone-admin-page.upload-page{
-  background:linear-gradient(180deg,#f8fbff,var(--up-bg,#f3f6fb));
+  background:#eef2f8;
 }
 
 body.standalone-admin-page.upload-page .admin-header{
@@ -131,7 +131,7 @@ body.standalone-admin-page.upload-page .main-container{
 
 /* ---- Trash page ---- */
 body.standalone-admin-page.trash-page{
-  background:#f3f6fb;
+  background:#eef2f8;
 }
 
 body.standalone-admin-page.trash-page .admin-header{

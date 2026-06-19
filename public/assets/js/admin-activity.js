@@ -187,5 +187,32 @@ document.getElementById("applyActivityFilter")?.addEventListener("click", () => 
 });
 document.getElementById("refreshActivityBtn")?.addEventListener("click", () => loadActivity());
 
+document.getElementById("exportActivityBtn")?.addEventListener("click", async () => {
+  const res = await window.adminSafeFetch(`/api/admin/activity?${buildQuery().replace(/page=\d+/, "page=1").replace(/limit=\d+/, "limit=500")}`);
+  if (!res || !res.success || !Array.isArray(res.data) || !res.data.length) {
+    window.AdminUI?.toastInfo("No activity rows to export");
+    return;
+  }
+  const header = ["timestamp", "admin", "action", "target", "status", "ip"];
+  const lines = [header.join(",")];
+  res.data.forEach((row) => {
+    lines.push(
+      header
+        .map((key) => {
+          const val = String(row[key] ?? "").replace(/"/g, '""');
+          return `"${val}"`;
+        })
+        .join(",")
+    );
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "admin-activity.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  window.AdminUI?.toastSuccess("Activity exported");
+});
+
 ensureFilterChips();
 loadActivity();

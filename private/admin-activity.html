@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=4">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 </head>
 <body data-admin-breadcrumbs="Admin,Activity">
@@ -39,6 +39,7 @@
   <div class="admin-header">
     <div class="admin-title">📝 Admin Activity</div>
     <div class="admin-header-actions">
+      <button type="button" class="header-action-btn" id="exportActivityBtn">Export CSV</button>
       <button type="button" class="header-action-btn" id="refreshActivityBtn">Refresh</button>
     </div>
   </div>
@@ -68,10 +69,12 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js"></script>
 <script src="/js/admin-shell.js"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js"></script>
+<script src="/js/admin-ui.js"></script>
 <script src="/js/admin-activity.js"></script>
 </body>
 </html>

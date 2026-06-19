@@ -44,9 +44,42 @@ function buildPagesQuery() {
 
 function pageListSkeletonHtml() {
   return `<div class="page-table page-table--skeleton" aria-hidden="true">
-    <div class="page-head"><div><input type="checkbox" disabled></div><div>Title</div><div>Category</div><div>Status</div><div>Actions</div></div>
-    ${Array.from({ length: 6 }).map(() => '<div class="page-row skeleton-row"><div></div><div></div><div></div><div></div><div></div></div>').join("")}
+    <div class="page-head"><div><input type="checkbox" disabled></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div>
+    ${Array.from({ length: 6 }).map(() => '<div class="page-row skeleton-row"><div></div><div></div><div></div><div></div><div></div><div></div></div>').join("")}
   </div>`;
+}
+
+function formatPageDate(value) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function pageUpdatedAt(page) {
+  return page.content_updated_at || page.updated_at || page.created_at || null;
+}
+
+function renderStatusFilterChips(meta) {
+  const host = document.getElementById("statusFilterChips");
+  if (!host) return;
+  const statuses = Array.isArray(meta && meta.statuses) ? meta.statuses : [];
+  const chips = [{ value: "", label: "All" }, ...statuses.map((s) => ({ value: s, label: s }))];
+  host.innerHTML = chips
+    .map(
+      (chip) =>
+        `<button type="button" class="status-chip${currentFilters.status === chip.value ? " is-active" : ""}" data-status="${escapeAttr(chip.value)}">${escapeAttr(chip.label)}</button>`
+    )
+    .join("");
+  host.querySelectorAll(".status-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentFilters.status = btn.getAttribute("data-status") || "";
+      const stSel = document.getElementById("statusFilter");
+      if (stSel) stSel.value = currentFilters.status;
+      currentPage = 1;
+      loadPageManager();
+    });
+  });
 }
 
 function escapeHtmlText(value) {
@@ -237,13 +270,16 @@ function renderPages(pages) {
   if (!pages.length) {
     selectedSlugs.clear();
     renderBulkBar();
-    box.innerHTML = "<p>No pages found for current filters.</p>";
+    const hasFilters = currentFilters.search || currentFilters.category || currentFilters.status;
+    box.innerHTML = hasFilters
+      ? "<p>No pages found for current filters.</p>"
+      : `<div class="admin-empty-state"><p>No pages yet. Create your first job page.</p><a href="/generator">Create first page</a></div>`;
     return;
   }
   const pageSlugs = pages.map((p) => String(p.slug || "").trim()).filter(Boolean);
   selectedSlugs = new Set(Array.from(selectedSlugs).filter((slug) => pageSlugs.includes(slug)));
   const allSelected = pageSlugs.length > 0 && pageSlugs.every((slug) => selectedSlugs.has(slug));
-  box.innerHTML = `<div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Title</div><div>Category</div><div>Status</div><div>Actions</div></div></div>`;
+  box.innerHTML = `<div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div></div>`;
   const table = box.querySelector(".page-table");
   const frag = document.createDocumentFragment();
   pages.forEach((p) => {
@@ -254,28 +290,27 @@ function renderPages(pages) {
     const statusLabel = normalizeStatusLabel(p.status);
     const statusClass = getStatusBadgeClass(statusLabel);
     const isChecked = selectedSlugs.has(slug);
-    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div>${escapeAttr(p.title)}</div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div class="row-actions"></div>`;
+    const views = Number(p.views) || 0;
+    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
     const actions = row.querySelector(".row-actions");
     const edit = document.createElement("a");
-    edit.href = "#";
+    edit.href = "/generator?slug=" + encodeURIComponent(slug);
+    edit.className = "row-action-btn--edit";
     edit.textContent = "Edit";
-    edit.addEventListener("click", (e) => {
-      e.preventDefault();
-      window.location.href = "/generator?slug=" + encodeURIComponent(slug);
-    });
     const view = document.createElement("a");
     view.href = url;
     view.target = "_blank";
     view.rel = "noopener";
+    view.className = "row-action-btn--view";
     view.textContent = "View";
-    const del = document.createElement("a");
-    del.href = "#";
-    del.textContent = "Delete";
-    del.addEventListener("click", async (e) => {
-      e.preventDefault();
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "row-action-btn row-action-btn--delete";
+    del.textContent = "Trash";
+    del.addEventListener("click", async () => {
       await deletePage(slug, del);
     });
-    actions.append(edit, document.createTextNode(" "), view, document.createTextNode(" "), del);
+    actions.append(edit, view, del);
     frag.appendChild(row);
   });
   table.appendChild(frag);
@@ -347,6 +382,7 @@ async function loadPageManager(opts = {}) {
   }
   renderPages(activePages);
   populateFiltersFromMeta(data.meta);
+  renderStatusFilterChips(data.meta);
   renderPagination(pagination);
   renderBulkBar();
   if (opts.scrollToTop) scrollPageListIntoView();
@@ -403,6 +439,12 @@ document.getElementById("nextBtn")?.addEventListener("click", () => {
   }
 });
 document.getElementById("managerRefreshBtn")?.addEventListener("click", () => loadPageManager());
+
+document.getElementById("sortOrder")?.addEventListener("change", (e) => {
+  sortOrder = e.target.value === "asc" ? "asc" : "desc";
+  currentPage = 1;
+  loadPageManager();
+});
 
 initSearch();
 loadPageManager();

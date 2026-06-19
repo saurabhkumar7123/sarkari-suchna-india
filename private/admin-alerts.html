@@ -7,10 +7,11 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=4">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/pdf.css">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 </head>
-<body>
+<body data-admin-breadcrumbs="Admin,PDF Alerts">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -36,16 +37,19 @@
   <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
 </div>
 <div class="main">
-  <div class="admin-header"><div class="admin-title">🔔 Alerts</div></div>
+  <div class="admin-header"><div class="admin-title">🔔 PDF Alerts</div></div>
   <div class="main-container">
     <div class="page-header">
-      <h1>Latest Notifications</h1>
-      <p>Latest updates and announcements</p>
+      <h1>PDF Notifications</h1>
+      <p>Latest PDF uploads and site announcements</p>
     </div>
     <div id="pdfList"></div>
   </div>
 </div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js"></script>
 <script src="/js/admin-shell.js"></script>
+<script src="/js/admin-layout.js"></script>
 <script src="/js/pdf.js"></script>
 </body>
 </html>

@@ -5,31 +5,9 @@
 (function () {
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
-  const SIDEBAR_HTML = `
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
-<div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
-  </div>
-  <div class="nav-group-title">Admin</div>
-  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
-  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
-  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
-  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
-  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
-  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
-  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
-  <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
-  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
-  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
-  <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
-  <div class="nav-group-title">System</div>
-  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
-  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
-</div>`;
+  const SIDEBAR_HTML = window.AdminNav
+    ? window.AdminNav.getSidebarShellHtml()
+    : `<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button><div class="sidebar" id="sidebar"></div>`;
 
   function detectStandalonePageClass() {
     const p = String(window.location.pathname || "").toLowerCase();

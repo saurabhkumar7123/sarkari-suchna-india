@@ -250,14 +250,15 @@ async function retryFailedQueueJobs(triggerBtn) {
 }
 
 async function clearQueueJobs(triggerBtn) {
-  const ok = await (window.AdminUI && window.AdminUI.confirmDelete
-    ? window.AdminUI.confirmDelete({ title: "Clear queue jobs", count: 1 })
+  const ok = await (window.AdminUI && window.AdminUI.typedConfirm
+    ? window.AdminUI.typedConfirm({
+        title: "Clear queue jobs",
+        warnText: "This cannot be undone",
+        details: "Waiting and failed queue jobs will be removed. Type CLEAR to confirm.",
+        requireText: "CLEAR"
+      })
     : Promise.resolve(window.confirm("Clear waiting and failed queue jobs?")));
   if (!ok) return;
-  const secondOk = await (window.AdminUI && window.AdminUI.confirmDelete
-    ? window.AdminUI.confirmDelete({ title: "Final confirmation", count: 1 })
-    : Promise.resolve(true));
-  if (!secondOk) return;
   const run = async () => {
     const res = await window.adminSafeFetch("/api/admin/queue/clear", { method: "POST" });
     if (!res || !res.success) {

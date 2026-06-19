@@ -161,13 +161,31 @@
     syncSidebarCollapseButton();
   }
 
+  function normalizeNavPath(value) {
+    return String(value || "").toLowerCase().replace(/\/$/, "") || "/";
+  }
+
+  function isNavLinkActive(href, path) {
+    const h = normalizeNavPath(href);
+    const p = normalizeNavPath(path);
+    if (!h || h === "#") return false;
+    if (h === p) return true;
+    if (h === "/admin/dashboard" && p === "/dashboard") return true;
+    if (h === "/admin/alerts" && p === "/notification") return true;
+    return false;
+  }
+
   function markActiveSidebarLink() {
-    const links = Array.from(document.querySelectorAll("#sidebar a"));
-    const path = window.location.pathname.toLowerCase();
+    const links = Array.from(document.querySelectorAll("#sidebar a[href]"));
+    const path = window.location.pathname;
     links.forEach((a) => {
-      const href = (a.getAttribute("href") || "").toLowerCase();
-      if (href && href !== "#" && href === path) a.classList.add("active");
-      else a.classList.remove("active");
+      const href = a.getAttribute("href") || "";
+      a.classList.toggle("active", isNavLinkActive(href, path));
+      if (isNavLinkActive(href, path)) {
+        a.setAttribute("aria-current", "page");
+      } else {
+        a.removeAttribute("aria-current");
+      }
     });
   }
 
@@ -183,6 +201,9 @@
 
   /** Re-bind sidebar controls after admin-layout injects sidebar on standalone pages. */
   function bindShellEvents() {
+    if (window.AdminNav && typeof window.AdminNav.hydrate === "function") {
+      window.AdminNav.hydrate();
+    }
     const toggle = document.getElementById("sidebarToggle");
     if (toggle && toggle.dataset.shellBound !== "1") {
       toggle.dataset.shellBound = "1";

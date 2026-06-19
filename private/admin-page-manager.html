@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=4">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 </head>
 <body data-admin-breadcrumbs="Admin,Page Manager">
@@ -63,8 +63,15 @@
       <div class="filter-group">
         <label for="statusFilter">Status</label>
         <select id="statusFilter"><option value="">All</option></select>
+      <div class="filter-group">
+        <label for="sortOrder">Sort</label>
+        <select id="sortOrder">
+          <option value="desc">Recently updated</option>
+          <option value="asc">Oldest first</option>
+        </select>
       </div>
     </div>
+    <div id="statusFilterChips" class="status-filter-chips" role="group" aria-label="Quick status filters"></div>
     <div class="page-list-panel">
       <div class="panel-head"><h3 class="panel-title">Pages</h3></div>
       <div id="pageList" class="page-list-host"></div>
@@ -80,6 +87,7 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js"></script>
 <script src="/js/admin-shell.js"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>

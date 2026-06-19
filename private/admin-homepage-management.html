@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=4">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/homepage-management.css?v=2">
 </head>
@@ -51,8 +51,9 @@
     </nav>
 
     <div class="page-list-panel hp-section" id="hp-section-breaking">
-      <div class="panel-head panel-head--stacked">
+      <div class="panel-head panel-head--stacked panel-head--with-preview">
         <h2 class="panel-title">Breaking News</h2>
+        <a class="hp-preview-link" href="/#breakingNews" target="_blank" rel="noopener">View on site ↗</a>
         <p class="panel-meta" id="breakingMeta" aria-live="polite"></p>
       </div>
       <div class="homepage-mgmt-form" id="breakingAddForm"></div>
@@ -60,8 +61,9 @@
     </div>
 
     <div class="page-list-panel hp-section" id="hp-section-badges">
-      <div class="panel-head panel-head--stacked">
+      <div class="panel-head panel-head--stacked panel-head--with-preview">
         <h2 class="panel-title">Badges</h2>
+        <a class="hp-preview-link" href="/" target="_blank" rel="noopener">View homepage ↗</a>
         <p class="panel-meta" id="badgesMeta" aria-live="polite"></p>
       </div>
       <div class="homepage-mgmt-form" id="badgesAddForm"></div>
@@ -69,9 +71,10 @@
     </div>
 
     <div class="page-list-panel hp-section" id="hp-section-small-boxes">
-      <div class="panel-head panel-head--stacked">
+      <div class="panel-head panel-head--stacked panel-head--with-preview">
         <h2 class="panel-title">Small Boxes</h2>
-        <p class="panel-meta" id="smallBoxesMeta" aria-live="polite"></p>
+        <a class="hp-preview-link" href="/#smallBoxes" target="_blank" rel="noopener">View on site ↗</a>
+        <p class="panel-meta" id="smallBoxesMeta" aria-live="polite">Drag order is controlled by slot numbers 1–4.</p>
       </div>
       <div class="homepage-mgmt-form" id="smallBoxesAssignForm"></div>
       <div id="smallBoxesList" class="page-list-host" aria-live="polite"></div>
@@ -79,6 +82,7 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js"></script>
 <script src="/js/admin-shell.js"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
