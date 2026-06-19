@@ -9,7 +9,7 @@ function setLoginLoading(loading) {
   const text = document.getElementById("loginBtnText");
   if (!btn || !text) return;
   btn.disabled = !!loading;
-  text.textContent = loading ? "Signing in..." : "Login";
+  text.textContent = loading ? "Signing in..." : "Sign in";
 }
 
 async function login() {
@@ -75,12 +75,12 @@ async function login() {
   }
 }
 
-// button
-document.getElementById("loginBtn").addEventListener("click", login);
-
-// enter
-document.addEventListener("keydown", function(e){
-  if(e.key === "Enter"){
+const loginForm = document.getElementById("loginForm");
+if (loginForm) {
+  loginForm.addEventListener("submit", function (e) {
+    e.preventDefault();
     login();
-  }
-});
+  });
+} else {
+  document.getElementById("loginBtn").addEventListener("click", login);
+}

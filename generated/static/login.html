@@ -1,40 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
+  <meta charset="UTF-8">
+  <title>Admin Login | Sarkari Suchna India</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
-<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
-<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
-  
+  <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/base/reset.css">
   <link rel="stylesheet" href="/css/base/base.css">
-  <link rel="stylesheet" href="/css/pages/login.css">
+  <link rel="stylesheet" href="/css/pages/login.css?v=2">
 </head>
-<body>
+<body class="page-login">
 
-<div class="main-container login-wrap">
-<div class="login-box">
-  <h2>Login</h2>
-  <p class="login-subtitle">Sign in to access the admin dashboard</p>
+<div class="login-page">
+  <div class="login-shell">
+    <header class="login-brand">
+      <a href="/" class="login-brand__title">Sarkari <span>Suchna</span> India</a>
+      <p class="login-brand__tagline">Admin dashboard sign in</p>
+    </header>
 
-  <label class="input-wrap">
-    <span class="input-icon" aria-hidden="true">👤</span>
-    <input id="u" placeholder="Username" autocomplete="username">
-  </label>
+    <div class="login-box">
+      <h1 class="login-box__heading">Welcome back</h1>
+      <p class="login-subtitle">Enter your credentials to continue</p>
 
-  <label class="input-wrap">
-    <span class="input-icon" aria-hidden="true">🔒</span>
-    <input id="p" placeholder="Password" type="password" autocomplete="current-password">
-  </label>
+      <form class="login-form" id="loginForm" action="#" method="post" novalidate>
+        <label class="login-field" for="u">
+          <span class="login-field__label">Username</span>
+          <input id="u" name="username" type="text" placeholder="Enter username" autocomplete="username" required>
+        </label>
 
-  <p id="loginError" class="login-error" aria-live="polite"></p>
+        <label class="login-field" for="p">
+          <span class="login-field__label">Password</span>
+          <input id="p" name="password" type="password" placeholder="Enter password" autocomplete="current-password" required>
+        </label>
 
-  <button id="loginBtn">
-    <span id="loginBtnText">Login</span>
-  </button>
-</div>
+        <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
+
+        <button type="submit" id="loginBtn" class="login-submit">
+          <span id="loginBtnText">Sign in</span>
+        </button>
+      </form>
+    </div>
+
+    <footer class="login-footer">
+      <a href="/" class="login-footer__link">← Back to Sarkari Suchna India</a>
+    </footer>
+  </div>
 </div>
 
 <script src="/js/admin-csrf.js"></script>

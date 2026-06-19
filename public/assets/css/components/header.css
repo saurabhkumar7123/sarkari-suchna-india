@@ -360,30 +360,30 @@
 /* Desktop: brand block — title, 2-line tagline, room for right section */
 @media (min-width: 769px) {
   .top-banner{
-    min-height:124px;
-    padding:16px;
+    min-height:168px;
+    padding:24px 20px;
     box-shadow:none;
   }
 
   .logo-section{
-    padding-right:148px;
-    padding-left:16px;
+    padding-right:160px;
+    padding-left:20px;
     box-sizing:border-box;
   }
 
   .title .site-brand-title{
-    font-size:36px;
+    font-size:42px;
     white-space:nowrap;
     text-shadow:none;
   }
 
   .title p{
-    font-size:13px;
+    font-size:14px;
     font-weight:400;
-    line-height:1.35;
+    line-height:1.4;
     color:#e2e8f0;
-    margin:4px auto 0;
-    max-width:min(500px, calc(100vw - 260px));
+    margin:6px auto 0;
+    max-width:min(560px, calc(100vw - 280px));
     display:-webkit-box;
     -webkit-box-orient:vertical;
     -webkit-line-clamp:2;
