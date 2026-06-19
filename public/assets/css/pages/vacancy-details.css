@@ -195,6 +195,23 @@
     margin-bottom:0;
     }
 
+    /* Tables: edge-to-edge inside section card (no side/bottom gutter) */
+    .card-content > .table-responsive{
+    margin-left:-22px;
+    margin-right:-22px;
+    margin-bottom:-18px;
+    width:calc(100% + 44px);
+    max-width:calc(100% + 44px);
+    }
+
+    .card-content > p + .table-responsive{
+    margin-top:0.35em;
+    }
+
+    .card-content > .table-responsive:first-child{
+    margin-top:0;
+    }
+
     /* ================= CONTENT LIST ================= */
     .card-content .content-list{
     margin:12px 0;
@@ -419,35 +436,35 @@
     }
 
     .rt-color{
-    font-weight:700;
+    font-weight:600;
     }
 
     .rt-color--red{
-    color:#991b1b;
+    color:#e11d48;
     }
 
     .rt-color--green{
-    color:#14532d;
+    color:#16a34a;
     }
 
     .rt-color--blue{
-    color:#163a5e;
+    color:#2563eb;
     }
 
     .rt-color--orange{
-    color:#7c2d12;
+    color:#ea580c;
     }
 
     .rt-color--purple{
-    color:#581c87;
+    color:#9333ea;
     }
 
     .rt-color--gray{
-    color:#374151;
+    color:#64748b;
     }
 
     .rt-color--yellow{
-    color:#854d0e;
+    color:#ca8a04;
     }
 
     .rt-highlight{
@@ -459,10 +476,11 @@
     
     /* ================= TABLE ================= */
     .table{
-    --table-head-bg:#1e3a5f;
-    --table-head-color:#f8fafc;
+    --table-head-from:#2563eb;
+    --table-head-to:#1e40af;
+    --table-head-color:#ffffff;
     --table-border:#d4e3f0;
-    --table-row-even:#f0f7fc;
+    --table-row-even:#f8fafc;
     --table-row-odd:#ffffff;
     width:100%;
     max-width:100%;
@@ -488,14 +506,14 @@
     }
 
     .table th{
-    background:var(--table-head-bg);
+    background:linear-gradient(135deg, var(--table-head-from) 0%, var(--table-head-to) 100%);
     color:var(--table-head-color);
     padding:10px 12px;
     font-size:15px;
     font-weight:600;
     text-align:left;
     line-height:1.4;
-    border:1px solid color-mix(in srgb, #0f766e 35%, #1e3a5f);
+    border:1px solid #1e3a8a;
     }
     
     .table td{
@@ -581,7 +599,7 @@
     }
 
     .table-responsive--wide .table th:first-child{
-    background:var(--table-head-bg);
+    background:linear-gradient(135deg, var(--table-head-from) 0%, var(--table-head-to) 100%);
     z-index:2;
     }
 
@@ -865,6 +883,14 @@
     font-size:18px;
     line-height:1.35;
     color:#ffffff;
+    }
+
+    .card-content > .table-responsive{
+    margin-left:-12px;
+    margin-right:-12px;
+    margin-bottom:-12px;
+    width:calc(100% + 24px);
+    max-width:calc(100% + 24px);
     }
     
     .date-row{
