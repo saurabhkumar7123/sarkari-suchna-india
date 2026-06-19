@@ -168,26 +168,26 @@
     box-shadow:none;
     }
     
-    /* ================= CARD HEADER (desktop — match .table th height) ================= */
+    /* ================= CARD HEADER (desktop — section label, taller bar than table th) ================= */
     .card-header{
     display:flex;
     align-items:center;
     justify-content:space-between;
     flex-wrap:wrap;
-    gap:8px;
-    margin:-18px -22px 16px;
-    padding:10px 22px;
+    gap:6px;
+    margin:-18px -22px 0;
+    padding:7px 20px;
     background:#1e3c72;
     color:#ffffff;
-    border-bottom:0;
+    border-bottom:1px solid rgba(255,255,255,0.12);
     border-radius:var(--site-radius, 14px) var(--site-radius, 14px) 0 0;
     }
     
     .card-header h2{
-    font-size:15px;
+    font-size:14px;
     margin:0;
-    font-weight:600;
-    line-height:1.4;
+    font-weight:700;
+    line-height:1.25;
     letter-spacing:-0.01em;
     color:#ffffff;
     }
@@ -211,10 +211,15 @@
     border-radius:var(--site-radius, 14px) var(--site-radius, 14px) 0 0;
     }
 
+    .card:not(:has(> .card-content > .table-responsive:first-child)):not(:has(> .card-content > .link-box:first-child)) > .card-header{
+    margin-bottom:12px;
+    border-bottom:0;
+    }
+
     .card-content p{
     margin:0 0 0.75em;
-    font-size:16px;
-    line-height:1.65;
+    font-size:15px;
+    line-height:1.55;
     font-weight:400;
     color:var(--section-body-text, #334155);
     letter-spacing:normal;
@@ -225,7 +230,7 @@
     margin-bottom:0;
     }
 
-    /* Tables: edge-to-edge inside section card (no side/bottom gutter) */
+    /* Tables sit inside section card — edge-to-edge, nested under section bar */
     .card-content > .table-responsive{
     margin-left:-22px;
     margin-right:-22px;
@@ -234,21 +239,33 @@
     max-width:calc(100% + 44px);
     }
 
+    .card-content > .table-responsive:first-child{
+    margin-top:0;
+    }
+
     .card-content > .table-responsive:not(:last-child){
-    margin-bottom:16px;
+    margin-bottom:0;
     }
 
     .card-content > .table-responsive:last-child{
     margin-bottom:-18px;
     }
 
-    .card-content > .table-responsive + p,
-    .card-content > p + .table-responsive{
-    margin-top:0.75em;
+    /* After a table: breathing room before interstitial text */
+    .card-content > .table-responsive + p{
+    margin-top:1em;
+    margin-bottom:0.4em;
+    padding-top:0.65em;
+    border-top:1px solid #e8eef4;
     }
 
-    .card-content > .table-responsive:first-child{
-    margin-top:0;
+    /* Text directly above a table = caption for the table below */
+    .card-content > p + .table-responsive{
+    margin-top:0.2em;
+    }
+
+    .card-content > p:has(+ .table-responsive){
+    margin-bottom:0.35em;
     }
 
     /* ================= CONTENT LIST ================= */
@@ -550,17 +567,17 @@
     .table th{
     background:linear-gradient(135deg, var(--table-head-from) 0%, var(--table-head-to) 100%);
     color:var(--table-head-color);
-    padding:10px 12px;
-    font-size:15px;
+    padding:6px 10px;
+    font-size:13px;
     font-weight:600;
     text-align:left;
-    line-height:1.4;
+    line-height:1.25;
     border:1px solid #1e3a8a;
     }
     
     .table td{
-    padding:10px 12px;
-    font-size:15px;
+    padding:8px 10px;
+    font-size:14px;
     border:1px solid var(--table-border);
     text-align:left;
     line-height:1.45;
@@ -935,22 +952,28 @@
     }
 
     .card-header{
-    margin:-12px -12px 12px;
-    padding:10px 12px;
+    margin:-12px -12px 0;
+    padding:6px 12px;
     background:#1e3c72;
     color:#ffffff;
+    border-bottom:1px solid rgba(255,255,255,0.12);
     border-radius:10px 10px 0 0;
     }
 
     .card-header h2{
-    font-size:18px;
-    line-height:1.35;
+    font-size:14px;
+    line-height:1.25;
     color:#ffffff;
     }
 
     .card:has(> .card-content > .table-responsive:first-child) > .card-header,
     .card:has(> .card-content > .link-box:first-child) > .card-header{
     margin-bottom:0;
+    }
+
+    .card:not(:has(> .card-content > .table-responsive:first-child)):not(:has(> .card-content > .link-box:first-child)) > .card-header{
+    margin-bottom:10px;
+    border-bottom:0;
     }
 
     .card-content > .table-responsive{
@@ -962,11 +985,20 @@
     }
 
     .card-content > .table-responsive:not(:last-child){
-    margin-bottom:12px;
+    margin-bottom:0;
     }
 
     .card-content > .table-responsive:last-child{
     margin-bottom:-12px;
+    }
+
+    .card-content > .table-responsive + p{
+    margin-top:0.85em;
+    padding-top:0.55em;
+    }
+
+    .card-content > p + .table-responsive{
+    margin-top:0.2em;
     }
     
     .date-row{
@@ -1059,9 +1091,9 @@
 
     .table th,
     .table td{
-    padding:8px 6px;
-    font-size:14px;
-    line-height:1.45;
+    padding:6px 6px;
+    font-size:13px;
+    line-height:1.35;
     }
 
     .key-fact-value--total-posts{
