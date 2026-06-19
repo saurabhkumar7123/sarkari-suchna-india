@@ -472,7 +472,24 @@ body.dark .action-bar.is-sticky-publish{
 .page-row-meta{
   font-size:12px;
   color:#64748b;
+  display:block;
 }
+
+.page-manager .page-table{
+  min-width:720px;
+}
+.page-manager .page-head,
+.page-manager .page-row{
+  grid-template-columns:36px minmax(160px,2.2fr) minmax(72px,1fr) minmax(72px,.9fr) minmax(88px,.8fr) minmax(180px,1.2fr);
+}
+.page-manager .row-actions{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:6px;
+  justify-content:flex-start;
+}
+
 .row-actions a,
 .row-action-btn{
   display:inline-flex;
@@ -485,21 +502,29 @@ body.dark .action-bar.is-sticky-publish{
   font-weight:600;
   text-decoration:none;
   border:1px solid transparent;
+  cursor:pointer;
+  white-space:nowrap;
+  font-family:inherit;
+  line-height:1.2;
 }
-.row-actions a[href*="generator"],
-.row-action-btn--edit{
+button.row-action-btn{
+  appearance:none;
+  background:#fef2f2;
+}
+.row-action-btn--edit,
+.row-actions a.row-action-btn--edit{
   background:#eff6ff;
   color:#1d4ed8;
   border-color:#bfdbfe;
 }
-.row-actions a[target="_blank"],
-.row-action-btn--view{
+.row-action-btn--view,
+.row-actions a.row-action-btn--view{
   background:#f0fdf4;
   color:#15803d;
   border-color:#bbf7d0;
 }
-.row-actions a:last-child,
-.row-action-btn--delete{
+.row-action-btn--delete,
+.row-actions .row-action-btn--delete{
   background:#fef2f2;
   color:#b91c1c;
   border-color:#fecaca;

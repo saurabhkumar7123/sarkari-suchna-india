@@ -295,13 +295,13 @@ function renderPages(pages) {
     const actions = row.querySelector(".row-actions");
     const edit = document.createElement("a");
     edit.href = "/generator?slug=" + encodeURIComponent(slug);
-    edit.className = "row-action-btn--edit";
+    edit.className = "row-action-btn row-action-btn--edit";
     edit.textContent = "Edit";
     const view = document.createElement("a");
     view.href = url;
     view.target = "_blank";
     view.rel = "noopener";
-    view.className = "row-action-btn--view";
+    view.className = "row-action-btn row-action-btn--view";
     view.textContent = "View";
     const del = document.createElement("button");
     del.type = "button";

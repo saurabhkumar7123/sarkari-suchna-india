@@ -84,3 +84,8 @@ if (loginForm) {
 } else {
   document.getElementById("loginBtn").addEventListener("click", login);
 }
+
+const usernameInput = document.getElementById("u");
+if (usernameInput) {
+  usernameInput.focus({ preventScroll: true });
+}
