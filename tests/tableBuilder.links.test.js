@@ -47,6 +47,23 @@ describe("tableBuilder table cell links", () => {
     expect(html).toContain(">Result</a>");
     expect(html).toContain('href="https://example.com/result"');
   });
+
+  test("duplicate cell values without merge markers stay separate", () => {
+    const html = buildTable("Post,Category\nConstable,General\nConstable,OBC");
+    expect(html).not.toContain("rowspan=");
+    expect(html).not.toContain("colspan=");
+    expect(html.match(/Constable/g)).toHaveLength(2);
+  });
+
+  test("colspan applies only with = marker", () => {
+    const html = buildTable("Post,Category,Posts\nConstable,General,100");
+    expect(html).not.toContain("colspan=");
+
+    const merged = buildTable("Post,Category,Posts\nConstable,General,=\n-,OBC,50");
+    expect(merged).toContain("colspan=");
+    expect(merged).toContain("General");
+    expect(merged).toContain("OBC");
+  });
 });
 
 describe("tableCellLink helpers", () => {

@@ -68,10 +68,14 @@ function analyzeJobContent(text) {
           severity: issue.severity || "warn"
         });
       }
-    } else if (hasExplicitTableMarkers(sec.content) && !sec.forceTable) {
+    } else if (
+      hasExplicitTableMarkers(sec.content) &&
+      !sec.forceTable &&
+      String(process.env.MIXED_SECTION_BLOCKS || "").trim() === "0"
+    ) {
       add(
         "MIXED_BLOCKS_FLAG_OFF",
-        `[${sec.cleanHeaderTitle}]: ---table--- markers found but MIXED_SECTION_BLOCKS is off — markers render as plain text.`,
+        `[${sec.cleanHeaderTitle}]: ---table--- markers found but MIXED_SECTION_BLOCKS=0 — markers render as plain text.`,
         { section: sec.cleanHeaderTitle, severity: "info" }
       );
     }

@@ -4,7 +4,10 @@ const TABLE_START_RE = /^---table---$/i;
 const TABLE_END_RE = /^---endtable---$/i;
 
 function isMixedSectionBlocksEnabled() {
-  return String(process.env.MIXED_SECTION_BLOCKS || "").trim() === "1";
+  const raw = String(process.env.MIXED_SECTION_BLOCKS || "").trim();
+  if (raw === "0") return false;
+  if (raw === "1") return true;
+  return null;
 }
 
 /**
@@ -18,12 +21,16 @@ function hasExplicitTableMarkers(content) {
 
 /**
  * Whether this section should use mixed block rendering.
+ * Auto-on when ---table--- markers exist (opt-out with MIXED_SECTION_BLOCKS=0).
  * @param {{ forceTable?: boolean, content?: string }} section
  */
 function shouldUseMixedSectionBlocks(section) {
-  if (!isMixedSectionBlocksEnabled()) return false;
   if (section && section.forceTable) return false;
-  return hasExplicitTableMarkers(section?.content);
+  if (!hasExplicitTableMarkers(section?.content)) return false;
+  const flag = isMixedSectionBlocksEnabled();
+  if (flag === false) return false;
+  if (flag === true) return true;
+  return true;
 }
 
 /**

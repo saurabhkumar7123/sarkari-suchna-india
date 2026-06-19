@@ -16,9 +16,9 @@ describe("sectionBlocks", () => {
     else process.env.MIXED_SECTION_BLOCKS = prevFlag;
   });
 
-  test("disabled by default", () => {
+  test("unset env returns null from isMixedSectionBlocksEnabled", () => {
     delete process.env.MIXED_SECTION_BLOCKS;
-    expect(isMixedSectionBlocksEnabled()).toBe(false);
+    expect(isMixedSectionBlocksEnabled()).toBe(null);
   });
 
   test("parses text + table + text blocks", () => {
@@ -81,11 +81,11 @@ End`;
     expect(blocks.filter((b) => b.type === "text")).toHaveLength(3);
   });
 
-  test("shouldUseMixedSectionBlocks requires flag and markers", () => {
-    process.env.MIXED_SECTION_BLOCKS = "1";
+  test("shouldUseMixedSectionBlocks auto-enables when markers present", () => {
+    delete process.env.MIXED_SECTION_BLOCKS;
     const sec = { forceTable: false, content: "---table---\nA\n---endtable---" };
     expect(shouldUseMixedSectionBlocks(sec)).toBe(true);
-    delete process.env.MIXED_SECTION_BLOCKS;
+    process.env.MIXED_SECTION_BLOCKS = "0";
     expect(shouldUseMixedSectionBlocks(sec)).toBe(false);
   });
 
@@ -118,20 +118,39 @@ Constable, General, 100
 Candidates should read official notification carefully.`;
 
   test("flag off renders markers as paragraphs (legacy)", () => {
-    delete process.env.MIXED_SECTION_BLOCKS;
+    process.env.MIXED_SECTION_BLOCKS = "0";
     const { html } = buildDynamicSectionsWithWarnings(mixedSectionText);
     expect(html).toContain("<p>UP Police recruitment");
     expect(html).not.toContain("<table");
     expect(html).toContain("---table---");
+    delete process.env.MIXED_SECTION_BLOCKS;
   });
 
-  test("flag on renders paragraph + table + paragraph", () => {
-    process.env.MIXED_SECTION_BLOCKS = "1";
+  test("auto-enables mixed blocks when markers present without env flag", () => {
+    delete process.env.MIXED_SECTION_BLOCKS;
     const { html } = buildDynamicSectionsWithWarnings(mixedSectionText);
-    expect(html).toContain("<p>UP Police recruitment");
     expect(html).toContain("<table");
-    expect(html).toContain("Constable");
-    expect(html).toContain("<p>Candidates should read");
+    expect(html).not.toContain("---table---");
+  });
+
+  test("renders text between two table blocks separately", () => {
+    delete process.env.MIXED_SECTION_BLOCKS;
+    const text = `[Section: SSC Delhi Police Constable Recruitment 2025 - Vacancy Details]
+---table---
+Post Name, No. Of Post
+Delhi Police Constable, 7201
+---endtable---
+abcd
+---table---
+Post Name, Eligibility Criteria
+Delhi Police Constable, Candidate must have 10+2
+---endtable---`;
+    const { html } = buildDynamicSectionsWithWarnings(text);
+    const tableCount = (html.match(/<table/g) || []).length;
+    expect(tableCount).toBe(2);
+    expect(html).toContain(">abcd<");
+    expect(html).toContain("7201");
+    expect(html).toContain("Eligibility Criteria");
     expect(html).not.toContain("---table---");
   });
 

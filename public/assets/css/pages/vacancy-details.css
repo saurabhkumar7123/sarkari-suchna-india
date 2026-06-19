@@ -229,13 +229,22 @@
     .card-content > .table-responsive{
     margin-left:-22px;
     margin-right:-22px;
-    margin-bottom:-18px;
+    margin-bottom:0;
     width:calc(100% + 44px);
     max-width:calc(100% + 44px);
     }
 
+    .card-content > .table-responsive:not(:last-child){
+    margin-bottom:16px;
+    }
+
+    .card-content > .table-responsive:last-child{
+    margin-bottom:-18px;
+    }
+
+    .card-content > .table-responsive + p,
     .card-content > p + .table-responsive{
-    margin-top:0.35em;
+    margin-top:0.75em;
     }
 
     .card-content > .table-responsive:first-child{
@@ -947,9 +956,17 @@
     .card-content > .table-responsive{
     margin-left:-12px;
     margin-right:-12px;
-    margin-bottom:-12px;
+    margin-bottom:0;
     width:calc(100% + 24px);
     max-width:calc(100% + 24px);
+    }
+
+    .card-content > .table-responsive:not(:last-child){
+    margin-bottom:12px;
+    }
+
+    .card-content > .table-responsive:last-child{
+    margin-bottom:-12px;
     }
     
     .date-row{

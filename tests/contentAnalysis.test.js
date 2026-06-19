@@ -38,14 +38,27 @@ Outro`;
     delete process.env.MIXED_SECTION_BLOCKS;
   });
 
-  test("warns when markers present but flag off", () => {
-    delete process.env.MIXED_SECTION_BLOCKS;
+  test("warns when markers present but explicitly opted out", () => {
+    process.env.MIXED_SECTION_BLOCKS = "0";
     const text = `[Section: Vacancy]
 ---table---
 A, B
 ---endtable---`;
     const a = analyzeJobContent(text);
     expect(a.warnings.some((w) => w.code === "MIXED_BLOCKS_FLAG_OFF")).toBe(true);
+    delete process.env.MIXED_SECTION_BLOCKS;
+  });
+
+  test("auto-enables mixed blocks without env flag", () => {
+    delete process.env.MIXED_SECTION_BLOCKS;
+    const text = `[Section: Vacancy]
+---table---
+A, B
+1, 2
+---endtable---`;
+    const a = analyzeJobContent(text);
+    expect(a.sections[0].renderMode).toBe("mixed_blocks");
+    expect(a.warnings.some((w) => w.code === "MIXED_BLOCKS_FLAG_OFF")).toBe(false);
   });
 
   test("warns when comma rows do not form a safe auto table", () => {
