@@ -60,7 +60,7 @@ A: Sample answer.`,
     expect(html).toContain('normalizeSectionKey("important dates")');
     expect(html).not.toContain('byLabel["ImportantDates"]');
     expect(html).toContain("vacancy-details.css?v=35");
-    expect(html).toContain("main.min.css?v=18");
+    expect(html).toContain("main.min.css?v=19");
     expect(html).toContain('<body class="page-vacancy">');
   });
 });
