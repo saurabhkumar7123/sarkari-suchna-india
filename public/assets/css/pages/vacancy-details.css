@@ -181,6 +181,13 @@
     display:none;
     }
 
+    /* Flush table/links directly under section title bar */
+    .card:has(> .card-content > .table-responsive:first-child) > .card-header,
+    .card:has(> .card-content > .link-box:first-child) > .card-header{
+    margin-bottom:0;
+    border-radius:var(--site-radius, 14px) var(--site-radius, 14px) 0 0;
+    }
+
     .card-content p{
     margin:0 0 0.75em;
     font-size:16px;
@@ -280,9 +287,12 @@
     /* ================= LINKS ================= */
     .links-grid,
     .card-content:has(> .link-box){
-    margin-top:10px;
-    border:1px solid var(--vac-border);
-    border-radius:var(--site-radius-sm);
+    margin:0 -22px -18px;
+    width:calc(100% + 44px);
+    max-width:calc(100% + 44px);
+    border:0;
+    border-top:1px solid var(--vac-border);
+    border-radius:0;
     background:var(--bg1);
     overflow:hidden;
     }
@@ -615,15 +625,16 @@
     .related-section{
     background:var(--section-body-bg, var(--site-surface, #ffffff));
     border-radius:var(--site-radius, 14px);
-    padding:18px 22px;
+    padding:0;
     margin:0 0 24px;
     border:1px solid var(--vac-border);
     border-left:4px solid var(--primary);
     box-shadow:none;
+    overflow:hidden;
     }
 
     .related-header{
-    margin:-18px -22px 16px;
+    margin:0;
     padding:12px 22px;
     background:#1e3c72;
     color:#ffffff;
@@ -643,14 +654,28 @@
     .related-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:12px;
+    gap:0;
     }
-    
+
     .related-card{
-    padding:14px;
-    border-radius:8px;
-    background:#f8fbff;
-    border:1px solid #e4e9f2;
+    padding:12px 14px;
+    border-radius:0;
+    background:#ffffff;
+    border:0;
+    border-right:1px solid #e2e8f0;
+    border-bottom:1px solid #e2e8f0;
+    }
+
+    .related-card:nth-child(2n){
+    border-right:0;
+    }
+
+    .related-card:nth-last-child(-n+2){
+    border-bottom:0;
+    }
+
+    .related-card:nth-last-child(1):nth-child(odd){
+    border-bottom:0;
     }
     
     .related-card a{
@@ -885,6 +910,11 @@
     color:#ffffff;
     }
 
+    .card:has(> .card-content > .table-responsive:first-child) > .card-header,
+    .card:has(> .card-content > .link-box:first-child) > .card-header{
+    margin-bottom:0;
+    }
+
     .card-content > .table-responsive{
     margin-left:-12px;
     margin-right:-12px;
@@ -898,7 +928,15 @@
     }
 
     .links-grid{
-    margin-top:8px;
+    margin:0 -12px -12px;
+    width:calc(100% + 24px);
+    max-width:calc(100% + 24px);
+    }
+
+    .card-content:has(> .link-box){
+    margin:0 -12px -12px;
+    width:calc(100% + 24px);
+    max-width:calc(100% + 24px);
     }
     
     .link-box{
@@ -927,13 +965,25 @@
     grid-template-columns:1fr;
     }
 
+    .related-card{
+    border-right:0;
+    }
+
+    .related-card:not(:last-child){
+    border-bottom:1px solid #e2e8f0;
+    }
+
+    .related-card:last-child{
+    border-bottom:0;
+    }
+
     .related-section{
-    padding:14px 12px;
+    padding:0;
     margin:0 0 20px;
     }
 
     .related-header{
-    margin:-14px -12px 12px;
+    margin:0;
     padding:10px 12px;
     background:#1e3c72;
     color:#ffffff;
