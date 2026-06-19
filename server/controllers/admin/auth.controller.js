@@ -17,6 +17,7 @@ const memoryRefreshByJti = new Map();
 const memoryLatestJtiBySid = new Map();
 const memoryUserSessions = new Map();
 let hasLoggedProdRedisUnavailable = false;
+let authLocalBypass = false;
 
 if (!Number.isFinite(MAX_ACTIVE_SESSIONS_PER_USER) || MAX_ACTIVE_SESSIONS_PER_USER < 1) {
   throw new Error("MAX_ACTIVE_SESSIONS_PER_USER must be a positive integer");
@@ -99,7 +100,7 @@ function hasRedisStore() {
 
 function assertAuthStoreAvailableOrThrow() {
   if (hasRedisStore()) return;
-  if (IS_PROD) {
+  if (IS_PROD && !authLocalBypass) {
     if (!hasLoggedProdRedisUnavailable) {
       hasLoggedProdRedisUnavailable = true;
       logger.error("auth: Redis unavailable in production; rejecting authentication operations");
@@ -111,7 +112,19 @@ function assertAuthStoreAvailableOrThrow() {
 }
 
 function canUseMemoryFallback() {
-  return IS_DEV && !hasRedisStore();
+  return (IS_DEV || authLocalBypass) && !hasRedisStore();
+}
+
+function withAuthLocalBypass(req, fn) {
+  const hostName = String((req && req.headers && req.headers.host) || "").split(":")[0];
+  const useLocalBypass = isLocalHostName(hostName);
+  if (!useLocalBypass) return fn();
+  authLocalBypass = true;
+  return Promise.resolve()
+    .then(fn)
+    .finally(() => {
+      authLocalBypass = false;
+    });
 }
 
 async function saveRefreshState({ sid, jti, username, ttlSec }) {
@@ -339,12 +352,65 @@ async function listActiveUserSids(username) {
   return redis.zRange(keyUserSessions, 0, -1);
 }
 
-exports.login = async (req, res) => {
-  const { username, password } = req.body;
+async function issueAdminSession(req, res, username) {
   const accessTtlSec = parseExpiresToSeconds(ACCESS_TOKEN_EXPIRES_IN, 15 * 60);
   const refreshTtlSec = parseExpiresToSeconds(REFRESH_TOKEN_EXPIRES_IN, 7 * 24 * 60 * 60);
-  const requestOrigin = String((req.headers && req.headers.origin) || "");
-  const requestHost = String((req.headers && req.headers.host) || "");
+  const sid = newTokenId();
+  const refreshJti = newTokenId();
+
+  const accessToken = jwt.sign(
+    { username, type: "access", sid },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
+  );
+  const refreshToken = jwt.sign(
+    { username, type: "refresh", sid, jti: refreshJti },
+    process.env.JWT_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+  );
+
+  try {
+    await withAuthLocalBypass(req, async () => {
+      await saveRefreshState({ sid, jti: refreshJti, username, ttlSec: refreshTtlSec });
+      await saveSessionState({ sid, username, ttlSec: refreshTtlSec });
+      await setSessionMetadata({
+        sid,
+        ttlSec: refreshTtlSec,
+        ip: req.ip,
+        userAgent: String(req.headers["user-agent"] || ""),
+        createdAt: new Date().toISOString()
+      });
+      await registerActiveUserSession({ username, sid, refreshTtlSec });
+    });
+  } catch (err) {
+    if (err && err.code === "AUTH_STORE_UNAVAILABLE") {
+      return res.status(503).json({ status: "error", message: "Authentication temporarily unavailable" });
+    }
+    throw err;
+  }
+
+  res.cookie("token", accessToken, getCookieOptions(req, accessTtlSec * 1000));
+  res.cookie("access_token", accessToken, getCookieOptions(req, accessTtlSec * 1000));
+  res.cookie("refresh_token", refreshToken, getCookieOptions(req, refreshTtlSec * 1000));
+  logger.info("auth: login success", {
+    requestId: req.id || "",
+    route: req.path,
+    status: "success",
+    secureCookie: shouldUseSecureCookies(req)
+  });
+  await recordActivity({
+    admin: username,
+    action: "login",
+    status: "success",
+    ip: req.ip,
+    userAgent: String(req.headers["user-agent"] || ""),
+    requestId: req.id || ""
+  }).catch(() => {});
+  return res.json({ status: "success" });
+}
+
+exports.login = async (req, res) => {
+  const { username, password } = req.body;
   if (AUTH_DEBUG_LOGS) {
     logger.info("auth-debug: login request received", {
       requestId: req.id || "",
@@ -374,56 +440,33 @@ exports.login = async (req, res) => {
     });
   }
 
-  const sid = newTokenId();
-  const refreshJti = newTokenId();
+  return issueAdminSession(req, res, username);
+};
 
-  const accessToken = jwt.sign(
-    { username, type: "access", sid },
-    process.env.JWT_SECRET,
-    { expiresIn: ACCESS_TOKEN_EXPIRES_IN }
-  );
-  const refreshToken = jwt.sign(
-    { username, type: "refresh", sid, jti: refreshJti },
-    process.env.JWT_SECRET,
-    { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
-  );
-
-  try {
-    await saveRefreshState({ sid, jti: refreshJti, username, ttlSec: refreshTtlSec });
-    await saveSessionState({ sid, username, ttlSec: refreshTtlSec });
-    await setSessionMetadata({
-      sid,
-      ttlSec: refreshTtlSec,
-      ip: req.ip,
-      userAgent: String(req.headers["user-agent"] || ""),
-      createdAt: new Date().toISOString()
-    });
-    await registerActiveUserSession({ username, sid, refreshTtlSec });
-  } catch (err) {
-    if (err && err.code === "AUTH_STORE_UNAVAILABLE") {
-      return res.status(503).json({ status: "error", message: "Authentication temporarily unavailable" });
-    }
-    throw err;
+/** Local machine only — skip password on /login. Live site always 404 (non-local Host). */
+exports.devAutoLogin = async (req, res) => {
+  if (process.env.NODE_ENV === "test") {
+    return res.status(404).json({ success: false, message: "Not found" });
   }
-
-  res.cookie("token", accessToken, getCookieOptions(req, accessTtlSec * 1000)); // backward-compat
-  res.cookie("access_token", accessToken, getCookieOptions(req, accessTtlSec * 1000));
-  res.cookie("refresh_token", refreshToken, getCookieOptions(req, refreshTtlSec * 1000));
-  logger.info("auth: login success", {
-    requestId: req.id || "",
-    route: req.path,
-    status: "success",
-    secureCookie: shouldUseSecureCookies(req)
-  });
-  await recordActivity({
-    admin: username,
-    action: "login",
-    status: "success",
-    ip: req.ip,
-    userAgent: String(req.headers["user-agent"] || ""),
-    requestId: req.id || ""
-  }).catch(() => {});
-  res.json({ status: "success" });
+  const hostName = String((req.headers && req.headers.host) || "").split(":")[0];
+  if (!isLocalHostName(hostName)) {
+    return res.status(404).json({ success: false, message: "Not found" });
+  }
+  if (String(process.env.ADMIN_DEV_AUTO_LOGIN || "1").trim() === "0") {
+    return res.status(403).json({ status: "error", message: "Dev auto login disabled" });
+  }
+  const username = String(process.env.ADMIN_USER || "").trim();
+  if (!username) {
+    return res.status(500).json({ status: "error", message: "ADMIN_USER not configured" });
+  }
+  if (AUTH_DEBUG_LOGS) {
+    logger.info("auth-debug: dev auto login", {
+      requestId: req.id || "",
+      route: req.path,
+      username
+    });
+  }
+  return issueAdminSession(req, res, username);
 };
 
 exports.refresh = async (req, res) => {

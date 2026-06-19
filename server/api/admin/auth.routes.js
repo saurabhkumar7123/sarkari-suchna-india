@@ -92,6 +92,13 @@ router.post(
   asyncHandler(authController.login)
 );
 
+router.post(
+  "/dev-auto-login",
+  enforceOriginConsistency,
+  logCsrfPair,
+  asyncHandler(authController.devAutoLogin)
+);
+
 // CSRF token is needed both for authenticated admin actions and refresh-cookie rotation.
 router.get("/csrf-token", enforceOriginConsistency, logCsrfPair, csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });

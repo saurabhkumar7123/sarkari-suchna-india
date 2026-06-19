@@ -28,11 +28,6 @@ async function login() {
     if (typeof window.getAdminCsrfToken === "function") {
       await window.getAdminCsrfToken({ forceRefresh: true });
     }
-    console.log("[auth-debug] login submit", {
-      origin: window.location.origin,
-      endpoint: "/api/admin/login",
-      credentialsMode: "include"
-    });
     const requestOptions = {
       method: "POST",
       headers: {
@@ -44,11 +39,6 @@ async function login() {
     const res = typeof window.fetchAdminWithCsrf === "function"
       ? await window.fetchAdminWithCsrf("/api/admin/login", requestOptions)
       : await fetch("/api/admin/login", requestOptions);
-    console.log("[auth-debug] login response", {
-      status: res.status,
-      ok: res.ok,
-      responseType: res.type
-    });
     if (res.status === 403) {
       setLoginError("Security check failed. Please refresh and try again.");
       if (typeof window.resetAdminCsrfToken === "function") {
@@ -85,7 +75,9 @@ if (loginForm) {
   document.getElementById("loginBtn").addEventListener("click", login);
 }
 
-const usernameInput = document.getElementById("u");
-if (usernameInput) {
-  usernameInput.focus({ preventScroll: true });
-}
+document.addEventListener("DOMContentLoaded", () => {
+  const usernameInput = document.getElementById("u");
+  if (usernameInput) {
+    usernameInput.focus({ preventScroll: true });
+  }
+});
