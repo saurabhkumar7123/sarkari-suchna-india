@@ -51,6 +51,17 @@ async function enqueueSiteCheckJob(site, queuePriority) {
       });
       return { skipped: true, jobId, state };
     }
+
+    if (["completed", "failed"].includes(state)) {
+      logger.info("updates: removing terminal site job before re-enqueue", {
+        siteId,
+        siteName: site?.name,
+        jobId,
+        state
+      });
+
+      await existingJob.remove();
+    }
   }
 
   await siteCheckQueue.add(
@@ -71,6 +82,18 @@ async function enqueueSiteCheckJob(site, queuePriority) {
       priority: queuePriority
     }
   );
+
+  const addedJob = await siteCheckQueue.getJob(jobId);
+  const addedState = addedJob
+    ? await addedJob.getState().catch(() => "unknown")
+    : "missing";
+
+  logger.info("updates: site job queued", {
+    siteId,
+    siteName: site?.name,
+    jobId,
+    state: addedState
+  });
 
   return { skipped: false, jobId, state: "enqueued" };
 }
