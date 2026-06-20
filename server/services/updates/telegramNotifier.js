@@ -55,9 +55,14 @@ async function sendTelegramMessage(text) {
   } catch (err) {
     const status = err && err.response ? err.response.status : null;
     const body = err && err.response ? err.response.data : null;
-    console.warn("Telegram error:", body || (err && err.message ? err.message : String(err)));
+    const causeMessage =
+      err && err.cause && err.cause.message ? err.cause.message : null;
+    console.warn("Telegram error:", body || causeMessage || (err && err.message ? err.message : String(err)));
     logger.error("updates: telegram send failed", {
       status,
+      code: err && err.code ? err.code : null,
+      name: err && err.name ? err.name : null,
+      cause: causeMessage,
       message: err && err.message ? err.message : String(err),
       body
     });

@@ -82,17 +82,19 @@ async function processSiteJob(job) {
       await markSiteChecked(siteId).catch(() => null);
       const failure = await incrementSiteFailure(siteId);
       if (failure.shouldWarn && !(await isInCooldown(siteId, COOLDOWN_MINUTES))) {
-        await sendTelegramMessage(
+        const tg = await sendTelegramMessage(
           buildPreDisableWarningMessage({
             siteName: site.name,
             failCount: failure.next,
             threshold: FAIL_DISABLE_THRESHOLD
           })
         );
-        await markAlertSent(siteId);
+        if (tg && tg.sent === true) {
+          await markAlertSent(siteId);
+        }
       }
       if (!(await isInCooldown(siteId, COOLDOWN_MINUTES))) {
-        await sendTelegramMessage(
+        const tg = await sendTelegramMessage(
           buildSelectorIssueMessage({
             siteName: site.name,
             siteUrl: site.url,
@@ -100,7 +102,9 @@ async function processSiteJob(job) {
             reason: result.reason
           })
         );
-        await markAlertSent(siteId);
+        if (tg && tg.sent === true) {
+          await markAlertSent(siteId);
+        }
       }
       logger.info("updates-worker: check failed", { siteId, reason: result.reason });
       return { changed: false, invalid: true, reason: result.reason };
@@ -154,11 +158,6 @@ async function processSiteJob(job) {
         continue;
       }
 
-      await insertDetectedUpdate({
-        siteId,
-        title: item.title || "New update",
-        link: item.link || ""
-      });
       pendingBatch.push({
         siteName: site.name,
         title: item.title,
@@ -173,16 +172,32 @@ async function processSiteJob(job) {
       return { changed: false, duplicatesOnly: true };
     }
 
+    let telegramResult;
+    if (pendingBatch.length === 1) {
+      telegramResult = await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
+    } else {
+      telegramResult = await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
+    }
+
+    if (!telegramResult || telegramResult.sent !== true) {
+      logger.warn("updates-worker: telegram delivery failed; preserving state for retry", {
+        siteId,
+        skipped: Boolean(telegramResult && telegramResult.skipped)
+      });
+      return { changed: true, savedCount, telegramFailed: true };
+    }
+
+    for (const item of pendingBatch) {
+      await insertDetectedUpdate({
+        siteId,
+        title: item.title || "New update",
+        link: item.link || ""
+      });
+    }
     if (result.baselineFingerprint) {
       await saveSiteBaseline(siteId, result.baselineFingerprint);
     }
     await markAlertSent(siteId);
-
-    if (pendingBatch.length === 1) {
-      await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
-    } else if (pendingBatch.length > 1) {
-      await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
-    }
 
     logger.info("updates-worker: update alert sent", {
       jobId: job.id,
@@ -194,14 +209,16 @@ async function processSiteJob(job) {
     await markSiteChecked(siteId).catch(() => null);
     const failure = await incrementSiteFailure(siteId).catch(() => null);
     if (failure && failure.shouldWarn && !(await isInCooldown(siteId, COOLDOWN_MINUTES))) {
-      await sendTelegramMessage(
+      const tg = await sendTelegramMessage(
         buildPreDisableWarningMessage({
           siteName: site.name,
           failCount: failure.next,
           threshold: FAIL_DISABLE_THRESHOLD
         })
       ).catch(() => null);
-      await markAlertSent(siteId).catch(() => null);
+      if (tg && tg.sent === true) {
+        await markAlertSent(siteId).catch(() => null);
+      }
     }
 
     logger.error("updates-worker: job failed", {
