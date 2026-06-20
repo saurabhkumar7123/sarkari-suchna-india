@@ -41,17 +41,32 @@ async function ensureTables() {
   logger.warn("updates: ensured monitored_sites/updates tables");
 
   // Backward compatible schema upgrades for existing installations.
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS base_url TEXT NULL`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS last_content TEXT NULL`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS last_alert_at DATETIME NULL`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS fail_count INT NOT NULL DEFAULT 0`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS broken TINYINT(1) NOT NULL DEFAULT 0`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS priority INT NOT NULL DEFAULT 1`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS next_retry_at DATETIME NULL`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS pre_disable_warned TINYINT(1) NOT NULL DEFAULT 0`);
-  await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN IF NOT EXISTS restored_at DATETIME NULL`);
+  await ensureColumn("base_url", "TEXT NULL");
+  await ensureColumn("is_active", "TINYINT(1) NOT NULL DEFAULT 1");
+  await ensureColumn("last_content", "TEXT NULL");
+  await ensureColumn("last_alert_at", "DATETIME NULL");
+  await ensureColumn("fail_count", "INT NOT NULL DEFAULT 0");
+  await ensureColumn("broken", "TINYINT(1) NOT NULL DEFAULT 0");
+  await ensureColumn("priority", "INT NOT NULL DEFAULT 1");
+  await ensureColumn("next_retry_at", "DATETIME NULL");
+  await ensureColumn("pre_disable_warned", "TINYINT(1) NOT NULL DEFAULT 0");
+  await ensureColumn("restored_at", "DATETIME NULL");
   await ensureLastCheckedAtColumn();
+}
+
+async function ensureColumn(columnName, columnDefinition) {
+  const [rows] = await db.query(
+    `SELECT 1 AS ok FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?
+     LIMIT 1`,
+    [SITES_TABLE, columnName]
+  );
+  if (rows.length) return;
+  try {
+    await db.query(`ALTER TABLE ${SITES_TABLE} ADD COLUMN ${columnName} ${columnDefinition}`);
+  } catch (err) {
+    if (err && err.code !== "ER_DUP_FIELDNAME") throw err;
+  }
 }
 
 async function ensureLastCheckedAtColumn() {
