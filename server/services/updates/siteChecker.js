@@ -2,6 +2,11 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const crypto = require("crypto");
 const logger = require("../../utils/logger");
+const {
+  isSscApiEnabled,
+  isSscApiSite,
+  extractSscNoticeItems
+} = require("./sscNoticeChecker");
 
 function normalizeText(value) {
   return String(value || "")
@@ -113,10 +118,15 @@ async function checkSite(site) {
     hasBaseline: Boolean(String(site.lastContent || "").trim())
   });
 
-  const html = await fetchHtml(site.url);
-  logger.info("updates: fetched html", { siteId: site.id, bytes: html.length });
-
-  const extracted = extractLatestItems(html, site);
+  let extracted;
+  if (isSscApiEnabled() && isSscApiSite(site)) {
+    logger.info("updates: using SSC API handler", { siteId: site.id, name: site.name });
+    extracted = await extractSscNoticeItems(site, { buildSignature, normalizeText });
+  } else {
+    const html = await fetchHtml(site.url);
+    logger.info("updates: fetched html", { siteId: site.id, bytes: html.length });
+    extracted = extractLatestItems(html, site);
+  }
   if (!extracted) {
     return { changed: false, reason: "selector_miss", invalid: true };
   }

@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, "../../../.env") });
 
 const { Worker } = require("bullmq");
 const logger = require("../../utils/logger");
