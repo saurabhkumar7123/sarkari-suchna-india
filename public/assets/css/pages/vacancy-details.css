@@ -332,6 +332,26 @@
     font-weight:500;
     font-style:italic;
     }
+
+    /* Desktop: 2-column label/value (Important Dates, Fee, Age Limit) — mobile untouched */
+    @media (min-width: 769px) {
+    .date-row{
+    display:grid;
+    grid-template-columns:minmax(0, 58%) minmax(0, 42%);
+    column-gap:28px;
+    justify-content:unset;
+    align-items:start;
+    }
+
+    .date-label{
+    padding-right:14px;
+    }
+
+    .date-value{
+    padding-left:10px;
+    text-align:left;
+    }
+    }
     
     /* ================= LINKS ================= */
     .links-grid,
@@ -342,7 +362,7 @@
     border:0;
     border-top:1px solid var(--vac-border);
     border-radius:0;
-    background:var(--bg1);
+    background:#f8fafc;
     overflow:hidden;
     }
 
@@ -535,10 +555,11 @@
     
     /* ================= TABLE ================= */
     .table{
-    --table-head-from:#2563eb;
-    --table-head-to:#1e40af;
+    --table-head-from:#4cb88a;
+    --table-head-mid:#3da67a;
+    --table-head-to:#2f946b;
     --table-head-color:#ffffff;
-    --table-border:#d4e3f0;
+    --table-border:#dcefe6;
     --table-row-even:#f8fafc;
     --table-row-odd:#ffffff;
     width:100%;
@@ -565,14 +586,21 @@
     }
 
     .table th{
-    background:linear-gradient(135deg, var(--table-head-from) 0%, var(--table-head-to) 100%);
+    background:linear-gradient(
+    135deg,
+    var(--table-head-from) 0%,
+    var(--table-head-mid) 52%,
+    var(--table-head-to) 100%
+    );
     color:var(--table-head-color);
     padding:6px 10px;
     font-size:13px;
     font-weight:600;
     text-align:left;
     line-height:1.25;
-    border:1px solid #1e3a8a;
+    border:1px solid #2a8a62;
+    letter-spacing:-0.01em;
+    text-shadow:0 1px 0 rgba(0,0,0,0.06);
     }
     
     .table td{
@@ -658,7 +686,12 @@
     }
 
     .table-responsive--wide .table th:first-child{
-    background:linear-gradient(135deg, var(--table-head-from) 0%, var(--table-head-to) 100%);
+    background:linear-gradient(
+    135deg,
+    var(--table-head-from) 0%,
+    var(--table-head-mid) 52%,
+    var(--table-head-to) 100%
+    );
     z-index:2;
     }
 
