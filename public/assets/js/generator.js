@@ -1897,54 +1897,77 @@ function setPdfUploadStatus(message, isError = false) {
   const status = document.getElementById("pdfUploadStatus");
   if (!status) return;
   status.textContent = String(message || "").trim();
-  status.style.color = isError ? "#dc2626" : "#16a34a";
+  status.classList.toggle("is-error", Boolean(isError));
+}
+
+function formatPdfFileSize(bytes) {
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function updatePdfSelectedFileName(file) {
   const nameEl = document.getElementById("pdfSelectedName");
+  const sizeEl = document.getElementById("pdfFileSize");
   if (!nameEl) return;
   if (!file) {
     nameEl.textContent = "No file selected";
+    if (sizeEl) sizeEl.textContent = "—";
     return;
   }
   nameEl.textContent = file.name;
+  nameEl.title = file.name;
+  if (sizeEl) sizeEl.textContent = formatPdfFileSize(file.size);
 }
 
 function setupPdfUploadUi() {
   const input = document.getElementById("pdfFile");
   const zone = document.getElementById("pdfDropZone");
+  const bar = document.getElementById("pdfExtractBar");
   if (!input || !zone) return;
+
+  const setDragActive = (on) => {
+    zone.classList.toggle("drag-active", on);
+    bar?.classList.toggle("drag-active", on);
+  };
 
   input.addEventListener("change", () => {
     updatePdfSelectedFileName(input.files && input.files[0] ? input.files[0] : null);
     setPdfUploadStatus("");
   });
 
-  ["dragenter", "dragover"].forEach((evt) => {
-    zone.addEventListener(evt, (e) => {
-      e.preventDefault();
-      zone.classList.add("drag-active");
+  const bindDrag = (el) => {
+    if (!el) return;
+    ["dragenter", "dragover"].forEach((evt) => {
+      el.addEventListener(evt, (e) => {
+        e.preventDefault();
+        setDragActive(true);
+      });
     });
-  });
-  ["dragleave", "drop"].forEach((evt) => {
-    zone.addEventListener(evt, (e) => {
-      e.preventDefault();
-      zone.classList.remove("drag-active");
+    ["dragleave", "drop"].forEach((evt) => {
+      el.addEventListener(evt, (e) => {
+        e.preventDefault();
+        setDragActive(false);
+      });
     });
-  });
+    el.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (!dt || !dt.files || !dt.files.length) return;
+      const file = dt.files[0];
+      if (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf") {
+        setPdfUploadStatus("PDF only", true);
+        return;
+      }
+      input.files = dt.files;
+      updatePdfSelectedFileName(file);
+      setPdfUploadStatus("Ready to extract");
+    });
+  };
 
-  zone.addEventListener("drop", (e) => {
-    const dt = e.dataTransfer;
-    if (!dt || !dt.files || !dt.files.length) return;
-    const file = dt.files[0];
-    if (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf") {
-      setPdfUploadStatus("Only PDF files are allowed", true);
-      return;
-    }
-    input.files = dt.files;
-    updatePdfSelectedFileName(file);
-    setPdfUploadStatus("PDF selected");
-  });
+  bindDrag(zone);
+  bindDrag(bar);
 }
 
 async function extractPDF() {
@@ -1952,16 +1975,16 @@ async function extractPDF() {
   const uploadBtn = document.getElementById("pdfUploadBtn");
   if (!file) {
     setGeneratorFeedback("error", "PDF extract failed", { detailsHtml: "Choose a PDF first." });
-    setPdfUploadStatus("Choose a PDF first", true);
+    setPdfUploadStatus("Choose PDF first", true);
     return;
   }
 
+  const runExtract = async () => {
   const formData = new FormData();
   formData.append("pdf", file);
 
   console.info("Uploading PDF, size:", file.size);
-  console.log("Method:", "POST");
-  setPdfUploadStatus("Uploading...");
+  setPdfUploadStatus("Extracting…");
   if (uploadBtn) uploadBtn.disabled = true;
 
   try {
@@ -2046,10 +2069,12 @@ async function extractPDF() {
     }
     console.log("[PDF extract] assigned to #data, length:", dataEl ? String(dataEl.value || "").length : 0);
     syncAiConvertButton();
-    setPdfUploadStatus("PDF extracted successfully");
+    setPdfUploadStatus("Extracted ✓");
     if (data.extractionNote) {
       console.info("[PDF extract]", data.extractionNote);
     }
+    document.getElementById("data")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.AdminUI?.toastSuccess?.("PDF text added to editor");
   } catch (e) {
     console.error(e);
     setGeneratorFeedback("error", "Network error", {
@@ -2058,6 +2083,13 @@ async function extractPDF() {
     setPdfUploadStatus("Network error", true);
   } finally {
     if (uploadBtn) uploadBtn.disabled = false;
+  }
+  };
+
+  if (window.AdminUI && window.AdminUI.withLoading && uploadBtn) {
+    await window.AdminUI.withLoading(uploadBtn, runExtract, "Extracting…");
+  } else {
+    await runExtract();
   }
 }
 

@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/generator.css">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
@@ -242,6 +242,30 @@
         <span id="charCount">0 chars</span>
       </div>
     </div>
+
+    <div class="pdf-extract-bar" id="pdfExtractBar">
+      <div class="pdf-extract-bar__intro">
+        <span class="pdf-extract-bar__icon" aria-hidden="true">📄</span>
+        <div class="pdf-extract-bar__copy">
+          <strong>PDF Extract</strong>
+          <span>Upload a recruitment PDF to fill the editor below</span>
+        </div>
+      </div>
+      <form id="pdfExtractForm" class="pdf-extract-bar__form" action="#" autocomplete="off">
+        <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
+        <label for="pdfFile" id="pdfDropZone" class="pdf-extract-drop" title="Choose or drop PDF">
+          <span class="pdf-extract-drop__ico" aria-hidden="true">⤴</span>
+          <span class="pdf-extract-drop__text">Choose PDF</span>
+        </label>
+        <div class="pdf-extract-bar__meta">
+          <span id="pdfSelectedName" class="pdf-extract-file" title="Selected file">No file selected</span>
+          <span id="pdfFileSize" class="pdf-extract-size">—</span>
+        </div>
+        <span id="pdfUploadStatus" class="pdf-extract-status" aria-live="polite"></span>
+        <button type="button" id="pdfUploadBtn" class="pdf-extract-btn">Extract text</button>
+      </form>
+    </div>
+
     <div class="editor-toolbar">
       <span>Structured editor</span>
       <span>Auto-saves draft</span>
@@ -283,26 +307,6 @@
 
 <div id="result"></div>
 
-<section class="pdf-upload-card">
-  <div class="pdf-upload-header">
-    <h3>PDF Extract Upload</h3>
-    <p>Upload recruitment PDF to auto-fill page content</p>
-  </div>
-  <form id="pdfExtractForm" class="pdf-extract-form" action="#" autocomplete="off">
-    <input type="file" id="pdfFile" accept="application/pdf" hidden>
-    <label for="pdfFile" id="pdfDropZone" class="pdf-drop-zone">
-      <div class="pdf-drop-icon" aria-hidden="true">📄</div>
-      <p class="pdf-drop-title">Click to upload PDF</p>
-      <p class="pdf-drop-subtitle">or drag &amp; drop here</p>
-    </label>
-    <div class="pdf-upload-meta">
-      <span id="pdfSelectedName" class="pdf-file-name">No file selected</span>
-      <span id="pdfUploadStatus" class="pdf-upload-status" aria-live="polite"></span>
-    </div>
-    <button type="button" id="pdfUploadBtn" class="pdf-upload-btn">Upload PDF</button>
-  </form>
-</section>
-
 </div>
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
@@ -318,6 +322,6 @@
 <script src="/js/admin-seo-checklist.js"></script>
 <script src="/js/admin-generator-ui.js"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/generator.js"></script>
+<script src="/js/generator.js?v=2"></script>
 </body>
 </html>
