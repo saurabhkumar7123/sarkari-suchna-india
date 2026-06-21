@@ -1,31 +1,48 @@
 .breadcrumb {
   font-size: 14px;
   margin: 10px 0 15px;
-  color: #0f172a;
   line-height: 1.5;
 }
 
+.breadcrumb a.breadcrumb__home,
 .breadcrumb a.breadcrumb__brand {
   text-decoration: none;
-  color: #ea2222;
+  color: #3b82f6;
   font-weight: 600;
 }
 
+.breadcrumb a.breadcrumb__home:hover,
+.breadcrumb a.breadcrumb__home:focus-visible,
 .breadcrumb a.breadcrumb__brand:hover,
 .breadcrumb a.breadcrumb__brand:focus-visible {
-  color: #2522ed;
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .breadcrumb__sep {
-  color: #64748b;
-  margin: 0 4px;
+  color: #94a3b8;
+  margin: 0 5px;
 }
 
 .breadcrumb__current {
-  color: #0f172a;
-  font-weight: 600;
+  color: #1e3c72;
+  font-weight: 700;
 }
 
 .breadcrumb__icon {
-  margin-right: 2px;
+  margin-right: 3px;
+}
+
+[data-theme="dark"] .breadcrumb a.breadcrumb__home,
+[data-theme="dark"] .breadcrumb a.breadcrumb__brand {
+  color: #60a5fa;
+}
+
+[data-theme="dark"] .breadcrumb__current {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .breadcrumb__sep {
+  color: #64748b;
 }

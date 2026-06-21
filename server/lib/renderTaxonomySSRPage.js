@@ -88,7 +88,7 @@ function renderTaxonomySSRPage(opts) {
 <link rel="preload" href="/css/main.min.css?v=12" as="style">
 <link rel="stylesheet" href="/css/main.min.css?v=12">
 <link rel="stylesheet" href="/css/pages/listing-layout.css?v=2">
-<link rel="stylesheet" href="/css/components/breadcrumb.css?v=3">
+<link rel="stylesheet" href="/css/components/breadcrumb.css?v=5">
 <link rel="stylesheet" href="/css/pages/home.css?v=5">
 <link rel="stylesheet" href="/css/pages/taxonomy-hub.css?v=2">
 <link rel="stylesheet" href="/css/components/search-overlay.css?v=5">

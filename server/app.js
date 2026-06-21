@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const { normalizeBreadcrumbInHtml } = require("./lib/breadcrumb");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
@@ -327,7 +328,8 @@ async function sendHtmlString(req, res, html, statusCode) {
   }
   res.type("html");
   const withHeader = shouldSkipChromeInjection(req) ? String(html || "") : await injectHeader(html);
-  return res.send(withHeader);
+  const normalized = normalizeBreadcrumbInHtml(withHeader);
+  return res.send(normalized);
 }
 
 async function injectHeader(htmlString) {

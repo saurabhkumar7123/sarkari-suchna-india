@@ -187,7 +187,7 @@
         ? `<span class="breadcrumb__sep" aria-hidden="true">›</span><span class="breadcrumb__current">Job Finder</span>`
         : "";
       breadcrumbEl.innerHTML = `
-        <a href="/" class="breadcrumb__brand"><i class="fa-solid fa-house breadcrumb__icon" aria-hidden="true"></i>Home</a>
+        <a href="/" class="breadcrumb__home"><i class="fa-solid fa-house breadcrumb__icon" aria-hidden="true"></i>Home</a>
         <span class="breadcrumb__sep" aria-hidden="true">›</span>
         ${finderCrumb}
         <span class="breadcrumb__sep" aria-hidden="true">›</span>

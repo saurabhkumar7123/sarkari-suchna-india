@@ -22,10 +22,11 @@ describe("renderTaxonomySSRPage", () => {
     expect(html).toMatch(/<!DOCTYPE html>/i);
     expect(html).toContain("<h1>Railway Jobs</h1>");
     expect(html).toContain('href="https://www.example.com/department/railway"');
-    expect(html).toContain('href="/" class="breadcrumb__brand"');
+    expect(html).toContain('href="/" class="breadcrumb__home"');
     expect(html).toContain('aria-current="page">Railway Jobs</span>');
+    expect(html).toContain(" Home</a>");
     expect(html).toContain("Sarkari Suchna India");
-    expect(html).toContain('href="/css/components/breadcrumb.css?v=3"');
+    expect(html).toContain('href="/css/components/breadcrumb.css?v=5"');
     expect(html).toContain('href="/css/pages/taxonomy-hub.css?v=2"');
     expect(html).toContain('href="/css/pages/home.css?v=5"');
     expect(html).not.toContain("You are here");

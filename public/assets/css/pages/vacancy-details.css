@@ -23,40 +23,48 @@
     }
     
     
-    /* ================= TITLE ================= */
+    /* ================= TITLE (blue headline — details flow below) ================= */
     .job-title-section{
-    margin:var(--space-8) 0 var(--space-12);
-    padding:16px 18px;
-    border-radius:12px;
-    border:1px solid #e2e8f0;
-    border-left:4px solid #1e3c72;
-    background:#f8fafc;
+    margin:var(--space-8) 0 0;
+    padding:0 0 14px;
+    border:none;
+    border-radius:0;
+    background:transparent;
+    border-bottom:1px solid #e2e8f0;
     box-shadow:none;
+    }
+
+    .job-title-section::after{
+    display:none;
     }
   
     .job-title{
     margin:0;
-    color:#0f172a;
-    font-size:clamp(1.25rem, 3.2vw, 1.75rem);
-    font-weight:700;
-    line-height:1.45;
-    letter-spacing:-0.01em;
+    color:#2563eb;
+    font-size:clamp(1.35rem, 3.6vw, 1.95rem);
+    font-weight:800;
+    line-height:1.35;
+    letter-spacing:-0.02em;
     word-break:break-word;
     overflow-wrap:anywhere;
     hyphens:auto;
     background:none;
-    -webkit-text-fill-color:currentColor;
+    -webkit-text-fill-color:#2563eb;
     }
 
-    @supports not ((-webkit-background-clip:text) and (-webkit-text-fill-color:transparent)) {
-    .job-title{
-    color:#0f172a;
+    [data-theme="dark"] .job-title-section{
+    border-bottom-color:#334155;
+    background:transparent;
     }
+
+    [data-theme="dark"] .job-title{
+    color:#60a5fa;
+    -webkit-text-fill-color:#60a5fa;
     }
   
     /* ================= META INFO (compact byline box — all screens) ================= */
     .meta-info-section{
-    margin:0 0 var(--space-12);
+    margin-top:var(--space-12);
     padding:0;
     width:100%;
     max-width:100%;
@@ -945,14 +953,12 @@
     }
     
     .job-title{
-    font-size:clamp(1.125rem, 4.5vw, 1.375rem);
-    line-height:1.5;
+    font-size:clamp(1.2rem, 4.8vw, 1.5rem);
+    line-height:1.35;
     }
-  
+
     .job-title-section{
-    padding:12px 14px;
-    border-left-width:4px;
-    background:#f8fafc;
+    padding:0 0 12px;
     }
   
     .meta-info-section{

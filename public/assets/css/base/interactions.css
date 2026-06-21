@@ -40,9 +40,11 @@
   }
 
   /* Breadcrumb */
+  .breadcrumb a.breadcrumb__home:hover,
+  .breadcrumb a.breadcrumb__home:focus-visible,
   .breadcrumb a.breadcrumb__brand:hover,
   .breadcrumb a.breadcrumb__brand:focus-visible {
-    color: var(--hover-text);
+    color: #1d4ed8;
     text-decoration: underline;
     text-decoration-color: #93c5fd;
   }
