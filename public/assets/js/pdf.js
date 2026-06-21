@@ -466,10 +466,12 @@ async function loadNotifications(opts = {}) {
       refreshBtn.classList.remove("is-loading");
     }
     syncPdfSearchClearButton();
+    window.AdminPageToolbar?.markUpdated?.();
   }
 }
 
 wirePdfAlertsPagination();
 wirePdfAlertsSearch();
 wirePdfAlertsRefresh();
+window.adminPageRefreshHandler = () => loadNotifications({ forceRefresh: true });
 loadNotifications();

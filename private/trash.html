@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/trash.css">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
-<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
 <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css">
 
@@ -29,6 +29,13 @@
 </header>
 
 <div class="main-container">
+<nav class="admin-workflow-banner" aria-label="Content workflow">
+  <span class="admin-workflow-banner__step is-done">Deleted</span>
+  <span class="admin-workflow-banner__arrow" aria-hidden="true">→</span>
+  <span class="admin-workflow-banner__step is-active">Restore or purge</span>
+  <span class="admin-workflow-banner__arrow" aria-hidden="true">→</span>
+  <a href="/admin/activity?action=restore" class="admin-workflow-banner__step" style="text-decoration:none;">View restore log</a>
+</nav>
 <div class="page-heading">
   <h2>Trash Pages</h2>
   <p>Manage deleted pages, restore or permanently delete.</p>
@@ -59,10 +66,12 @@
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-nav.js?v=3"></script>
-<script src="/js/admin-shell.js?v=4"></script>
+<script src="/js/admin-shell.js?v=5"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js"></script>
+<script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/trash.js?v=2"></script>
 

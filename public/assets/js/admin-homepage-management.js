@@ -646,11 +646,13 @@
       "smallBoxesMeta",
       `${meta.smallBoxSlotsTotal || 0} of 4 slots filled · search by title above to assign`
     );
+    window.AdminPageToolbar?.markUpdated?.();
   }
 
   document.getElementById("homepageMgmtRefreshBtn")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     await withSaveLoading(btn, loadOverview, "Refreshing...");
   });
+  window.adminPageRefreshHandler = loadOverview;
   loadOverview();
 })();

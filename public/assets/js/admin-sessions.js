@@ -98,6 +98,7 @@ async function loadSessions() {
   sessionsAll = res.data || [];
   setMsg(`Loaded ${sessionsAll.length} session(s).`);
   renderSessions(getFilteredSessions());
+  window.AdminPageToolbar?.markUpdated?.();
 }
 
 async function revokeSession(sessionId, triggerBtn) {
@@ -160,4 +161,5 @@ document.getElementById("sessionsSearchClear")?.addEventListener("click", () => 
   renderSessions(getFilteredSessions());
 });
 
+window.adminPageRefreshHandler = loadSessions;
 loadSessions();

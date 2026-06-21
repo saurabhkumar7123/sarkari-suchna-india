@@ -65,7 +65,22 @@
     if (errorBannerEl) errorBannerEl.classList.remove("is-visible");
   }
 
-  async function adminSafeFetch(url, options = {}) {
+  async function tryRefreshSession() {
+    if (typeof window.getAdminCsrfToken !== "function") return false;
+    try {
+      const token = await window.getAdminCsrfToken();
+      const res = await fetch("/api/admin/refresh", {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-CSRF-Token": token }
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async function adminSafeFetch(url, options = {}, _retried) {
     try {
       const headers = { ...(options.headers || {}) };
       if (String(url).includes("/api/admin") && typeof window.getAdminCsrfToken === "function") {
@@ -83,12 +98,19 @@
         ...options,
         headers
       });
+      if (res.status === 401 && !_retried && String(url).includes("/api/admin")) {
+        const refreshed = await tryRefreshSession();
+        if (refreshed) return adminSafeFetch(url, options, true);
+        window.location.href = "/login?reason=expired";
+        return null;
+      }
       if (!res.ok) {
         lastFetchFailure = { url, status: res.status, retry: null };
         showGlobalErrorBanner({ status: res.status, url });
         return null;
       }
       hideGlobalErrorBanner();
+      window.AdminIdleSession?.touch?.();
       const ct = res.headers.get("content-type") || "";
       if (ct.includes("application/json")) return await res.json();
       return await res.text();

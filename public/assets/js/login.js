@@ -89,7 +89,17 @@ async function login() {
       return;
     }
 
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+
+    if (res.status === 429 || data.status === "blocked") {
+      setLoginError(data.message || "Too many attempts. Please try again later.");
+      return;
+    }
 
     if (data.status === "success") {
       persistRememberedUsername(username);
@@ -106,7 +116,11 @@ async function login() {
       setLoginError("Too many attempts. Please try again later.");
       return;
     }
-    setLoginError("Invalid username or password.");
+    if (res.status === 400 && data.message) {
+      setLoginError(data.message);
+      return;
+    }
+    setLoginError(data.message || "Invalid username or password.");
   } catch (err) {
     console.error("Login error:", err);
     setLoginError("Server error. Please try again.");

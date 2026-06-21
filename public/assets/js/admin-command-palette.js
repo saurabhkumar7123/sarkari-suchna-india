@@ -1,20 +1,23 @@
 /**
- * Command palette (Ctrl+K) — lightweight fuzzy match, no extra dependencies.
+ * Command palette (Ctrl+K) — navigation, actions, page search.
  */
 (function () {
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const ROUTES = [
-    { label: "Dashboard", href: "/admin/dashboard", group: "Go to" },
-    { label: "Page Manager", href: "/admin/page-manager", group: "Go to" },
-    { label: "Monitoring", href: "/admin/monitoring", group: "Go to" },
-    { label: "Activity Log", href: "/admin/activity", group: "Go to" },
-    { label: "CSV Upload", href: "/admin/csv-upload", group: "Go to" },
-    { label: "Page Generator", href: "/generator", group: "Go to" },
-    { label: "Upload Files", href: "/upload", group: "Go to" },
-    { label: "Trash", href: "/trash", group: "Go to" },
-    { label: "New job page", href: "/generator", group: "Actions" },
-    { label: "Run site check", href: "/admin/monitoring", group: "Actions" }
+    { label: "Dashboard", href: "/admin/dashboard", group: "Go to", keywords: "home overview" },
+    { label: "Page Manager", href: "/admin/page-manager", group: "Go to", keywords: "pages edit list" },
+    { label: "Monitoring", href: "/admin/monitoring", group: "Go to", keywords: "queue sites health" },
+    { label: "PDF Alerts", href: "/admin/alerts", group: "Go to", keywords: "notifications pdf" },
+    { label: "Content Import", href: "/admin/csv-upload", group: "Go to", keywords: "csv import" },
+    { label: "Sessions", href: "/admin/sessions", group: "Go to", keywords: "login devices" },
+    { label: "Activity Log", href: "/admin/activity", group: "Go to", keywords: "audit history" },
+    { label: "Homepage Management", href: "/admin/homepage-management", group: "Go to", keywords: "breaking badges" },
+    { label: "Page Generator", href: "/generator", group: "Go to", keywords: "create new job" },
+    { label: "Upload PDF", href: "/upload", group: "Go to", keywords: "files pdf" },
+    { label: "Trash", href: "/trash", group: "Go to", keywords: "deleted restore" },
+    { label: "Run site check now", href: "__action_run_check__", group: "Actions", keywords: "monitor queue" },
+    { label: "Retry failed queue jobs", href: "__action_retry_failed__", group: "Actions", keywords: "monitor error" }
   ];
 
   let overlayEl = null;
@@ -22,6 +25,7 @@
   let resultsEl = null;
   let activeIndex = 0;
   let currentItems = [];
+  let pageSearchTimer = null;
 
   function score(q, text) {
     const query = String(q || "").trim().toLowerCase();
@@ -46,7 +50,8 @@
   function buildItems(query) {
     const items = [];
     ROUTES.forEach((r) => {
-      const s = score(query, r.label);
+      const hay = `${r.label} ${r.keywords || ""}`;
+      const s = score(query, hay);
       if (s) items.push({ ...r, score: s, kind: "route" });
     });
     getRecentPages().forEach((p) => {
@@ -65,7 +70,21 @@
         });
       }
     });
-    return items.sort((a, b) => b.score - a.score).slice(0, 12);
+    return items.sort((a, b) => b.score - a.score).slice(0, 14);
+  }
+
+  async function searchPagesRemote(query) {
+    const q = String(query || "").trim();
+    if (q.length < 2 || typeof window.adminSafeFetch !== "function") return [];
+    const res = await window.adminSafeFetch(`/api/admin/pages?page=1&limit=6&q=${encodeURIComponent(q)}`);
+    if (!res || !res.success || !Array.isArray(res.data)) return [];
+    return res.data.map((p) => ({
+      label: p.title || p.slug,
+      href: `/admin/page-manager?q=${encodeURIComponent(p.slug || p.title || "")}`,
+      group: "Search pages",
+      score: 3,
+      kind: "search"
+    }));
   }
 
   function renderResults(items) {
@@ -85,7 +104,7 @@
     let html = "";
     Object.keys(groups).forEach((g) => {
       html += `<div class="admin-cmd-group-title">${g}</div>`;
-      groups[g].forEach((it, idx) => {
+      groups[g].forEach((it) => {
         const globalIdx = items.indexOf(it);
         html += `<button type="button" class="admin-cmd-item${globalIdx === 0 ? " is-active" : ""}" data-idx="${globalIdx}">${it.label}</button>`;
       });
@@ -99,8 +118,38 @@
     });
   }
 
+  async function runPaletteAction(action) {
+    if (typeof window.adminSafeFetch !== "function") return;
+    if (action === "__action_run_check__") {
+      close();
+      window.AdminUI?.toastSuccess?.("Running site check…");
+      const res = await window.adminSafeFetch("/api/admin/run-check", { method: "POST" });
+      if (res && res.success) {
+        window.AdminUI?.toastSuccess?.("Check triggered");
+        window.location.href = "/admin/monitoring";
+      } else {
+        window.AdminUI?.toastError?.("Could not run check");
+      }
+      return;
+    }
+    if (action === "__action_retry_failed__") {
+      close();
+      const res = await window.adminSafeFetch("/api/admin/queue/retry", { method: "POST" });
+      if (res && res.success) {
+        window.AdminUI?.toastSuccess?.("Retry queued");
+        window.location.href = "/admin/monitoring";
+      } else {
+        window.AdminUI?.toastError?.("Retry failed");
+      }
+    }
+  }
+
   function navigate(item) {
     if (!item || !item.href) return;
+    if (String(item.href).startsWith("__action_")) {
+      runPaletteAction(item.href);
+      return;
+    }
     close();
     window.location.href = item.href;
   }
@@ -136,9 +185,9 @@
     overlayEl.setAttribute("aria-label", "Command palette");
     overlayEl.innerHTML = `
       <div class="admin-cmd-modal">
-        <input type="text" class="admin-cmd-input" id="adminCmdInput" placeholder="Search pages, go to…" autocomplete="off" aria-label="Command search">
+        <input type="text" class="admin-cmd-input" id="adminCmdInput" placeholder="Search pages, go to admin… (Ctrl+K)" autocomplete="off" aria-label="Command search">
         <div class="admin-cmd-results" id="adminCmdResults"></div>
-        <p class="admin-cmd-hint">↑↓ navigate · Enter open · Esc close</p>
+        <p class="admin-cmd-hint">↑↓ navigate · Enter open · Esc close · Ctrl+K anytime</p>
       </div>
     `;
     document.body.appendChild(overlayEl);
@@ -148,7 +197,20 @@
     overlayEl.addEventListener("click", (e) => {
       if (e.target === overlayEl) close();
     });
-    inputEl.addEventListener("input", () => renderResults(buildItems(inputEl.value)));
+    inputEl.addEventListener("input", () => {
+      const q = inputEl.value;
+      const base = buildItems(q);
+      renderResults(base);
+      if (pageSearchTimer) clearTimeout(pageSearchTimer);
+      if (String(q).trim().length >= 2) {
+        pageSearchTimer = setTimeout(async () => {
+          const remote = await searchPagesRemote(q);
+          if (inputEl.value !== q) return;
+          const merged = [...remote, ...buildItems(q)].sort((a, b) => b.score - a.score).slice(0, 14);
+          renderResults(merged);
+        }, 280);
+      }
+    });
     inputEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowDown") {
         e.preventDefault();

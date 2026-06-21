@@ -33,16 +33,44 @@
     if (!file) {
       setStatus("Please select a CSV file", true);
       uploadBtn.disabled = true;
+      hideDryRunPreview();
       return false;
     }
     if (!isCsvFile(file)) {
       setStatus("Only .csv files are supported", true);
       uploadBtn.disabled = true;
+      hideDryRunPreview();
       return false;
     }
-    setStatus("CSV selected");
+    setStatus("CSV selected — review dry-run preview before import");
     uploadBtn.disabled = false;
+    runDryRunPreview(file);
     return true;
+  }
+
+  function hideDryRunPreview() {
+    const box = document.getElementById("csvDryRunPreview");
+    if (box) box.hidden = true;
+  }
+
+  async function runDryRunPreview(file) {
+    const box = document.getElementById("csvDryRunPreview");
+    const summary = document.getElementById("csvDryRunSummary");
+    const sample = document.getElementById("csvDryRunSample");
+    if (!box || !summary || !sample || !file) return hideDryRunPreview();
+    try {
+      const text = await file.slice(0, 8192).text();
+      const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
+      const header = lines[0] || "";
+      const cols = header.split(",").length;
+      const dataRows = Math.max(0, lines.length - 1);
+      const emptyRows = lines.slice(1).filter((l) => !String(l).trim()).length;
+      summary.textContent = `Dry-run: ~${dataRows} data row(s), ${cols} column(s)${emptyRows ? `, ${emptyRows} empty row(s) will be skipped` : ""}.`;
+      sample.textContent = lines.slice(0, Math.min(5, lines.length)).join("\n");
+      box.hidden = false;
+    } catch {
+      hideDryRunPreview();
+    }
   }
 
   function escapeHtml(s) {
@@ -231,6 +259,7 @@
           : rows.length;
       if (listMeta) listMeta.textContent = `${total} import(s) in queue`;
       renderImportList(getFilteredImports());
+      window.AdminPageToolbar?.markUpdated?.();
     } catch (err) {
       console.error("Import list error:", err);
       if (listMeta) listMeta.textContent = "Failed to load imports";
@@ -323,6 +352,8 @@
       }
     }
   });
+
+  window.adminPageRefreshHandler = loadImportList;
 
   loadImportList();
 })();

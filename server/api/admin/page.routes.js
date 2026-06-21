@@ -16,6 +16,10 @@ router.get("/pages", asyncHandler(controller.getAllPages));
 // 📊 DASHBOARD
 router.get("/dashboard", asyncHandler(controller.getDashboardStats));
 
+// 🩺 System health (admin)
+const systemHealthController = require("../../controllers/admin/systemHealth.controller");
+router.get("/system-health", asyncHandler(systemHealthController.getSystemHealth));
+
 // 🎯 Homepage small-box slot occupancy (admin generator UI)
 router.get("/small-box-slots", asyncHandler(controller.getSmallBoxSlots));
 

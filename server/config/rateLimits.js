@@ -98,7 +98,12 @@ const adminLoginLimiter = rateLimit({
   legacyHeaders: false,
   store: buildStore("login"),
   keyGenerator: (req) => `${getClientIp(req)}:admin-login`,
-  message: { success: false, message: "Too many login attempts. Try again later." }
+  message: { success: false, status: "blocked", message: "Too many login attempts. Try again later." },
+  skip: (req) => {
+    if (process.env.NODE_ENV === "production") return false;
+    const host = String((req.headers && req.headers.host) || "").split(":")[0].toLowerCase();
+    return host === "localhost" || host === "127.0.0.1";
+  }
 });
 
 /** Admin sensitive actions — strict */

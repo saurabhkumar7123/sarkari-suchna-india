@@ -173,7 +173,7 @@ function renderQueueFailedList(items) {
             <div>${escapeAttr(item.id || "-")}</div>
             <div>${escapeAttr(item.type || "check-site")}</div>
             <div><span class="monitor-status is-broken"><span class="monitor-status-dot"></span>Failed</span> ${failBadge}</div>
-            <div title="${escapeAttr(item.error || "")}">${escapeAttr(item.error || "unknown")}</div>
+            <div title="${escapeAttr(item.error || "")}" class="monitor-error-cell">${escapeAttr(item.error || "unknown")}</div>
             <div>${escapeAttr(formatMonitorTime(item.timestamp))}</div>
             <div class="monitor-row-actions">
               <button type="button" data-action="retry-failed-job" data-job-id="${escapeAttr(item.id || "")}">Retry</button>
@@ -184,6 +184,72 @@ function renderQueueFailedList(items) {
     </div>
   `;
 }
+
+async function loadSystemHealth() {
+  const res = await window.adminSafeFetch("/api/admin/system-health");
+  const set = (id, text, ok) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    const card = el.closest(".admin-health-item");
+    if (card) {
+      card.classList.remove("is-ok", "is-bad", "is-warn");
+      if (ok === true) card.classList.add("is-ok");
+      else if (ok === false) card.classList.add("is-bad");
+      else if (ok === "warn") card.classList.add("is-warn");
+    }
+  };
+  if (!res || !res.success || !res.data) {
+    set("healthDbStatus", "Unavailable", false);
+    set("healthRedisStatus", "Unavailable", false);
+    set("healthDiskStatus", "Unavailable", false);
+    set("healthTelegramStatus", "Unavailable", false);
+    return;
+  }
+  const d = res.data;
+  set("healthDbStatus", d.database ? "Connected" : "Down", d.database);
+  set("healthRedisStatus", d.redis ? `OK · ${d.queue.failed} failed` : "Down", d.redis);
+  const disk = d.disk || {};
+  set(
+    "healthDiskStatus",
+    disk.uploadsDirExists ? `${disk.pdfCount || 0} PDFs · mem ${disk.memoryUsedPct || 0}%` : "Missing uploads dir",
+    disk.uploadsDirExists ? true : "warn"
+  );
+  set(
+    "healthTelegramStatus",
+    d.telegram && d.telegram.configured ? "Configured" : "Not configured",
+    d.telegram && d.telegram.configured ? true : "warn"
+  );
+}
+
+async function loadRecentUpdates() {
+  const box = document.getElementById("recentUpdatesList");
+  if (!box) return;
+  const res = await window.adminSafeFetch("/api/admin/updates?limit=12");
+  const rows = res && res.success && Array.isArray(res.data) ? res.data : [];
+  if (!rows.length) {
+    box.innerHTML = '<p class="empty-msg">No recent detections.</p>';
+    return;
+  }
+  box.innerHTML = rows
+    .map(
+      (r) => `<div class="page-item"><strong>${escapeAttr(r.site_name || r.siteName || "Site")}</strong> — ${escapeAttr(r.summary || r.title || r.url || "Update detected")} <span style="color:var(--muted,#64748b);font-size:12px;">${escapeAttr(formatMonitorTime(r.detected_at || r.detectedAt || r.created_at))}</span></div>`
+    )
+    .join("");
+}
+
+async function refreshMonitoringAll(triggerBtn) {
+  const run = () =>
+    Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs(), loadSystemHealth(), loadRecentUpdates()]).then(
+      () => window.AdminPageToolbar?.markUpdated?.()
+    );
+  if (window.AdminUI && window.AdminUI.withLoading && triggerBtn) {
+    return window.AdminUI.withLoading(triggerBtn, run, "Refreshing...");
+  }
+  return run();
+}
+
+window.adminPageRefreshHandler = refreshMonitoringAll;
 
 async function loadQueueFailedJobs() {
   const sortEl = document.getElementById("failedSort");
@@ -320,13 +386,7 @@ async function clearQueueJobs(triggerBtn) {
 }
 
 document.getElementById("runCheckBtn")?.addEventListener("click", (e) => runManualMonitoringCheck(e.currentTarget));
-document.getElementById("refreshSitesBtn")?.addEventListener("click", (e) => {
-  const btn = e.currentTarget;
-  if (window.AdminUI && window.AdminUI.withLoading) {
-    return window.AdminUI.withLoading(btn, () => Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs()]), "Refreshing...");
-  }
-  return Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs()]);
-});
+document.getElementById("refreshSitesBtn")?.addEventListener("click", (e) => refreshMonitoringAll(e.currentTarget));
 document.getElementById("retryFailedBtn")?.addEventListener("click", (e) => retryFailedQueueJobs(e.currentTarget));
 document.getElementById("clearQueueBtn")?.addEventListener("click", (e) => clearQueueJobs(e.currentTarget));
 document.getElementById("sitesTable")?.addEventListener("click", (e) => {
@@ -361,4 +421,4 @@ document.getElementById("sitesSearchClear")?.addEventListener("click", () => {
   renderSitesTable(getFilteredMonitoringSites());
 });
 
-Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs()]);
+refreshMonitoringAll();

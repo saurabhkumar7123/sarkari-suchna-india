@@ -3,56 +3,41 @@
 const TRASH_API = "/api/admin/trash";
 const TRASH_PAGE_SIZE = 12;
 let trashPage = 1;
-let trashAll = [];
+let trashItems = [];
+let trashTotal = 0;
 let trashSearchQuery = "";
+let trashSearchDebounce = null;
 
 async function safeFetch(url, options = {}) {
+  if (typeof window.adminSafeFetch === "function") {
+    return window.adminSafeFetch(url, options);
+  }
   try {
     const hdrs = { ...(options.headers || {}) };
     if (String(url).includes("/api/admin") && typeof window.getAdminCsrfToken === "function") {
-      try {
-        hdrs["X-CSRF-Token"] = await window.getAdminCsrfToken();
-      } catch (err) {
-        console.error("[CSRF]", err);
-      }
-    }
-    if (typeof options.body === "string" && !hdrs["Content-Type"]) {
-      hdrs["Content-Type"] = "application/json";
+      hdrs["X-CSRF-Token"] = await window.getAdminCsrfToken();
     }
     const res = await fetch(url, { credentials: "include", ...options, headers: hdrs });
-    const ct = res.headers.get("content-type") || "";
     if (!res.ok) return null;
-    if (ct.includes("application/json")) return await res.json();
-    return null;
+    return await res.json();
   } catch (e) {
     console.error(e);
     return null;
   }
 }
 
-function getFilteredTrash() {
-  const q = trashSearchQuery.trim().toLowerCase();
-  if (!q) return trashAll.slice();
-  return trashAll.filter((p) => {
-    const title = String(p.title || "").toLowerCase();
-    const slug = String(p.slug || p.url || "").toLowerCase();
-    return title.includes(q) || slug.includes(q);
-  });
-}
-
-function renderTrashStats(filteredCount) {
+function renderTrashStats() {
   const el = document.getElementById("trashStats");
   if (!el) return;
-  const total = trashAll.length;
-  if (!total) {
+  if (!trashTotal && !trashSearchQuery.trim()) {
     el.hidden = true;
     return;
   }
   const q = trashSearchQuery.trim();
   el.hidden = false;
   el.innerHTML = `
-    <span class="saas-stat saas-stat--warn"><strong>${total}</strong> in trash</span>
-    ${q ? `<span class="saas-stat saas-stat--accent"><strong>${filteredCount}</strong> matching</span>` : ""}
+    <span class="saas-stat saas-stat--warn"><strong>${trashTotal}</strong> in trash</span>
+    ${q ? `<span class="saas-stat saas-stat--accent">search: "${q.replace(/"/g, "")}"</span>` : ""}
   `;
 }
 
@@ -63,44 +48,44 @@ function syncTrashSearchClear() {
   btn.classList.toggle("is-hidden", !input.value.trim());
 }
 
-function renderTrashPagination(total) {
+function renderTrashPagination() {
   const nav = document.getElementById("trashPagination");
   const summary = document.getElementById("trashPaginationSummary");
   const prev = document.getElementById("trashPrevBtn");
   const next = document.getElementById("trashNextBtn");
   const nums = document.getElementById("trashPageNumbers");
-  const totalPages = Math.max(1, Math.ceil(total / TRASH_PAGE_SIZE) || 1);
+  const totalPages = Math.max(1, Math.ceil(trashTotal / TRASH_PAGE_SIZE) || 1);
   if (trashPage > totalPages) trashPage = totalPages;
 
-  if (nav) nav.classList.toggle("is-hidden", !trashAll.length);
+  if (nav) nav.classList.toggle("is-hidden", trashTotal === 0);
 
   if (summary) {
-    if (!trashAll.length) summary.textContent = "Trash is empty.";
-    else if (!total && trashSearchQuery.trim()) summary.textContent = `No results for "${trashSearchQuery.trim()}".`;
+    if (!trashTotal) summary.textContent = trashSearchQuery.trim() ? "No matching pages in trash." : "Trash is empty.";
     else {
       const start = (trashPage - 1) * TRASH_PAGE_SIZE + 1;
-      const end = Math.min(trashPage * TRASH_PAGE_SIZE, total);
-      const filterNote = trashSearchQuery.trim() ? ` · filtered from ${trashAll.length}` : "";
-      summary.textContent = `Showing ${start}–${end} of ${total}${filterNote} · Page ${trashPage} of ${totalPages}`;
+      const end = Math.min(trashPage * TRASH_PAGE_SIZE, trashTotal);
+      summary.textContent = `Showing ${start}–${end} of ${trashTotal}`;
     }
   }
 
-  if (prev) prev.disabled = trashPage <= 1 || total === 0;
-  if (next) next.disabled = trashPage >= totalPages || total === 0;
+  if (prev) prev.disabled = trashPage <= 1;
+  if (next) next.disabled = trashPage >= totalPages;
 
   if (!nums) return;
   nums.innerHTML = "";
-  if (totalPages <= 1 || total === 0) return;
-
-  for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+  const maxBtns = 5;
+  let startPage = Math.max(1, trashPage - 2);
+  let endPage = Math.min(totalPages, startPage + maxBtns - 1);
+  startPage = Math.max(1, endPage - maxBtns + 1);
+  for (let i = startPage; i <= endPage; i += 1) {
     const b = document.createElement("button");
     b.type = "button";
+    b.className = `pagination-num${i === trashPage ? " is-active" : ""}`;
     b.textContent = String(i);
-    if (i === trashPage) b.classList.add("is-active");
     b.addEventListener("click", () => {
       if (trashPage === i) return;
       trashPage = i;
-      renderTrashView();
+      loadTrash({ resetPage: false });
     });
     nums.appendChild(b);
   }
@@ -119,17 +104,27 @@ function formatDeletedDate(value) {
   });
 }
 
-function showFeedback(message, isError = false) {
+function showFeedback(message, isError = false, withActivityLink = false) {
   const box = document.getElementById("trashFeedback");
   if (!box) return;
   if (showFeedback._timer) clearTimeout(showFeedback._timer);
-  box.textContent = String(message || "").trim();
+  box.innerHTML = "";
+  const text = document.createElement("span");
+  text.textContent = String(message || "").trim();
+  box.appendChild(text);
+  if (withActivityLink) {
+    const link = document.createElement("a");
+    link.href = "/admin/activity?action=restore";
+    link.textContent = " View in activity log";
+    link.style.marginLeft = "6px";
+    box.appendChild(link);
+  }
   box.className = `trash-feedback ${isError ? "error" : "success"}`.trim();
   if (message) {
     showFeedback._timer = setTimeout(() => {
       box.textContent = "";
       box.className = "trash-feedback";
-    }, 2200);
+    }, 4200);
   }
 }
 
@@ -137,33 +132,28 @@ function renderTrashView() {
   const box = document.getElementById("trashList");
   if (!box) return;
 
-  const filtered = getFilteredTrash();
-  const total = filtered.length;
-  renderTrashStats(total);
+  renderTrashStats();
 
-  if (!trashAll.length) {
+  if (!trashItems.length && !trashTotal) {
     box.innerHTML = `<div class="saas-empty-state"><div class="icon">🗑️</div><h4>Trash is empty</h4><p>Deleted pages will appear here.</p></div>`;
-    renderTrashPagination(0);
+    renderTrashPagination();
     return;
   }
 
-  if (!total && trashSearchQuery.trim()) {
+  if (!trashItems.length && trashSearchQuery.trim()) {
     box.innerHTML = `<div class="saas-empty-state"><div class="icon">🔍</div><h4>No matching pages</h4></div>`;
-    renderTrashPagination(0);
+    renderTrashPagination();
     return;
   }
-
-  const start = (trashPage - 1) * TRASH_PAGE_SIZE;
-  const pages = filtered.slice(start, start + TRASH_PAGE_SIZE);
 
   box.innerHTML = "";
-  pages.forEach((p) => {
+  trashItems.forEach((p) => {
     const slug = p.slug || (p.url ? String(p.url).replace(/^\//, "").replace(/\.html$/, "") : "");
     const card = document.createElement("div");
     card.className = "trash-card";
 
     const title = p.title || slug || "Untitled";
-    const deletedAt = formatDeletedDate(p.deleted_at || p.deletedAt || p.updated_at || p.updatedAt);
+    const deletedAt = formatDeletedDate(p.deleted_at || p.deletedAt || p.created_at || p.createdAt);
     const slugText = slug ? `/${slug}` : (p.url || "—");
 
     const main = document.createElement("div");
@@ -198,7 +188,7 @@ function renderTrashView() {
     box.appendChild(card);
   });
 
-  renderTrashPagination(total);
+  renderTrashPagination();
 }
 
 async function loadTrash(opts = {}) {
@@ -207,23 +197,36 @@ async function loadTrash(opts = {}) {
   box.innerHTML = `<div class="saas-loading-grid"><div class="saas-skeleton"></div><div class="saas-skeleton"></div></div>`;
   showFeedback("");
 
-  const res = await safeFetch(`${TRASH_API}?page=1&limit=100`);
+  if (opts.resetPage !== false) trashPage = 1;
+
+  const q = trashSearchQuery.trim();
+  const params = new URLSearchParams({
+    page: String(trashPage),
+    limit: String(TRASH_PAGE_SIZE)
+  });
+  if (q) params.set("q", q);
+
+  const res = await safeFetch(`${TRASH_API}?${params.toString()}`);
   if (!res || !res.success) {
     box.innerHTML = `<div class="saas-empty-state"><div class="icon">⚠️</div><h4>Unable to load trash</h4></div>`;
     showFeedback("Failed to load trash", true);
     return;
   }
 
-  trashAll = res.data || [];
-  if (opts.resetPage !== false) trashPage = 1;
+  trashItems = res.data || [];
+  trashTotal = res.pagination && typeof res.pagination.total === "number" ? res.pagination.total : trashItems.length;
   renderTrashView();
+  window.AdminPageToolbar?.markUpdated?.();
 }
 
 async function restorePage(slug) {
-  if (!confirm("Restore this page?")) return;
+  const ok = await (window.AdminUI && window.AdminUI.confirmDelete
+    ? window.AdminUI.confirmDelete({ title: "Restore page", count: 1, confirmLabel: "Restore" })
+    : Promise.resolve(window.confirm("Restore this page?")));
+  if (!ok) return;
   const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/restore`, { method: "PATCH" });
   if (data && data.success) {
-    showFeedback("Page restored");
+    showFeedback("Page restored.", false, true);
     loadTrash({ resetPage: false });
   } else {
     showFeedback("Restore failed", true);
@@ -238,7 +241,7 @@ async function permanentDelete(slug) {
         details: "Type DELETE to confirm",
         requireText: "DELETE"
       })
-    : Promise.resolve(confirm("Permanently delete this page?")));
+    : Promise.resolve(window.confirm("Permanently delete this page?")));
   if (!ok) return;
 
   const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/permanent`, { method: "DELETE" });
@@ -251,34 +254,33 @@ async function permanentDelete(slug) {
 }
 
 function wireTrashControls() {
-  document.getElementById("trashRefreshBtn")?.addEventListener("click", () => loadTrash());
-  document.getElementById("trashRefreshBtn2")?.addEventListener("click", () => loadTrash());
+  window.adminPageRefreshHandler = () => loadTrash({ resetPage: false });
+
+  document.getElementById("trashRefreshBtn")?.addEventListener("click", () => loadTrash({ resetPage: false }));
+  document.getElementById("trashRefreshBtn2")?.addEventListener("click", () => loadTrash({ resetPage: false }));
   document.getElementById("trashPrevBtn")?.addEventListener("click", () => {
     if (trashPage <= 1) return;
     trashPage -= 1;
-    renderTrashView();
+    loadTrash({ resetPage: false });
   });
   document.getElementById("trashNextBtn")?.addEventListener("click", () => {
     trashPage += 1;
-    renderTrashView();
+    loadTrash({ resetPage: false });
   });
 
-  let debounce = null;
   document.getElementById("trashSearch")?.addEventListener("input", (e) => {
     trashSearchQuery = e.target.value;
-    trashPage = 1;
     syncTrashSearchClear();
-    if (debounce) clearTimeout(debounce);
-    debounce = setTimeout(() => renderTrashView(), 180);
+    if (trashSearchDebounce) clearTimeout(trashSearchDebounce);
+    trashSearchDebounce = setTimeout(() => loadTrash({ resetPage: true }), 280);
   });
   document.getElementById("trashSearchClear")?.addEventListener("click", () => {
     const input = document.getElementById("trashSearch");
     if (!input) return;
     input.value = "";
     trashSearchQuery = "";
-    trashPage = 1;
     syncTrashSearchClear();
-    renderTrashView();
+    loadTrash({ resetPage: true });
   });
 }
 

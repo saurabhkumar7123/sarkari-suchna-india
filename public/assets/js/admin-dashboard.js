@@ -72,6 +72,28 @@ function flashKpi(id) {
   card.classList.add("admin-kpi-flash");
 }
 
+function renderTodaySummary(d) {
+  const s = d && d.todaySummary ? d.todaySummary : null;
+  if (!s) return;
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+  set("todayPdfUploads", s.pdfUploads ?? 0);
+  set("todayCsvImports", s.csvImports == null ? "N/A" : s.csvImports);
+  set("todayAdminActions", s.adminActions ?? 0);
+  set("todayQueueFailed", s.queueFailed ?? 0);
+  set("todayBrokenSites", s.brokenSites ?? 0);
+  set("todayTelegramStatus", s.telegramConfigured ? "Ready" : "Not set");
+
+  const queueCard = document.getElementById("todayQueueCard");
+  if (queueCard) queueCard.classList.toggle("is-warn", Number(s.queueFailed) > 0);
+  const brokenCard = document.getElementById("todayBrokenCard");
+  if (brokenCard) brokenCard.classList.toggle("is-warn", Number(s.brokenSites) > 0);
+  const tgCard = document.getElementById("todayTelegramCard");
+  if (tgCard) tgCard.classList.toggle("is-ok", Boolean(s.telegramConfigured));
+}
+
 async function loadStatsCards() {
   const res = await window.adminSafeFetch("/api/admin/dashboard");
   if (!res || !res.success || !res.data) {
@@ -103,6 +125,7 @@ async function loadStatsCards() {
   set("attentionManualItems", d.needsAttention && d.needsAttention.manualActionItems ? d.needsAttention.manualActionItems : 0);
   set("avgProcessingTime", d.avgProcessingTimeMs != null ? `${d.avgProcessingTimeMs} ms` : "N/A");
   set("recentTrend", `${Number(d.completedJobs || 0)} success / ${Number(d.failedJobs || 0)} failed`);
+  renderTodaySummary(d);
 }
 
 function loadAdminUxMetrics() {
@@ -236,7 +259,10 @@ async function initAdminDashboard() {
   await loadStatsCards();
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
   updateLiveStripLabel();
+  window.AdminPageToolbar?.markUpdated?.();
 }
+
+window.adminPageRefreshHandler = initAdminDashboard;
 
 /** Live refresh — polling only, cleans up on pagehide. */
 function ensureLiveRefreshUi() {

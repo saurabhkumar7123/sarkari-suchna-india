@@ -10,6 +10,8 @@ const { getRelatedPagesForSlug } = require("../../services/relatedPages.service"
 const fileService = require("../../services/file.service");
 const { siteCheckQueue } = require("../../services/queue/siteQueue");
 const { recordActivity, listActivity } = require("../../services/adminActivity.service");
+const { canSendTelegram } = require("../../services/updates/telegramNotifier");
+const { fetchSites } = require("../../services/updates/updates.repository");
 
 /** Same canonical status list as regenerate / generator (for buildJobHtml). */
 const CANONICAL_STATUSES = new Set([
@@ -104,13 +106,18 @@ const getAllPages = async (req, res) => {
 
 const getTrashPages = async (req, res) => {
   try {
-    let { page = 1, limit = 20 } = req.query;
+    let { page = 1, limit = 20, q } = req.query;
     page = Math.max(parseInt(page, 10) || 1, 1);
     limit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
     const offset = (page - 1) * limit;
+    const qTrim = q != null ? String(q).trim() : "";
 
-    const total = await pageRepository.countTrashPages();
-    const rows = await pageRepository.selectTrashPagesPaginated(limit, offset);
+    const total = qTrim
+      ? await pageRepository.countTrashPagesFiltered(qTrim)
+      : await pageRepository.countTrashPages();
+    const rows = qTrim
+      ? await pageRepository.selectTrashPagesPaginatedFiltered(limit, offset, qTrim)
+      : await pageRepository.selectTrashPagesPaginated(limit, offset);
 
     return res.json({
       success: true,
@@ -119,7 +126,7 @@ const getTrashPages = async (req, res) => {
         total,
         page,
         limit,
-        totalPages: Math.max(1, Math.ceil(total / limit))
+        totalPages: total === 0 ? 0 : Math.ceil(total / limit)
       }
     });
   } catch (error) {
@@ -269,6 +276,44 @@ const permanentDelete = async (req, res) => {
   }
 };
 
+async function countPdfsUploadedToday() {
+  const dir = path.join(process.cwd(), "storage", "uploads", "pdf");
+  const files = await fs.promises.readdir(dir).catch(() => []);
+  if (!Array.isArray(files) || !files.length) return 0;
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  let count = 0;
+  await Promise.all(
+    files.map(async (name) => {
+      try {
+        const stat = await fs.promises.stat(path.join(dir, name));
+        if (stat.mtime >= start) count += 1;
+      } catch {
+        /* ignore */
+      }
+    })
+  );
+  return count;
+}
+
+async function countImportsToday() {
+  try {
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS n FROM content_imports WHERE DATE(created_at) = CURDATE()`
+    );
+    return Number(rows && rows[0] && rows[0].n) || 0;
+  } catch {
+    return null;
+  }
+}
+
+async function countActivityEventsToday() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const result = await listActivity({ page: 1, limit: 1, from: start.toISOString() });
+  return Number(result.pagination && result.pagination.total) || 0;
+}
+
 const getDashboardStats = async (req, res) => {
   try {
     const { agg, catRow, todayRow } = await pageRepository.selectDashboardAggregate();
@@ -285,6 +330,15 @@ const getDashboardStats = async (req, res) => {
       fs.promises.readdir(path.join(storageRoot, "images")).catch(() => [])
     ]);
     const totalUploads = (Array.isArray(pdfFiles) ? pdfFiles.length : 0) + (Array.isArray(imageFiles) ? imageFiles.length : 0);
+
+    const [pdfsToday, importsToday, activityToday, sites] = await Promise.all([
+      countPdfsUploadedToday(),
+      countImportsToday(),
+      countActivityEventsToday(),
+      fetchSites().catch(() => [])
+    ]);
+    const brokenSites = Array.isArray(sites) ? sites.filter((s) => Number(s && s.broken) === 1).length : 0;
+    const telegramOk = canSendTelegram();
 
     const stats = {
       totalPages: Number(agg.totalPages) || 0,
@@ -303,6 +357,16 @@ const getDashboardStats = async (req, res) => {
       needsAttention: {
         failedJobs,
         manualActionItems: failedJobs + (waitingJobs > 0 ? 1 : 0)
+      },
+      todaySummary: {
+        pdfUploads: pdfsToday,
+        csvImports: importsToday,
+        adminActions: activityToday,
+        queueFailed: failedJobs,
+        queuePending: waitingJobs + activeJobs,
+        brokenSites,
+        telegramConfigured: telegramOk,
+        telegramStatus: telegramOk ? "ready" : "not_configured"
       }
     };
 

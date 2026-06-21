@@ -781,6 +781,17 @@ async function countTrashPages(executor = db) {
   return Number(row && row.n) || 0;
 }
 
+async function countTrashPagesFiltered(q, executor = db) {
+  const qTrim = String(q || "").trim();
+  if (!qTrim) return countTrashPages(executor);
+  const like = `%${qTrim}%`;
+  const [[row]] = await executor.query(
+    `SELECT COUNT(*) AS n FROM pages WHERE deleted=1 AND (title LIKE ? OR slug LIKE ?)`,
+    [like, like]
+  );
+  return Number(row && row.n) || 0;
+}
+
 async function selectTrashPagesPaginated(limit, offset, executor = db) {
   const [rows] = await executor.query(
     `SELECT title, slug, category, created_at 
@@ -789,6 +800,21 @@ async function selectTrashPagesPaginated(limit, offset, executor = db) {
      ORDER BY created_at DESC
      LIMIT ? OFFSET ?`,
     [limit, offset]
+  );
+  return rows;
+}
+
+async function selectTrashPagesPaginatedFiltered(limit, offset, q, executor = db) {
+  const qTrim = String(q || "").trim();
+  if (!qTrim) return selectTrashPagesPaginated(limit, offset, executor);
+  const like = `%${qTrim}%`;
+  const [rows] = await executor.query(
+    `SELECT title, slug, category, created_at 
+     FROM pages 
+     WHERE deleted=1 AND (title LIKE ? OR slug LIKE ?)
+     ORDER BY created_at DESC
+     LIMIT ? OFFSET ?`,
+    [like, like, limit, offset]
   );
   return rows;
 }
@@ -1347,6 +1373,8 @@ module.exports = {
   selectDistinctStatusesAll,
   selectTrashPages,
   countTrashPages,
+  countTrashPagesFiltered,
+  selectTrashPagesPaginatedFiltered,
   selectTrashPagesPaginated,
   softDeleteBySlug,
   restoreBySlug,

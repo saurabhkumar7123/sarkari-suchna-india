@@ -219,6 +219,7 @@ async function loadActivity() {
   }
 
   renderActivity(rows, res.pagination || { totalPages: 1 });
+  window.AdminPageToolbar?.markUpdated?.();
 }
 
 document.getElementById("applyActivityFilter")?.addEventListener("click", () => {
@@ -267,4 +268,5 @@ document.getElementById("activityNextBtn")?.addEventListener("click", () => {
 });
 
 ensureFilterChips();
+window.adminPageRefreshHandler = loadActivity;
 loadActivity();

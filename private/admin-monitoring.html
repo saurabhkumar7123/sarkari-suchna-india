@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
-<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
 </head>
 <body data-admin-breadcrumbs="Admin,Monitoring">
@@ -60,6 +60,17 @@
       <div class="card card-teal"><h3><span class="card-icon">⚙️</span> Queue Active</h3><p id="queueActive">0</p></div>
       <div class="card card-red"><h3><span class="card-icon">❌</span> Queue Failed</h3><p id="queueFailed">0</p></div>
     </div>
+    <section class="admin-health-panel" aria-label="System health">
+      <div class="saas-toolbar">
+        <div class="saas-toolbar__title"><h3>System health</h3></div>
+      </div>
+      <div class="admin-health-grid" id="systemHealthGrid">
+        <div class="admin-health-item"><strong>Database</strong><span id="healthDbStatus">Checking…</span></div>
+        <div class="admin-health-item"><strong>Redis / Queue</strong><span id="healthRedisStatus">Checking…</span></div>
+        <div class="admin-health-item"><strong>Storage</strong><span id="healthDiskStatus">Checking…</span></div>
+        <div class="admin-health-item"><strong>Telegram</strong><span id="healthTelegramStatus">Checking…</span></div>
+      </div>
+    </section>
     <div class="monitor-actions">
       <button type="button" id="runCheckBtn">▶ Run Check</button>
       <button type="button" id="retryFailedBtn">♻ Retry Failed</button>
@@ -80,6 +91,10 @@
     <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
     <div id="sitesTable" class="sites-table-host"></div>
     <div class="recent">
+      <h3>Recent site detections</h3>
+      <div id="recentUpdatesList"><p class="empty-msg">Loading…</p></div>
+    </div>
+    <div class="recent">
       <h3>Queue Failed Jobs</h3>
       <div class="filters-toolbar" style="margin-bottom:10px;">
         <div class="filter-group">
@@ -96,10 +111,12 @@
 </div>
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-nav.js?v=3"></script>
-<script src="/js/admin-shell.js?v=4"></script>
+<script src="/js/admin-shell.js?v=5"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js"></script>
+<script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-monitoring.js"></script>
 </body>

@@ -403,6 +403,7 @@ async function loadPageManager(opts = {}) {
   renderPagination(pagination);
   renderBulkBar();
   if (opts.scrollToTop) scrollPageListIntoView();
+  window.AdminPageToolbar?.markUpdated?.();
 }
 
 function initSearch() {
@@ -474,4 +475,5 @@ document.getElementById("pageSearchClear")?.addEventListener("click", () => {
 });
 
 initSearch();
+window.adminPageRefreshHandler = () => loadPageManager();
 loadPageManager();
