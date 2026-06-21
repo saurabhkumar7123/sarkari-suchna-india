@@ -864,6 +864,10 @@
   }
 
   /* Homepage card rows (#dynamicSections): title – BADGE hierarchy */
+  body.page-home #dynamicSections .card-content{
+    margin-top:20px;
+  }
+
   body.page-home #dynamicSections .job-list{
     width:100%;
   }
@@ -877,7 +881,7 @@
   body.page-home #dynamicSections .job-list li::before{
     width:6px;
     height:6px;
-    margin-right:9px;
+    margin-right:6px;
     background:#94a3b8;
     opacity:0.88;
     flex-shrink:0;
@@ -930,7 +934,7 @@
   }
 
   body.page-home #dynamicSections .home-card-badge-group .home-badge + .home-badge{
-    margin-left:6px;
+    margin-left:3px;
   }
 
   body.page-home #dynamicSections .home-badge--new{
@@ -1157,6 +1161,10 @@
       padding:2px 4px;
     }
 
+    body.page-home #dynamicSections .card-content{
+      margin-top:16px;
+    }
+
     body.page-home #dynamicSections > .card{
       padding-left:8px;
       padding-right:8px;
@@ -1180,7 +1188,7 @@
     body.page-home #dynamicSections .job-list li::before{
       width:3px;
       height:3px;
-      margin-right:6px;
+      margin-right:4px;
       background:#94a3b8;
       opacity:0.88;
     }
@@ -1192,7 +1200,11 @@
 
     body.page-home #dynamicSections .home-badge{
       font-size:9px;
-      padding:1px 6px;
+      padding:1px 5px;
+    }
+
+    body.page-home #dynamicSections .home-card-badge-group .home-badge + .home-badge{
+      margin-left:3px;
     }
 
     body.page-home .trending-list li::before{

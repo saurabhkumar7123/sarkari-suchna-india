@@ -445,7 +445,7 @@
 
     .right-link.link-box-actions{
     justify-content:center;
-    gap:8px;
+    gap:4px;
     }
 
     .link-box-status{
@@ -456,13 +456,13 @@
     @media (max-width: 768px) {
     .left-text{
     text-align:left;
-    padding-right:8px;
+    padding-right:4px;
     }
 
     .right-link{
     justify-content:flex-end;
-    gap:6px;
-    padding-left:8px;
+    gap:4px;
+    padding-left:4px;
     }
 
     .right-link.link-box-actions{
@@ -525,8 +525,8 @@
     }
 
     .right-link.link-box-actions a{
-    padding-left:12px;
-    padding-right:12px;
+    padding-left:10px;
+    padding-right:10px;
     }
 
     .link-box-status{
@@ -1182,7 +1182,7 @@
 
     .right-link.link-box-actions a{
     font-size:12px;
-    padding:7px 10px;
+    padding:7px 8px;
     }
     
     .related-grid{
