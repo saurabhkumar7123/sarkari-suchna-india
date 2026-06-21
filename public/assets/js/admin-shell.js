@@ -131,6 +131,20 @@
     }
   }
 
+  function syncCollapsedNavTooltips() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    const collapsed = sidebar.classList.contains("collapsed");
+    sidebar.querySelectorAll("a[href], .sidebar-nav-btn").forEach((el) => {
+      const label = el.querySelector(".nav-text")?.textContent?.trim();
+      if (collapsed && label) {
+        el.setAttribute("title", label);
+      } else {
+        el.removeAttribute("title");
+      }
+    });
+  }
+
   function syncSidebarCollapseButton() {
     const sidebar = document.getElementById("sidebar");
     const btn = document.getElementById("sidebarCollapseBtn");
@@ -149,6 +163,7 @@
     document.body.classList.toggle("sidebar-collapsed", sidebar.classList.contains("collapsed"));
     localStorage.setItem("dashboardSidebarCollapsed", sidebar.classList.contains("collapsed") ? "1" : "0");
     syncSidebarCollapseButton();
+    syncCollapsedNavTooltips();
   }
 
   function applySidebarStateFromStorage() {
@@ -159,6 +174,7 @@
       document.body.classList.add("sidebar-collapsed");
     }
     syncSidebarCollapseButton();
+    syncCollapsedNavTooltips();
   }
 
   function normalizeNavPath(value) {
@@ -199,8 +215,17 @@
     window.location.href = "/login";
   }
 
+  function upgradeMobileToggleButton() {
+    const toggle = document.getElementById("sidebarToggle");
+    if (!toggle || toggle.dataset.shellUpgraded === "1") return;
+    toggle.dataset.shellUpgraded = "1";
+    toggle.innerHTML = '<span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span>';
+    toggle.setAttribute("aria-label", "Open navigation");
+  }
+
   /** Re-bind sidebar controls after admin-layout injects sidebar on standalone pages. */
   function bindShellEvents() {
+    upgradeMobileToggleButton();
     if (window.AdminNav && typeof window.AdminNav.hydrate === "function") {
       window.AdminNav.hydrate();
     }
@@ -233,7 +258,13 @@
       });
     }
     markActiveSidebarLink();
+    syncCollapsedNavTooltips();
+    if (typeof window.AdminShellRebind === "function" && bindShellEvents._rebindPending) {
+      bindShellEvents._rebindPending = false;
+    }
   }
+
+  bindShellEvents._rebindPending = false;
 
   if (localStorage.getItem("darkMode") === "true") {
     document.body.classList.add("dark");
