@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=5">
     <link rel="stylesheet" href="/css/components/section-surfaces.css?v=1">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=5">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=59">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=64">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -108,57 +108,58 @@
     <span class="advt-value">{{ADVERTISEMENT_NO}}</span>
   </div>
 
-  <!-- ================= SOCIAL / SHARE ================= -->
-  <section class="social-share-bar" aria-label="Share and follow">
+  <!-- ================= MAIN CONTENT (before banner) ================= -->
+  {{DYNAMIC_SECTIONS_BEFORE_BANNER}}
+
+  <!-- ================= SOCIAL / SHARE (after Important Links) ================= -->
+  <section class="social-share-bar" aria-label="Share this page">
     <div class="social-share-actions">
-      <button type="button" class="share-btn social-btn social-btn-share" id="sharePageBtn">
-        Share
+      <button type="button" class="social-btn social-btn-share" id="sharePageBtn">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i><span>Share</span>
       </button>
 
-      <a href="https://whatsapp.com/channel/0029VbCtmOJIiRoqIP4wgN1n" target="_blank" class="btn social-btn whatsapp" rel="noopener noreferrer">
-        WhatsApp
+      <a href="#" class="social-btn whatsapp" target="_blank" rel="noopener noreferrer" aria-label="Share on WhatsApp">
+        <i class="fa-brands fa-whatsapp" aria-hidden="true"></i><span>WhatsApp</span>
       </a>
 
-      <a href="https://t.me/sarkarisuchnaindia" target="_blank" class="btn social-btn telegram" rel="noopener">
-        Telegram
+      <a href="#" class="social-btn telegram" target="_blank" rel="noopener noreferrer" aria-label="Share on Telegram">
+        <i class="fa-brands fa-telegram" aria-hidden="true"></i><span>Telegram</span>
       </a>
 
-      <a href="https://www.facebook.com/share/1cQMwV2STp/" target="_blank" class="btn social-btn facebook" rel="noopener noreferrer">
-        Facebook
+      <a href="#" class="social-btn facebook" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">
+        <i class="fa-brands fa-facebook-f" aria-hidden="true"></i><span>Facebook</span>
       </a>
     </div>
   </section>
 
-  <!-- ================= MAIN CONTENT (before banner) ================= -->
-  {{DYNAMIC_SECTIONS_BEFORE_BANNER}}
-
   <!-- ================= HIGHLIGHT BANNER (3-layer poster) ================= -->
-  <section class="highlight-banner-root" aria-label="Job highlight summary">
+  <section class="highlight-banner-root {{BANNER_THEME_CLASS}}" aria-label="Job highlight summary">
     <div class="highlight-banner-wrap">
       <header class="highlight-banner-top">
         <div class="highlight-banner-top-inner">
-          <span class="highlight-banner-top-badge">Recruitment</span>
-          <span class="highlight-banner-top-badge highlight-banner-top-badge-outline">Official Website</span>
+          <span class="highlight-banner-top-badge highlight-banner-status-badge">{{BANNER_STATUS_BADGE}}</span>
+          <span class="highlight-banner-top-badge highlight-banner-top-badge-outline highlight-banner-org-badge">{{BANNER_ORG}}</span>
         </div>
         <p class="highlight-banner-top-advt">
           <span class="highlight-banner-top-advt-label">Notification No.</span>
-          <span class="highlight-banner-top-advt-value">{{ADVERTISEMENT_NO}}</span>
+          <span class="highlight-banner-top-advt-value">{{BANNER_ADVT_DISPLAY}}</span>
         </p>
       </header>
       <div class="highlight-banner-main">
-        <p class="highlight-banner-title-main">{{TITLE}}</p>
-        <p class="highlight-banner-subtitle"><span class="highlight-banner-subtitle-label">Post Name</span> {{POST_NAME}}</p>
+        <p class="highlight-banner-title-main">{{BANNER_TITLE_SHORT}}</p>
+        <p class="highlight-banner-action">{{BANNER_ACTION}}</p>
+        <p class="highlight-banner-subtitle">{{POST_NAME}}</p>
         <p class="highlight-banner-total-line">
           <span class="highlight-banner-total-main">
             <span class="highlight-banner-total-text">Total : <span class="highlight-banner-total-num">{{TOTAL_POSTS}}</span> Posts</span>
           </span>
-          <span class="highlight-banner-total-fallback">Total Posts: N/A</span>
+          <span class="highlight-banner-total-fallback">Total Posts: As per Notification</span>
         </p>
-        <p class="highlight-banner-tagline"><span class="highlight-banner-tag">{{TAG}}</span></p>
+        <p class="highlight-banner-tagline"><span class="highlight-banner-tag">{{BANNER_FACT}}</span></p>
       </div>
       <footer class="highlight-banner-bottom">
         <div class="highlight-banner-brand-domain">sarkarisuchnaindia.com</div>
-        <div class="highlight-banner-brand-tagline">Official Sarkari Suchna India</div>
+        <div class="highlight-banner-brand-tagline">Sarkari Suchna India — Latest Govt Jobs</div>
       </footer>
     </div>
   </section>
@@ -176,8 +177,8 @@
 <script src="/js/related-posts.js"></script>
 <script src="/js/header.js"></script>
 <script src="/js/animation.js"></script>
-<script src="/js/tools.js"></script>
-<script src="/js/highlight-banner-theme.js"></script>
+<script src="/js/job-page-share.js?v=2"></script>
+<script src="/js/highlight-banner-theme.js?v=2"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const cleanText = (value) => String(value || "").replace(/\s+/g, " ").trim();
@@ -248,16 +249,6 @@ document.addEventListener("DOMContentLoaded", () => {
     factsSection.hidden = false;
   }
 
-  const socialBar = document.querySelector(".social-share-bar");
-  if (socialBar) {
-    const validAnchors = Array.from(socialBar.querySelectorAll("a[href]")).filter((a) => {
-      const href = a.getAttribute("href") || "";
-      return /^https?:\/\//i.test(href) && !/your_link|your_channel|your_page/i.test(href);
-    });
-    if (!validAnchors.length) {
-      socialBar.hidden = true;
-    }
-  }
 });
 </script>
 

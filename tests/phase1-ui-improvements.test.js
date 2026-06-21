@@ -50,7 +50,7 @@ A: Sample answer.`,
       totalPosts: "12256"
     });
 
-    const bannerIdx = html.indexOf('class="highlight-banner-root"');
+    const bannerIdx = html.indexOf("highlight-banner-root");
     const linksIdx = html.indexOf('class="link-box"');
     const faqIdx = html.indexOf("Sample question");
     expect(bannerIdx).toBeGreaterThan(-1);
@@ -59,7 +59,12 @@ A: Sample answer.`,
     expect(linksIdx).toBeLessThan(bannerIdx);
     expect(html).toContain('normalizeSectionKey("important dates")');
     expect(html).not.toContain('byLabel["ImportantDates"]');
-    expect(html).toContain("vacancy-details.css?v=59");
+    expect(html).toContain("vacancy-details.css?v=64");
+    expect(html).toContain("job-page-share.js?v=2");
+    expect(html).toContain("highlight-banner-theme.js?v=2");
+    expect(html).toContain("Apply Online");
+    expect(html).toContain("highlight-banner-action");
+    expect(html).toContain("Last Date: 22 June 2026");
     expect(html).toContain("main.min.css?v=19");
     expect(html).toContain('<body class="page-vacancy">');
   });

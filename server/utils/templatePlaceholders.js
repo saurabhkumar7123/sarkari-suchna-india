@@ -6,6 +6,7 @@ const { extractTotalPosts } = require("./extractTotalPosts");
 const { escapeHtml, sanitizeUrl, safeUrlSegment } = require("./escapeHtml");
 const { getBaseUrl } = require("./baseUrl");
 const { renderBreadcrumbHtml } = require("../lib/breadcrumb");
+const { buildHighlightBannerFields } = require("../lib/highlightBanner");
 
 function createSlug(title) {
   return String(title || "")
@@ -169,6 +170,16 @@ function buildJobTemplateVariables(opts) {
   const totalPostsForTemplate =
     explicitTotal.length > 0 ? explicitTotal.replace(/\s+/g, " ") : extractedTotal == null ? "" : String(extractedTotal);
 
+  const bannerFields = buildHighlightBannerFields({
+    title: titleTrim,
+    text: String(text || ""),
+    category: String(category || ""),
+    normalizedStatus: String(normalizedStatus || ""),
+    postName: postNameForTemplate,
+    totalPosts: totalPostsForTemplate,
+    advertisementNo
+  });
+
   const slugClean = String(slug || "")
     .trim()
     .replace(/\.html$/i, "");
@@ -232,7 +243,14 @@ function buildJobTemplateVariables(opts) {
     META_DESCRIPTION: escapeHtml(metaDescription),
     BASE_URL: escapeHtml(baseUrl),
     SLUG: slugForUrls || "page",
-    TOTAL_POSTS: escapeHtml(totalPostsForTemplate),
+    TOTAL_POSTS: escapeHtml(bannerFields.TOTAL_POSTS_FORMATTED || totalPostsForTemplate),
+    BANNER_STATUS_BADGE: escapeHtml(bannerFields.BANNER_STATUS_BADGE),
+    BANNER_ORG: escapeHtml(bannerFields.BANNER_ORG),
+    BANNER_TITLE_SHORT: escapeHtml(bannerFields.BANNER_TITLE_SHORT),
+    BANNER_ACTION: escapeHtml(bannerFields.BANNER_ACTION),
+    BANNER_FACT: escapeHtml(bannerFields.BANNER_FACT),
+    BANNER_ADVT_DISPLAY: escapeHtml(bannerFields.BANNER_ADVT_DISPLAY),
+    BANNER_THEME_CLASS: escapeHtml(bannerFields.BANNER_THEME_CLASS),
     JOBPOSTING_SCHEMA: JSON.stringify(jobPosting),
     PARSER_WARNINGS: parserWarnings
   };

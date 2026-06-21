@@ -2,6 +2,8 @@ require("dotenv").config();
 
 const express = require("express");
 const { normalizeBreadcrumbInHtml } = require("./lib/breadcrumb");
+const { normalizeJobPageShareInHtml } = require("./lib/jobPageShare");
+const { normalizeHighlightBannerInHtml } = require("./lib/highlightBannerHtml");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
@@ -328,7 +330,9 @@ async function sendHtmlString(req, res, html, statusCode) {
   }
   res.type("html");
   const withHeader = shouldSkipChromeInjection(req) ? String(html || "") : await injectHeader(html);
-  const normalized = normalizeBreadcrumbInHtml(withHeader);
+  const normalized = normalizeJobPageShareInHtml(
+    normalizeHighlightBannerInHtml(normalizeBreadcrumbInHtml(withHeader))
+  );
   return res.send(normalized);
 }
 
