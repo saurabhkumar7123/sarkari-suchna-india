@@ -10,50 +10,72 @@
   <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 
   <link rel="stylesheet" href="/css/base/tokens.css">
-  <link rel="stylesheet" href="/css/base/reset.css">
-  <link rel="stylesheet" href="/css/base/base.css">
-  <link rel="stylesheet" href="/css/pages/login.css?v=2">
+  <link rel="stylesheet" href="/css/pages/login.css?v=3">
 </head>
 <body class="page-login">
 
-<div class="login-page">
-  <div class="login-shell">
-    <header class="login-brand">
-      <a href="/" class="login-brand__title">Sarkari <span>Suchna</span> India</a>
-      <p class="login-brand__tagline">Admin dashboard sign in</p>
-    </header>
-
-    <div class="login-box">
-      <h1 class="login-box__heading">Welcome back</h1>
-      <p class="login-subtitle">Enter your credentials to continue</p>
-
-      <form class="login-form" id="loginForm" action="#" method="post" novalidate>
-        <label class="login-field" for="u">
-          <span class="login-field__label">Username</span>
-          <input id="u" name="username" type="text" placeholder="Enter username" autocomplete="username" required autofocus>
-        </label>
-
-        <label class="login-field" for="p">
-          <span class="login-field__label">Password</span>
-          <input id="p" name="password" type="password" placeholder="Enter password" autocomplete="current-password" required>
-        </label>
-
-        <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
-
-        <button type="submit" id="loginBtn" class="login-submit">
-          <span id="loginBtnText">Sign in</span>
-        </button>
-      </form>
+<div class="login-layout">
+  <aside class="login-hero" aria-hidden="true">
+    <div class="login-hero__inner">
+      <a href="/" class="login-hero__brand">Sarkari <span>Suchna</span> India</a>
+      <h2 class="login-hero__title">Admin Control Center</h2>
+      <p class="login-hero__text">Manage pages, uploads, monitoring and homepage — all from one secure dashboard.</p>
+      <ul class="login-hero__features">
+        <li>Page generator &amp; lifecycle updates</li>
+        <li>PDF alerts &amp; file uploads</li>
+        <li>Site monitoring &amp; queue health</li>
+      </ul>
+      <p class="login-hero__secure">🔒 Secure admin access only</p>
     </div>
+  </aside>
 
-    <footer class="login-footer">
-      <a href="/" class="login-footer__link">← Back to Sarkari Suchna India</a>
-    </footer>
-  </div>
+  <main class="login-main">
+    <div class="login-shell">
+      <header class="login-brand login-brand--mobile">
+        <a href="/" class="login-brand__title">Sarkari <span>Suchna</span> India</a>
+        <p class="login-brand__tagline">Admin sign in</p>
+      </header>
+
+      <div class="login-box">
+        <div class="login-box__icon" aria-hidden="true">🛡</div>
+        <h1 class="login-box__heading">Welcome back</h1>
+        <p class="login-subtitle">Sign in to continue to your dashboard</p>
+
+        <form class="login-form" id="loginForm" action="#" method="post" novalidate>
+          <label class="login-field" for="u">
+            <span class="login-field__label">Username</span>
+            <input id="u" name="username" type="text" placeholder="Enter username" autocomplete="username" required autofocus>
+          </label>
+
+          <label class="login-field login-field--password" for="p">
+            <span class="login-field__label">Password</span>
+            <input id="p" name="password" type="password" placeholder="Enter password" autocomplete="current-password" required>
+            <button type="button" class="login-password-toggle" id="loginPasswordToggle" aria-label="Show password" aria-pressed="false">Show</button>
+          </label>
+
+          <label class="login-remember">
+            <input type="checkbox" id="loginRemember" name="remember">
+            <span>Remember username on this device</span>
+          </label>
+
+          <p id="loginError" class="login-error" role="alert" aria-live="polite"></p>
+
+          <button type="submit" id="loginBtn" class="login-submit">
+            <span class="login-submit__spinner is-hidden" id="loginSpinner" aria-hidden="true"></span>
+            <span id="loginBtnText">Sign in</span>
+          </button>
+        </form>
+      </div>
+
+      <footer class="login-footer">
+        <a href="/" class="login-footer__link">← Back to website</a>
+      </footer>
+    </div>
+  </main>
 </div>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/login.js"></script>
+<script src="/js/login.js?v=2"></script>
 
 </body>
 </html>

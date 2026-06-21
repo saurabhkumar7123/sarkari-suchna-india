@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
 </head>
 <body data-admin-breadcrumbs="Admin,Monitoring">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -36,12 +37,18 @@
   <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
 </div>
 <div class="main">
-  <div class="admin-header"><div class="admin-title">📊 Monitoring</div></div>
+  <div class="admin-header">
+    <div class="admin-title">📊 Monitoring</div>
+    <div class="admin-header-actions">
+      <button type="button" class="header-action-btn" id="refreshSitesBtn">↻ Refresh</button>
+    </div>
+  </div>
   <section class="monitoring-section" aria-label="Monitoring panel">
     <div class="manager-header">
       <h1 class="manager-title">Monitoring Panel</h1>
       <p class="manager-hint">Manage monitored sites, run checks, and track site health.</p>
     </div>
+    <div class="saas-stats-bar" id="monitoringStats" hidden aria-live="polite"></div>
     <div class="monitoring-grid">
       <div class="card card-indigo"><h3><span class="card-icon">🌐</span> Total Sites</h3><p id="totalSites">0</p></div>
       <div class="card card-green"><h3><span class="card-icon">✅</span> Active Sites</h3><p id="activeSites">0</p></div>
@@ -54,9 +61,20 @@
     </div>
     <div class="monitor-actions">
       <button type="button" id="runCheckBtn">▶ Run Check</button>
-      <button type="button" id="refreshSitesBtn">🔄 Refresh</button>
       <button type="button" id="retryFailedBtn">♻ Retry Failed</button>
       <button type="button" id="clearQueueBtn">🧹 Clear Queue</button>
+    </div>
+    <div class="saas-toolbar">
+      <div class="saas-toolbar__title">
+        <h3>Monitored Sites</h3>
+      </div>
+      <div class="saas-toolbar__controls">
+        <label class="saas-search">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="search" id="sitesSearch" placeholder="Search sites..." autocomplete="off">
+          <button type="button" id="sitesSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
+        </label>
+      </div>
     </div>
     <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
     <div id="sitesTable" class="sites-table-host"></div>

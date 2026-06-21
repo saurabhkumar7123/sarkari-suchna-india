@@ -1,8 +1,10 @@
 "use strict";
 
 const TRASH_API = "/api/admin/trash";
+const TRASH_PAGE_SIZE = 12;
 let trashPage = 1;
-const trashLimit = 20;
+let trashAll = [];
+let trashSearchQuery = "";
 
 async function safeFetch(url, options = {}) {
   try {
@@ -28,38 +30,80 @@ async function safeFetch(url, options = {}) {
   }
 }
 
-function renderTrashPager(pagination) {
-  let el = document.getElementById("trashPager");
-  if (!el) {
-    const host = document.getElementById("trashList");
-    if (!host || !host.parentNode) return;
-    el = document.createElement("div");
-    el.id = "trashPager";
-    el.className = "trash-pager";
-    host.parentNode.insertBefore(el, host);
+function getFilteredTrash() {
+  const q = trashSearchQuery.trim().toLowerCase();
+  if (!q) return trashAll.slice();
+  return trashAll.filter((p) => {
+    const title = String(p.title || "").toLowerCase();
+    const slug = String(p.slug || p.url || "").toLowerCase();
+    return title.includes(q) || slug.includes(q);
+  });
+}
+
+function renderTrashStats(filteredCount) {
+  const el = document.getElementById("trashStats");
+  if (!el) return;
+  const total = trashAll.length;
+  if (!total) {
+    el.hidden = true;
+    return;
   }
-  const total = pagination && pagination.total != null ? pagination.total : 0;
-  const totalPages = pagination && pagination.totalPages ? pagination.totalPages : 1;
-  const page = pagination && pagination.page ? pagination.page : 1;
+  const q = trashSearchQuery.trim();
+  el.hidden = false;
   el.innerHTML = `
-    <p class="trash-meta">Total: ${total} · Page ${page} of ${totalPages}</p>
-    <div class="trash-pager-btns">
-      <button type="button" id="trashPrev" ${page <= 1 ? "disabled" : ""}>Previous</button>
-      <button type="button" id="trashNext" ${page >= totalPages ? "disabled" : ""}>Next</button>
-    </div>
+    <span class="saas-stat saas-stat--warn"><strong>${total}</strong> in trash</span>
+    ${q ? `<span class="saas-stat saas-stat--accent"><strong>${filteredCount}</strong> matching</span>` : ""}
   `;
-  document.getElementById("trashPrev").onclick = () => {
-    if (trashPage > 1) {
-      trashPage -= 1;
-      loadTrash();
+}
+
+function syncTrashSearchClear() {
+  const input = document.getElementById("trashSearch");
+  const btn = document.getElementById("trashSearchClear");
+  if (!input || !btn) return;
+  btn.classList.toggle("is-hidden", !input.value.trim());
+}
+
+function renderTrashPagination(total) {
+  const nav = document.getElementById("trashPagination");
+  const summary = document.getElementById("trashPaginationSummary");
+  const prev = document.getElementById("trashPrevBtn");
+  const next = document.getElementById("trashNextBtn");
+  const nums = document.getElementById("trashPageNumbers");
+  const totalPages = Math.max(1, Math.ceil(total / TRASH_PAGE_SIZE) || 1);
+  if (trashPage > totalPages) trashPage = totalPages;
+
+  if (nav) nav.classList.toggle("is-hidden", !trashAll.length);
+
+  if (summary) {
+    if (!trashAll.length) summary.textContent = "Trash is empty.";
+    else if (!total && trashSearchQuery.trim()) summary.textContent = `No results for "${trashSearchQuery.trim()}".`;
+    else {
+      const start = (trashPage - 1) * TRASH_PAGE_SIZE + 1;
+      const end = Math.min(trashPage * TRASH_PAGE_SIZE, total);
+      const filterNote = trashSearchQuery.trim() ? ` · filtered from ${trashAll.length}` : "";
+      summary.textContent = `Showing ${start}–${end} of ${total}${filterNote} · Page ${trashPage} of ${totalPages}`;
     }
-  };
-  document.getElementById("trashNext").onclick = () => {
-    if (trashPage < totalPages) {
-      trashPage += 1;
-      loadTrash();
-    }
-  };
+  }
+
+  if (prev) prev.disabled = trashPage <= 1 || total === 0;
+  if (next) next.disabled = trashPage >= totalPages || total === 0;
+
+  if (!nums) return;
+  nums.innerHTML = "";
+  if (totalPages <= 1 || total === 0) return;
+
+  for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = String(i);
+    if (i === trashPage) b.classList.add("is-active");
+    b.addEventListener("click", () => {
+      if (trashPage === i) return;
+      trashPage = i;
+      renderTrashView();
+    });
+    nums.appendChild(b);
+  }
 }
 
 function formatDeletedDate(value) {
@@ -89,31 +133,30 @@ function showFeedback(message, isError = false) {
   }
 }
 
-async function loadTrash() {
+function renderTrashView() {
   const box = document.getElementById("trashList");
   if (!box) return;
-  box.innerHTML = `<p class="trash-loading">Loading…</p>`;
-  showFeedback("");
 
-  const res = await safeFetch(`${TRASH_API}?page=${trashPage}&limit=${trashLimit}`);
-  if (!res || !res.success) {
-    box.innerHTML = `<div class="trash-empty"><div class="icon">⚠️</div><h3>Unable to load trash</h3><p>Please check login/session and retry.</p></div>`;
-    showFeedback("Failed to load trash", true);
+  const filtered = getFilteredTrash();
+  const total = filtered.length;
+  renderTrashStats(total);
+
+  if (!trashAll.length) {
+    box.innerHTML = `<div class="saas-empty-state"><div class="icon">🗑️</div><h4>Trash is empty</h4><p>Deleted pages will appear here.</p></div>`;
+    renderTrashPagination(0);
     return;
   }
 
-  const pages = res.data || [];
-  const pagination = res.pagination || { page: 1, totalPages: 1, total: 0 };
-
-  renderTrashPager(pagination);
-
-  if (!pages.length) {
-    box.innerHTML = `<div class="trash-empty"><div class="icon">🗑️</div><h3>Trash is empty</h3><p>Deleted pages will appear here</p></div>`;
+  if (!total && trashSearchQuery.trim()) {
+    box.innerHTML = `<div class="saas-empty-state"><div class="icon">🔍</div><h4>No matching pages</h4></div>`;
+    renderTrashPagination(0);
     return;
   }
+
+  const start = (trashPage - 1) * TRASH_PAGE_SIZE;
+  const pages = filtered.slice(start, start + TRASH_PAGE_SIZE);
 
   box.innerHTML = "";
-
   pages.forEach((p) => {
     const slug = p.slug || (p.url ? String(p.url).replace(/^\//, "").replace(/\.html$/, "") : "");
     const card = document.createElement("div");
@@ -136,13 +179,13 @@ async function loadTrash() {
     const restoreBtn = document.createElement("button");
     restoreBtn.type = "button";
     restoreBtn.className = "btn btn-restore";
-    restoreBtn.textContent = "♻ Restore";
+    restoreBtn.textContent = "Restore";
     restoreBtn.addEventListener("click", () => restorePage(slug));
 
     const delBtn = document.createElement("button");
     delBtn.type = "button";
     delBtn.className = "btn btn-delete";
-    delBtn.textContent = "❌ Delete Forever";
+    delBtn.textContent = "Delete Forever";
     delBtn.addEventListener("click", () => permanentDelete(slug));
 
     const actions = document.createElement("div");
@@ -152,21 +195,36 @@ async function loadTrash() {
 
     card.appendChild(main);
     card.appendChild(actions);
-
     box.appendChild(card);
   });
+
+  renderTrashPagination(total);
+}
+
+async function loadTrash(opts = {}) {
+  const box = document.getElementById("trashList");
+  if (!box) return;
+  box.innerHTML = `<div class="saas-loading-grid"><div class="saas-skeleton"></div><div class="saas-skeleton"></div></div>`;
+  showFeedback("");
+
+  const res = await safeFetch(`${TRASH_API}?page=1&limit=100`);
+  if (!res || !res.success) {
+    box.innerHTML = `<div class="saas-empty-state"><div class="icon">⚠️</div><h4>Unable to load trash</h4></div>`;
+    showFeedback("Failed to load trash", true);
+    return;
+  }
+
+  trashAll = res.data || [];
+  if (opts.resetPage !== false) trashPage = 1;
+  renderTrashView();
 }
 
 async function restorePage(slug) {
   if (!confirm("Restore this page?")) return;
-
-  const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/restore`, {
-    method: "PATCH"
-  });
-
+  const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/restore`, { method: "PATCH" });
   if (data && data.success) {
-    showFeedback("Page restored successfully");
-    loadTrash();
+    showFeedback("Page restored");
+    loadTrash({ resetPage: false });
   } else {
     showFeedback("Restore failed", true);
   }
@@ -177,24 +235,52 @@ async function permanentDelete(slug) {
     ? window.AdminUI.typedConfirm({
         title: "Permanent delete",
         warnText: "This action cannot be undone",
-        details: "This will permanently delete the page. Type DELETE to confirm",
+        details: "Type DELETE to confirm",
         requireText: "DELETE"
       })
-    : Promise.resolve(confirm("⚠ This will permanently delete the page. Continue?")));
+    : Promise.resolve(confirm("Permanently delete this page?")));
   if (!ok) return;
 
-  const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/permanent`, {
-    method: "DELETE"
-  });
-
+  const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/permanent`, { method: "DELETE" });
   if (data && data.success) {
     showFeedback("Page permanently deleted");
-    loadTrash();
+    loadTrash({ resetPage: false });
   } else {
     showFeedback("Delete failed", true);
   }
 }
 
-document.getElementById("trashRefreshBtn")?.addEventListener("click", () => loadTrash());
+function wireTrashControls() {
+  document.getElementById("trashRefreshBtn")?.addEventListener("click", () => loadTrash());
+  document.getElementById("trashRefreshBtn2")?.addEventListener("click", () => loadTrash());
+  document.getElementById("trashPrevBtn")?.addEventListener("click", () => {
+    if (trashPage <= 1) return;
+    trashPage -= 1;
+    renderTrashView();
+  });
+  document.getElementById("trashNextBtn")?.addEventListener("click", () => {
+    trashPage += 1;
+    renderTrashView();
+  });
 
+  let debounce = null;
+  document.getElementById("trashSearch")?.addEventListener("input", (e) => {
+    trashSearchQuery = e.target.value;
+    trashPage = 1;
+    syncTrashSearchClear();
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(() => renderTrashView(), 180);
+  });
+  document.getElementById("trashSearchClear")?.addEventListener("click", () => {
+    const input = document.getElementById("trashSearch");
+    if (!input) return;
+    input.value = "";
+    trashSearchQuery = "";
+    trashPage = 1;
+    syncTrashSearchClear();
+    renderTrashView();
+  });
+}
+
+wireTrashControls();
 loadTrash();

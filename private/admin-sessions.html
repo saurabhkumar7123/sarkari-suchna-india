@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
 </head>
 <body data-admin-breadcrumbs="Admin,Sessions">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -47,6 +48,16 @@
     <div class="manager-header">
       <h1 class="manager-title">Active Sessions</h1>
       <p class="manager-hint">Review and revoke active admin sessions.</p>
+    </div>
+    <div class="saas-stats-bar" id="sessionsStats" hidden aria-live="polite"></div>
+    <div class="saas-toolbar">
+      <div class="saas-toolbar__controls">
+        <label class="saas-search">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="search" id="sessionsSearch" placeholder="Search IP or device..." autocomplete="off">
+          <button type="button" id="sessionsSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
+        </label>
+      </div>
     </div>
     <div id="sessionsMessage" class="monitoring-message" role="status" aria-live="polite"></div>
     <div id="sessionsTable" class="sites-table-host"></div>

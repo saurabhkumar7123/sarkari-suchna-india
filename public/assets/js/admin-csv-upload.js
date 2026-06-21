@@ -4,6 +4,8 @@
   const refreshBtn = document.getElementById("refreshImportsBtn");
   const listContainer = document.getElementById("importListContainer");
   const listMeta = document.getElementById("importListMeta");
+  let importRowsAll = [];
+  let importSearchQuery = "";
 
   if (!csvInput || !uploadBtn) return;
 
@@ -94,15 +96,57 @@
     return { ok: res.ok, status: res.status, body };
   }
 
+  function getFilteredImports() {
+    const q = importSearchQuery.trim().toLowerCase();
+    if (!q) return importRowsAll.slice();
+    return importRowsAll.filter((row) => {
+      const preview = String(row.content_preview || "").toLowerCase();
+      const file = String(row.source_file || "").toLowerCase();
+      const status = String(row.status || "").toLowerCase();
+      return preview.includes(q) || file.includes(q) || status.includes(q) || String(row.id).includes(q);
+    });
+  }
+
+  function renderImportStats(filteredCount) {
+    const el = document.getElementById("importStats");
+    if (!el) return;
+    const total = importRowsAll.length;
+    if (!total) {
+      el.hidden = true;
+      return;
+    }
+    const pending = importRowsAll.filter((r) => String(r.status || "pending").toLowerCase() === "pending").length;
+    const q = importSearchQuery.trim();
+    el.hidden = false;
+    el.innerHTML = `
+      <span class="saas-stat"><strong>${total}</strong> imports</span>
+      <span class="saas-stat saas-stat--accent"><strong>${pending}</strong> pending</span>
+      ${q ? `<span class="saas-stat saas-stat--accent"><strong>${filteredCount}</strong> matching</span>` : ""}
+    `;
+  }
+
+  function syncImportSearchClear() {
+    const input = document.getElementById("importSearch");
+    const btn = document.getElementById("importSearchClear");
+    if (!input || !btn) return;
+    btn.classList.toggle("is-hidden", !input.value.trim());
+  }
+
   function renderImportList(rows) {
     if (!listContainer) return;
-    if (!rows || !rows.length) {
+    const list = Array.isArray(rows) ? rows : getFilteredImports();
+    renderImportStats(list.length);
+    if (!importRowsAll.length) {
       listContainer.innerHTML =
         '<p class="import-queue-empty">No imports yet. Upload a CSV with a <strong>content</strong> column.</p>';
       return;
     }
+    if (!list.length) {
+      listContainer.innerHTML = '<div class="saas-empty-state"><div class="icon">🔍</div><h4>No matching imports</h4></div>';
+      return;
+    }
 
-    listContainer.innerHTML = rows
+    listContainer.innerHTML = list
       .map((row) => {
         const href = `/generator?importId=${encodeURIComponent(row.id)}`;
         const status = escapeHtml(row.status || "pending");
@@ -180,12 +224,13 @@
         return;
       }
       const rows = res.body.data || [];
+      importRowsAll = rows;
       const total =
         res.body.pagination && res.body.pagination.total != null
           ? res.body.pagination.total
           : rows.length;
       if (listMeta) listMeta.textContent = `${total} import(s) in queue`;
-      renderImportList(rows);
+      renderImportList(getFilteredImports());
     } catch (err) {
       console.error("Import list error:", err);
       if (listMeta) listMeta.textContent = "Failed to load imports";
@@ -213,6 +258,22 @@
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => loadImportList());
   }
+
+  let importSearchDebounce = null;
+  document.getElementById("importSearch")?.addEventListener("input", (e) => {
+    importSearchQuery = e.target.value;
+    syncImportSearchClear();
+    if (importSearchDebounce) clearTimeout(importSearchDebounce);
+    importSearchDebounce = setTimeout(() => renderImportList(getFilteredImports()), 180);
+  });
+  document.getElementById("importSearchClear")?.addEventListener("click", () => {
+    const input = document.getElementById("importSearch");
+    if (!input) return;
+    input.value = "";
+    importSearchQuery = "";
+    syncImportSearchClear();
+    renderImportList(getFilteredImports());
+  });
 
   uploadBtn.addEventListener("click", async () => {
     const file = csvInput.files && csvInput.files[0] ? csvInput.files[0] : null;

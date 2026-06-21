@@ -1,5 +1,44 @@
 let monitoringSites = [];
 let monitorActionInFlight = false;
+let sitesSearchQuery = "";
+
+function getFilteredMonitoringSites() {
+  const q = sitesSearchQuery.trim().toLowerCase();
+  if (!q) return monitoringSites.slice();
+  return monitoringSites.filter((s) => {
+    const name = String(s && s.name ? s.name : "").toLowerCase();
+    const url = String(s && s.url ? s.url : "").toLowerCase();
+    return name.includes(q) || url.includes(q);
+  });
+}
+
+function renderMonitoringStats() {
+  const el = document.getElementById("monitoringStats");
+  if (!el) return;
+  const total = monitoringSites.length;
+  if (!total) {
+    el.hidden = true;
+    return;
+  }
+  const active = monitoringSites.filter((s) => Number(s && s.active) === 1).length;
+  const broken = monitoringSites.filter((s) => Number(s && s.broken) === 1).length;
+  const filtered = getFilteredMonitoringSites().length;
+  const q = sitesSearchQuery.trim();
+  el.hidden = false;
+  el.innerHTML = `
+    <span class="saas-stat"><strong>${total}</strong> sites</span>
+    <span class="saas-stat saas-stat--success"><strong>${active}</strong> active</span>
+    <span class="saas-stat saas-stat--warn"><strong>${broken}</strong> broken</span>
+    ${q ? `<span class="saas-stat saas-stat--accent"><strong>${filtered}</strong> matching</span>` : ""}
+  `;
+}
+
+function syncSitesSearchClear() {
+  const input = document.getElementById("sitesSearch");
+  const btn = document.getElementById("sitesSearchClear");
+  if (!input || !btn) return;
+  btn.classList.toggle("is-hidden", !input.value.trim());
+}
 
 function escapeAttr(value) {
   return String(value || "")
@@ -36,19 +75,22 @@ function formatMonitorTime(value) {
 function renderSitesTable(data) {
   const host = document.getElementById("sitesTable");
   if (!host) return;
-  if (!Array.isArray(data) || data.length === 0) {
-    host.innerHTML = '<p class="empty-msg">No monitored sites found.</p>';
+  const list = Array.isArray(data) ? data : getFilteredMonitoringSites();
+  if (!list.length) {
+    host.innerHTML = sitesSearchQuery.trim()
+      ? '<div class="saas-empty-state"><div class="icon">🔍</div><h4>No matching sites</h4><p>Try another search term.</p></div>'
+      : '<p class="empty-msg">No monitored sites found.</p>';
     return;
   }
-  host.innerHTML = `<div class="monitor-table"><div class="monitor-head"><div>Site</div><div>Status</div><div>Priority</div><div>Last Checked</div><div>Actions</div></div></div>`;
+  host.innerHTML = `<div class="monitor-table monitor-table--sites"><div class="monitor-head"><div>Site</div><div>Status</div><div>Priority</div><div>Last Checked</div><div>Actions</div></div></div>`;
   const table = host.querySelector(".monitor-table");
   const frag = document.createDocumentFragment();
-  data.forEach((site) => {
+  list.forEach((site) => {
     const row = document.createElement("div");
     row.className = "monitor-row";
     const isActive = Number(site && site.active) === 1;
     const isBroken = Number(site && site.broken) === 1;
-    const statusText = isBroken ? "⚠️ Broken" : isActive ? "✅ Active" : "⏸ Disabled";
+    const statusText = isBroken ? "Broken" : isActive ? "Active" : "Disabled";
     const statusClass = isBroken ? "is-broken" : isActive ? "is-active" : "is-disabled";
     const lastCheckedAt =
       (site &&
@@ -58,17 +100,18 @@ function renderSitesTable(data) {
           site.checkedAt)) ||
       null;
     row.innerHTML = `
-      <div class="monitor-site"><strong>${escapeAttr(site && site.name ? site.name : "Unnamed Site")}</strong><span class="monitor-site-url">${escapeAttr(site && site.url ? site.url : "")}</span></div>
-      <div><span class="monitor-status ${statusClass}"><span class="monitor-status-dot"></span>${statusText}</span></div>
-      <div>${Number(site && site.priority) || 1}</div>
-      <div>${escapeAttr(lastCheckedAt ? formatMonitorTime(lastCheckedAt) : "Not available")}</div>
-      <div class="monitor-row-actions">
+      <div class="monitor-site" data-label="Site"><strong>${escapeAttr(site && site.name ? site.name : "Unnamed Site")}</strong><span class="monitor-site-url">${escapeAttr(site && site.url ? site.url : "")}</span></div>
+      <div data-label="Status"><span class="monitor-status ${statusClass}"><span class="monitor-status-dot"></span>${statusText}</span></div>
+      <div data-label="Priority">${Number(site && site.priority) || 1}</div>
+      <div data-label="Checked">${escapeAttr(lastCheckedAt ? formatMonitorTime(lastCheckedAt) : "Not available")}</div>
+      <div class="monitor-row-actions" data-label="Actions">
         <button type="button" data-action="restore-site" data-site-id="${Number(site.id) || 0}">Restore</button>
         <button type="button" data-action="disable-site" data-site-id="${Number(site.id) || 0}">Disable</button>
       </div>`;
     frag.appendChild(row);
   });
   table.appendChild(frag);
+  renderMonitoringStats();
 }
 
 async function loadSites() {
@@ -89,7 +132,7 @@ async function loadSites() {
   set("totalSites", monitoringSites.length);
   set("activeSites", monitoringSites.filter((s) => Number(s && s.active) === 1).length);
   set("brokenSites", monitoringSites.filter((s) => Number(s && s.broken) === 1).length);
-  renderSitesTable(monitoringSites);
+  renderSitesTable(getFilteredMonitoringSites());
   setMonitoringMessage(`Loaded ${monitoringSites.length} monitored sites.`, "success");
 }
 
@@ -301,5 +344,21 @@ document.getElementById("queueFailedList")?.addEventListener("click", (e) => {
   retryFailedJobById(jobId, btn);
 });
 document.getElementById("failedSort")?.addEventListener("change", () => loadQueueFailedJobs());
+
+let sitesSearchDebounce = null;
+document.getElementById("sitesSearch")?.addEventListener("input", (e) => {
+  sitesSearchQuery = e.target.value;
+  syncSitesSearchClear();
+  if (sitesSearchDebounce) clearTimeout(sitesSearchDebounce);
+  sitesSearchDebounce = setTimeout(() => renderSitesTable(getFilteredMonitoringSites()), 180);
+});
+document.getElementById("sitesSearchClear")?.addEventListener("click", () => {
+  const input = document.getElementById("sitesSearch");
+  if (!input) return;
+  input.value = "";
+  sitesSearchQuery = "";
+  syncSitesSearchClear();
+  renderSitesTable(getFilteredMonitoringSites());
+});
 
 Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs()]);

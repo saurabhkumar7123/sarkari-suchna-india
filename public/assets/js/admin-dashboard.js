@@ -11,6 +11,59 @@ let lastDashboardStats = null;
 let dashboardLiveTimer = null;
 let dashboardLivePaused = false;
 
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function initDashboardWelcome() {
+  const banner = document.getElementById("dashboardWelcomeBanner");
+  const dismiss = document.getElementById("dashboardWelcomeDismiss");
+  const greeting = document.getElementById("dashboardGreeting");
+  const heroTitle = document.getElementById("dashboardHeroTitle");
+  const welcomeTitle = document.getElementById("dashboardWelcomeTitle");
+  const dateLine = document.getElementById("dashboardDateLine");
+
+  let username = "Admin";
+  let justLoggedIn = false;
+  try {
+    justLoggedIn = sessionStorage.getItem("adminLoginWelcome") === "1";
+    username = sessionStorage.getItem("adminLoginWelcomeUser") || username;
+    if (justLoggedIn) {
+      sessionStorage.removeItem("adminLoginWelcome");
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const greet = getTimeGreeting();
+  const displayName = username.charAt(0).toUpperCase() + username.slice(1);
+  if (greeting) greeting.textContent = `${greet}, ${displayName}`;
+  if (heroTitle) heroTitle.textContent = `${greet}, ${displayName}`;
+  if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${displayName}`;
+  if (dateLine) {
+    dateLine.textContent = new Date().toLocaleDateString("en-IN", {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+  }
+
+  if (banner && justLoggedIn) {
+    banner.classList.remove("is-hidden");
+    window.AdminUI?.toastSuccess("Signed in successfully");
+  }
+
+  dismiss?.addEventListener("click", () => {
+    banner?.classList.add("is-hidden");
+  });
+}
+
+initDashboardWelcome();
+
 function flashKpi(id) {
   const card = document.getElementById(id)?.closest(".card");
   if (!card) return;
@@ -190,7 +243,7 @@ function ensureLiveRefreshUi() {
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
   if (document.getElementById("adminLiveStrip")) return;
 
-  const heading = document.querySelector(".page-sub");
+  const heading = document.querySelector(".dashboard-hero__sub");
   if (!heading) return;
 
   const strip = document.createElement("div");

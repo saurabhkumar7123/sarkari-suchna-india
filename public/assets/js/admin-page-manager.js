@@ -167,12 +167,29 @@ function renderBulkBar() {
   });
 }
 
+function renderPageManagerStats(pagination) {
+  const el = document.getElementById("pageManagerStats");
+  if (!el) return;
+  const total = Number(pagination && pagination.total) || 0;
+  if (!total) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = `
+    <span class="saas-stat"><strong>${total}</strong> pages</span>
+    <span class="saas-stat saas-stat--accent"><strong>${currentPage}</strong> / ${Math.max(1, Number(pagination.totalPages) || 1)} page</span>
+  `;
+}
+
 function renderPagination(pagination) {
   const total = Number(pagination.total) || 0;
   totalItemCount = total;
   pageLimit = Number(pagination.limit) || 20;
   totalPageCount = Math.max(1, Number(pagination.totalPages) || 1);
   if (total === 0) totalPageCount = 1;
+
+  renderPageManagerStats(pagination);
 
   const prev = document.getElementById("prevBtn");
   const next = document.getElementById("nextBtn");
@@ -399,6 +416,7 @@ function initSearch() {
     clearTimeout(suggestTimer);
     const raw = this.value;
     const v = raw.trim();
+    document.getElementById("pageSearchClear")?.classList.toggle("is-hidden", !v);
     suggestTimer = setTimeout(async () => {
       if (!suggestBox) return;
       if (v.length < 2) return (suggestBox.innerHTML = "");
@@ -443,6 +461,15 @@ document.getElementById("managerRefreshBtn")?.addEventListener("click", () => lo
 document.getElementById("sortOrder")?.addEventListener("change", (e) => {
   sortOrder = e.target.value === "asc" ? "asc" : "desc";
   currentPage = 1;
+  loadPageManager();
+});
+
+document.getElementById("pageSearchClear")?.addEventListener("click", () => {
+  const input = document.getElementById("searchPage");
+  if (!input) return;
+  input.value = "";
+  currentPage = 1;
+  document.getElementById("pageSearchClear")?.classList.add("is-hidden");
   loadPageManager();
 });
 

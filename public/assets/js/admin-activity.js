@@ -82,23 +82,66 @@ function buildQuery() {
   return q.toString();
 }
 
-function renderPagination(pagination) {
-  const host = document.getElementById("activityPagination");
-  if (!host) return;
-  const total = Number(pagination && pagination.totalPages ? pagination.totalPages : 1);
-  host.innerHTML = `
-    <button type="button" id="activityPrevBtn" ${activityPage <= 1 ? "disabled" : ""}>Previous</button>
-    <span>Page ${activityPage} / ${total}</span>
-    <button type="button" id="activityNextBtn" ${activityPage >= total ? "disabled" : ""}>Next</button>
+function renderActivityStats(pagination) {
+  const el = document.getElementById("activityStats");
+  if (!el) return;
+  const total = Number(pagination && pagination.total) || 0;
+  if (!total) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = `
+    <span class="saas-stat"><strong>${total}</strong> events</span>
+    <span class="saas-stat saas-stat--accent"><strong>${activityPage}</strong> / ${Number(pagination.totalPages) || 1} page</span>
   `;
-  document.getElementById("activityPrevBtn")?.addEventListener("click", () => {
-    activityPage = Math.max(1, activityPage - 1);
-    loadActivity();
-  });
-  document.getElementById("activityNextBtn")?.addEventListener("click", () => {
-    activityPage = Math.min(total, activityPage + 1);
-    loadActivity();
-  });
+}
+
+function renderPagination(pagination) {
+  const nav = document.getElementById("activityPaginationNav");
+  const summary = document.getElementById("activityPaginationSummary");
+  const prev = document.getElementById("activityPrevBtn");
+  const next = document.getElementById("activityNextBtn");
+  const nums = document.getElementById("activityPageNumbers");
+  const totalPages = Math.max(1, Number(pagination && pagination.totalPages ? pagination.totalPages : 1));
+  const total = Number(pagination && pagination.total) || 0;
+
+  if (nav) nav.classList.toggle("is-hidden", !total);
+  renderActivityStats(pagination);
+
+  if (summary) {
+    if (!total) summary.textContent = "No activity records yet.";
+    else {
+      const start = (activityPage - 1) * 20 + 1;
+      const end = Math.min(activityPage * 20, total);
+      summary.textContent = `Showing ${start}–${end} of ${total} · Page ${activityPage} of ${totalPages}`;
+    }
+  }
+
+  if (prev) prev.disabled = activityPage <= 1;
+  if (next) next.disabled = activityPage >= totalPages;
+
+  if (!nums) return;
+  nums.innerHTML = "";
+  if (totalPages <= 1) return;
+
+  const maxButtons = 7;
+  let startPage = Math.max(1, activityPage - 3);
+  let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  startPage = Math.max(1, endPage - maxButtons + 1);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = String(i);
+    if (i === activityPage) b.classList.add("is-active");
+    b.addEventListener("click", () => {
+      if (activityPage === i) return;
+      activityPage = i;
+      loadActivity();
+    });
+    nums.appendChild(b);
+  }
 }
 
 function renderActivityError(message) {
@@ -110,8 +153,8 @@ function renderActivityError(message) {
 function renderActivityEmpty(pagination) {
   const host = document.getElementById("activityTable");
   if (!host) return;
-  host.innerHTML = '<p class="empty-msg">No activity records found.</p><div id="activityPagination" class="pagination"></div>';
-  renderPagination(pagination || { totalPages: 1 });
+  host.innerHTML = '<div class="saas-empty-state"><div class="icon">📝</div><h4>No activity records</h4><p>Try changing filters or date range.</p></div>';
+  renderPagination(pagination || { totalPages: 1, total: 0 });
 }
 
 /** Timeline cards (progressive); falls back to table-friendly layout on wide screens via CSS. */
@@ -146,15 +189,13 @@ function renderActivity(rows, pagination) {
     });
   });
   html += "</div>";
-
-  html += '<div id="activityPagination" class="pagination"></div>';
   host.innerHTML = html;
   renderPagination(pagination || { totalPages: 1 });
 }
 
 async function loadActivity() {
   const host = document.getElementById("activityTable");
-  if (host) host.innerHTML = '<p class="empty-msg">Loading activity...</p>';
+  if (host) host.innerHTML = '<div class="saas-loading-grid"><div class="saas-skeleton"></div><div class="saas-skeleton"></div></div>';
 
   const res = await window.adminSafeFetch(`/api/admin/activity?${buildQuery()}`);
 
@@ -212,6 +253,17 @@ document.getElementById("exportActivityBtn")?.addEventListener("click", async ()
   a.click();
   URL.revokeObjectURL(a.href);
   window.AdminUI?.toastSuccess("Activity exported");
+});
+
+document.getElementById("activityPrevBtn")?.addEventListener("click", () => {
+  if (activityPage <= 1) return;
+  activityPage -= 1;
+  loadActivity();
+});
+document.getElementById("activityNextBtn")?.addEventListener("click", () => {
+  if (document.getElementById("activityNextBtn")?.disabled) return;
+  activityPage += 1;
+  loadActivity();
 });
 
 ensureFilterChips();

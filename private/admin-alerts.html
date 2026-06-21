@@ -8,10 +8,11 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-<link rel="stylesheet" href="/css/admin/pdf.css">
+<link rel="stylesheet" href="/css/admin/pdf.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
 </head>
-<body data-admin-breadcrumbs="Admin,PDF Alerts">
+<body class="admin-alerts-page" data-admin-breadcrumbs="Admin,PDF Alerts">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -39,17 +40,47 @@
 <div class="main">
   <div class="admin-header"><div class="admin-title">🔔 PDF Alerts</div></div>
   <div class="main-container">
-    <div class="page-header">
-      <h1>PDF Notifications</h1>
-      <p>Latest PDF uploads and site announcements</p>
+    <div class="page-header page-header--with-search">
+      <div class="page-header__text">
+        <h1>PDF Notifications</h1>
+        <p>Latest PDF uploads and site announcements</p>
+      </div>
+      <div class="pdf-alerts-toolbar">
+        <div class="pdf-alerts-toolbar-actions">
+          <a href="/upload" class="pdf-alerts-btn pdf-alerts-btn--primary">Upload PDF</a>
+          <button type="button" id="pdfAlertsRefresh" class="pdf-alerts-btn pdf-alerts-btn--ghost" aria-label="Refresh PDF list">
+            ↻ Refresh
+          </button>
+        </div>
+        <label class="search-wrap pdf-alerts-search" for="pdfAlertsSearch">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="search"
+            id="pdfAlertsSearch"
+            placeholder="Search PDF name..."
+            autocomplete="off"
+            enterkeyhint="search"
+          >
+          <button type="button" id="pdfAlertsSearchClear" class="pdf-alerts-search-clear is-hidden" aria-label="Clear search">×</button>
+        </label>
+      </div>
     </div>
-    <div id="pdfList"></div>
+    <div class="pdf-alerts-stats" id="pdfAlertsStats" hidden aria-live="polite"></div>
+    <div id="pdfList" class="pdf-alerts-grid" aria-live="polite"></div>
+    <nav class="pagination" id="pdfAlertsPagination" aria-label="PDF alerts pagination">
+      <p id="pdfPaginationSummary" class="pagination-summary" aria-live="polite"></p>
+      <div class="pagination-controls">
+        <button type="button" id="pdfPrevBtn">Previous</button>
+        <div id="pdfPageNumbers" class="page-numbers"></div>
+        <button type="button" id="pdfNextBtn">Next</button>
+      </div>
+    </nav>
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-nav.js"></script>
 <script src="/js/admin-shell.js"></script>
 <script src="/js/admin-layout.js"></script>
-<script src="/js/pdf.js"></script>
+<script src="/js/pdf.js?v=4"></script>
 </body>
 </html>

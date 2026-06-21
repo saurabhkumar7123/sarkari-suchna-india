@@ -11,8 +11,9 @@
 
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/upload.css">
+  <link rel="stylesheet" href="/css/admin/upload.css?v=3">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
   <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css">
 
 </head>
@@ -34,22 +35,28 @@
     <p>Upload, preview, search, and manage all files from one place.</p>
   </div>
 
+  <div class="upload-stats" id="uploadStats" hidden aria-live="polite"></div>
+
   <section class="card upload-card">
-    <form id="uploadForm">
+    <form id="uploadForm" class="upload-form-compact">
       <input type="file" id="fileInput" name="pdf" accept=".pdf,.jpg,.jpeg,.png" required hidden>
       <label for="fileInput" id="uploadDropZone" class="upload-drop-zone">
-        <div class="drop-icon" aria-hidden="true">⤴</div>
-        <p class="drop-title">Click to upload or drag &amp; drop</p>
-        <p class="drop-subtitle">Supports PDF, JPG, JPEG, PNG</p>
+        <span class="drop-icon" aria-hidden="true">⤴</span>
+        <span class="drop-copy">
+          <span class="drop-title">Click or drag file here</span>
+          <span class="drop-subtitle">PDF, JPG, JPEG, PNG · max 10 MB</span>
+        </span>
       </label>
-      <div class="upload-meta">
-        <span id="uploadSelectedName" class="selected-file">No file selected</span>
-        <span id="uploadState" class="upload-state" aria-live="polite"></span>
+      <div class="upload-form-row">
+        <div class="upload-meta">
+          <span id="uploadSelectedName" class="selected-file">No file selected</span>
+          <span id="uploadState" class="upload-state" aria-live="polite"></span>
+        </div>
+        <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload File</button>
       </div>
-      <button type="submit" id="uploadSubmitBtn" class="btn btn-primary">Upload File</button>
     </form>
 
-    <p id="msg"></p>
+    <p id="msg" class="upload-msg"></p>
     <div id="uploadProgressWrap" class="upload-progress-wrap" hidden>
       <div class="upload-progress-bar"><span id="uploadProgressFill"></span></div>
       <span id="uploadProgressText">0%</span>
@@ -58,20 +65,44 @@
 
   <section class="card manager-card">
     <div class="manager-head">
-      <h3>Uploaded Files</h3>
+      <div class="manager-head__title">
+        <h3>Uploaded Files</h3>
+        <p class="manager-head__hint">Manage PDFs and images used across the site</p>
+      </div>
       <div class="manager-controls">
-        <div class="search-wrap">
+        <div class="search-wrap upload-search">
           <span class="search-icon" aria-hidden="true">🔍</span>
-          <input type="text" id="searchFile" placeholder="Search files...">
+          <input type="search" id="searchFile" placeholder="Search files..." autocomplete="off">
+          <button type="button" id="uploadSearchClear" class="upload-search-clear is-hidden" aria-label="Clear search">×</button>
         </div>
-        <select id="filter">
-          <option value="all">All Files</option>
-          <option value="pdf">PDF</option>
-          <option value="image">Image</option>
+        <select id="uploadSort" class="upload-sort" aria-label="Sort files">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name-asc">Name A–Z</option>
+          <option value="name-desc">Name Z–A</option>
+          <option value="size-desc">Largest first</option>
         </select>
+        <div class="upload-filter-pills" role="group" aria-label="Filter by type">
+          <button type="button" class="upload-filter-pill is-active" data-filter="all">All</button>
+          <button type="button" class="upload-filter-pill" data-filter="pdf">PDF</button>
+          <button type="button" class="upload-filter-pill" data-filter="image">Images</button>
+        </div>
+        <div class="upload-view-toggle" role="group" aria-label="View mode">
+          <button type="button" id="uploadViewGrid" class="upload-view-btn is-active" aria-pressed="true" title="Grid view">▦</button>
+          <button type="button" id="uploadViewList" class="upload-view-btn" aria-pressed="false" title="List view">☰</button>
+        </div>
+        <button type="button" id="uploadRefreshBtn" class="upload-refresh-btn" aria-label="Refresh file list">↻ Refresh</button>
       </div>
     </div>
     <div id="fileList"></div>
+    <nav class="pagination upload-pagination" id="uploadPagination" aria-label="Uploaded files pagination">
+      <p id="uploadPaginationSummary" class="pagination-summary" aria-live="polite"></p>
+      <div class="pagination-controls">
+        <button type="button" id="uploadPrevBtn">Previous</button>
+        <div id="uploadPageNumbers" class="page-numbers"></div>
+        <button type="button" id="uploadNextBtn">Next</button>
+      </div>
+    </nav>
   </section>
 
 </div>
@@ -95,7 +126,7 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/upload.js"></script>
+<script src="/js/upload.js?v=3"></script>
 
 </body>
 </html>

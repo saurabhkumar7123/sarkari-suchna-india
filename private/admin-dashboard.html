@@ -10,6 +10,8 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
+<link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=1">
 </head>
 <body data-admin-breadcrumbs="Admin,Dashboard">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -38,15 +40,60 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">👋 Welcome, Admin</div>
+    <div class="admin-title" id="dashboardGreeting">👋 Welcome, Admin</div>
     <div class="admin-header-actions">
-      <button type="button" class="header-action-btn" id="dashboardRefreshBtn">Refresh Dashboard</button>
+      <button type="button" class="header-action-btn" id="dashboardRefreshBtn">↻ Refresh</button>
     </div>
   </div>
-  <h1 class="page-heading">Dashboard</h1>
-  <p class="page-sub">Overview and insights</p>
-  <section class="stats-section" aria-label="Actionable analytics">
-    <h2 class="section-heading">Actionable Analytics</h2>
+
+  <div class="dashboard-welcome-banner is-hidden" id="dashboardWelcomeBanner" role="status">
+    <div class="dashboard-welcome-banner__text">
+      <strong id="dashboardWelcomeTitle">Signed in successfully</strong>
+      <span>Your admin session is active. Here's your site overview.</span>
+    </div>
+    <button type="button" class="dashboard-welcome-banner__dismiss" id="dashboardWelcomeDismiss">Got it</button>
+  </div>
+
+  <section class="dashboard-hero" aria-label="Dashboard overview">
+    <p class="dashboard-hero__eyebrow" id="dashboardDateLine">Today</p>
+    <h1 class="dashboard-hero__title" id="dashboardHeroTitle">Dashboard</h1>
+    <p class="dashboard-hero__sub">Overview, KPIs, and quick actions for Sarkari Suchna India</p>
+    <div class="dashboard-quick-grid">
+      <a href="/generator" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">➕</span>
+        <span class="dashboard-quick-card__label">New Page</span>
+        <span class="dashboard-quick-card__hint">Open generator</span>
+      </a>
+      <a href="/upload" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">📤</span>
+        <span class="dashboard-quick-card__label">Upload PDF</span>
+        <span class="dashboard-quick-card__hint">Files &amp; alerts</span>
+      </a>
+      <a href="/admin/page-manager" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">📄</span>
+        <span class="dashboard-quick-card__label">Page Manager</span>
+        <span class="dashboard-quick-card__hint">Edit &amp; publish</span>
+      </a>
+      <a href="/admin/monitoring" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">📊</span>
+        <span class="dashboard-quick-card__label">Monitoring</span>
+        <span class="dashboard-quick-card__hint">Queue &amp; sites</span>
+      </a>
+      <a href="/admin/alerts" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">🔔</span>
+        <span class="dashboard-quick-card__label">PDF Alerts</span>
+        <span class="dashboard-quick-card__hint">Notifications</span>
+      </a>
+      <a href="/admin/homepage-management" class="dashboard-quick-card">
+        <span class="dashboard-quick-card__icon">🌐</span>
+        <span class="dashboard-quick-card__label">Homepage</span>
+        <span class="dashboard-quick-card__hint">Boxes &amp; badges</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stats-section dashboard-kpi-strip" aria-label="Actionable analytics">
+    <h2 class="section-heading">Key metrics</h2>
     <div class="cards stats-cards">
       <a class="card card-blue" href="/admin/page-manager"><h3><span class="card-icon">📄</span> Total Pages</h3><p id="kpiTotalPages">0</p></a>
       <a class="card card-indigo" href="/upload"><h3><span class="card-icon">📤</span> Total Uploads</h3><p id="kpiTotalUploads">0</p></a>
@@ -67,11 +114,9 @@
     <div class="recent">
       <h3>Quick Actions</h3>
       <div class="row-actions">
-        <a href="/generator">Generate Page</a>
-        <a href="/admin/homepage-management">Homepage Management</a>
-        <a href="/admin/csv-upload">Upload CSV</a>
         <a href="/admin/monitoring" id="quickRunCheckBtn">Run Check</a>
         <a href="/admin/monitoring" id="quickRetryFailedBtn">Retry Failed Jobs</a>
+        <a href="/admin/csv-upload">Import CSV</a>
       </div>
       <div class="page-item" style="margin-top:8px;"><span>Average Processing Time</span><strong id="avgProcessingTime">N/A</strong></div>
       <div class="page-item"><span>Recent Trend</span><strong id="recentTrend">N/A</strong></div>
@@ -125,6 +170,6 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-dashboard.js"></script>
+<script src="/js/admin-dashboard.js?v=2"></script>
 </body>
 </html>

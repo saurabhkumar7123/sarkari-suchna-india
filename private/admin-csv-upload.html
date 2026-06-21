@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/csv-upload.css">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
 </head>
 <body data-admin-breadcrumbs="Admin,Content Import">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -78,7 +79,15 @@
           <h2 class="import-queue-card__title">Imported drafts</h2>
           <p class="import-queue-card__meta" id="importListMeta">Loading…</p>
         </div>
+        <div class="saas-toolbar__controls">
+          <label class="saas-search">
+            <span class="search-icon" aria-hidden="true">🔍</span>
+            <input type="search" id="importSearch" placeholder="Search imports..." autocomplete="off">
+            <button type="button" id="importSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
+          </label>
+        </div>
       </div>
+      <div class="saas-stats-bar" id="importStats" hidden aria-live="polite"></div>
       <div id="importListContainer" class="import-queue-list" role="list" aria-label="Imported content drafts"></div>
     </div>
   </section>

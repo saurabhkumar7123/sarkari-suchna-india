@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
 <link rel="stylesheet" href="/css/admin/trash.css">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=1">
 <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css">
 
 </head>
@@ -31,8 +32,27 @@
   <h2>Trash Pages</h2>
   <p>Manage deleted pages, restore or permanently delete.</p>
 </div>
+<div class="saas-stats-bar" id="trashStats" hidden aria-live="polite"></div>
+<div class="saas-toolbar">
+  <div class="saas-toolbar__controls">
+    <label class="saas-search">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="search" id="trashSearch" placeholder="Search title or slug..." autocomplete="off">
+      <button type="button" id="trashSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
+    </label>
+    <button type="button" class="saas-btn" id="trashRefreshBtn2">↻ Refresh</button>
+  </div>
+</div>
 <div id="trashFeedback" class="trash-feedback" aria-live="polite"></div>
 <div id="trashList"></div>
+<nav class="pagination" id="trashPagination" aria-label="Trash pagination">
+  <p id="trashPaginationSummary" class="pagination-summary" aria-live="polite"></p>
+  <div class="pagination-controls">
+    <button type="button" id="trashPrevBtn">Previous</button>
+    <div id="trashPageNumbers" class="page-numbers"></div>
+    <button type="button" id="trashNextBtn">Next</button>
+  </div>
+</nav>
 </div>
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
@@ -43,7 +63,7 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/trash.js"></script>
+<script src="/js/trash.js?v=2"></script>
 
 </body>
 </html>
