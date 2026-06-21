@@ -39,6 +39,142 @@ function updateFinderSelectAppearance() {
   [els.qualification, els.state, els.department].forEach((sel) => {
     if (!sel) return;
     sel.classList.toggle("finder-input--empty", !String(sel.value || "").trim());
+    const trigger = sel.parentElement?.querySelector(".finder-select-trigger");
+    if (trigger) syncFinderSelectTrigger(trigger, sel);
+  });
+}
+
+let finderPickerActiveTrigger = null;
+
+function syncFinderSelectTrigger(trigger, select) {
+  const option = select.options[select.selectedIndex];
+  trigger.textContent = option ? option.textContent : "";
+  trigger.classList.toggle("finder-input--empty", !String(select.value || "").trim());
+}
+
+function ensureFinderPickerSheet() {
+  if (document.getElementById("finderPickerSheet")) return;
+
+  const sheet = document.createElement("div");
+  sheet.id = "finderPickerSheet";
+  sheet.className = "finder-picker-sheet";
+  sheet.setAttribute("aria-hidden", "true");
+  sheet.innerHTML = `
+    <div class="finder-picker-backdrop" data-finder-picker-close></div>
+    <div class="finder-picker-panel" role="dialog" aria-modal="true" aria-labelledby="finderPickerTitle">
+      <div class="finder-picker-handle" aria-hidden="true"></div>
+      <div class="finder-picker-header">
+        <p class="finder-picker-title" id="finderPickerTitle"></p>
+        <button type="button" class="finder-picker-done" data-finder-picker-close>Done</button>
+      </div>
+      <ul class="finder-picker-list" role="listbox"></ul>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+
+  sheet.addEventListener("click", (e) => {
+    if (e.target.closest("[data-finder-picker-close]")) {
+      closeFinderPickerSheet();
+    }
+  });
+}
+
+function closeFinderPickerSheet() {
+  const sheet = document.getElementById("finderPickerSheet");
+  if (!sheet) return;
+  sheet.classList.remove("is-open");
+  sheet.setAttribute("aria-hidden", "true");
+  if (finderPickerActiveTrigger) {
+    finderPickerActiveTrigger.setAttribute("aria-expanded", "false");
+    finderPickerActiveTrigger = null;
+  }
+}
+
+function openFinderPickerSheet(select, trigger) {
+  ensureFinderPickerSheet();
+  const sheet = document.getElementById("finderPickerSheet");
+  const title = sheet.querySelector(".finder-picker-title");
+  const list = sheet.querySelector(".finder-picker-list");
+  const fieldLabel = select.closest(".finder-field")?.querySelector(".finder-label")?.textContent?.trim();
+  const placeholderOption = Array.from(select.options).find((opt) => !String(opt.value || "").trim());
+
+  title.textContent = fieldLabel || "Select";
+  list.innerHTML = "";
+
+  Array.from(select.options).forEach((opt) => {
+    const item = document.createElement("li");
+    item.className = "finder-picker-option";
+    item.setAttribute("role", "option");
+    item.dataset.value = opt.value;
+    item.textContent = opt.textContent;
+    if (!String(opt.value || "").trim()) {
+      item.classList.add("is-placeholder");
+    }
+    if (opt.value === select.value) {
+      item.classList.add("is-selected");
+      item.setAttribute("aria-selected", "true");
+    }
+    item.addEventListener("click", () => {
+      select.value = opt.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      syncFinderSelectTrigger(trigger, select);
+      closeFinderPickerSheet();
+    });
+    list.appendChild(item);
+  });
+
+  sheet.classList.add("is-open");
+  sheet.setAttribute("aria-hidden", "false");
+  trigger.setAttribute("aria-expanded", "true");
+  finderPickerActiveTrigger = trigger;
+
+  const selected = list.querySelector(".finder-picker-option.is-selected") ||
+    list.querySelector(".finder-picker-option.is-placeholder");
+  if (selected) {
+    selected.scrollIntoView({ block: "nearest" });
+  }
+
+  if (!select.value && placeholderOption) {
+    title.textContent = placeholderOption.textContent.trim();
+  }
+}
+
+function shouldUseFinderMobileSelects() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+function enhanceFinderMobileSelects() {
+  const els = getFinderFormEls();
+  if (!els || !els.form || !shouldUseFinderMobileSelects()) return;
+  if (els.form.dataset.mobileSelectsEnhanced === "1") return;
+  els.form.dataset.mobileSelectsEnhanced = "1";
+
+  ensureFinderPickerSheet();
+
+  [els.qualification, els.department, els.state].forEach((select) => {
+    if (!select || select.dataset.mobileEnhanced === "1") return;
+    select.dataset.mobileEnhanced = "1";
+
+    const field = select.closest(".finder-field");
+    if (field) field.classList.add("finder-field--mobile-select");
+
+    const wrap = document.createElement("div");
+    wrap.className = "finder-select-wrap";
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add("finder-input-native");
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "finder-select-trigger finder-input";
+    trigger.setAttribute("aria-haspopup", "listbox");
+    trigger.setAttribute("aria-expanded", "false");
+    syncFinderSelectTrigger(trigger, select);
+    wrap.appendChild(trigger);
+
+    trigger.addEventListener("click", () => {
+      openFinderPickerSheet(select, trigger);
+    });
   });
 }
 
@@ -81,6 +217,7 @@ function bindFinderFormValidation() {
 
   els.form.addEventListener("change", updateFinderSubmitState);
   els.form.addEventListener("input", updateFinderSubmitState);
+  enhanceFinderMobileSelects();
   updateFinderSubmitState();
 }
 
@@ -108,6 +245,7 @@ function setFinderTriggerExpanded(expanded) {
 }
 
 function closeFinder() {
+  closeFinderPickerSheet();
   const { modal } = getFinderModalEls();
   if (modal) {
     modal.classList.remove("active");
@@ -200,6 +338,12 @@ document.addEventListener("click", (e) => {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
+    const picker = document.getElementById("finderPickerSheet");
+    if (picker && picker.classList.contains("is-open")) {
+      e.preventDefault();
+      closeFinderPickerSheet();
+      return;
+    }
     const modal = document.getElementById("jobFinderModal");
     if (modal && modal.classList.contains("active")) {
       e.preventDefault();
