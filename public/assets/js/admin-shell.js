@@ -208,6 +208,17 @@
   function toggleDarkMode() {
     document.body.classList.toggle("dark");
     localStorage.setItem("darkMode", document.body.classList.contains("dark"));
+    syncDarkModeToggleButton();
+  }
+
+  function syncDarkModeToggleButton() {
+    const btn = document.getElementById("darkModeToggle");
+    if (!btn) return;
+    const isDark = document.body.classList.contains("dark");
+    const ico = btn.querySelector(".nav-ico");
+    const label = btn.querySelector(".nav-text");
+    if (ico) ico.textContent = isDark ? "☀️" : "🌙";
+    if (label) label.textContent = isDark ? "Light Mode" : "Dark Mode";
   }
 
   async function logout() {
@@ -259,6 +270,7 @@
     }
     markActiveSidebarLink();
     syncCollapsedNavTooltips();
+    syncDarkModeToggleButton();
     if (typeof window.AdminShellRebind === "function" && bindShellEvents._rebindPending) {
       bindShellEvents._rebindPending = false;
     }
@@ -269,6 +281,7 @@
   if (localStorage.getItem("darkMode") === "true") {
     document.body.classList.add("dark");
   }
+  syncDarkModeToggleButton();
 
   document.addEventListener("pointerdown", (e) => {
     if (!isMobileSidebarMode()) return;
