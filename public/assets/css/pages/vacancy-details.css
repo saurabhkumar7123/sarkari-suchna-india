@@ -604,12 +604,13 @@
     .table{
     --table-head-bg:#ffffff;
     --table-head-color:#000000;
-    --table-border:#dcefe6;
+    --table-border:#cbd5e1;
     --table-row-even:#f8fafc;
     --table-row-odd:#ffffff;
     width:100%;
     max-width:100%;
     border-collapse:collapse;
+    border:1px solid var(--table-border);
     table-layout:fixed;
     min-width:0;
     }
@@ -628,6 +629,7 @@
     white-space:normal;
     hyphens:auto;
     vertical-align:middle;
+    border:1px solid var(--table-border);
     }
 
     .table th{
@@ -638,13 +640,11 @@
     font-weight:700;
     text-align:left;
     line-height:1.25;
-    border:1px solid var(--table-border);
     }
     
     .table td{
     padding:8px 10px;
     font-size:14px;
-    border:1px solid var(--table-border);
     text-align:left;
     line-height:1.45;
     font-variant-numeric:tabular-nums;
@@ -720,7 +720,7 @@
     left:0;
     z-index:1;
     box-shadow:none;
-    border-right:1px solid #e2e8f0;
+    border-right:1px solid var(--table-border);
     }
 
     .table-responsive--wide .table th:first-child{

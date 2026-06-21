@@ -59,7 +59,7 @@ A: Sample answer.`,
     expect(linksIdx).toBeLessThan(bannerIdx);
     expect(html).toContain('normalizeSectionKey("important dates")');
     expect(html).not.toContain('byLabel["ImportantDates"]');
-    expect(html).toContain("vacancy-details.css?v=73");
+    expect(html).toContain("vacancy-details.css?v=74");
     expect(html).toContain("job-page-share.js?v=3");
     expect(html).toContain("highlight-banner-theme.js?v=2");
     expect(html).toContain("Apply Online");
