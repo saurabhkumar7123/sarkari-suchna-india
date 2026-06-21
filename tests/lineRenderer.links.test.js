@@ -99,4 +99,26 @@ Official Website=https://ssc.gov.in`;
     expect(official).toContain(">Visit Site</a>");
     expect(official).not.toContain(">Click Here</a>");
   });
+
+  test("dual-button pipe syntax renders two links in one row", () => {
+    const html = renderLinesToHtml(
+      ["Download Syllabus|Hindi=https://hindi.com|English=https://english.com"],
+      { sectionName: "ImportantLinks" }
+    );
+    expect(html).toContain('<div class="left-text">Download Syllabus</div>');
+    expect(html).toContain('class="right-link link-box-actions"');
+    expect(html).toContain('href="https://hindi.com/');
+    expect(html).toContain('href="https://english.com/');
+    expect(html).toContain(">Hindi</a>");
+    expect(html).toContain(">English</a>");
+  });
+
+  test("legacy pipe-in-label row still uses single Click Here button", () => {
+    const html = renderLinesToHtml(["A|B|C=https://example.com"], {
+      sectionName: "ImportantLinks"
+    });
+    expect(html).toContain('<div class="left-text">A</div>');
+    expect(html).toContain(">B|C</a>");
+    expect(html).not.toContain("link-box-actions");
+  });
 });

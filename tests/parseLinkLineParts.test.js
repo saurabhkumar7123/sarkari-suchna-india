@@ -2,7 +2,8 @@
 
 const {
   LEGACY_LINK_BOX_BUTTON,
-  parseLinkLineParts
+  parseLinkLineParts,
+  parsePipeLinkLine
 } = require("../generator/lib/parseLinkLineParts");
 
 describe("parseLinkLineParts", () => {
@@ -61,5 +62,34 @@ describe("parseLinkLineParts", () => {
       displayLabel: "A",
       buttonText: "B|C"
     });
+  });
+});
+
+describe("parsePipeLinkLine", () => {
+  test("parses dual-button Important Links syntax", () => {
+    expect(
+      parsePipeLinkLine("Download Syllabus|Hindi=https://hindi.com|English=https://english.com")
+    ).toEqual({
+      displayLabel: "Download Syllabus",
+      actions: [
+        { buttonText: "Hindi", href: "https://hindi.com" },
+        { buttonText: "English", href: "https://english.com" }
+      ]
+    });
+  });
+
+  test("parses single custom button pipe syntax", () => {
+    expect(parsePipeLinkLine("Apply Online|Apply Now=https://example.com")).toEqual({
+      displayLabel: "Apply Online",
+      actions: [{ buttonText: "Apply Now", href: "https://example.com" }]
+    });
+  });
+
+  test("returns null for legacy pipe-in-label syntax", () => {
+    expect(parsePipeLinkLine("A|B|C=https://example.com")).toBeNull();
+  });
+
+  test("returns null without pipes", () => {
+    expect(parsePipeLinkLine("Official Website=https://example.com")).toBeNull();
   });
 });

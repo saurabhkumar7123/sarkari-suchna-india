@@ -434,6 +434,14 @@
     justify-content:center;
     align-items:center;
     justify-self:stretch;
+    gap:8px;
+    flex-wrap:wrap;
+    min-width:0;
+    }
+
+    .right-link.link-box-actions{
+    justify-content:center;
+    gap:8px;
     }
 
     .link-box-status{
@@ -448,6 +456,18 @@
 
     .right-link{
     justify-content:flex-end;
+    gap:6px;
+    }
+
+    .right-link.link-box-actions{
+    justify-content:flex-end;
+    max-width:100%;
+    }
+
+    .right-link.link-box-actions a{
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
     }
 
     .link-box-status{
@@ -1161,6 +1181,14 @@
     font-weight:600;
     padding:6px 12px;
     white-space:nowrap;
+    max-width:100%;
+    box-sizing:border-box;
+    }
+
+    .right-link.link-box-actions a{
+    font-size:12px;
+    padding:6px 10px;
+    min-width:40px;
     }
     
     .related-grid{

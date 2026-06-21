@@ -8,7 +8,7 @@ const {
 } = require("../lib/inlineMarkdownLinks");
 const { hasRichInlineTags, renderRichBodyDisplayHtml } = require("../lib/richInlineText");
 const { parseLineBlocks, renderContentListHtml } = require("../lib/listBlocks");
-const { parseLinkLineParts } = require("../lib/parseLinkLineParts");
+const { parseLinkLineParts, parsePipeLinkLine } = require("../lib/parseLinkLineParts");
 
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
@@ -46,6 +46,27 @@ function renderLinkBoxAnchor(leftOfEq, href) {
     left,
     `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${button}</a>`
   );
+}
+
+function renderLinkBoxAnchors(displayLabel, actions) {
+  const left = escapeBodyDisplayText(displayLabel, { mode: "title" });
+  const multi = actions.length > 1;
+  const buttonsHtml = actions
+    .map((action) => {
+      const button = escapeBodyDisplayText(action.buttonText, { mode: "title" });
+      const safeHref = sanitizeUrl(resolveUrl(action.href));
+      return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${button}</a>`;
+    })
+    .join("");
+  const rightClass = multi ? "right-link link-box-actions" : "right-link";
+  return `
+            <div class="link-box">
+              <div class="left-text">${left}</div>
+              <div class="${rightClass}">
+                ${buttonsHtml}
+              </div>
+            </div>
+          `;
 }
 
 function renderLinkBoxStatus(label, statusText) {
@@ -103,6 +124,10 @@ function renderOneLine(line, options = {}) {
   }
 
   if (hasEq && eqLooksLikeLink && (!hasColon || leftOfEq.length > 0)) {
+    const pipeParsed = parsePipeLinkLine(rawLine);
+    if (pipeParsed) {
+      return renderLinkBoxAnchors(pipeParsed.displayLabel, pipeParsed.actions);
+    }
     return renderLinkBoxAnchor(leftOfEq, rightOfEq);
   }
 
