@@ -992,6 +992,8 @@
   
     .meta-info-section{
     padding:0;
+    width:60%;
+    max-width:60%;
     }
 
     .meta-item{
@@ -1000,7 +1002,7 @@
     }
 
     .meta-label{
-    min-width:5.75rem;
+    min-width:4.5rem;
     font-size:9px;
     white-space:normal;
     }
@@ -1154,8 +1156,8 @@
     }
 
     .key-facts-section{
-    max-width:100%;
-    width:100%;
+    max-width:60%;
+    width:60%;
     }
 
     .key-facts-grid{
