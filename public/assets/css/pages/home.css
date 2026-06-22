@@ -2077,6 +2077,16 @@
     padding-top: 0;
   }
 
+  /* Tighter rhythm: breaking → small boxes → finder → categories → sections */
+  body.page-home .main-container {
+    gap: 12px;
+  }
+
+  body.page-home #dynamicSections.card-grid {
+    margin-top: 0;
+    padding-top: 10px;
+  }
+
   body.page-home .breaking-news.breaking {
     align-items: center;
   }
