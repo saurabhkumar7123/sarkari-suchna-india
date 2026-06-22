@@ -2068,6 +2068,15 @@
     overflow: hidden;
   }
 
+  body.page-home .main-header {
+    margin-bottom: 0;
+  }
+
+  body.page-home .site-main .main-container {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
   body.page-home .breaking-news.breaking {
     align-items: center;
   }
