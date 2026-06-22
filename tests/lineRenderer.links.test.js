@@ -59,6 +59,21 @@ describe("lineRenderer Important Links status rows", () => {
     expect(html).toContain("link-box-status");
   });
 
+  test("colon status row uses link-box when same block has url links", () => {
+    const html = renderLinesToHtml(
+      [
+        "Check Exam City : Link Activate Soon",
+        "Apply Online=https://example.com/apply"
+      ],
+      { sectionName: "Uttar Pradesh TET Recruitment 2026 : Vacancy Details" }
+    );
+    expect(html).toContain('class="link-box"');
+    expect(html).toContain('class="link-box-status"');
+    expect(html).toContain("Check Exam City");
+    expect(html).toContain("Link Activate Soon");
+    expect(html).not.toContain('class="date-row"');
+  });
+
   test("full section build integrates Important Links status rows", () => {
     const text = `[Section: ImportantLinks]
 Apply Online Registration Link : Link Activate Soon

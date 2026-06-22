@@ -26,6 +26,16 @@ function isImportantLinksSection(sectionName) {
   return key === "importantlinks" || key === "importantlink";
 }
 
+function blockHasLinkLines(lines) {
+  if (!Array.isArray(lines)) return false;
+  return lines.some((line) => {
+    const raw = String(line || "").trim();
+    const eqIdx = raw.indexOf("=");
+    if (eqIdx <= 0) return false;
+    return isUrlLike(raw.slice(eqIdx + 1).trim());
+  });
+}
+
 function renderLinkBox(left, rightHtml) {
   return `
             <div class="link-box">
@@ -101,7 +111,8 @@ function dateValueClassName(value) {
  * @returns {string}
  */
 function renderOneLine(line, options = {}) {
-  const linksSection = isImportantLinksSection(options.sectionName);
+  const linksSection =
+    isImportantLinksSection(options.sectionName) || options.linkStyleColonRows === true;
   const rawLine = String(line || "").trim();
   const eqIdx = rawLine.indexOf("=");
   const hasEq = eqIdx > -1;
@@ -174,13 +185,19 @@ function renderLinesToHtml(lines, options = {}) {
     return "";
   }
 
+  const lineOptions = {
+    ...options,
+    linkStyleColonRows:
+      isImportantLinksSection(options.sectionName) || blockHasLinkLines(lines)
+  };
+
   const blocks = parseLineBlocks(lines);
   return blocks
     .map((block) => {
       if (block.type === "list") {
-        return renderContentListHtml(block.items, options);
+        return renderContentListHtml(block.items, lineOptions);
       }
-      return renderOneLine(block.line, options);
+      return renderOneLine(block.line, lineOptions);
     })
     .join("");
 }
@@ -190,6 +207,7 @@ module.exports = {
   renderOneLine,
   isUrlLike,
   isImportantLinksSection,
+  blockHasLinkLines,
   isPlaceholderDateValue,
   dateValueClassName
 };
