@@ -1,6 +1,6 @@
 "use strict";
 
-/** Predefined homepage dynamic section keys — desktop visual order. */
+const { SECTION_STATUS_GROUPS } = require("../repositories/page.repository");
 const DESKTOP_SECTION_KEYS = [
   "result",
   "admit-card",
@@ -35,6 +35,25 @@ const PREDEFINED_SECTION_META = {
 /** Custom status sections sort after all predefined sections (A–Z). */
 const CUSTOM_ORDER_BASE = 8;
 
+/** DB status values already covered by a predefined homepage section (incl. legacy aliases). */
+const PREDEFINED_SECTION_STATUSES = (() => {
+  const set = new Set();
+  for (const group of Object.values(SECTION_STATUS_GROUPS)) {
+    for (const status of group) {
+      set.add(String(status).trim().toLowerCase());
+    }
+  }
+  for (const meta of Object.values(PREDEFINED_SECTION_META)) {
+    set.add(meta.label);
+  }
+  return set;
+})();
+
+function isPredefinedSectionStatus(status) {
+  const s = String(status || "").trim().toLowerCase();
+  return Boolean(s) && PREDEFINED_SECTION_STATUSES.has(s);
+}
+
 function orderIndexForKey(sectionKey, platform) {
   const list = platform === "mobile" ? MOBILE_SECTION_KEYS : DESKTOP_SECTION_KEYS;
   const idx = list.indexOf(sectionKey);
@@ -47,12 +66,8 @@ function orderIndexForKey(sectionKey, platform) {
 function buildHomepageSectionDefs(customStatuses) {
   const customs = [...customStatuses]
     .map((s) => String(s || "").trim().toLowerCase())
-    .filter(Boolean)
+    .filter((s) => s && !isPredefinedSectionStatus(s))
     .sort((a, b) => a.localeCompare(b));
-
-  const predefinedLabels = new Set(
-    Object.values(PREDEFINED_SECTION_META).map((m) => m.label)
-  );
 
   const predefined = DESKTOP_SECTION_KEYS.map((key) => {
     const meta = PREDEFINED_SECTION_META[key];
@@ -67,9 +82,7 @@ function buildHomepageSectionDefs(customStatuses) {
     };
   });
 
-  const customDefs = customs
-    .filter((status) => !predefinedLabels.has(status))
-    .map((status, index) => ({
+  const customDefs = customs.map((status, index) => ({
       section: `custom:${status}`,
       ribbonStatus: status,
       href: `/result?status=${encodeURIComponent(status)}`,
@@ -122,5 +135,7 @@ module.exports = {
   orderIndexForKey,
   buildHomepageSectionDefs,
   buildHomeSectionCardAttrs,
-  sortHomeSectionResults
+  sortHomeSectionResults,
+  isPredefinedSectionStatus,
+  PREDEFINED_SECTION_STATUSES
 };

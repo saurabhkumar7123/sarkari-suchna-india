@@ -4,7 +4,8 @@ const {
   DESKTOP_SECTION_KEYS,
   MOBILE_SECTION_KEYS,
   buildHomepageSectionDefs,
-  sortHomeSectionResults
+  sortHomeSectionResults,
+  isPredefinedSectionStatus
 } = require("../server/lib/homeSectionOrder");
 
 describe("homeSectionOrder", () => {
@@ -62,5 +63,14 @@ describe("homeSectionOrder", () => {
       "latest-job",
       "admit-card"
     ]);
+  });
+
+  test("legacy new form is not emitted as a custom section", () => {
+    expect(isPredefinedSectionStatus("new form")).toBe(true);
+    const defs = buildHomepageSectionDefs(["new form", "notification"]);
+    const sections = defs.map((d) => d.section);
+    expect(sections).toContain("latest-job");
+    expect(sections).not.toContain("custom:new form");
+    expect(sections).toContain("custom:notification");
   });
 });

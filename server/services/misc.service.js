@@ -3,7 +3,7 @@ const { parseBadges } = require("./page.service");
 const { getRelatedPagesForSlug } = require("./relatedPages.service");
 const {
   buildHomepageSectionDefs,
-  PREDEFINED_SECTION_META
+  isPredefinedSectionStatus
 } = require("../lib/homeSectionOrder");
 
 async function getSmallBoxes() {
@@ -37,12 +37,9 @@ async function getRelatedPages(slug) {
 async function getHomepageSections() {
   const rows = await pageRepository.selectDistinctStatuses();
 
-  const predefinedStatusSet = new Set(
-    Object.values(PREDEFINED_SECTION_META).map((m) => m.label)
-  );
   const customStatuses = rows
     .map((r) => String(r.status || "").trim().toLowerCase())
-    .filter((s) => s && !predefinedStatusSet.has(s));
+    .filter((s) => s && !isPredefinedSectionStatus(s));
 
   return buildHomepageSectionDefs(customStatuses);
 }
