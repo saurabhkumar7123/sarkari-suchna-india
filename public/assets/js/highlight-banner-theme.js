@@ -30,6 +30,7 @@
     if (s.includes("syllabus") || /\bsyllabus\b/.test(t)) return "Syllabus";
     if (s.includes("admission") || /\badmission\b/.test(t)) return "Admission";
     if (
+      s.includes("latest job") ||
       s.includes("new form") ||
       s === "form" ||
       s === "new" ||

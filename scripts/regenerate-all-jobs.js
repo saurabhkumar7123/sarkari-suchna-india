@@ -16,7 +16,7 @@ const { writeSitemapFile } = require("../server/lib/sitemapGenerator");
 const logger = require("../server/utils/logger");
 
 const CANONICAL_STATUSES = new Set([
-  "new form",
+  "latest job",
   "admit card",
   "result",
   "answer key",
@@ -26,8 +26,9 @@ const CANONICAL_STATUSES = new Set([
 ]);
 
 const LEGACY_STATUS_ALIASES = {
-  new: "new form",
-  form: "new form",
+  "new form": "latest job",
+  new: "latest job",
+  form: "latest job",
   admit: "admit card",
   answer: "answer key"
 };

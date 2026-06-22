@@ -1,5 +1,5 @@
 // =============================
-// Listing pages: /new-form, /result, /admit-card, …
+// Listing pages: /latest-job, /result, /admit-card, …
 // Fetches ONLY the active section via ?section=… (DB-filtered, not client-filtered)
 // =============================
 (function () {
@@ -15,7 +15,8 @@
   const RENDER_BADGES_IN_LISTINGS = false;
 
   const LISTING_PATH_TO_SECTION = {
-    "/new-form": "new form",
+    "/latest-job": "latest job",
+    "/new-form": "latest job",
     "/admission": "admission",
     "/result": "result",
     "/admit-card": "admit card",
@@ -26,7 +27,8 @@
 
   /** API ?section= slug (matches backend SECTION_STATUS_GROUPS keys) */
   const PATH_TO_SECTION_SLUG = {
-    "/new-form": "new-form",
+    "/latest-job": "latest-job",
+    "/new-form": "latest-job",
     "/admission": "admission",
     "/result": "result",
     "/admit-card": "admit-card",
@@ -52,13 +54,15 @@
     return normalizePathname().toLowerCase();
   }
 
-  function isNewFormRibbonStatus(status) {
+  function isLatestJobRibbonStatus(status) {
     const t = String(status || "").trim().toLowerCase();
-    return t === "new form" || t.startsWith("new form ");
+    return t === "latest job" || t.startsWith("latest job ")
+      || t === "new form" || t.startsWith("new form ");
   }
 
   function getRibbonClass(status) {
     const s = String(status || "").toLowerCase().trim();
+    if (s === "latest job" || s.startsWith("latest job ")) return "navy-ribbon";
     if (s === "new form" || s.startsWith("new form ")) return "navy-ribbon";
     if (s === "admission" || s.startsWith("admission ")) return "navy-ribbon";
     if (s.includes("admit card") || s === "admit") return "orange-ribbon";
@@ -101,7 +105,8 @@
   }
 
   function fallbackStatusBadge(normalizedStatus, status) {
-    if (normalizedStatus === "new form" || normalizedStatus.includes("new form")) {
+    if (normalizedStatus === "latest job" || normalizedStatus.includes("latest job")
+      || normalizedStatus === "new form" || normalizedStatus.includes("new form")) {
       return `<span class="tag new">NEW</span>`;
     }
     if (normalizedStatus.includes("new")) return `<span class="tag new">NEW</span>`;
@@ -191,14 +196,14 @@
 
   function buildRibbonTitleNodes(want) {
     const frag = document.createDocumentFragment();
-    if (isNewFormRibbonStatus(want)) {
+    if (isLatestJobRibbonStatus(want)) {
       const badge = document.createElement("span");
       badge.className = "mini-badge";
-      badge.textContent = "New";
+      badge.textContent = "Latest";
       frag.appendChild(badge);
       const title = document.createElement("span");
       title.className = "title";
-      title.textContent = "FORMS";
+      title.textContent = "JOBS";
       frag.appendChild(title);
       return frag;
     }
@@ -215,7 +220,7 @@
     div.className = "card";
 
     const ribbon = document.createElement("div");
-    ribbon.className = `ribbon ${ribbonClass}${isNewFormRibbonStatus(want) ? " form-ribbon" : ""}`;
+    ribbon.className = `ribbon ${ribbonClass}${isLatestJobRibbonStatus(want) ? " form-ribbon" : ""}`;
     ribbon.appendChild(buildRibbonTitleNodes(want));
 
     const content = document.createElement("div");
@@ -334,9 +339,13 @@
           title: "Latest Results 2026",
           desc: "Check all latest result updates and scorecards"
         },
+        "/latest-job": {
+          title: "Latest Govt Jobs 2026",
+          desc: "All latest job forms and recruitment updates"
+        },
         "/new-form": {
           title: "Latest Govt Jobs 2026",
-          desc: "All new job forms and recruitment updates"
+          desc: "All latest job forms and recruitment updates"
         },
         "/answer-key": {
           title: "Answer Key 2026",
@@ -375,7 +384,7 @@
         if (sub) sub.textContent = m.desc;
       } else if (LISTING_PATH_TO_SECTION[path]) {
         const section = LISTING_PATH_TO_SECTION[path];
-        const fallbackTitle = `${section === "new form" ? "New form" : section} listings`;
+        const fallbackTitle = `${section === "latest job" || section === "new form" ? "Latest jobs" : section} listings`;
         if (pageTitleEl) pageTitleEl.textContent = fallbackTitle;
         const h = document.getElementById("listingHeading");
         if (h) h.textContent = fallbackTitle;

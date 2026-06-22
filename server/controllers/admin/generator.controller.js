@@ -12,7 +12,7 @@ const { analyzeJobContent } = require("../../../generator/analysis/contentAnalys
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
-  "new form",
+  "latest job",
   "admit card",
   "result",
   "answer key",
@@ -22,8 +22,9 @@ const CANONICAL_STATUSES = new Set([
 ]);
 
 const LEGACY_STATUS_ALIASES = {
-  new: "new form",
-  form: "new form",
+  "new form": "latest job",
+  new: "latest job",
+  form: "latest job",
   admit: "admit card",
   answer: "answer key"
 };
@@ -253,13 +254,13 @@ const generatePage = async (req, res) => {
         message: "Last Date must be a valid date (DD/MM/YYYY or YYYY-MM-DD)"
       });
     }
-    if (hasNonEmptyLastDateInput(rawLastDate) && normalizedLastDate && normalizedStatus !== "new form") {
+    if (hasNonEmptyLastDateInput(rawLastDate) && normalizedLastDate && normalizedStatus !== "latest job") {
       return res.status(400).json({
         status: "error",
-        message: "Last Date can only be saved when Section is New Form."
+        message: "Last Date can only be saved when Section is Latest Jobs."
       });
     }
-    const finalLastDate = normalizedStatus === "new form" ? normalizedLastDate : null;
+    const finalLastDate = normalizedStatus === "latest job" ? normalizedLastDate : null;
     logger.info("generator lastDate pipeline", {
       rawLastDate: rawLastDate == null ? null : String(rawLastDate),
       parsedIso: normalizedLastDate,

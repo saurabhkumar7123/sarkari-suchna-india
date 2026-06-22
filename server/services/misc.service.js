@@ -1,6 +1,10 @@
 const pageRepository = require("../repositories/page.repository");
 const { parseBadges } = require("./page.service");
 const { getRelatedPagesForSlug } = require("./relatedPages.service");
+const {
+  buildHomepageSectionDefs,
+  PREDEFINED_SECTION_META
+} = require("../lib/homeSectionOrder");
 
 async function getSmallBoxes() {
   return pageRepository.selectSmallBoxes();
@@ -31,40 +35,16 @@ async function getRelatedPages(slug) {
 }
 
 async function getHomepageSections() {
-  const predefined = [
-    { key: "new-form", label: "new form", href: "/new-form" },
-    { key: "result", label: "result", href: "/result" },
-    { key: "admit-card", label: "admit card", href: "/admit-card" },
-    { key: "answer-key", label: "answer key", href: "/answer-key" },
-    { key: "syllabus", label: "syllabus", href: "/syllabus" },
-    { key: "admission", label: "admission", href: "/admission" },
-    { key: "document", label: "document", href: "/document" }
-  ];
-
   const rows = await pageRepository.selectDistinctStatuses();
 
-  const predefinedStatusSet = new Set(predefined.map((s) => s.label));
+  const predefinedStatusSet = new Set(
+    Object.values(PREDEFINED_SECTION_META).map((m) => m.label)
+  );
   const customStatuses = rows
     .map((r) => String(r.status || "").trim().toLowerCase())
-    .filter((s) => s && !predefinedStatusSet.has(s))
-    .sort((a, b) => a.localeCompare(b));
+    .filter((s) => s && !predefinedStatusSet.has(s));
 
-  return [
-    ...predefined.map((s) => ({
-      section: s.key,
-      ribbonStatus: s.label,
-      href: s.href,
-      queryMode: "section",
-      queryValue: s.key
-    })),
-    ...customStatuses.map((status) => ({
-      section: `custom:${status}`,
-      ribbonStatus: status,
-      href: `/result?status=${encodeURIComponent(status)}`,
-      queryMode: "status",
-      queryValue: status
-    }))
-  ];
+  return buildHomepageSectionDefs(customStatuses);
 }
 
 module.exports = {

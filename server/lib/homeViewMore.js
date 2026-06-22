@@ -1,5 +1,6 @@
 const SECTION_DISPLAY_NAMES = {
-  "new form": "New Forms",
+  "latest job": "Latest Jobs",
+  "new form": "Latest Jobs",
   "admit card": "Admit Cards",
   result: "Results",
   "answer key": "Answer Keys",
@@ -32,6 +33,7 @@ function getHomeSectionDisplayName(ribbonStatus) {
 function getHomeViewMoreAccentClass(ribbonStatus) {
   const s = normalizeRibbonKey(ribbonStatus);
 
+  if (s === "latest job" || s.startsWith("latest job ")) return "view-more--navy";
   if (s === "new form" || s.startsWith("new form ")) return "view-more--navy";
   if (s === "admission" || s.startsWith("admission ")) return "view-more--navy";
   if (s.includes("admit card") || s === "admit") return "view-more--orange";

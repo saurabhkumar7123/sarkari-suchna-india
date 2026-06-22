@@ -64,6 +64,7 @@ function bannerStatusBadge(normalizedStatus, title) {
   if (status.includes("syllabus") || /\bsyllabus\b/.test(t)) return "Syllabus";
   if (status.includes("admission") || /\badmission\b/.test(t)) return "Admission";
   if (
+    status.includes("latest job") ||
     status.includes("new form") ||
     status === "form" ||
     status === "new" ||

@@ -36,6 +36,7 @@ const pagesListQuerySchema = Joi.object({
   status: Joi.string().trim().max(64).allow("").optional(),
   section: Joi.string()
     .valid(
+      "latest-job",
       "new-form",
       "admission",
       "result",

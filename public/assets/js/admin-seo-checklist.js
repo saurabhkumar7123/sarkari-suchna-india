@@ -58,7 +58,7 @@
       id: "status",
       pass: Boolean(status),
       warn: false,
-      label: status ? `Section: ${status}` : "Select section (New Form / Result / …)"
+      label: status ? `Section: ${status}` : "Select section (Latest Jobs / Result / …)"
     });
 
     checks.push({

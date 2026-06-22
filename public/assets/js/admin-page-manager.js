@@ -21,7 +21,7 @@ function normalizeStatusLabel(status) {
 
 function getStatusBadgeClass(status) {
   const s = normalizeStatusLabel(status).toLowerCase();
-  if (s === "new" || s === "new form" || s === "form") return "status-new";
+  if (s === "new" || s === "latest job" || s === "new form" || s === "form") return "status-new";
   if (s === "result") return "status-result";
   if (s === "admit" || s === "admit card") return "status-admit";
   if (s === "answer" || s === "answer key") return "status-answer";

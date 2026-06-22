@@ -15,7 +15,7 @@ const { fetchSites } = require("../../services/updates/updates.repository");
 
 /** Same canonical status list as regenerate / generator (for buildJobHtml). */
 const CANONICAL_STATUSES = new Set([
-  "new form",
+  "latest job",
   "admit card",
   "result",
   "answer key",
@@ -24,8 +24,9 @@ const CANONICAL_STATUSES = new Set([
   "syllabus"
 ]);
 const LEGACY_STATUS_ALIASES = {
-  new: "new form",
-  form: "new form",
+  "new form": "latest job",
+  new: "latest job",
+  form: "latest job",
   admit: "admit card",
   answer: "answer key"
 };

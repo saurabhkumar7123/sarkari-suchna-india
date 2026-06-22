@@ -131,7 +131,7 @@ async function logStructuredFieldsDbContext(conn, operation) {
  * @type {Record<string, string[]>}
  */
 const SECTION_STATUS_GROUPS = {
-  "new-form": ["new form", "new", "form"],
+  "latest-job": ["latest job", "new form", "new", "form"],
   admission: ["admission"],
   result: ["result"],
   "admit-card": ["admit card", "admit"],
@@ -668,16 +668,16 @@ async function selectJobsFiltered({ qualification, state, department, jobType, s
     ? `
     ORDER BY
       CASE
-        WHEN ${normalizedStatusColumn} = 'new form' THEN 0
+        WHEN ${normalizedStatusColumn} IN ('latest job', 'new form') THEN 0
         WHEN ${normalizedStatusColumn} IN ('admit card', 'admit') THEN 1
         ELSE 2
       END ASC,
       CASE
-        WHEN ${normalizedStatusColumn} = 'new form' AND last_date IS NULL THEN 1
+        WHEN ${normalizedStatusColumn} IN ('latest job', 'new form') AND last_date IS NULL THEN 1
         ELSE 0
       END ASC,
       CASE
-        WHEN ${normalizedStatusColumn} = 'new form' THEN last_date
+        WHEN ${normalizedStatusColumn} IN ('latest job', 'new form') THEN last_date
         ELSE NULL
       END ASC,
       created_at DESC

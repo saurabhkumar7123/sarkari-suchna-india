@@ -43,6 +43,7 @@ const {
   resolveHomeCardBadgeHtmlFromItem
 } = require("./lib/homepageBadges");
 const { buildHomeViewMoreLinkHtml } = require("./lib/homeViewMore");
+const { buildHomeSectionCardAttrs, sortHomeSectionResults } = require("./lib/homeSectionOrder");
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -426,6 +427,7 @@ function safePageHref(item) {
 
 function getHomeRibbonClass(status) {
   const s = String(status || "").toLowerCase().trim();
+  if (s === "latest job" || s.startsWith("latest job ")) return "navy-ribbon";
   if (s === "new form" || s.startsWith("new form ")) return "navy-ribbon";
   if (s === "admission" || s.startsWith("admission ")) return "navy-ribbon";
   if (s.includes("admit card") || s === "admit") return "orange-ribbon";
@@ -437,9 +439,10 @@ function getHomeRibbonClass(status) {
   return "green-ribbon";
 }
 
-function isNewFormRibbonStatus(status) {
+function isLatestJobRibbonStatus(status) {
   const t = String(status ?? "").trim().toLowerCase();
-  return t === "new form" || t.startsWith("new form ");
+  return t === "latest job" || t.startsWith("latest job ")
+    || t === "new form" || t.startsWith("new form ");
 }
 
 function formatRibbonLabelText(status) {
@@ -450,8 +453,8 @@ function formatRibbonLabelText(status) {
 }
 
 function buildRibbonTitleHtml(status) {
-  if (isNewFormRibbonStatus(status)) {
-    return '<span class="mini-badge">New</span><span class="title">FORMS</span>';
+  if (isLatestJobRibbonStatus(status)) {
+    return '<span class="mini-badge">Latest</span><span class="title">JOBS</span>';
   }
   const line = formatRibbonLabelText(status);
   return `<span class="title">${escapeHtml(line)}</span>`;
@@ -749,10 +752,11 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
 
 function renderHomeCardsHtml(sectionResults) {
   const cards = [];
-  for (const { def, payload } of sectionResults) {
+  const sorted = sortHomeSectionResults(sectionResults, "desktop");
+  for (const { def, payload } of sorted) {
     if (!payload || !Array.isArray(payload.data) || !payload.data.length) continue;
     const ribbonClass = getHomeRibbonClass(def.ribbonStatus);
-    const ribbonFormClass = isNewFormRibbonStatus(def.ribbonStatus) ? " form-ribbon" : "";
+    const ribbonFormClass = isLatestJobRibbonStatus(def.ribbonStatus) ? " form-ribbon" : "";
     const linksHtml = payload.data
       .map((item) => {
         const badge = resolveHomeCardBadgeHtmlFromItem(item);
@@ -760,7 +764,7 @@ function renderHomeCardsHtml(sectionResults) {
       })
       .join("");
     cards.push(`
-      <div class="card">
+      <div class="card" ${buildHomeSectionCardAttrs(def)}>
         <div class="ribbon ${ribbonClass}${ribbonFormClass}">
           ${buildRibbonTitleHtml(def.ribbonStatus)}
         </div>
@@ -856,7 +860,7 @@ async function buildSearchFallbackHtml(req, query) {
     </div>
     <div class="result-card">
       <h2>Latest Jobs</h2>
-      <ul class="job-list">${latestJobLinks || '<li><a href="/new-form">Browse latest government jobs</a></li>'}</ul>
+      <ul class="job-list">${latestJobLinks || '<li><a href="/latest-job">Browse latest government jobs</a></li>'}</ul>
     </div>
   `;
   const title = query ? `Search Fallback for "${escapeHtml(query)}"` : "Search Sarkari Jobs";
@@ -1169,8 +1173,8 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
         taxonomyPageService.getFooterHtml()
       )
       .replace(
-        '<script src="/js/index.js" defer></script>',
-        `${homeSections.bootstrapScript}\n<script src="/js/index.js" defer></script>`
+        '<script src="/js/index.js?v=2" defer></script>',
+        `${homeSections.bootstrapScript}\n<script src="/js/index.js?v=2" defer></script>`
       );
     const baseUrl = getPublicBaseUrl(req);
     html = normalizeSeoUrlsInHtml(html, baseUrl);
@@ -1357,7 +1361,7 @@ Object.entries(staticPageRoutes).forEach(([route, file]) => {
 
 const listingHtmlPath = path.join(generatedDir, "static", "listing.html");
 const listingSeoMap = {
-  "new-form": {
+  "latest-job": {
     title: "Latest Govt Jobs 2026 | Sarkari Suchna India",
     description: "Browse the latest government job forms, recruitment notifications and apply online updates on Sarkari Suchna India."
   },
@@ -1388,7 +1392,7 @@ const listingSeoMap = {
 };
 
 async function sendListingHtml(req, res, segment) {
-  const seo = listingSeoMap[segment] || listingSeoMap["new-form"];
+  const seo = listingSeoMap[segment] || listingSeoMap["latest-job"];
   const baseUrl = getPublicBaseUrl(req);
   const absoluteUrl = baseUrl ? `${baseUrl}/${segment}` : `/${segment}`;
   const source = await fileService.readFile(listingHtmlPath, "utf8");
@@ -1406,8 +1410,11 @@ async function sendListingHtml(req, res, segment) {
   html = normalizeSeoUrlsInHtml(html, baseUrl);
   return sendHtmlString(req, res, html);
 }
+app.get(["/new-form", "/new-form/"], (req, res) => {
+  res.redirect(301, "/latest-job");
+});
 const listingSegments = [
-  "new-form",
+  "latest-job",
   "result",
   "admit-card",
   "answer-key",
@@ -1527,6 +1534,7 @@ app.get("/:slug", async (req, res, next) => {
     "login",
     "health",
     "ready",
+    "latest-job",
     "new-form",
     "result",
     "admit-card",

@@ -89,6 +89,7 @@ function stripInvisible(s) {
 function normalizeStatusGroup(status) {
   const s = stripInvisible(status);
   if (!s) return "other";
+  if (s.includes("latest") && s.includes("job")) return "form";
   if (s.includes("new") && s.includes("form")) return "form";
   if (s === "form" || s.startsWith("form ")) return "form";
   if (s.includes("admit")) return "admit";

@@ -15,7 +15,7 @@ function staticPaths(baseUrl) {
   const paths = [
     "/",
     "/search",
-    "/new-form",
+    "/latest-job",
     "/result",
     "/admit-card",
     "/answer-key",

@@ -45,7 +45,7 @@ Q: Sample question?
 A: Sample answer.`,
       slug: "ssc-cgl-2026-test",
       category: "ssc cgl",
-      normalizedStatus: "new form",
+      normalizedStatus: "latest job",
       postName: "SSC CGL",
       totalPosts: "12256"
     });

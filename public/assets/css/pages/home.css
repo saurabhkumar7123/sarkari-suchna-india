@@ -654,6 +654,7 @@
 
   /* Homepage dynamic sections: thin borders as separators */
   body.page-home #dynamicSections.card-grid{
+    display:grid;
     column-gap:0;
     row-gap:0;
     gap:0;
@@ -667,6 +668,7 @@
     box-sizing:border-box;
     background:#ffffff;
     box-shadow:none;
+    order:var(--home-order-mobile, 99);
   }
 
   body.page-home #dynamicSections .ribbon .title{
@@ -700,6 +702,10 @@
     body.page-home #dynamicSections.card-grid{
       column-gap:8px;
       row-gap:var(--home-gap-grid-tight);
+    }
+
+    body.page-home #dynamicSections > .card{
+      order:var(--home-order-desktop, 99);
     }
   }
   
@@ -787,7 +793,7 @@
     2px 2px 4px rgba(0,0,0,0.4);
   }
 
-  /* "New Form" → mini-badge + FORM (same ribbon row) */
+  /* "Latest Jobs" → mini-badge + JOBS (same ribbon row) */
   .ribbon.form-ribbon{
     gap:10px;
   }

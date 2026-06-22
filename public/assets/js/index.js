@@ -186,13 +186,14 @@ function escapeRibbonInnerText(s) {
     .replace(/>/g, "&gt;");
 }
 
-/** True when ribbon label is the "New Form" status (dropdown / sections API). */
-function isNewFormRibbonStatus(status) {
+/** True when ribbon label is the "Latest Jobs" section (dropdown / sections API). */
+function isLatestJobRibbonStatus(status) {
   const t = String(status ?? "").trim().toLowerCase();
-  return t === "new form" || t.startsWith("new form ");
+  return t === "latest job" || t.startsWith("latest job ")
+    || t === "new form" || t.startsWith("new form ");
 }
 
-/** Ribbon label plural, e.g. RESULT → RESULTS, ADMIT CARD → ADMIT CARDS. */
+/** Ribbon label plural, e.g. RESULT → RESULTS, LATEST JOB → LATEST JOBS. */
 function formatRibbonLabelText(status) {
   const line = String(status ?? "").trim() || "SECTION";
   const upper = line.toUpperCase();
@@ -201,11 +202,11 @@ function formatRibbonLabelText(status) {
 }
 
 /**
- * Ribbon title HTML. "New Form" → mini-badge "New" + title "FORMS"; others uppercase + s.
+ * Ribbon title HTML. "Latest Job" → mini-badge "Latest" + title "JOBS"; others uppercase + s.
  */
 function buildRibbonTitleHtml(status) {
-  if (isNewFormRibbonStatus(status)) {
-    return `<span class="mini-badge">New</span><span class="title">${escapeRibbonInnerText("FORMS")}</span>`;
+  if (isLatestJobRibbonStatus(status)) {
+    return `<span class="mini-badge">Latest</span><span class="title">${escapeRibbonInnerText("JOBS")}</span>`;
   }
   return `<span class="title">${escapeRibbonInnerText(formatRibbonLabelText(status))}</span>`;
 }
@@ -439,6 +440,7 @@ async function loadTopCategories(){
 function getRibbonClass(status) {
   const s = String(status || "").toLowerCase().trim();
 
+  if (s === "latest job" || s.startsWith("latest job ")) return "navy-ribbon";
   if (s === "new form" || s.startsWith("new form ")) return "navy-ribbon";
   if (s === "admission" || s.startsWith("admission ")) return "navy-ribbon";
   if (s.includes("admit card") || s === "admit") return "orange-ribbon";
@@ -459,7 +461,7 @@ function normalizePathname() {
 }
 
 const LISTING_ROUTES = new Set([
-  "/new-form",
+  "/latest-job",
   "/admission",
   "/result",
   "/admit-card",
@@ -476,15 +478,38 @@ async function getHomeSectionDefs() {
   return defs;
 }
 
+const HOME_SECTION_DESKTOP_MQ = "(min-width: 769px)";
+
+function currentHomeSectionPlatform() {
+  return window.matchMedia(HOME_SECTION_DESKTOP_MQ).matches ? "desktop" : "mobile";
+}
+
+function sortHomeSectionResultsClient(sectionResults) {
+  const orderKey = currentHomeSectionPlatform() === "mobile" ? "orderMobile" : "orderDesktop";
+  return [...sectionResults].sort((a, b) => {
+    const ao = Number(a?.def?.[orderKey]);
+    const bo = Number(b?.def?.[orderKey]);
+    const av = Number.isFinite(ao) && ao > 0 ? ao : 99;
+    const bv = Number.isFinite(bo) && bo > 0 ? bo : 99;
+    return av - bv;
+  });
+}
+
+let cachedHomeSectionResults = null;
+let cachedHomeSectionPlatform = null;
+
 // ================= MAIN CARDS =================
 function renderHomeSectionCards(sectionResults) {
   const container = document.getElementById("dynamicSections");
   if (!container) return;
 
+  cachedHomeSectionResults = sectionResults;
+  cachedHomeSectionPlatform = currentHomeSectionPlatform();
+
   const frag = document.createDocumentFragment();
   let rendered = 0;
 
-  sectionResults.forEach(({ def, res }) => {
+  sortHomeSectionResultsClient(sectionResults).forEach(({ def, res }) => {
     if (!def || !res || !Array.isArray(res.data) || res.data.length === 0) {
       console.log("[home] section empty — skip render:", def && def.section);
       return;
@@ -498,7 +523,7 @@ function renderHomeSectionCards(sectionResults) {
 
     const ribbonText = def.ribbonStatus;
     const ribbonClass = getRibbonClass(ribbonText);
-    const ribbonFormClass = isNewFormRibbonStatus(ribbonText) ? " form-ribbon" : "";
+    const ribbonFormClass = isLatestJobRibbonStatus(ribbonText) ? " form-ribbon" : "";
 
     let html = `<ul class="job-list">`;
     res.data.forEach((item) => {
@@ -510,6 +535,13 @@ function renderHomeSectionCards(sectionResults) {
 
     const div = document.createElement("div");
     div.className = "card";
+    if (def.section) {
+      div.dataset.homeSection = def.section;
+    }
+    const orderDesktop = Number(def.orderDesktop) > 0 ? Number(def.orderDesktop) : 99;
+    const orderMobile = Number(def.orderMobile) > 0 ? Number(def.orderMobile) : 99;
+    div.style.setProperty("--home-order-desktop", String(orderDesktop));
+    div.style.setProperty("--home-order-mobile", String(orderMobile));
     div.innerHTML = `
       <div class="ribbon ${ribbonClass}${ribbonFormClass}">
         ${buildRibbonTitleHtml(ribbonText)}
@@ -677,6 +709,22 @@ document.addEventListener("DOMContentLoaded", () => {
       loadTopCategories();
       loadHomeCards();
       loadTrendingJobs();
+    }
+
+    if (window.matchMedia) {
+      const mq = window.matchMedia(HOME_SECTION_DESKTOP_MQ);
+      const onPlatformChange = () => {
+        if (!cachedHomeSectionResults) return;
+        const next = currentHomeSectionPlatform();
+        if (next === cachedHomeSectionPlatform) return;
+        cachedHomeSectionPlatform = next;
+        renderHomeSectionCards(cachedHomeSectionResults);
+      };
+      if (typeof mq.addEventListener === "function") {
+        mq.addEventListener("change", onPlatformChange);
+      } else if (typeof mq.addListener === "function") {
+        mq.addListener(onPlatformChange);
+      }
     }
   } catch (err) {
     console.error("index.js init:", err);

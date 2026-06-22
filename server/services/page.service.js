@@ -274,13 +274,14 @@ function pickLastDateColumn(row) {
   return null;
 }
 
-function isNewFormStatusValue(status) {
-  return String(status ?? "")
+function isLatestJobStatusValue(status) {
+  const normalized = String(status ?? "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/\u00A0/g, " ")
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, " ") === "new form";
+    .replace(/\s+/g, " ");
+  return normalized === "latest job" || normalized === "new form";
 }
 
 async function listJobs({ qualification, state, department, jobType, status, source, page, limit }) {
@@ -354,7 +355,7 @@ module.exports = {
   getTopViews,
   getActivityLogSlice,
   normalizeLastDate,
-  isNewFormStatusValue,
+  isLatestJobStatusValue,
   pickLastDateColumn,
   parseBadges
 };

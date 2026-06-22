@@ -7,12 +7,14 @@ const {
 
 describe("homeViewMore", () => {
   test("buildHomeViewMoreLabel uses count when more items exist", () => {
-    expect(buildHomeViewMoreLabel("new form", 7, 42)).toBe("View all 42 New Forms");
+    expect(buildHomeViewMoreLabel("latest job", 7, 42)).toBe("View all 42 Latest Jobs");
+    expect(buildHomeViewMoreLabel("new form", 7, 42)).toBe("View all 42 Latest Jobs");
     expect(buildHomeViewMoreLabel("result", 7, 7)).toBe("View all Results");
     expect(buildHomeViewMoreLabel("admit card", 5, null)).toBe("View all Admit Cards");
   });
 
   test("accent class follows ribbon section", () => {
+    expect(getHomeViewMoreAccentClass("latest job")).toBe("view-more--navy");
     expect(getHomeViewMoreAccentClass("new form")).toBe("view-more--navy");
     expect(getHomeViewMoreAccentClass("result")).toBe("view-more--green");
     expect(getHomeViewMoreAccentClass("admit card")).toBe("view-more--orange");

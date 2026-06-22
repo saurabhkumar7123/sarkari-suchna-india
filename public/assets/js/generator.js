@@ -649,7 +649,7 @@ function setEditorActionsBusy(busy) {
 }
 
 const PREDEFINED_STATUSES = new Set([
-  "new form",
+  "latest job",
   "admit card",
   "result",
   "answer key",
@@ -662,7 +662,8 @@ function applyStatusToForm(raw) {
   const select = document.getElementById("status");
   const customIn = document.getElementById("customStatus");
   if (!select || !customIn) return;
-  const s = String(raw ?? "").trim().toLowerCase();
+  let s = String(raw ?? "").trim().toLowerCase();
+  if (s === "new form") s = "latest job";
   if (PREDEFINED_STATUSES.has(s)) {
     select.value = s;
     customIn.value = "";
@@ -779,8 +780,9 @@ function normalizeClientStatus(raw) {
     .replace(/\s+/g, " ");
 }
 
-function isNewFormStatusValue(rawStatus) {
-  return normalizeClientStatus(rawStatus) === "new form";
+function isLatestJobStatusValue(rawStatus) {
+  const s = normalizeClientStatus(rawStatus);
+  return s === "latest job" || s === "new form";
 }
 
 /** Matches server parseLastDateInputToIso: DD/MM/YYYY (flexible digits), YYYY-MM-DD, unicode slashes. */
@@ -1166,7 +1168,7 @@ async function selectPage(p){
 function getStatusColor(status){
   const s = (status || "").toLowerCase();
 
-  if (s === "new form" || s.includes("new form")) return "#1e3c72";
+  if (s === "latest job" || s.includes("latest job") || s === "new form" || s.includes("new form")) return "#1e3c72";
   if (s === "admission" || s.startsWith("admission")) return "#dc2626";
   if (s.includes("result")) return "#2563eb";
   if (s.includes("admit card") || s === "admit") return "#f59e0b";
@@ -1259,7 +1261,7 @@ async function generatePage(){
     });
     return;
   }
-  if (statusNormalized !== "new form") {
+  if (statusNormalized !== "latest job" && statusNormalized !== "new form") {
     payload.lastDate = null;
   }
 

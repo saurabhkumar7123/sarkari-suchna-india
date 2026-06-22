@@ -323,7 +323,7 @@
         const normalizedStatus = normalizeJobStatus(job.status);
         const lastDateOk = typeof job.lastDate === "string" && job.lastDate.length >= 10;
         const formattedDate = lastDateOk ? formatLastDateDdMmYyyy(job.lastDate) : null;
-        const showLastDate = normalizedStatus === "new form" && formattedDate != null;
+        const showLastDate = (normalizedStatus === "latest job" || normalizedStatus === "new form") && formattedDate != null;
         const href = safeUrl(job.page || "#");
         const qualMeta = job.qualification ? titleCase(job.qualification) : "";
         const allIndiaTag = shouldShowAllIndiaTag(job, filters)

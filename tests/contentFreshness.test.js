@@ -8,8 +8,8 @@ const {
 describe("contentFreshness", () => {
   const baseRow = {
     title: "SSC CGL Notification",
-    status: "new form",
-    category: "new-form",
+    status: "latest job",
+    category: "latest-job",
     qualification: "graduate",
     state: "all india",
     department: "ssc",

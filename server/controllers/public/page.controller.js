@@ -11,7 +11,7 @@ const listPages = asyncHandler(async (req, res) => {
   let { status, section, type, department, page, limit } = req.query;
   if (!section && type) {
     const t = String(type).toLowerCase().trim();
-    if (t === "new" || t === "new-form") section = "new-form";
+    if (t === "new" || t === "new-form" || t === "latest-job") section = "latest-job";
     else if (["result", "admit-card", "answer-key", "syllabus", "document", "admission"].includes(t)) {
       section = t;
     }

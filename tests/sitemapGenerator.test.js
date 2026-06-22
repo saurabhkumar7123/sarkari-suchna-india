@@ -21,6 +21,6 @@ describe("sitemapGenerator.staticPaths", () => {
   it("keeps core static listing routes unchanged", () => {
     expect(locs).toContain(`${baseUrl}/`);
     expect(locs).toContain(`${baseUrl}/search`);
-    expect(locs).toContain(`${baseUrl}/new-form`);
+    expect(locs).toContain(`${baseUrl}/latest-job`);
   });
 });

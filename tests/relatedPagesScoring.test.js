@@ -24,6 +24,7 @@ function row(overrides) {
 
 describe("normalizeStatusGroup", () => {
   it("maps canonical statuses", () => {
+    expect(normalizeStatusGroup("latest job")).toBe("form");
     expect(normalizeStatusGroup("new form")).toBe("form");
     expect(normalizeStatusGroup("Admit Card")).toBe("admit");
     expect(normalizeStatusGroup("result")).toBe("result");

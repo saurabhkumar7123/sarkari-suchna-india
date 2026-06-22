@@ -1,4 +1,4 @@
-/* Listing routes (/new-form, /result, …) — width from tokens.css .main-container */
+/* Listing routes (/latest-job, /result, …) — width from tokens.css .main-container */
 body.listing-page {
   font-family: var(--site-font, "Segoe UI", sans-serif);
   background: #ffffff;

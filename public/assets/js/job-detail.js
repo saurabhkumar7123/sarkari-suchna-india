@@ -17,8 +17,9 @@
     return `${m[3]}/${m[2]}/${m[1]}`;
   }
 
-  function isNewFormStatus(status) {
-    return String(status || "").trim().toLowerCase() === "new form";
+  function isLatestJobStatus(status) {
+    const s = String(status || "").trim().toLowerCase();
+    return s === "latest job" || s === "new form";
   }
 
   function renderJob(container, job) {
@@ -33,7 +34,7 @@
           <li class="job-detail-item"><span class="job-detail-label">Job Type:</span><span>${job.jobType}</span></li>
           <li class="job-detail-item"><span class="job-detail-label">Status:</span><span>${job.status}</span></li>
           ${
-            isNewFormStatus(job.status) && formattedLastDate
+            isLatestJobStatus(job.status) && formattedLastDate
               ? `<li class="job-detail-item"><span class="job-detail-label">Last Date:</span><span class="job-last-date-badge">${formattedLastDate}</span></li>`
               : ""
           }
