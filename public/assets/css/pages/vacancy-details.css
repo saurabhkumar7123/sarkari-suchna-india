@@ -1037,7 +1037,7 @@
 
 /* Text / dates / FAQ sections — narrower column for easier reading */
 .page-vacancy .card.card--compact{
-  max-width:min(100%, 40rem);
+  max-width:min(100%, 56rem);
   }
 
 /* Tables and Important Links stay full column width */

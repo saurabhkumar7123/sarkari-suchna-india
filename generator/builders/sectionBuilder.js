@@ -11,7 +11,11 @@ const { isImportantLinksSection } = require("./lineRenderer");
 
 function resolveCardLayoutClass(sectionContent) {
   const html = String(sectionContent || "");
-  if (html.includes('class="table-responsive') || html.includes('class="link-box"')) {
+  if (
+    html.includes('class="table-responsive') ||
+    html.includes('class="link-box"') ||
+    html.includes('class="faq-item"')
+  ) {
     return "card--wide";
   }
   return "card--compact";

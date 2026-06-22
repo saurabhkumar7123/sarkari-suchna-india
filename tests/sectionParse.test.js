@@ -51,5 +51,11 @@ Post, Count
 Clerk, 100`);
     expect(vacancy.html).toContain('class="card card--wide"');
     expect(vacancy.html).toContain("<table");
+
+    const faq = buildDynamicSectionsWithWarnings(`[Section: FAQ]
+Q: When is the exam?
+A: In June 2026`);
+    expect(faq.html).toContain('class="card card--wide"');
+    expect(faq.html).toContain('class="faq-item"');
   });
 });
