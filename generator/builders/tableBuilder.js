@@ -84,12 +84,9 @@ function buildTable(raw) {
 
       const tag = i === 0 ? "th" : "td";
       const cellMode = "title";
-      html += `<${tag}
-      ${rowspan > 1 ? `rowspan="${rowspan}"` : ""}
-      ${colspan > 1 ? `colspan="${colspan}"` : ""}
-      >
-      ${renderTableCellContent(rows[i][j], { mode: cellMode })}
-      </${tag}>`;
+      const cellHtml = renderTableCellContent(rows[i][j], { mode: cellMode });
+      const spanAttrs = `${rowspan > 1 ? ` rowspan="${rowspan}"` : ""}${colspan > 1 ? ` colspan="${colspan}"` : ""}`;
+      html += `<${tag}${spanAttrs}>${cellHtml}</${tag}>`;
     }
 
     html += "</tr>";

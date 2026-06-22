@@ -250,11 +250,11 @@
 
     /* Tables sit inside section card — edge-to-edge, nested under section bar */
     .card-content > .table-responsive{
-    margin-left:-22px;
-    margin-right:-22px;
+    margin-left:-20px;
+    margin-right:-20px;
     margin-bottom:0;
-    width:calc(100% + 44px);
-    max-width:calc(100% + 44px);
+    width:calc(100% + 40px);
+    max-width:calc(100% + 40px);
     }
 
     .card-content > .table-responsive:first-child{
@@ -619,6 +619,8 @@
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
     max-width:100%;
+    box-sizing:border-box;
+    padding-inline:2px;
     }
 
     /* Default: mobile-first fit — wrap text, no forced min-width */
@@ -627,9 +629,19 @@
     overflow-wrap:anywhere;
     word-break:break-word;
     white-space:normal;
-    hyphens:auto;
+    hyphens:manual;
     vertical-align:middle;
     border:1px solid var(--table-border);
+    }
+
+    .table th:first-child,
+    .table td:first-child{
+    padding-left:11px;
+    }
+
+    .table th:last-child,
+    .table td:last-child{
+    padding-right:11px;
     }
 
     .table th{
@@ -694,6 +706,7 @@
     .table th:last-child,
     .table td:last-child{
     text-align:center;
+    padding-right:11px;
     }
 
     .table-responsive--wide::after{
@@ -721,6 +734,7 @@
     z-index:1;
     box-shadow:none;
     border-right:1px solid var(--table-border);
+    padding-left:11px;
     }
 
     .table-responsive--wide .table th:first-child{
@@ -1116,11 +1130,11 @@
     }
 
     .card-content > .table-responsive{
-    margin-left:-12px;
-    margin-right:-12px;
+    margin-left:-10px;
+    margin-right:-10px;
     margin-bottom:0;
-    width:calc(100% + 24px);
-    max-width:calc(100% + 24px);
+    width:calc(100% + 20px);
+    max-width:calc(100% + 20px);
     }
 
     .card-content > .table-responsive:not(:last-child){
@@ -1287,6 +1301,16 @@
     line-height:1.35;
     }
 
+    .table th:first-child,
+    .table td:first-child{
+    padding-left:10px;
+    }
+
+    .table th:last-child,
+    .table td:last-child{
+    padding-right:10px;
+    }
+
     .table th{
     font-size:14px;
     }
@@ -1332,6 +1356,16 @@
     .table th,
     .table td{
     padding:6px 5px;
+    }
+
+    .table th:first-child,
+    .table td:first-child{
+    padding-left:9px;
+    }
+
+    .table th:last-child,
+    .table td:last-child{
+    padding-right:9px;
     }
 
     .table th{
