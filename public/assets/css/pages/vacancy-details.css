@@ -632,30 +632,21 @@
     hyphens:manual;
     vertical-align:middle;
     border:1px solid var(--table-border);
-    }
-
-    .table th:first-child,
-    .table td:first-child{
-    padding-left:11px;
-    }
-
-    .table th:last-child,
-    .table td:last-child{
-    padding-right:11px;
+    padding-inline:12px;
     }
 
     .table th{
     background:var(--table-head-bg);
     color:var(--table-head-color);
-    padding:7px 10px;
+    padding-block:7px;
     font-size:15px;
     font-weight:700;
-    text-align:left;
+    text-align:center;
     line-height:1.25;
     }
     
     .table td{
-    padding:8px 10px;
+    padding-block:8px;
     font-size:14px;
     text-align:left;
     line-height:1.45;
@@ -706,7 +697,6 @@
     .table th:last-child,
     .table td:last-child{
     text-align:center;
-    padding-right:11px;
     }
 
     .table-responsive--wide::after{
@@ -734,7 +724,6 @@
     z-index:1;
     box-shadow:none;
     border-right:1px solid var(--table-border);
-    padding-left:11px;
     }
 
     .table-responsive--wide .table th:first-child{
@@ -1057,16 +1046,6 @@
 .table-responsive{
   padding-inline:4px;
   }
-
-.table th:first-child,
-.table td:first-child{
-  padding-left:12px;
-  }
-
-.table th:last-child,
-.table td:last-child{
-  padding-right:12px;
-  }
 }
     
     /* ================= MOBILE ================= */
@@ -1319,22 +1298,14 @@
 
     .table th,
     .table td{
-    padding:6px 6px;
+    padding-block:6px;
+    padding-inline:10px;
     line-height:1.35;
-    }
-
-    .table th:first-child,
-    .table td:first-child{
-    padding-left:10px;
-    }
-
-    .table th:last-child,
-    .table td:last-child{
-    padding-right:10px;
     }
 
     .table th{
     font-size:14px;
+    text-align:center;
     }
 
     .table td{
@@ -1377,21 +1348,13 @@
 
     .table th,
     .table td{
-    padding:6px 5px;
-    }
-
-    .table th:first-child,
-    .table td:first-child{
-    padding-left:9px;
-    }
-
-    .table th:last-child,
-    .table td:last-child{
-    padding-right:9px;
+    padding-block:6px;
+    padding-inline:9px;
     }
 
     .table th{
     font-size:14px;
+    text-align:center;
     }
 
     .table td{
