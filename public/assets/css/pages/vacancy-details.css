@@ -1035,6 +1035,16 @@
   width:fit-content;
   }
 
+/* Text / dates / FAQ sections — narrower column for easier reading */
+.page-vacancy .card.card--compact{
+  max-width:min(100%, 40rem);
+  }
+
+/* Tables and Important Links stay full column width */
+.page-vacancy .card.card--wide{
+  max-width:100%;
+  }
+
 /* Desktop: extra table edge buffer (mobile already correct) */
 .card-content > .table-responsive{
   margin-left:-18px;

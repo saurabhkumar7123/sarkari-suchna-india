@@ -33,4 +33,23 @@ This is prose without commas.`;
     const lines = ["Post, Cat, Count", "Clerk, UR, 100"];
     expect(isSafeCsvTable(lines)).toBe(true);
   });
+
+  test("compact layout for text and date sections, wide for tables and links", () => {
+    const dates = buildDynamicSectionsWithWarnings(`[Section: Important Dates]
+Apply Start : 1 Jan 2026
+Apply End : 31 Jan 2026`);
+    expect(dates.html).toContain('class="card card--compact"');
+    expect(dates.html).toContain("date-row");
+
+    const links = buildDynamicSectionsWithWarnings(`[Section: Important Links]
+Apply Online=https://example.com`);
+    expect(links.html).toContain('class="card card--wide"');
+    expect(links.html).toContain('class="link-box"');
+
+    const vacancy = buildDynamicSectionsWithWarnings(`[Section: Vacancy | table]
+Post, Count
+Clerk, 100`);
+    expect(vacancy.html).toContain('class="card card--wide"');
+    expect(vacancy.html).toContain("<table");
+  });
 });

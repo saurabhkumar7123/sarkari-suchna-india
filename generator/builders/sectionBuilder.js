@@ -9,6 +9,14 @@ const {
 const { shouldUseMixedSectionBlocks } = require("../parse/sectionBlocks");
 const { isImportantLinksSection } = require("./lineRenderer");
 
+function resolveCardLayoutClass(sectionContent) {
+  const html = String(sectionContent || "");
+  if (html.includes('class="table-responsive') || html.includes('class="link-box"')) {
+    return "card--wide";
+  }
+  return "card--compact";
+}
+
 function collectParsingWarnings(text) {
   const { analyzeJobContent } = require("../analysis/contentAnalysis");
   return analyzeJobContent(text).legacyWarnings;
@@ -54,8 +62,10 @@ function buildDynamicSectionsWithWarnings(text) {
       }
     }
 
+    const cardLayoutClass = resolveCardLayoutClass(sectionContent);
+
     const cardHtml = `
-      <div class="card">
+      <div class="card ${cardLayoutClass}">
         <div class="card-header">
           <h2 class="section-title">
             ${title} <span class="section-icon">➜</span>
@@ -102,6 +112,7 @@ module.exports = {
   collectParsingWarnings,
   parseSectionsFromText,
   resolveSectionRenderMode,
+  resolveCardLayoutClass,
   isSafeCsvTable: require("../parse/sectionParse").isSafeCsvTable,
   isNumberedRowsTable: require("../parse/sectionParse").isNumberedRowsTable
 };
