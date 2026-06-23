@@ -428,7 +428,7 @@ async function selectSmallBoxes(executor = db) {
        CASE WHEN small_box_slot IS NOT NULL THEN small_box_slot ELSE 100 END ASC,
        created_at DESC,
        id DESC
-     LIMIT 4`
+     LIMIT 8`
   );
   return rows;
 }

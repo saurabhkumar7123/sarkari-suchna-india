@@ -1,7 +1,9 @@
 "use strict";
 
 const MIN_SLOT = 1;
-const MAX_SLOT = 4;
+const MAX_SLOT = 8;
+/** Slots 1–6 appear on mobile (3×2); 7–8 are desktop-only (4×2). */
+const MOBILE_MAX_SLOT = 6;
 
 /**
  * Parse admin/API small box slot input.
@@ -31,21 +33,32 @@ function positionFromSlot(slot) {
 }
 
 /**
- * Color index for homepage .cat tiles (0–3).
+ * @param {number | null | undefined} slot
+ * @returns {boolean}
+ */
+function isDesktopOnlySmallBoxSlot(slot) {
+  const n = Number(slot);
+  return Number.isInteger(n) && n > MOBILE_MAX_SLOT && n <= MAX_SLOT;
+}
+
+/**
+ * Color index for homepage .cat tiles (cycles 4 palette classes).
  * @param {number | null | undefined} slot
  * @param {number} fallbackIndex
  */
 function colorIndexForSlot(slot, fallbackIndex = 0) {
   if (Number.isInteger(slot) && slot >= MIN_SLOT && slot <= MAX_SLOT) {
-    return slot - 1;
+    return (slot - 1) % 4;
   }
-  return fallbackIndex % MAX_SLOT;
+  return fallbackIndex % 4;
 }
 
 module.exports = {
   MIN_SLOT,
   MAX_SLOT,
+  MOBILE_MAX_SLOT,
   parseSmallBoxSlot,
   positionFromSlot,
+  isDesktopOnlySmallBoxSlot,
   colorIndexForSlot
 };

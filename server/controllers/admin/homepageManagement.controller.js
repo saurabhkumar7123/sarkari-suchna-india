@@ -4,6 +4,7 @@ const homepagePlacementService = require("../../services/homepagePlacement.servi
 const { parseBadges } = require("../../services/page.service");
 const { recordActivity } = require("../../services/adminActivity.service");
 const { ALLOWED_BADGE_CODES, HOMEPAGE_BADGE_MAX } = require("../../lib/homepageBadges");
+const { MAX_SLOT, MOBILE_MAX_SLOT } = require("../../lib/smallBoxSlots");
 
 function placementErrorResponse(res, error) {
   const code = error && error.code;
@@ -62,6 +63,8 @@ const getHomepageManagementOverview = async (req, res) => {
           homepageTickerLimit,
           badgePagesTotal: badges.length,
           smallBoxSlotsTotal: Array.isArray(smallBoxes) ? smallBoxes.length : 0,
+          smallBoxSlotsMax: MAX_SLOT,
+          smallBoxMobileMax: MOBILE_MAX_SLOT,
           allowedBadgeCodes: ALLOWED_BADGE_CODES,
           maxBadgesPerPage: HOMEPAGE_BADGE_MAX
         }

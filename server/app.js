@@ -503,13 +503,15 @@ function renderBreakingNewsHtml(items) {
 function renderSmallBoxesHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
   const colors = ["blue", "green", "orange", "purple"];
-  const { colorIndexForSlot } = require("./lib/smallBoxSlots");
+  const { colorIndexForSlot, MAX_SLOT } = require("./lib/smallBoxSlots");
   return items
-    .slice(0, 4)
+    .slice(0, MAX_SLOT)
     .map((item, idx) => {
       const slot = item && item.smallBoxSlot != null ? Number(item.smallBoxSlot) : null;
       const colorIdx = colorIndexForSlot(slot, idx);
-      return `<a href="${escapeHtml(safePageHref(item))}" class="cat ${colors[colorIdx % colors.length]}">${escapeHtml(item.title)}</a>`;
+      const slotAttr =
+        slot != null && Number.isInteger(slot) ? ` data-small-box-slot="${slot}"` : "";
+      return `<a href="${escapeHtml(safePageHref(item))}" class="cat ${colors[colorIdx % colors.length]}"${slotAttr}>${escapeHtml(item.title)}</a>`;
     })
     .join("");
 }

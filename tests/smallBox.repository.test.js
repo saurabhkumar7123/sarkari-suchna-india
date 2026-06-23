@@ -10,7 +10,7 @@ describe("selectSmallBoxes query contract", () => {
     );
     expect(source).toMatch(/small_box_slot AS smallBoxSlot/);
     expect(source).toMatch(/ORDER BY[\s\S]*small_box_slot IS NOT NULL THEN small_box_slot ELSE 100 END ASC/);
-    expect(source).toMatch(/LIMIT 4/);
-    expect(source).not.toMatch(/SELECT title, slug FROM pages WHERE position='small' AND deleted=0 LIMIT 4/);
+    expect(source).toMatch(/LIMIT 8/);
+    expect(source).not.toMatch(/SELECT title, slug FROM pages WHERE position='small' AND deleted=0 LIMIT 8/);
   });
 });

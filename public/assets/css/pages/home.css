@@ -469,7 +469,7 @@
   }
   
   /* ---------- Components: category grid ---------- */
-    /* 🎯 Categories Grid */
+    /* 🎯 Categories Grid — desktop 4×2 (8 slots), mobile 3×2 (slots 1–6) */
     .small-boxes{
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -1084,11 +1084,16 @@
       font-size:15px;
     }
   
-    /* Categories — mobile: 2×2 grid, all four boxes visible */
+    /* Categories — mobile: 3×2 grid; slots 7–8 hidden (desktop only) */
     .small-boxes{
-      grid-template-columns:repeat(2,1fr);
+      grid-template-columns:repeat(3,1fr);
       gap:7px;
       font-size:12px;
+    }
+
+    .small-boxes .cat[data-small-box-slot="7"],
+    .small-boxes .cat[data-small-box-slot="8"]{
+      display:none;
     }
      
     body.page-home .small-boxes .cat{

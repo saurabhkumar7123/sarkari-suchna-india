@@ -426,12 +426,15 @@ async function loadTopCategories(){
 
   const colors = ["blue","green","orange","purple"];
 
-  data.slice(0, 4).forEach((item, i) => {
+  data.slice(0, 8).forEach((item, i) => {
     const slot = item && item.smallBoxSlot != null ? Number(item.smallBoxSlot) : null;
-    const colorIdx = slot >= 1 && slot <= 4 ? slot - 1 : i % colors.length;
+    const colorIdx = slot >= 1 && slot <= 8 ? (slot - 1) % 4 : i % colors.length;
     const a = document.createElement("a");
     a.href = safePageHref(item);
     a.className = `cat ${colors[colorIdx % colors.length]}`;
+    if (slot >= 1 && slot <= 8) {
+      a.setAttribute("data-small-box-slot", String(slot));
+    }
     a.textContent = item.title;
     container.appendChild(a);
   });

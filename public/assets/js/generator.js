@@ -224,6 +224,15 @@ function updateBreakingOrderVisibility() {
 
 let smallBoxSlotOccupancy = {};
 
+function isDesktopOnlySmallBoxSlot(slot) {
+  const n = Number(slot);
+  return Number.isInteger(n) && n >= 7 && n <= 8;
+}
+
+function defaultSmallBoxSlotHint() {
+  return "Desktop shows 8 boxes (4×2). Mobile shows slots 1–6 only (3×2). Slots 7–8 are desktop only. Choosing a slot replaces the current occupant.";
+}
+
 function setSmallBoxSlotFormValue(slot) {
   const el = document.getElementById("smallBoxSlot");
   if (!el) return;
@@ -259,8 +268,7 @@ function updateSmallBoxSlotHint() {
   if (!hint || !select) return;
   const slot = select.value;
   if (!slot) {
-    hint.textContent =
-      "Slot 4 is hidden on mobile (≤768px). Choosing a slot replaces the current occupant.";
+    hint.textContent = defaultSmallBoxSlotHint();
     return;
   }
   const occupant = smallBoxSlotOccupancy[slot];
@@ -272,8 +280,8 @@ function updateSmallBoxSlotHint() {
     String(occupant).trim().toLowerCase() === currentTitle.trim().toLowerCase();
   if (occupant && !isSelf) {
     hint.textContent = `Slot ${slot} is currently: ${occupant}. Saving will move it to Normal.`;
-  } else if (slot === "4") {
-    hint.textContent = "Slot 4 is hidden on mobile (≤768px).";
+  } else if (isDesktopOnlySmallBoxSlot(slot)) {
+    hint.textContent = `Slot ${slot} is desktop only (hidden on mobile).`;
   } else {
     hint.textContent = `Slot ${slot} will appear in homepage small boxes.`;
   }

@@ -1,5 +1,26 @@
 (function () {
-  let overviewMeta = { allowedBadgeCodes: ["NEW", "OUT", "START", "SOON"], maxBadgesPerPage: 2 };
+  let overviewMeta = {
+    allowedBadgeCodes: ["NEW", "OUT", "START", "SOON"],
+    maxBadgesPerPage: 2,
+    smallBoxSlotsMax: 8,
+    smallBoxMobileMax: 6
+  };
+
+  function smallBoxSlotNumbers() {
+    const max = Number(overviewMeta.smallBoxSlotsMax) || 8;
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }
+
+  function isDesktopOnlySmallBoxSlot(slot) {
+    const mobileMax = Number(overviewMeta.smallBoxMobileMax) || 6;
+    return Number(slot) > mobileMax;
+  }
+
+  function desktopOnlySmallBoxNote(slot) {
+    return isDesktopOnlySmallBoxSlot(slot)
+      ? '<span class="hp-slot-card__label-note">Desktop only</span>'
+      : "";
+  }
 
   function escapeHtml(value) {
     return String(value || "")
@@ -156,7 +177,7 @@
 
   function slotSkeletonHtml() {
     return `<div class="hp-slot-grid" aria-hidden="true">
-      ${[1, 2, 3, 4]
+      ${smallBoxSlotNumbers()
         .map(
           () => `<div class="hp-slot-card hp-slot-card--empty">
             <div class="skeleton-row"><div style="min-height:14px;width:40%;"></div></div>
@@ -291,14 +312,14 @@
   function renderSmallBoxesAssignForm() {
     const host = document.getElementById("smallBoxesAssignForm");
     if (!host) return;
-    const slots = [1, 2, 3, 4];
+    const slots = smallBoxSlotNumbers();
     host.innerHTML = `
       <p class="homepage-mgmt-form__title">Assign pages to slots</p>
       <div class="homepage-mgmt-assign-grid">
         ${slots
           .map(
             (slot) => `<div class="homepage-mgmt-assign-row">
-            <span class="homepage-mgmt-assign-label">Slot ${slot}${slot === 4 ? " (desktop only)" : ""}</span>
+            <span class="homepage-mgmt-assign-label">Slot ${slot}${isDesktopOnlySmallBoxSlot(slot) ? " (desktop only)" : ""}</span>
             ${pageSearchFieldHtml(`smallboxSlot${slot}`)}
             <button type="button" class="header-action-btn header-action-btn--primary smallbox-assign" data-slot="${slot}">Assign</button>
           </div>`
@@ -557,7 +578,7 @@
     const host = document.getElementById("smallBoxesList");
     if (!host) return;
 
-    const slots = [1, 2, 3, 4];
+    const slots = smallBoxSlotNumbers();
     const bySlot = {};
     (items || []).forEach((row) => {
       if (row && row.slot != null) bySlot[String(row.slot)] = row;
@@ -571,7 +592,7 @@
         const filled = Boolean(slug);
         const chip = filled ? statusChip("filled", "Filled") : statusChip("empty", "Empty");
         const slotLabel = `Slot ${slot}`;
-        const desktopNote = slot === 4 ? '<span class="hp-slot-card__label-note">Desktop only</span>' : "";
+        const desktopNote = desktopOnlySmallBoxNote(slot);
         const body = filled
           ? `<p class="hp-slot-card__title">${escapeHtml(title)}</p>
              <p class="hp-slot-card__slug">${escapeHtml(slug)}</p>`
@@ -625,7 +646,9 @@
     const { breaking = [], badges = [], smallBoxes = [], meta = {} } = res.data;
     overviewMeta = {
       allowedBadgeCodes: meta.allowedBadgeCodes || overviewMeta.allowedBadgeCodes,
-      maxBadgesPerPage: meta.maxBadgesPerPage || overviewMeta.maxBadgesPerPage
+      maxBadgesPerPage: meta.maxBadgesPerPage || overviewMeta.maxBadgesPerPage,
+      smallBoxSlotsMax: meta.smallBoxSlotsMax || overviewMeta.smallBoxSlotsMax,
+      smallBoxMobileMax: meta.smallBoxMobileMax || overviewMeta.smallBoxMobileMax
     };
 
     renderBreakingList(breaking);
@@ -644,7 +667,7 @@
     );
     setText(
       "smallBoxesMeta",
-      `${meta.smallBoxSlotsTotal || 0} of 4 slots filled · search by title above to assign`
+      `${meta.smallBoxSlotsTotal || 0} of ${overviewMeta.smallBoxSlotsMax} slots filled · mobile shows 1–${overviewMeta.smallBoxMobileMax}`
     );
     window.AdminPageToolbar?.markUpdated?.();
   }

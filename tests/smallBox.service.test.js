@@ -42,6 +42,6 @@ describe("smallBox.service assignSmallBoxSlot", () => {
   });
 
   it("rejects invalid slot numbers", async () => {
-    await expect(assignSmallBoxSlot({ pageId: 1, slot: 9, conn })).rejects.toThrow(/1–4/);
+    await expect(assignSmallBoxSlot({ pageId: 1, slot: 9, conn })).rejects.toThrow(/1–8/);
   });
 });
