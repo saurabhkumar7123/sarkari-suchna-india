@@ -96,11 +96,19 @@
 }
 
 .finder-banner-title{
-  font-size:19px;
-  font-weight:800;
-  line-height:1.15;
-  letter-spacing:-0.02em;
-  color:var(--brand-navy);
+  display: block;
+  font-size: 1.1875rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: var(--brand-navy, #1e3c72);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: color 0.2s ease;
+}
+
+.finder-banner:hover .finder-banner-title{
+  color: #152a55;
 }
 
 .finder-sub{
@@ -204,7 +212,8 @@
   }
 
   .finder-banner-title{
-    font-size:21px;
+    font-size: 1.3125rem;
+    letter-spacing: -0.035em;
   }
 
   .finder-tag{
@@ -918,8 +927,9 @@ body.finder-modal-open{
 }
 
 .finder-banner-title{
-  font-size:16px;
-  line-height:1.15;
+  font-size: 1.0625rem;
+  line-height: 1.12;
+  letter-spacing: -0.028em;
 }
 
 .finder-sub{

@@ -11,3 +11,25 @@ body.page-active {
 body.page-exit {
   opacity: 0;
 }
+
+body.page-categories.page-active .site-main {
+  animation: categories-slide-in 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes categories-slide-in {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body,
+  body.page-categories.page-active .site-main {
+    animation: none;
+    transition: none;
+    opacity: 1;
+  }
+}
