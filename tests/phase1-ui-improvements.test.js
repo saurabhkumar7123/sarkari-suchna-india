@@ -27,7 +27,7 @@ describe("lineRenderer date styling classes", () => {
 });
 
 describe("template phase 1 layout", () => {
-  test("highlight banner appears after Important Links and uses normalized key facts lookup", async () => {
+  test("highlight banner appears after Important Links", async () => {
     const html = await buildJobHtml({
       title: "SSC CGL Online Form 2026",
       text: `[Section: ShortInfo]
@@ -57,9 +57,12 @@ A: Sample answer.`,
     expect(linksIdx).toBeGreaterThan(-1);
     expect(faqIdx).toBeGreaterThan(bannerIdx);
     expect(linksIdx).toBeLessThan(bannerIdx);
-    expect(html).toContain('normalizeSectionKey("important dates")');
     expect(html).not.toContain('byLabel["ImportantDates"]');
-    expect(html).toContain("vacancy-details.css?v=74");
+    expect(html).toContain("advt-box--posts");
+    expect(html).toContain("advt-summary-row");
+    expect(html).toContain("Total Posts");
+    expect(html).not.toContain("keyFactsSection");
+    expect(html).toContain("vacancy-details.css?v=86");
     expect(html).toContain("job-page-share.js?v=3");
     expect(html).toContain("highlight-banner-theme.js?v=2");
     expect(html).toContain("Apply Online");

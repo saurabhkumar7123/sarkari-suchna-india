@@ -32,19 +32,13 @@
   }
 })();
 
-/** Job page: Title → Post meta (date/author/tag) → Key Facts */
+/** Job page: Title → Post meta (date/author/tag) */
 function ensureVacancyHeaderBlockOrder() {
   const title = document.querySelector(".job-title-section");
   if (!title) return;
   const meta = document.querySelector(".meta-info-section");
-  const keyFacts = document.getElementById("keyFactsSection");
-  let anchor = title;
   if (meta) {
-    anchor.insertAdjacentElement("afterend", meta);
-    anchor = meta;
-  }
-  if (keyFacts) {
-    anchor.insertAdjacentElement("afterend", keyFacts);
+    title.insertAdjacentElement("afterend", meta);
   }
 }
 

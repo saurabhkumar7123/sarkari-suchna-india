@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/css/components/breadcrumb.css?v=5">
     <link rel="stylesheet" href="/css/components/section-surfaces.css?v=1">
     <link rel="stylesheet" href="/css/components/search-overlay.css?v=5">
-    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=84">
+    <link rel="stylesheet" href="/css/pages/vacancy-details.css?v=86">
     <link rel="stylesheet" href="/css/effects/animation.css?v=2">
 
     <!-- Icons -->
@@ -96,16 +96,18 @@
     </div>
   </section>
 
-  <section class="key-facts-section" id="keyFactsSection" aria-label="Key facts" hidden>
-    <h2 class="key-facts-heading">Key Facts</h2>
-    <div class="key-facts-grid" id="keyFactsGrid"></div>
-  </section>
-
-  <!-- ================= ADVERTISEMENT ================= -->
-  <div class="advt-box" role="note" aria-label="Advertisement number">
-    <span class="advt-label">Advertisement No</span>
-    <span class="advt-sep">:</span>
-    <span class="advt-value">{{ADVERTISEMENT_NO}}</span>
+  <!-- ================= ADVERTISEMENT + TOTAL POSTS ================= -->
+  <div class="advt-summary-row">
+    <div class="advt-box" role="note" aria-label="Advertisement number">
+      <span class="advt-label">Advertisement No</span>
+      <span class="advt-sep">:</span>
+      <span class="advt-value">{{ADVERTISEMENT_NO}}</span>
+    </div>
+    <div class="advt-box advt-box--posts" role="note" aria-label="Total posts">
+      <span class="advt-label">Total Posts</span>
+      <span class="advt-sep">:</span>
+      <span class="advt-value advt-value--posts">{{TOTAL_POSTS}}</span>
+    </div>
   </div>
 
   <!-- ================= MAIN CONTENT (before banner) ================= -->
@@ -182,73 +184,25 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const cleanText = (value) => String(value || "").replace(/\s+/g, " ").trim();
-  const normalizeSectionKey = (value) =>
-    cleanText(value).toLowerCase().replace(/[^a-z0-9]/g, "");
-  const isPlaceholderFactValue = (value) =>
-    /will\s+be\s+update(d)?(\s+here)?\s+soon|will\s+be\s+updated\s+soon|available\s+soon|to\s+be\s+announced|^tba$|^n\/a$|not\s+yet\s+(released|announced|available)|coming\s+soon/i.test(
-      cleanText(value)
-    );
-  const cards = Array.from(document.querySelectorAll(".card"));
-  const byLabel = {};
 
-  cards.forEach((card) => {
-    const titleNode = card.querySelector(".section-title");
-    if (!titleNode) return;
-    const icon = titleNode.querySelector(".section-icon");
-    const rawTitle = cleanText(titleNode.textContent.replace("➜", ""));
-    byLabel[normalizeSectionKey(rawTitle)] = card;
+  document.querySelectorAll(".card").forEach((card) => {
+    const icon = card.querySelector(".section-title .section-icon");
     if (icon) icon.textContent = "➜";
   });
 
-  const findValueInRows = (card, labelRe) => {
-    if (!card) return "";
-    const rows = Array.from(card.querySelectorAll(".date-row"));
-    const row = rows.find((r) => labelRe.test(cleanText(r.querySelector(".date-label")?.textContent || "")));
-    return cleanText(row?.querySelector(".date-value")?.textContent || "");
-  };
-
-  const extractQualification = () => {
-    const eligibilityCard = byLabel[normalizeSectionKey("eligibility")];
-    if (!eligibilityCard) return "";
-    const text = cleanText(eligibilityCard.querySelector(".card-content")?.textContent || "");
-    const match = text.match(/(10th|12th|intermediate|diploma|graduation|graduate|degree|b\.?e|b\.?tech|iti|post graduate|master)/i);
-    if (!match) return "";
-    const idx = text.toLowerCase().indexOf(match[0].toLowerCase());
-    return text.slice(Math.max(0, idx - 20), Math.min(text.length, idx + 70)).replace(/\s+/g, " ").trim();
-  };
-
-  const postName = cleanText(document.querySelector(".highlight-banner-subtitle")?.textContent.replace(/^Post Name/i, "").replace(/^:/, "") || document.querySelector(".job-title")?.textContent);
-  const importantDatesCard = byLabel[normalizeSectionKey("important dates")];
-  const lastDateRaw = findValueInRows(importantDatesCard, /(?:online\s+apply\s+)?last\s*date/i);
-  const lastDate = isPlaceholderFactValue(lastDateRaw) ? "" : lastDateRaw;
-  const totalPosts = cleanText(document.querySelector(".highlight-banner-total-num")?.textContent);
-  const qualification = extractQualification();
-
-  const facts = [
-    { label: "Post Name", value: postName },
-    { label: "Last Date", value: lastDate },
-    { label: "Total Posts", value: totalPosts },
-    { label: "Qualification", value: qualification }
-  ].filter((item) => item.value && item.value !== "—" && item.value.toLowerCase() !== "n/a");
-
-  const isTotalPostsFact = (label) => /^total\s*(posts|vacancies)\b/i.test(String(label || "").trim());
-
-  const factsSection = document.getElementById("keyFactsSection");
-  const factsGrid = document.getElementById("keyFactsGrid");
-  if (facts.length && factsSection && factsGrid) {
-    factsGrid.innerHTML = facts
-      .map((item) => {
-        const highlight = isTotalPostsFact(item.label);
-        const itemClass = highlight ? "key-fact-item key-fact-item--total-posts" : "key-fact-item";
-        const valueClass = highlight ? "key-fact-value key-fact-value--total-posts" : "key-fact-value";
-        return (
-          '<div class="' + itemClass + '"><span class="key-fact-label">' + item.label + '</span><span class="' + valueClass + '">' + item.value + "</span></div>"
-        );
-      })
-      .join("");
-    factsSection.hidden = false;
+  const postsBox = document.querySelector(".advt-box--posts");
+  const postsVal = document.querySelector(".advt-value--posts");
+  if (postsBox && postsVal) {
+    const raw = cleanText(postsVal.textContent);
+    if (!raw || raw === "-" || raw === "—") {
+      postsBox.hidden = true;
+    } else {
+      const digits = raw.replace(/,/g, "");
+      if (/^\d+$/.test(digits)) {
+        postsVal.textContent = Number(digits).toLocaleString("en-IN");
+      }
+    }
   }
-
 });
 </script>
 

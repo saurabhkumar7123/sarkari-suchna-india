@@ -896,9 +896,16 @@
     }
     }
   
-    /* ================= ADVERTISEMENT ================= */
-    .advt-box{
+    /* ================= ADVERTISEMENT + TOTAL POSTS ================= */
+    .advt-summary-row{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
     margin:14px 0 18px;
+    }
+
+    .advt-box{
     padding:12px 14px;
     border-radius:12px;
     border:1px solid #c5d4eb;
@@ -908,21 +915,22 @@
     align-items:center;
     gap:6px;
     flex-wrap:wrap;
+    width:100%;
+    box-sizing:border-box;
     }
-  
+
     .advt-label{
     font-size:14px;
     color:#334155;
     font-weight:600;
     }
-  
+
     .advt-sep{
     color:var(--text-secondary);
     font-weight:600;
     }
-  
-    .advt-value,
-    .advt-box > span:last-child{
+
+    .advt-value{
     display:inline-flex;
     align-items:center;
     padding:3px 10px;
@@ -934,88 +942,9 @@
     font-size:13px;
     }
 
-/* ================= KEY FACTS (single compact box) ================= */
-.key-facts-section{
-  margin:0 0 12px;
-  padding:0;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  background:#f8fafc;
-  box-shadow:none;
-  overflow:hidden;
-}
-
-.key-facts-heading{
-  margin:0;
-  padding:7px 12px;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  color:#64748b;
-  background:#ffffff;
-  border-bottom:1px solid #e2e8f0;
-}
-
-.key-facts-grid{
-  display:flex;
-  flex-direction:column;
-  gap:0;
-}
-
-.key-fact-item{
-  display:flex;
-  flex-direction:row;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  width:100%;
-  border:none;
-  border-radius:0;
-  padding:6px 12px;
-  background:transparent;
-  min-width:0;
-  box-sizing:border-box;
-}
-
-.key-fact-item:not(:last-child){
-  border-bottom:1px solid #e2e8f0;
-}
-
-.key-fact-label{
-  flex:0 0 auto;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  color:#64748b;
-  margin-bottom:0;
-  line-height:1.2;
-  white-space:nowrap;
-}
-
-.key-fact-value{
-  flex:1 1 auto;
-  font-size:12px;
-  font-weight:700;
-  color:#1e3c72;
-  line-height:1.3;
-  text-align:right;
-  word-break:break-word;
-}
-
-.key-fact-item--total-posts{
-  background:transparent;
-}
-
-.key-fact-value--total-posts{
-  font-size:13px;
-  font-weight:800;
-  color:#1e3c72;
-  font-variant-numeric:tabular-nums;
-  letter-spacing:0.01em;
-  line-height:1.25;
-}
+    .advt-value--posts{
+    font-variant-numeric:tabular-nums;
+    }
 
 @media (min-width: 769px) {
 .job-container > .post-meta-header .breadcrumb{
@@ -1026,13 +955,18 @@
   margin-top:22px;
   }
 
-.key-facts-section{
-  max-width:min(100%, 22rem);
+.advt-summary-row{
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  gap:16px;
+  max-width:min(100%, 44rem);
   }
 
 .advt-box{
-  max-width:min(50%, 24rem);
-  width:fit-content;
+  width:auto;
+  flex:0 1 auto;
+  max-width:min(100%, 22rem);
   }
 
 /* Text / dates / FAQ sections — narrower column for easier reading */
@@ -1246,64 +1180,21 @@
     color:#f8fafc;
     }
   
+    .advt-summary-row{
+    gap:8px;
+    max-width:100%;
+    }
+
     .advt-box{
     padding:10px 12px;
     gap:4px;
+    width:100%;
+    max-width:100%;
     }
-  
+
     .advt-label,
     .advt-value{
     font-size:14px;
-    }
-
-    .key-facts-section{
-    max-width:60%;
-    width:60%;
-    }
-
-    .key-facts-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:0;
-    }
-
-    .key-fact-item{
-    flex-direction:column;
-    align-items:flex-start;
-    justify-content:flex-start;
-    gap:2px;
-    padding:6px 8px;
-    width:auto;
-    border-bottom:1px solid #e2e8f0;
-    border-right:1px solid #e2e8f0;
-    }
-
-    .key-fact-item:nth-child(2n){
-    border-right:none;
-    }
-
-    .key-fact-item:not(:last-child){
-    border-bottom:1px solid #e2e8f0;
-    }
-
-    .key-fact-item:last-child:nth-child(odd){
-    grid-column:1 / -1;
-    border-right:none;
-    }
-
-    .key-fact-label{
-    white-space:normal;
-    font-size:9px;
-    }
-
-    .key-fact-value{
-    text-align:left;
-    font-size:11px;
-    width:100%;
-    }
-
-    .key-fact-value--total-posts{
-    font-size:11px;
     }
 
     .table th,
