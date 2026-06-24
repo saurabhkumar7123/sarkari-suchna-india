@@ -7,17 +7,18 @@ function normalizeText(text) {
   return (text || "").toLowerCase().trim();
 }
 
-function titleMatchesQuery(title, query) {
+function pageMatchesQuery(page, query) {
   const q = normalizeText(query);
   if (!q) return false;
-  return normalizeText(title).includes(q);
+  const fields = [page.title, page.category, page.post_name, page.slug];
+  return fields.some((field) => normalizeText(field).includes(q));
 }
 
 async function search(query) {
   const q = normalizeText(query);
   if (!q || q.length < 2) return [];
 
-  const cacheKey = `search:title:${q}`;
+  const cacheKey = `search:multi:${q}`;
   const cached = await getCache(cacheKey);
   if (cached) {
     try {
@@ -40,7 +41,7 @@ async function search(query) {
   }
 
   const result = rows
-    .filter((p) => titleMatchesQuery(p.title, q))
+    .filter((p) => pageMatchesQuery(p, q))
     .map((p) => ({
       title: p.title,
       url: "/" + p.slug,
@@ -99,5 +100,6 @@ async function clearSearchCache() {
 module.exports = {
   search,
   searchSuggest,
-  clearSearchCache
+  clearSearchCache,
+  pageMatchesQuery
 };

@@ -57,10 +57,10 @@ A: Sample answer.`,
     expect(linksIdx).toBeGreaterThan(-1);
     expect(faqIdx).toBeGreaterThan(bannerIdx);
     expect(linksIdx).toBeLessThan(bannerIdx);
-    expect(html).not.toContain('byLabel["ImportantDates"]');
-    expect(html).toContain("advt-box--posts");
+    expect(html).toContain("/topic/ssc-cgl");
     expect(html).toContain("advt-summary-row");
     expect(html).toContain("Total Posts");
+    expect(html).toContain("meta-item--tag");
     expect(html).not.toContain("keyFactsSection");
     expect(html).toContain("vacancy-details.css?v=86");
     expect(html).toContain("job-page-share.js?v=3");

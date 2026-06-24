@@ -655,16 +655,19 @@ function hydrateLegacyMetaPlaceholders() {
   const tagAnchor = metaInfo.querySelector("a.tag-link");
   if (!tagAnchor) return;
 
-  const pageName = document.querySelector(".page-name")?.textContent?.trim() || "general";
-  const fallbackTag = pageName;
-  const fallbackSlug = slugifyForTag(fallbackTag) || "general";
-
-  if (tagAnchor.textContent.includes("{{TAG}}")) {
-    tagAnchor.textContent = fallbackTag;
+  const legacyStatusTags =
+    /^(latest job|new form|admit card|result|answer key|document|admission|syllabus|general)$/i;
+  const tagItem = metaInfo.querySelector(".meta-item--tag") || tagAnchor.closest(".meta-item");
+  const label = tagAnchor.textContent?.trim() || "";
+  if (!label || legacyStatusTags.test(label) || label.includes("{{TAG}}")) {
+    if (tagItem) tagItem.hidden = true;
+    return;
   }
+
   const href = tagAnchor.getAttribute("href") || "";
-  if (href.includes("{{TAG_SLUG}}")) {
-    tagAnchor.setAttribute("href", `/tag/${fallbackSlug}`);
+  if (href.includes("{{TAG_HREF}}") || href.includes("{{TAG_SLUG}}")) {
+    const slug = String(label).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    tagAnchor.setAttribute("href", slug ? `/topic/${slug}` : "#");
   }
 }
 

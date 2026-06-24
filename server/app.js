@@ -28,6 +28,7 @@ const miscService = require("./services/misc.service");
 const pageService = require("./services/page.service");
 const homeStatsService = require("./services/homeStats.service");
 const taxonomyPageService = require("./services/taxonomyPage.service");
+const topicPageService = require("./services/topicPage.service");
 const {
   buildDepartmentPath,
   buildQualificationPath,
@@ -1222,6 +1223,24 @@ app.get("/department/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtm
 app.get("/qualification/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "qualification")));
 app.get("/state/:slug", asyncHandler(async (req, res) => sendTaxonomyHubHtml(req, res, "state")));
 
+app.get("/topic/:slug", asyncHandler(async (req, res) => {
+  const slug = String(req.params.slug || "").trim();
+  if (!slug) {
+    return res.redirect(302, "/search");
+  }
+  const html = await topicPageService.buildTopicPage({
+    slug,
+    baseUrl: getPublicBaseUrl(req),
+    headerHtml: cachedHeader,
+    footerHtml: taxonomyPageService.getFooterHtml()
+  });
+  if (!html) {
+    return res.redirect(302, `/search?q=${encodeURIComponent(slug)}`);
+  }
+  const normalized = normalizeSeoUrlsInHtml(html, getPublicBaseUrl(req));
+  return sendHtmlString(req, res, normalized);
+}));
+
 /** Legacy /board/{slug} → canonical /department/{slug} */
 app.get("/board/:slug", asyncHandler(async (req, res) => {
   const slug = String(req.params.slug || "").trim();
@@ -1231,7 +1250,7 @@ app.get("/board/:slug", asyncHandler(async (req, res) => {
   return res.redirect(301, buildDepartmentPath(slug));
 }));
 
-/** Legacy /tag/{board} → /department/{board}; other tags → search. */
+/** Legacy /tag/{board} → /department/{board}; other tags → /topic/{slug}. */
 app.get("/tag/:tag", asyncHandler(async (req, res) => {
   const raw = normalizeBoardSlug(req.params.tag);
   if (!raw) {
@@ -1240,7 +1259,7 @@ app.get("/tag/:tag", asyncHandler(async (req, res) => {
   if (isBoardSlug(raw)) {
     return res.redirect(301, buildDepartmentPath(raw));
   }
-  return res.redirect(302, `/search?q=${encodeURIComponent(raw)}`);
+  return res.redirect(301, `/topic/${encodeURIComponent(raw)}`);
 }));
 
 const staticPageRoutes = {

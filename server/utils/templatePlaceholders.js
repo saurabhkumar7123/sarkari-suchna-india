@@ -7,6 +7,7 @@ const { escapeHtml, sanitizeUrl, safeUrlSegment } = require("./escapeHtml");
 const { getBaseUrl } = require("./baseUrl");
 const { renderBreadcrumbHtml } = require("../lib/breadcrumb");
 const { buildHighlightBannerFields } = require("../lib/highlightBanner");
+const { resolveTagLinkHref, createSlug: topicCreateSlug } = require("../lib/topicTags");
 
 function createSlug(title) {
   return String(title || "")
@@ -145,10 +146,11 @@ function buildJobTemplateVariables(opts) {
     parserWarnings = [];
   }
 
-  const tag = String(category || normalizedStatus || "general")
+  const categoryTrim = String(category || "")
     .trim()
     .replace(/\s+/g, " ");
-  const tagSlug = createSlug(tag || "general");
+  const tag = categoryTrim;
+  const tagSlug = tag ? topicCreateSlug(tag) : "";
   const titleTrim = String(title || "").trim();
   const postNameTrim = String(postName ?? "").trim();
   const postNameForTemplate = postNameTrim.length > 0 ? postNameTrim : titleTrim;
@@ -185,7 +187,9 @@ function buildJobTemplateVariables(opts) {
     .replace(/\.html$/i, "");
 
   const slugForUrls = slugClean ? safeUrlSegment(slugClean) : "";
-  const tagSlugForUrls = safeUrlSegment(tagSlug || "general") || "general";
+  const tagSlugForUrls = tagSlug ? safeUrlSegment(tagSlug) || "" : "";
+  const tagHref = tag ? resolveTagLinkHref(categoryTrim, tagSlugForUrls) : "";
+  const tagMetaHidden = tag ? "" : " hidden";
   const baseUrl = getBaseUrl().replace(/\/+$/, "");
   const canonicalPath = sanitizeUrl(slugForUrls ? `/${slugForUrls}` : "/");
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
@@ -236,8 +240,10 @@ function buildJobTemplateVariables(opts) {
     DYNAMIC_SECTIONS_AFTER_BANNER: dynamicSectionsAfterBanner,
     POST_DATE: formatPostDate(now),
     POST_TIME: formatPostTime(now),
-    TAG: escapeHtml(tag || "general"),
+    TAG: escapeHtml(tag),
     TAG_SLUG: tagSlugForUrls,
+    TAG_HREF: tagHref,
+    TAG_META_HIDDEN: tagMetaHidden,
     ADVERTISEMENT_NO: escapeHtml(advertisementNo),
     CANONICAL_URL: canonicalUrl,
     META_DESCRIPTION: escapeHtml(metaDescription),

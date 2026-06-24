@@ -89,9 +89,9 @@
         <span class="meta-label">👤 Author</span>
         <span class="meta-value">Sarkari Suchna India Team</span>
       </div>
-      <div class="meta-item">
+      <div class="meta-item meta-item--tag"{{TAG_META_HIDDEN}}>
         <span class="meta-label">🏷 Tag</span>
-        <a href="/tag/{{TAG_SLUG}}" class="tag-link meta-tag">{{TAG}}</a>
+        <a href="{{TAG_HREF}}" class="tag-link meta-tag">{{TAG}}</a>
       </div>
     </div>
   </section>
@@ -189,6 +189,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const icon = card.querySelector(".section-title .section-icon");
     if (icon) icon.textContent = "➜";
   });
+
+  const legacyStatusTags =
+    /^(latest job|new form|admit card|result|answer key|document|admission|syllabus|general)$/i;
+  const tagItem = document.querySelector(".meta-item--tag");
+  const tagLink = tagItem?.querySelector(".tag-link");
+  if (tagItem && tagLink) {
+    const label = cleanText(tagLink.textContent);
+    if (!label || legacyStatusTags.test(label) || tagLink.getAttribute("href") === "#") {
+      tagItem.hidden = true;
+    }
+  }
 
   const postsBox = document.querySelector(".advt-box--posts");
   const postsVal = document.querySelector(".advt-value--posts");

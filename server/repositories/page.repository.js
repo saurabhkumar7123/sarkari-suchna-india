@@ -3,6 +3,7 @@
 const db = require("../config/db");
 const logger = require("../utils/logger");
 const { pageContentFieldsChanged } = require("../lib/contentFreshness");
+const { topicSearchTokens } = require("../lib/topicTags");
 const IS_NON_PROD = process.env.NODE_ENV !== "production";
 
 function stripInvisible(s) {
@@ -206,6 +207,20 @@ function buildPublicListWhereDepartment(department) {
   };
 }
 
+function buildPublicListWhereTopic(topicSlug) {
+  const tokens = topicSearchTokens(topicSlug);
+  if (!tokens.length) {
+    return { baseQuery: "FROM pages WHERE 1=0", params: [] };
+  }
+  let baseQuery = "FROM pages WHERE deleted=0 AND category IS NOT NULL AND TRIM(category) <> ''";
+  const params = [];
+  for (const token of tokens) {
+    baseQuery += " AND LOWER(category) LIKE ?";
+    params.push(`%${token}%`);
+  }
+  return { baseQuery, params };
+}
+
 /**
  * Board hub listings — filter by pages.department (not category / page_tags).
  * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
@@ -225,6 +240,28 @@ async function selectPublicListByDepartment(department, limit, offset, executor 
   const rawSql = includeRawText ? ", raw_text" : "";
   const [rows] = await executor.query(
     `SELECT id, title, slug, status, badges, category, created_at${rawSql}, last_date, breaking, position, event_time ${baseQuery} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+  return rows;
+}
+
+/**
+ * Topic hub listings — match pages.category (comma-separated tags), not department.
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ */
+async function countPublicListByTopicSlug(topicSlug, executor = db) {
+  const { baseQuery, params } = buildPublicListWhereTopic(topicSlug);
+  const [countRows] = await executor.query(`SELECT COUNT(*) as total ${baseQuery}`, params);
+  return countRows[0].total;
+}
+
+/**
+ * @param {import("mysql2/promise").Pool | import("mysql2/promise").PoolConnection} [executor]
+ */
+async function selectPublicListByTopicSlug(topicSlug, limit, offset, executor = db) {
+  const { baseQuery, params } = buildPublicListWhereTopic(topicSlug);
+  const [rows] = await executor.query(
+    `SELECT id, title, slug, status, category, created_at ${baseQuery} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset]
   );
   return rows;
@@ -340,13 +377,18 @@ async function incrementViewsBySlug(slug, executor = db) {
 
 async function searchByLike(likeQuery, executor = db) {
   const [rows] = await executor.query(
-    `SELECT title, slug, status 
+    `SELECT title, slug, status, category, post_name
      FROM pages 
      WHERE deleted=0 
-     AND title LIKE ?
+     AND (
+       title LIKE ?
+       OR category LIKE ?
+       OR post_name LIKE ?
+       OR slug LIKE ?
+     )
      ORDER BY created_at DESC
      LIMIT 20`,
-    [likeQuery]
+    [likeQuery, likeQuery, likeQuery, likeQuery]
   );
   return rows;
 }
@@ -366,10 +408,10 @@ async function searchByFullText(query, executor = db) {
   await ensurePagesSearchFullTextIndex(executor);
   try {
     const [rows] = await executor.query(
-      `SELECT title, slug, status
+      `SELECT title, slug, status, category, post_name
        FROM pages
        WHERE deleted = 0
-         AND MATCH(title) AGAINST (? IN NATURAL LANGUAGE MODE)
+         AND MATCH(title, category, post_name) AGAINST (? IN NATURAL LANGUAGE MODE)
        ORDER BY created_at DESC
        LIMIT 20`,
       [q]
@@ -1336,6 +1378,8 @@ module.exports = {
   selectPublicListPage,
   countPublicListByDepartment,
   selectPublicListByDepartment,
+  countPublicListByTopicSlug,
+  selectPublicListByTopicSlug,
   findRowBySlug,
   findPublicRowBySlug,
   selectTopViews,
