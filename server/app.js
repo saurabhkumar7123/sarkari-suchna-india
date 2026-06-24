@@ -1062,6 +1062,14 @@ app.get("/robots.txt", (req, res) => {
   res.send(`User-agent: *
 Allow: /
 Disallow: /search?q=
+Disallow: /login
+Disallow: /generator
+Disallow: /upload
+Disallow: /trash
+Disallow: /dashboard
+Disallow: /admin/
+Disallow: /api/
+Disallow: /job-admin
 
 ${sitemapLine}
 `);
@@ -1473,9 +1481,23 @@ app.get("/tools/image-resizer", asyncHandler(async (req, res) => {
 
 const verifyToken = require("./middleware/auth.middleware");
 
+const privatePagesDir = path.join(__dirname, "../private");
+
+function injectAdminNoindex(html) {
+  const tag = '<meta name="robots" content="noindex, nofollow">';
+  const source = String(html || "");
+  if (/<meta name="robots"[^>]*>/i.test(source)) {
+    return source.replace(/<meta name="robots"[^>]*>/i, tag);
+  }
+  return source.replace(/<\/head>/i, `  ${tag}\n</head>`);
+}
+
 function sendPrivatePage(res, fileName) {
   if (isProd) res.set("Cache-Control", "private, no-store");
-  return res.sendFile(path.join(__dirname, `../private/${fileName}`));
+  res.set("X-Robots-Tag", "noindex, nofollow");
+  const abs = path.join(privatePagesDir, fileName);
+  const html = injectAdminNoindex(fs.readFileSync(abs, "utf8"));
+  res.type("html").send(html);
 }
 
 app.get(["/admin/dashboard", "/admin/dashboard/", "/admin/dashboard.html"], verifyToken, (req, res) => {
