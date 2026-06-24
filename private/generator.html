@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=2">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=6">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
@@ -50,26 +50,35 @@
   <a href="#gen-step-preview" class="generator-step" data-step="gen-step-preview">4. Preview</a>
 </nav>
 
+<section class="page-search-panel" aria-label="Search existing page">
+  <label for="pageSearch">Search Existing Page (edit)</label>
+  <div class="search-select">
+    <span class="search-input-icon" aria-hidden="true">🔍</span>
+    <input type="text" id="pageSearch" placeholder="Search by title or URL…" autocomplete="off">
+    <div id="pageSuggestions" class="suggestions"></div>
+  </div>
+</section>
+
 <div class="form-grid" id="gen-step-basic">
   <div class="basic-group-label">Basic Fields</div>
-  <section class="generator-card">
-    <h3 class="card-title">Basic Info</h3>
-    <div class="card-fields">
+  <section class="generator-card generator-card--identity">
+    <h3 class="card-title">Page Identity</h3>
+    <div class="card-fields card-fields--title-url">
       <div class="field-group">
-        <label>Search Existing Page (edit)</label>
-        <div class="search-select">
-          <span class="search-input-icon" aria-hidden="true">🔍</span>
-          <input type="text" id="pageSearch" placeholder="Search page..." autocomplete="off">
-          <div id="pageSuggestions" class="suggestions"></div>
-        </div>
-      </div>
-      <div class="field-group">
-        <label>Page Title</label>
+        <label for="title">Page Title</label>
         <input type="text" id="title" placeholder="UP Police Constable Recruitment 2026" autocomplete="off">
         <p class="field-error" id="titleError" aria-live="polite"></p>
-        <p class="slug-preview">URL slug preview: <code id="slugPreview">—</code></p>
+      </div>
+      <div class="field-group">
+        <label for="pageUrl">Page URL</label>
+        <input type="text" id="pageUrl" placeholder="/pages/example.html">
+        <p class="field-error" id="pageUrlError" aria-live="polite"></p>
       </div>
     </div>
+    <p class="slug-preview">URL slug preview: <code id="slugPreview">—</code></p>
+    <p id="urlModeHint" class="mode-hint">Create mode: URL can be edited before first save.</p>
+    <input type="hidden" id="pageId">
+    <input type="hidden" id="oldSlug">
   </section>
 
   <section class="generator-card">
@@ -125,33 +134,41 @@
         </select>
         <p class="field-hint" id="smallBoxSlotHint">Desktop shows 8 boxes (4×2). Mobile shows slots 1–6 only (3×2). Slots 7–8 are desktop only. Choosing a slot replaces the current occupant.</p>
       </div>
-      <div class="field-group inline-checkbox-group">
-        <label class="inline-checkbox-label">
-          <input type="checkbox" id="breaking"> Show in Breaking News
-        </label>
-      </div>
-      <div class="field-group" id="breakingOrderGroup">
-        <label>Breaking Order</label>
-        <input type="number" id="breakingOrder" placeholder="1,2,3...">
-      </div>
-      <div class="field-group" id="badgesGroup">
-        <label>Homepage Badges (optional, max 2)</label>
-        <div class="inline-checkbox-group" id="badgesCheckboxGroup" role="group" aria-label="Homepage badges">
-          <label class="inline-checkbox-label">
-            <input type="checkbox" class="badge-checkbox" value="NEW"> NEW
-          </label>
-          <label class="inline-checkbox-label">
-            <input type="checkbox" class="badge-checkbox" value="OUT"> OUT
-          </label>
-          <label class="inline-checkbox-label">
-            <input type="checkbox" class="badge-checkbox" value="START"> START
-          </label>
-          <label class="inline-checkbox-label">
-            <input type="checkbox" class="badge-checkbox" value="SOON"> SOON
-          </label>
+      <div class="breaking-badges-block">
+        <div class="generator-inline-row generator-inline-row--breaking">
+          <div class="breaking-toggle-card" id="breakingToggleCard">
+            <label class="breaking-toggle-label" for="breaking">
+              <input type="checkbox" id="breaking" class="breaking-checkbox">
+              <span class="breaking-toggle-copy">
+                <span class="breaking-toggle-title">Breaking News</span>
+                <span class="breaking-toggle-sub">Show in homepage ticker</span>
+              </span>
+            </label>
+          </div>
+          <div class="field-group field-group--inline" id="breakingOrderGroup">
+            <label for="breakingOrder">Breaking Order</label>
+            <input type="number" id="breakingOrder" placeholder="1, 2, 3…" min="1" step="1">
+          </div>
         </div>
-        <input type="hidden" id="badgesJson" value="[]">
-        <p class="field-hint" id="badgesHint">Shown only on homepage. Listing/search/PDF pages ignore badges.</p>
+        <div class="field-group field-group--badges" id="badgesGroup">
+          <label for="badgesCheckboxGroup">Homepage Badges <span class="field-label-muted">(optional, max 2)</span></label>
+          <div class="inline-checkbox-group inline-checkbox-group--badges" id="badgesCheckboxGroup" role="group" aria-label="Homepage badges">
+            <label class="inline-checkbox-label inline-checkbox-label--badge">
+              <input type="checkbox" class="badge-checkbox" value="NEW"> NEW
+            </label>
+            <label class="inline-checkbox-label inline-checkbox-label--badge">
+              <input type="checkbox" class="badge-checkbox" value="OUT"> OUT
+            </label>
+            <label class="inline-checkbox-label inline-checkbox-label--badge">
+              <input type="checkbox" class="badge-checkbox" value="START"> START
+            </label>
+            <label class="inline-checkbox-label inline-checkbox-label--badge">
+              <input type="checkbox" class="badge-checkbox" value="SOON"> SOON
+            </label>
+          </div>
+          <input type="hidden" id="badgesJson" value="[]">
+          <p class="field-hint" id="badgesHint">Shown only on homepage. Listing/search/PDF pages ignore badges.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -172,7 +189,7 @@
   </section>
 
   <section class="generator-card">
-    <h3 class="card-title">SEO &amp; URL</h3>
+    <h3 class="card-title">Topics &amp; SEO</h3>
     <div class="card-fields">
       <div class="field-group">
         <label>Topics (tags)</label>
@@ -185,14 +202,6 @@
           <input type="hidden" id="category">
           <div id="tagSuggestions" class="tag-suggestions"></div>
         </div>
-      </div>
-      <div class="field-group">
-        <label>Page URL</label>
-        <input type="text" id="pageUrl" placeholder="/pages/example.html">
-        <p class="field-error" id="pageUrlError" aria-live="polite"></p>
-        <p id="urlModeHint" class="mode-hint">Create mode: URL can be edited before first save.</p>
-        <input type="hidden" id="pageId">
-        <input type="hidden" id="oldSlug">
       </div>
     </div>
   </section>
@@ -300,13 +309,15 @@
 </div>
 
 <div class="action-bar is-sticky-publish">
-  <div class="action-group action-group-secondary">
-    <button type="button" id="previewBtn" class="btn btn-preview btn-secondary">👁 Preview</button>
-    <button type="button" id="aiConvertBtn" class="btn btn-ai btn-secondary">✨ Convert with AI</button>
-    <button type="button" id="deleteBtn" class="btn delete-btn btn-secondary" style="display:none;">🗑 Delete Page</button>
-  </div>
-  <div class="action-group action-group-primary">
-    <button type="button" id="savePageBtn" class="btn btn-save btn-primary">🚀 Save / Update Page</button>
+  <div class="action-bar__inner">
+    <div class="action-group action-group-tools">
+      <button type="button" id="previewBtn" class="btn-tool btn-tool--preview">👁 Preview</button>
+      <button type="button" id="aiConvertBtn" class="btn-tool btn-tool--ai">✨ Convert with AI</button>
+      <button type="button" id="deleteBtn" class="btn-tool btn-tool--delete is-hidden">🗑 Delete Page</button>
+    </div>
+    <div class="action-group action-group-primary">
+      <button type="button" id="savePageBtn" class="btn btn-save btn-primary">🚀 Save / Update Page</button>
+    </div>
   </div>
 </div>
 

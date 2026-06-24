@@ -220,8 +220,13 @@ async function loadTrash(opts = {}) {
 }
 
 async function restorePage(slug) {
-  const ok = await (window.AdminUI && window.AdminUI.confirmDelete
-    ? window.AdminUI.confirmDelete({ title: "Restore page", count: 1, confirmLabel: "Restore" })
+  const ok = await (window.AdminUI && window.AdminUI.simpleConfirm
+    ? window.AdminUI.simpleConfirm({
+        title: "Restore page",
+        warnText: "",
+        details: "This page will be moved back to the live site and removed from trash.",
+        confirmLabel: "Restore"
+      })
     : Promise.resolve(window.confirm("Restore this page?")));
   if (!ok) return;
   const data = await safeFetch(`/api/admin/pages/${encodeURIComponent(slug)}/restore`, { method: "PATCH" });
@@ -237,9 +242,10 @@ async function permanentDelete(slug) {
   const ok = await (window.AdminUI && window.AdminUI.typedConfirm
     ? window.AdminUI.typedConfirm({
         title: "Permanent delete",
-        warnText: "This action cannot be undone",
-        details: "Type DELETE to confirm",
-        requireText: "DELETE"
+        warnText: "Permanent action — data cannot be recovered.",
+        details: "Please confirm you want to permanently delete this page.",
+        requireText: "DELETE",
+        confirmLabel: "Delete forever"
       })
     : Promise.resolve(window.confirm("Permanently delete this page?")));
   if (!ok) return;

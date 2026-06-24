@@ -183,6 +183,7 @@
   --z-overlay: 500;
   --z-modal: 1000;
   --z-toast: 1100;
+  --z-admin-overlay: 5000;
 
   --site-max: 1200px;
   --site-content-pad: var(--space-16);

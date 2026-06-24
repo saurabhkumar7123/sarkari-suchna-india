@@ -219,3 +219,32 @@ body.standalone-admin-page.upload-page .modal,
 body.standalone-admin-page.trash-page .modal{
   z-index:calc(var(--z-modal,1200) + 10);
 }
+
+/* AdminUI confirm overlay — above fixed sidebar, centered in content column */
+body.standalone-admin-page #adminConfirmModalHost{
+  z-index:99999 !important;
+  left:250px;
+  right:0;
+  width:auto;
+}
+
+body.standalone-admin-page.sidebar-collapsed #adminConfirmModalHost{
+  left:72px;
+}
+
+body.standalone-admin-page #adminToastHost{
+  z-index:99999;
+}
+
+body.admin-confirm-open.standalone-admin-page .sidebar,
+body.admin-confirm-open.standalone-admin-page .toggle-btn{
+  z-index:1 !important;
+}
+
+@media (max-width:768px){
+  body.standalone-admin-page #adminConfirmModalHost{
+    left:0;
+    right:0;
+    width:100%;
+  }
+}

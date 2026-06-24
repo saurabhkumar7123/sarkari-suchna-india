@@ -11,7 +11,7 @@
 
     let statusEl = document.getElementById("stickyDraftStatus");
     if (!statusEl) {
-      const group = bar.querySelector(".action-group-secondary") || bar;
+      const group = bar.querySelector(".action-group-tools") || bar.querySelector(".action-bar__inner") || bar;
       statusEl = document.createElement("span");
       statusEl.id = "stickyDraftStatus";
       statusEl.className = "sticky-draft-status";

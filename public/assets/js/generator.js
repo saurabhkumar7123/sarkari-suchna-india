@@ -10,6 +10,11 @@ function escapeAttr(s) {
     .replace(/>/g, "&gt;");
 }
 
+function setDeleteButtonVisible(visible) {
+  const delBtn = document.getElementById("deleteBtn");
+  if (delBtn) delBtn.classList.toggle("is-hidden", !visible);
+}
+
 function setPageUrlLocked(locked) {
   const url = document.getElementById("pageUrl");
   const modeBadge = document.getElementById("generatorModeBadge");
@@ -214,10 +219,12 @@ function validateFieldNow(fieldId) {
 function updateBreakingOrderVisibility() {
   const breaking = document.getElementById("breaking");
   const group = document.getElementById("breakingOrderGroup");
+  const card = document.getElementById("breakingToggleCard");
   const input = document.getElementById("breakingOrder");
   if (!breaking || !group || !input) return;
   const enabled = !!breaking.checked;
   group.style.opacity = enabled ? "1" : ".55";
+  if (card) card.classList.toggle("is-disabled", !enabled);
   input.disabled = !enabled;
   if (!enabled) input.value = "";
 }
@@ -439,8 +446,7 @@ function resetGeneratorForm() {
   setSmallBoxSlotFormValue("");
   const breaking = document.getElementById("breaking");
   if (breaking) breaking.checked = false;
-  const delBtn = document.getElementById("deleteBtn");
-  if (delBtn) delBtn.style.display = "none";
+  setDeleteButtonVisible(false);
   const frame = document.getElementById("previewFrame");
   if (frame) frame.srcdoc = "";
   setPageUrlLocked(false);
@@ -980,7 +986,7 @@ async function loadPageFromURL(){
     setSmallBoxSlotFormValue(page.smallBoxSlot != null ? page.smallBoxSlot : "");
     applyBadgesToForm(page.badges);
 
-    document.getElementById("deleteBtn").style.display = "inline-block";
+    setDeleteButtonVisible(true);
     setPageUrlLocked(true);
     updateSlugPreview();
     syncAiConvertButton();
@@ -1159,7 +1165,7 @@ async function selectPage(p){
     if (lastDateInputEdit) lastDateInputEdit.value = lastDateDdMmYyyyToIso(page.lastDate);
     setSmallBoxSlotFormValue(page.smallBoxSlot != null ? page.smallBoxSlot : "");
     applyBadgesToForm(page.badges);
-    document.getElementById("deleteBtn").style.display = "inline-block";
+    setDeleteButtonVisible(true);
     setPageUrlLocked(true);
     syncAiConvertButton();
     updateBreakingOrderVisibility();
@@ -1369,7 +1375,7 @@ async function generatePage(){
     document.getElementById("oldSlug").value = newSlug;
     document.getElementById("pageUrl").value = resolvedUrl.startsWith("/") ? resolvedUrl : "/" + resolvedUrl;
     if (resolvedId != null && resolvedId !== "") document.getElementById("pageId").value = String(resolvedId);
-    document.getElementById("deleteBtn").style.display = "inline-block";
+    setDeleteButtonVisible(true);
     setPageUrlLocked(true);
     updateSlugPreview();
 

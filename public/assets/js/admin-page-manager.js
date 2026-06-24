@@ -133,12 +133,8 @@ function renderBulkBar() {
     const btn = e.currentTarget;
     const countNow = selectedSlugs.size;
     if (!countNow) return;
-    const ok = await (window.AdminUI && window.AdminUI.simpleConfirm
-      ? window.AdminUI.simpleConfirm({
-          title: "Move pages to trash",
-          warnText: "This action cannot be undone",
-          details: `You are moving ${countNow} pages to trash. Continue?`
-        })
+    const ok = await (window.AdminUI && window.AdminUI.confirmMoveToTrash
+      ? window.AdminUI.confirmMoveToTrash({ count: countNow })
       : Promise.resolve(window.confirm(`You are moving ${countNow} pages to trash. Continue?`)));
     if (!ok) return;
     const slugs = Array.from(selectedSlugs);
@@ -352,12 +348,8 @@ function renderPages(pages) {
 }
 
 async function deletePage(slug, triggerEl) {
-  const confirmed = await (window.AdminUI && window.AdminUI.simpleConfirm
-    ? window.AdminUI.simpleConfirm({
-        title: "Move page to trash",
-        warnText: "This action cannot be undone",
-        details: "Move this page to trash?"
-      })
+  const confirmed = await (window.AdminUI && window.AdminUI.confirmMoveToTrash
+    ? window.AdminUI.confirmMoveToTrash({ count: 1 })
     : Promise.resolve(window.confirm("Move this page to Trash?")));
   if (!confirmed) return;
   const run = async () => {
