@@ -553,7 +553,7 @@ function renderPopularBoardsHtml(boards, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="Departments">
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularBoards" ${panelAttrs} aria-label="All Departments">
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
@@ -575,7 +575,7 @@ function renderPopularQualificationsHtml(qualifications, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-label="Qualifications">
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularQualifications" ${panelAttrs} aria-label="All Qualifications">
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
@@ -597,7 +597,7 @@ function renderPopularStatesHtml(states, opts = {}) {
   const panelClass = opts.panelClass || "";
   const panelAttrs = opts.panelAttrs || "";
   return `
-<section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-label="States">
+<section class="popular-categories taxonomy-panel section${panelClass}" id="popularStates" ${panelAttrs} aria-label="All States">
   <div class="taxonomy-panel__inner">
   <div class="popular-categories__row">
     ${pills}
@@ -641,21 +641,21 @@ function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw
   const tabDefs = [
     {
       key: "departments",
-      label: "Departments",
+      label: "All Departments",
       tabId: "categoriesTabDepartments",
       panelId: "categoriesBoards",
       pills: renderCategoriesPanelPills(departmentItems, formatBrowseLabel)
     },
     {
       key: "qualifications",
-      label: "Qualifications",
+      label: "All Qualifications",
       tabId: "categoriesTabQualifications",
       panelId: "categoriesQualifications",
       pills: renderCategoriesPanelPills(qualificationItems, formatBrowseLabel)
     },
     {
       key: "states",
-      label: "States",
+      label: "All States",
       tabId: "categoriesTabStates",
       panelId: "categoriesStates",
       pills: renderCategoriesPanelPills(stateItems, formatBrowseLabel)
@@ -693,7 +693,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
   const tabDefs = [
     {
       key: "departments",
-      label: "Departments",
+      label: "All Departments",
       tabId: "taxonomyTabDepartments",
       html: renderPopularBoardsHtml(boards, {
         panelAttrs: 'data-taxonomy-panel="departments" role="tabpanel"'
@@ -701,7 +701,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
     },
     {
       key: "qualifications",
-      label: "Qualifications",
+      label: "All Qualifications",
       tabId: "taxonomyTabQualifications",
       html: renderPopularQualificationsHtml(qualifications, {
         panelAttrs: 'data-taxonomy-panel="qualifications" role="tabpanel"'
@@ -709,7 +709,7 @@ function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
     },
     {
       key: "states",
-      label: "States",
+      label: "All States",
       tabId: "taxonomyTabStates",
       html: renderPopularStatesHtml(states, {
         panelAttrs: 'data-taxonomy-panel="states" role="tabpanel"'
