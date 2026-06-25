@@ -1,0 +1,425 @@
+/**
+ * Admin SaaS theme v2 — login ke baad sabhi sidebar pages par unified polish.
+ * Scoped: body.admin-saas-v2 (generator uses generator-saas.css for editor; yahan shell/cards).
+ */
+
+body.admin-saas-v2{
+  --saas-bg:#eef2f8;
+  --saas-surface:#ffffff;
+  --saas-surface-soft:#f8fafc;
+  --saas-line:#e2e8f0;
+  --saas-line-strong:#cbd5e1;
+  --saas-text:#0f172a;
+  --saas-muted:#64748b;
+  --saas-brand:#2563eb;
+  --saas-brand-soft:#eff6ff;
+  --saas-radius:16px;
+  --saas-radius-sm:12px;
+  --saas-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06);
+  --saas-shadow-lg:0 12px 40px rgba(15,23,42,.1);
+  font-feature-settings:"cv02","cv03","cv04","cv11";
+}
+
+body.admin-saas-v2:not(.standalone-admin-page){
+  background:
+    radial-gradient(ellipse 80% 50% at 0% -10%,rgba(37,99,235,.07),transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%,rgba(79,70,229,.05),transparent 50%),
+    var(--saas-bg) !important;
+}
+
+body.admin-saas-v2 .main{
+  max-width:1240px;
+  padding:20px 24px 32px;
+}
+
+/* ---- Top header (replaces legacy navy bar) ---- */
+body.admin-saas-v2 .main > .admin-header,
+body.admin-saas-v2.standalone-admin-page .admin-header{
+  background:rgba(255,255,255,.88) !important;
+  color:var(--saas-text) !important;
+  border:1px solid var(--saas-line) !important;
+  border-radius:var(--saas-radius) !important;
+  box-shadow:var(--saas-shadow) !important;
+  backdrop-filter:blur(12px);
+  padding:14px 18px !important;
+  margin-bottom:18px;
+  position:sticky;
+  top:10px;
+  z-index:80;
+}
+
+body.admin-saas-v2 .admin-title,
+body.admin-saas-v2 .admin-left h1{
+  font-size:clamp(17px,2.5vw,20px) !important;
+  font-weight:800 !important;
+  letter-spacing:-.02em;
+  color:var(--saas-text) !important;
+}
+
+body.admin-saas-v2 .admin-left p{
+  color:var(--saas-muted) !important;
+}
+
+body.admin-saas-v2 .admin-badge{
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff) !important;
+  border-color:#c7d2fe !important;
+  color:#4338ca !important;
+  font-size:11px;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+body.admin-saas-v2 .admin-breadcrumbs{
+  flex:1 1 100%;
+  font-size:12px;
+  font-weight:600;
+  color:var(--saas-muted);
+  margin:0 0 2px;
+}
+
+body.admin-saas-v2 .header-action-btn,
+body.admin-saas-v2 .saas-btn{
+  min-height:38px;
+  padding:0 14px;
+  border:1px solid var(--saas-line-strong);
+  border-radius:10px;
+  background:var(--saas-surface);
+  color:var(--saas-text);
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 1px 3px rgba(15,23,42,.05);
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+
+body.admin-saas-v2 .header-action-btn:hover,
+body.admin-saas-v2 .saas-btn:hover{
+  border-color:#93c5fd;
+  background:var(--saas-brand-soft);
+  box-shadow:0 4px 12px rgba(37,99,235,.1);
+}
+
+/* ---- Dashboard welcome & hero ---- */
+body.admin-saas-v2 .dashboard-welcome-banner{
+  border-radius:var(--saas-radius-sm);
+  border-color:#86efac;
+  box-shadow:var(--saas-shadow);
+}
+
+body.admin-saas-v2 .dashboard-hero{
+  border-radius:var(--saas-radius);
+  border:1px solid var(--saas-line);
+  background:linear-gradient(165deg,#fff 0%,#f8fafc 100%);
+  box-shadow:var(--saas-shadow);
+  position:relative;
+  overflow:hidden;
+}
+
+body.admin-saas-v2 .dashboard-hero::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:3px;
+  background:linear-gradient(90deg,#2563eb,#4f46e5,#7c3aed);
+}
+
+body.admin-saas-v2 .dashboard-hero__eyebrow{
+  font-size:11px;
+  letter-spacing:.1em;
+  color:var(--saas-brand);
+}
+
+body.admin-saas-v2 .dashboard-quick-card{
+  border-radius:var(--saas-radius-sm);
+  border-color:var(--saas-line);
+  background:var(--saas-surface);
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+
+body.admin-saas-v2 .dashboard-quick-card:hover{
+  border-color:#93c5fd;
+  box-shadow:0 8px 20px rgba(37,99,235,.12);
+  transform:translateY(-2px);
+}
+
+body.admin-saas-v2 .dashboard-today-summary,
+body.admin-saas-v2 .admin-health-panel,
+body.admin-saas-v2 .dashboard-today-card{
+  border-radius:var(--saas-radius);
+  border-color:var(--saas-line);
+  box-shadow:var(--saas-shadow);
+}
+
+/* ---- KPI / stat cards ---- */
+body.admin-saas-v2 .cards.stats-cards .card,
+body.admin-saas-v2 .cards a.card,
+body.admin-saas-v2 .card{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  background:var(--saas-surface);
+  box-shadow:var(--saas-shadow);
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+
+body.admin-saas-v2 .card:hover{
+  transform:translateY(-2px);
+  box-shadow:var(--saas-shadow-lg);
+  border-color:#c7d2fe;
+}
+
+body.admin-saas-v2 .card h3{
+  font-size:11px !important;
+  font-weight:800 !important;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--saas-muted) !important;
+}
+
+body.admin-saas-v2 .card p{
+  font-size:clamp(24px,4vw,30px) !important;
+  letter-spacing:-.02em;
+}
+
+/* ---- Charts ---- */
+body.admin-saas-v2 .charts-section,
+body.admin-saas-v2 .chart-card{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  background:var(--saas-surface);
+  box-shadow:var(--saas-shadow);
+  padding:16px;
+}
+
+body.admin-saas-v2 .chart-block-title{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+}
+
+/* ---- Page manager & list pages ---- */
+body.admin-saas-v2 .page-manager,
+body.admin-saas-v2 .monitoring-section,
+body.admin-saas-v2 .sessions-panel,
+body.admin-saas-v2 .activity-panel,
+body.admin-saas-v2 .csv-upload-wrap,
+body.admin-saas-v2 .homepage-mgmt{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  background:var(--saas-surface);
+  box-shadow:var(--saas-shadow);
+  padding:18px;
+}
+
+body.admin-saas-v2 .manager-title{
+  font-size:clamp(20px,3vw,26px);
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+body.admin-saas-v2 .manager-hint{
+  font-size:14px;
+  line-height:1.5;
+  color:var(--saas-muted);
+}
+
+body.admin-saas-v2 .filters-toolbar,
+body.admin-saas-v2 .saas-toolbar{
+  padding:12px 14px;
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  background:var(--saas-surface-soft);
+  margin-bottom:14px;
+}
+
+body.admin-saas-v2 .filters-toolbar input,
+body.admin-saas-v2 .filters-toolbar select,
+body.admin-saas-v2 .saas-search input,
+body.admin-saas-v2 .search-box input{
+  border-radius:10px;
+  border-color:var(--saas-line-strong);
+  background:#fff;
+  min-height:40px;
+}
+
+body.admin-saas-v2 .filters-toolbar input:focus,
+body.admin-saas-v2 .filters-toolbar select:focus,
+body.admin-saas-v2 .saas-search input:focus{
+  border-color:var(--saas-brand);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+  outline:none;
+}
+
+body.admin-saas-v2 .saas-stat,
+body.admin-saas-v2 .upload-stat{
+  border-radius:999px;
+  font-weight:600;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+/* ---- Tables ---- */
+body.admin-saas-v2 table,
+body.admin-saas-v2 .data-table,
+body.admin-saas-v2 .monitor-table{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  overflow:hidden;
+  background:var(--saas-surface);
+}
+
+body.admin-saas-v2 .monitor-head{
+  background:var(--saas-surface-soft);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+}
+
+body.admin-saas-v2 .monitor-row{
+  transition:background .12s ease;
+}
+
+body.admin-saas-v2 .monitor-row:hover{
+  background:var(--saas-brand-soft);
+}
+
+body.admin-saas-v2 .page-table-wrap,
+body.admin-saas-v2 .table-wrap{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  overflow:auto;
+  box-shadow:var(--saas-shadow);
+}
+
+/* ---- Upload / trash standalone ---- */
+body.admin-saas-v2.standalone-admin-page.upload-page,
+body.admin-saas-v2.standalone-admin-page.trash-page{
+  background:
+    radial-gradient(ellipse 80% 50% at 0% -10%,rgba(37,99,235,.07),transparent 55%),
+    var(--saas-bg) !important;
+}
+
+body.admin-saas-v2 .upload-card,
+body.admin-saas-v2 .trash-panel,
+body.admin-saas-v2 .csv-upload-card{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  background:var(--saas-surface);
+  box-shadow:var(--saas-shadow);
+}
+
+/* ---- Forms & inputs (shared) ---- */
+body.admin-saas-v2 input:not([type="checkbox"]):not([type="radio"]),
+body.admin-saas-v2 select,
+body.admin-saas-v2 textarea{
+  border-color:var(--saas-line-strong);
+  border-radius:var(--saas-radius-sm);
+}
+
+body.admin-saas-v2 input:focus,
+body.admin-saas-v2 select:focus,
+body.admin-saas-v2 textarea:focus{
+  border-color:var(--saas-brand);
+  box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+
+body.admin-saas-v2 label{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+}
+
+/* ---- Buttons ---- */
+body.admin-saas-v2 .btn-primary,
+body.admin-saas-v2 .btn-save,
+body.admin-saas-v2 button.primary{
+  border-radius:var(--saas-radius-sm);
+  font-weight:800;
+}
+
+body.admin-saas-v2 .btn-secondary,
+body.admin-saas-v2 .btn-tool{
+  border-radius:var(--saas-radius-sm);
+}
+
+/* ---- Alerts / PDF page ---- */
+body.admin-saas-v2 .pdf-panel,
+body.admin-saas-v2 .alerts-wrap,
+body.admin-saas-v2 .alert-card{
+  border-radius:var(--saas-radius);
+  border-color:var(--saas-line);
+  box-shadow:var(--saas-shadow);
+}
+
+/* ---- Global error banner ---- */
+body.admin-saas-v2 .admin-global-error-banner{
+  border-radius:var(--saas-radius-sm);
+  box-shadow:var(--saas-shadow);
+}
+
+/* ---- Dark mode ---- */
+body.dark.admin-saas-v2{
+  --saas-bg:#0b1220;
+  --saas-surface:#111827;
+  --saas-surface-soft:#1e293b;
+  --saas-line:#334155;
+  --saas-line-strong:#475569;
+  --saas-text:#f1f5f9;
+  --saas-muted:#94a3b8;
+}
+
+body.dark.admin-saas-v2:not(.standalone-admin-page){
+  background:
+    radial-gradient(ellipse 80% 50% at 0% -10%,rgba(37,99,235,.12),transparent 55%),
+    var(--saas-bg) !important;
+}
+
+body.dark.admin-saas-v2 .main > .admin-header,
+body.dark.admin-saas-v2.standalone-admin-page .admin-header{
+  background:rgba(17,24,39,.9) !important;
+  color:var(--saas-text) !important;
+  border-color:var(--saas-line) !important;
+}
+
+body.dark.admin-saas-v2 .dashboard-hero,
+body.dark.admin-saas-v2 .page-manager,
+body.dark.admin-saas-v2 .card,
+body.dark.admin-saas-v2 .charts-section,
+body.dark.admin-saas-v2 .chart-card,
+body.dark.admin-saas-v2 .monitoring-section{
+  background:var(--saas-surface);
+  border-color:var(--saas-line);
+}
+
+body.dark.admin-saas-v2 .header-action-btn,
+body.dark.admin-saas-v2 .saas-btn{
+  background:var(--saas-surface-soft);
+  border-color:var(--saas-line);
+  color:var(--saas-text);
+}
+
+/* ---- Mobile ---- */
+@media (max-width:768px){
+  body.admin-saas-v2 .main{
+    padding:16px 12px 28px;
+    padding-top:62px !important;
+  }
+
+  body.admin-saas-v2 .main > .admin-header{
+    top:56px;
+    position:sticky;
+  }
+
+  body.admin-saas-v2 .dashboard-quick-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media (max-width:480px){
+  body.admin-saas-v2 .dashboard-quick-grid{
+    grid-template-columns:1fr;
+  }
+}

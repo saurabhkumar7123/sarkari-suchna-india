@@ -386,3 +386,69 @@ body.dark .toggle-btn:hover {
     justify-content: center;
   }
 }
+
+/* ===== SaaS v3 refinements ===== */
+.sidebar {
+  backdrop-filter: blur(10px);
+}
+
+.sidebar-nav {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  padding-right: 2px;
+}
+
+.sidebar a,
+.sidebar .sidebar-nav-btn {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.15s ease,
+    box-shadow 0.18s ease;
+}
+
+.sidebar a:hover:not(.active),
+.sidebar .sidebar-nav-btn:hover {
+  transform: translateX(2px);
+}
+
+.sidebar a.active {
+  font-weight: 700;
+}
+
+.sidebar-collapse-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e2e8f0;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.logout-link {
+  margin-top: 4px;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.22);
+}
+
+.toggle-btn {
+  backdrop-filter: blur(10px);
+}
+
+body.admin-saas-v2 .sidebar-brand__mark {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+body.admin-saas-v2 .nav-group-title {
+  font-weight: 800;
+}
+

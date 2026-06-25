@@ -2218,22 +2218,24 @@ body.generator-editor-fullscreen .content-editor{
 }
 
 body.generator-editor-fullscreen .action-bar.is-sticky-publish{
-  left:0 !important;
-  width:100% !important;
-  z-index:99991;
+  display:none !important;
 }
 
-body.generator-editor-fullscreen .action-group-tools{
-  display:none;
+body.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel{
+  display:flex !important;
+  flex-direction:column;
+  position:fixed;
+  inset:0;
+  z-index:99994;
+  margin:0;
+  padding:10px 10px calc(10px + env(safe-area-inset-bottom,0px));
+  background:var(--gen-surface,#fff);
+  box-sizing:border-box;
 }
 
-body.generator-editor-fullscreen .action-group-primary{
-  flex:1 1 auto;
-  width:100%;
-}
-
-body.generator-editor-fullscreen .action-group-primary .btn-save{
-  width:100%;
+body.generator-editor-fullscreen.has-sticky-publish-bar #standaloneAdminShell,
+body.generator-editor-fullscreen.has-sticky-publish-bar .main-container{
+  padding-bottom:0 !important;
 }
 
 @media (max-width:768px){

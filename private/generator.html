@@ -21,14 +21,16 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=9">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=12">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=1">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
-  <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
+  <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=3">
+  <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=1">
   <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css">
 </head>
 
-<body class="standalone-admin-page generator-page" data-admin-layout="standalone" data-admin-breadcrumbs="Content,Page Generator">
+<body class="standalone-admin-page generator-page generator-saas-v2 admin-saas-v2" data-admin-layout="standalone" data-admin-breadcrumbs="Content,Page Generator">
   <div class="admin-header">
   <div class="admin-left">
     <h1>Welcome, Saurabh 👋</h1>
@@ -51,9 +53,18 @@
   <span class="admin-workflow-banner__step">4 Live on site</span>
 </nav>
 
-<h2>🧾 Page Generator</h2>
-<p class="page-subtitle">Create, preview, and publish pages with structured metadata.</p>
-<div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create Mode - URL editable</div>
+<h2 class="visually-hidden">Page Generator</h2>
+
+<header class="generator-hero" id="generatorHero">
+  <div class="generator-hero__copy">
+    <p class="generator-hero__eyebrow">Content studio</p>
+    <h2 class="generator-hero__title">Page Generator</h2>
+    <p class="page-subtitle">Create, preview, and publish pages with structured metadata.</p>
+  </div>
+  <div class="generator-hero__aside">
+    <div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create mode · URL editable</div>
+  </div>
+</header>
 
 <div id="generatorQuickBanner" class="generator-quick-banner is-hidden" aria-live="polite">
   <div class="generator-quick-banner__copy">
@@ -315,9 +326,9 @@
       </form>
     </div>
 
-    <div class="editor-toolbar">
-      <span>Structured editor</span>
-      <span>Auto-saves draft</span>
+    <div class="editor-toolbar editor-toolbar--saas">
+      <span class="editor-toolbar__chip">Structured editor</span>
+      <span class="editor-toolbar__chip editor-toolbar__chip--muted">Auto-saves draft</span>
       <span class="editor-toolbar-hint">Use <code>[Section: Vacancy | table]</code> for stable tables</span>
     </div>
     <textarea
@@ -373,7 +384,7 @@
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-nav.js?v=3"></script>
-<script src="/js/admin-shell.js?v=5"></script>
+<script src="/js/admin-shell.js?v=6"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
@@ -382,8 +393,8 @@
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-seo-checklist.js"></script>
 <script src="/js/admin-generator-ui.js"></script>
-<script src="/js/generator-mobile.js?v=2"></script>
+<script src="/js/generator-mobile.js?v=3"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/generator.js?v=4"></script>
+<script src="/js/generator.js?v=5"></script>
 </body>
 </html>

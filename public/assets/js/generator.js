@@ -65,7 +65,7 @@ function setPageUrlLocked(locked) {
   if (modeBadge) {
     modeBadge.classList.toggle("is-edit", !!locked);
     modeBadge.classList.toggle("is-create", !locked);
-    modeBadge.textContent = locked ? "Edit Mode - URL locked" : "Create Mode - URL editable";
+    modeBadge.textContent = locked ? "Edit mode · URL locked" : "Create mode · URL editable";
   }
   if (modeHint) {
     modeHint.textContent = locked

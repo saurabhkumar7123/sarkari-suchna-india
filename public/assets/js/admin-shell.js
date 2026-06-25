@@ -1,6 +1,10 @@
 (function () {
   const dashboardMobileMq = window.matchMedia("(max-width: 768px)");
 
+  if (document.body) {
+    document.body.classList.add("admin-saas-v2");
+  }
+
   /** Feature flag: set localStorage.adminEnhancementsOff=1 to disable new UX modules. */
   window.AdminEnhancements = {
     isEnabled() {
