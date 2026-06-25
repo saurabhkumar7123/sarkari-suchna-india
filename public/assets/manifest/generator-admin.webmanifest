@@ -1,0 +1,25 @@
+{
+  "name": "Sarkari Suchna — Page Generator",
+  "short_name": "Generator",
+  "description": "Quick admin access to edit Sarkari Suchna job pages.",
+  "start_url": "/generator?quick=1",
+  "scope": "/generator",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eef2f8",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/assets/image/logo/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/image/logo/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
