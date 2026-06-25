@@ -94,6 +94,74 @@ function renderTodaySummary(d) {
   if (tgCard) tgCard.classList.toggle("is-ok", Boolean(s.telegramConfigured));
 }
 
+function renderExpiryPanel(d) {
+  const counts = d && d.expiry ? d.expiry : {};
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(v ?? 0);
+  };
+  set("expiryClosingCount", counts.closingSoon);
+  set("expiryExpiredCount", counts.expiredLive);
+  set("expiryMissingCount", counts.missingLastDate);
+
+  const renderList = (hostId, rows, emptyText) => {
+    const host = document.getElementById(hostId);
+    if (!host) return;
+    const list = Array.isArray(rows) ? rows : [];
+    if (!list.length) {
+      host.innerHTML = `<p class="dashboard-expiry-empty">${emptyText}</p>`;
+      return;
+    }
+    host.innerHTML = list
+      .map((p) => {
+        const slug = escapeAttr(p.slug || "");
+        const title = escapeAttr(p.title || p.slug || "Page");
+        const date = p.last_date || p.lastDate || "—";
+        return `<a class="dashboard-expiry-item" href="/generator?slug=${encodeURIComponent(p.slug || "")}"><span class="dashboard-expiry-item__title">${title}</span><span class="dashboard-expiry-item__meta">${escapeAttr(date)}</span></a>`;
+      })
+      .join("");
+  };
+
+  renderList("dashboardClosingSoon", d && d.closingSoonPages, "No jobs closing in the next 3 days.");
+  renderList("dashboardExpiredLive", d && d.expiredLivePages, "No expired jobs currently live.");
+}
+
+function renderActionInbox(d) {
+  const host = document.getElementById("dashboardActionInbox");
+  const list = document.getElementById("dashboardActionList");
+  if (!host || !list) return;
+  const items = Array.isArray(d && d.actionInbox) ? d.actionInbox : [];
+  if (!items.length) {
+    host.classList.add("is-hidden");
+    list.innerHTML = "";
+    return;
+  }
+  host.classList.remove("is-hidden");
+  list.innerHTML = items
+    .map(
+      (item) =>
+        `<li><a class="dashboard-action-item dashboard-action-item--${escapeAttr(item.type || "default")}" href="${escapeAttr(item.href || "#")}"><span>${escapeAttr(item.label || "")}</span><span aria-hidden="true">→</span></a></li>`
+    )
+    .join("");
+}
+
+function renderTopTrafficPanel(list) {
+  const host = document.getElementById("dashboardTopTraffic");
+  if (!host) return;
+  const rows = Array.isArray(list) ? list : [];
+  if (!rows.length) {
+    host.innerHTML = `<p class="dashboard-expiry-empty">No view data yet. Traffic will appear after pages get visits.</p>`;
+    return;
+  }
+  host.innerHTML = rows
+    .slice(0, 8)
+    .map((p, i) => {
+      const views = Number(p.views) || 0;
+      return `<a class="dashboard-traffic-item" href="/${escapeAttr(p.slug)}" target="_blank" rel="noopener"><span class="dashboard-traffic-item__rank">${i + 1}</span><span class="dashboard-traffic-item__title">${escapeAttr(p.title || p.slug)}</span><span class="dashboard-traffic-item__views">${views} views</span></a>`;
+    })
+    .join("");
+}
+
 async function loadStatsCards() {
   const res = await window.adminSafeFetch("/api/admin/dashboard");
   if (!res || !res.success || !res.data) {
@@ -126,6 +194,8 @@ async function loadStatsCards() {
   set("avgProcessingTime", d.avgProcessingTimeMs != null ? `${d.avgProcessingTimeMs} ms` : "N/A");
   set("recentTrend", `${Number(d.completedJobs || 0)} success / ${Number(d.failedJobs || 0)} failed`);
   renderTodaySummary(d);
+  renderExpiryPanel(d);
+  renderActionInbox(d);
 }
 
 function loadAdminUxMetrics() {
@@ -190,6 +260,7 @@ async function loadLatestAndTrending() {
     : "<p>No trending pages yet.</p>";
   if (trendBox) trendBox.innerHTML = trendHtml;
   if (topToday) topToday.innerHTML = trendHtml;
+  renderTopTrafficPanel(list);
 }
 
 async function checkServerHealth() {

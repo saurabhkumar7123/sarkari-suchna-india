@@ -423,3 +423,247 @@ body.dark.admin-saas-v2 .saas-btn{
     grid-template-columns:1fr;
   }
 }
+
+/* ---- Dashboard ops panels ---- */
+.dashboard-panel-head{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:8px 12px;
+  margin-bottom:12px;
+}
+
+.dashboard-panel-head h2{
+  margin:0;
+  font-size:16px;
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+
+.dashboard-panel-hint{
+  flex:1 1 100%;
+  margin:0;
+  font-size:12px;
+  color:var(--saas-muted);
+}
+
+.dashboard-panel-link{
+  text-decoration:none;
+  font-size:12px;
+}
+
+.dashboard-action-inbox,
+.dashboard-expiry-panel,
+.dashboard-traffic-panel{
+  margin:0 0 16px;
+  padding:16px 18px;
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius);
+  background:var(--saas-surface);
+  box-shadow:var(--saas-shadow);
+}
+
+.dashboard-action-inbox.is-hidden{
+  display:none !important;
+}
+
+.dashboard-action-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.dashboard-action-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  background:var(--saas-surface-soft);
+  text-decoration:none;
+  color:var(--saas-text);
+  font-size:13px;
+  font-weight:600;
+}
+
+.dashboard-action-item:hover{
+  border-color:#93c5fd;
+  background:var(--saas-brand-soft);
+}
+
+.dashboard-expiry-stats{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.dashboard-expiry-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+.dashboard-expiry-col h3{
+  margin:0 0 8px;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+}
+
+.dashboard-expiry-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.dashboard-expiry-item{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:8px 10px;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:var(--saas-surface-soft);
+  text-decoration:none;
+  color:inherit;
+}
+
+.dashboard-expiry-item:hover{
+  border-color:#93c5fd;
+  background:#fff;
+}
+
+.dashboard-expiry-item__title{
+  font-size:12px;
+  font-weight:700;
+  color:var(--saas-text);
+}
+
+.dashboard-expiry-item__meta{
+  font-size:11px;
+  color:var(--saas-muted);
+}
+
+.dashboard-expiry-empty{
+  margin:0;
+  font-size:12px;
+  color:var(--saas-muted);
+}
+
+.dashboard-traffic-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.dashboard-traffic-item{
+  display:grid;
+  grid-template-columns:28px 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  text-decoration:none;
+  color:inherit;
+  background:var(--saas-surface-soft);
+}
+
+.dashboard-traffic-item:hover{
+  border-color:#93c5fd;
+  background:#fff;
+}
+
+.dashboard-traffic-item__rank{
+  font-size:11px;
+  font-weight:800;
+  color:var(--saas-brand);
+}
+
+.dashboard-traffic-item__title{
+  font-size:12px;
+  font-weight:700;
+  color:var(--saas-text);
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.dashboard-traffic-item__views{
+  font-size:11px;
+  color:var(--saas-muted);
+  white-space:nowrap;
+}
+
+/* ---- Page manager quality ---- */
+.expiry-filter-chips{
+  margin-top:6px;
+}
+
+.page-row-flags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-top:4px;
+}
+
+.page-quality-flag{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 7px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.02em;
+  background:#f1f5f9;
+  color:#475569;
+  border:1px solid #e2e8f0;
+}
+
+.page-quality-flag--warn{
+  background:#fff7ed;
+  color:#c2410c;
+  border-color:#fed7aa;
+}
+
+.page-quality-flag--danger{
+  background:#fef2f2;
+  color:#b91c1c;
+  border-color:#fecaca;
+}
+
+.notify-actions .action-link.draft{
+  background:#eef2ff;
+  color:#3730a3;
+  border:1px solid #c7d2fe;
+}
+
+@media (max-width:768px){
+  .dashboard-expiry-grid{
+    grid-template-columns:1fr;
+  }
+
+  .dashboard-traffic-item{
+    grid-template-columns:24px 1fr;
+  }
+
+  .dashboard-traffic-item__views{
+    grid-column:2;
+  }
+
+  .bulk-action-bar{
+    left:8px !important;
+    right:8px !important;
+    width:auto !important;
+  }
+}

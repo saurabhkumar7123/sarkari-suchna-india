@@ -666,6 +666,11 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  if (initPdfDraftFromUrl()) {
+    scheduleContentAnalysis();
+    return;
+  }
+
   const importLoaded = await loadContentImportFromURL();
   if (importLoaded) {
     scheduleContentAnalysis();
@@ -985,7 +990,80 @@ async function loadContentImportFromURL() {
   }
 }
 
-// ================= AUTO LOAD =================
+function titleFromPdfName(name) {
+  return String(name || "")
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function initPdfDraftFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("fromPdf") !== "1") return false;
+
+  const pdfName = urlParams.get("pdfName") || "";
+  const pdfUrl = urlParams.get("pdfUrl") || "";
+  const titleEl = document.getElementById("title");
+  if (titleEl && !titleEl.value.trim() && pdfName) {
+    titleEl.value = titleFromPdfName(pdfName);
+    updateSlugPreview();
+  }
+
+  let banner = document.getElementById("generatorPdfDraftBanner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "generatorPdfDraftBanner";
+    banner.className = "generator-pdf-draft-banner";
+    const host = document.querySelector(".generator-hero") || document.querySelector(".main-container");
+    if (host) host.insertAdjacentElement("afterend", banner);
+  }
+  if (!banner) return true;
+
+  const safeUrl = pdfUrl && /^https?:\/\//i.test(pdfUrl) ? pdfUrl : "";
+  const nameEsc = pdfName.replace(/</g, "&lt;");
+  banner.innerHTML = `
+    <div class="generator-pdf-draft-banner__copy">
+      <strong>PDF draft</strong>
+      <span>${pdfName ? `From: ${nameEsc}` : "Open this PDF in generator"} — set section & last date, then extract or paste content.</span>
+    </div>
+    <div class="generator-pdf-draft-banner__actions">
+      ${safeUrl ? `<a class="header-action-btn" href="${safeUrl}" target="_blank" rel="noopener">Download PDF</a>` : ""}
+    </div>
+  `;
+  return true;
+}
+
+async function checkDuplicateBeforeSave(payload) {
+  const params = new URLSearchParams();
+  params.set("title", payload.title || "");
+  const exclude = payload.oldSlug || payload.slug || "";
+  if (exclude) params.set("slug", exclude);
+  if (payload.department) params.set("department", payload.department);
+  if (payload.state) params.set("state", payload.state);
+
+  const res = await safeFetch(`/api/admin/pages/duplicate-check?${params.toString()}`);
+  if (!res.ok || !res.body || !res.body.success) return true;
+
+  const matches = res.body.data && Array.isArray(res.body.data.matches) ? res.body.data.matches : [];
+  if (!matches.length) return true;
+
+  const listHtml = matches
+    .slice(0, 4)
+    .map((m) => `• ${m.title} (/${m.slug})`)
+    .join("<br>");
+
+  if (window.AdminUI && typeof window.AdminUI.confirm === "function") {
+    return window.AdminUI.confirm({
+      title: "Similar page found",
+      message: `This may duplicate an existing page. Continue anyway?<br><br>${listHtml}`,
+      confirmLabel: "Save anyway",
+      cancelLabel: "Review"
+    });
+  }
+  return window.confirm("Similar pages found. Save anyway?");
+}
+
 async function loadPageFromURL(){
 
   const params = new URLSearchParams(window.location.search);
@@ -1318,6 +1396,9 @@ async function generatePage(){
   if (statusNormalized !== "latest job" && statusNormalized !== "new form") {
     payload.lastDate = null;
   }
+
+  const canSave = await checkDuplicateBeforeSave(payload);
+  if (!canSave) return;
 
   console.log("FRONTEND PAYLOAD:", payload);
   console.warn("FRONTEND STATUS FLOW:", {

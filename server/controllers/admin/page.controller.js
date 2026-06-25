@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const pageRepository = require("../../repositories/page.repository");
 const pageService = require("../../services/page.service");
+const { buildPageQualityFlags, titleSimilarityScore } = require("../../lib/pageAdminInsights");
 const { invalidatePageCaches } = require("../../services/cache.services");
 const db = require("../../config/db");
 const pipeline = require("../../../generator/pipeline/generatePage");
@@ -76,9 +77,24 @@ const getAllPages = async (req, res) => {
       params.push(like, like);
     }
 
+    const expiry = String(req.query.expiry || "").trim().toLowerCase();
+    const jobStatusSql = "LOWER(status) IN ('latest job', 'new form', 'new', 'form')";
+    if (expiry === "closing_soon") {
+      where += ` AND last_date IS NOT NULL AND last_date >= CURDATE() AND last_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND ${jobStatusSql}`;
+    } else if (expiry === "expired") {
+      where += ` AND last_date IS NOT NULL AND last_date < CURDATE() AND ${jobStatusSql}`;
+    } else if (expiry === "no_last_date") {
+      where += ` AND (last_date IS NULL OR last_date = '0000-00-00') AND ${jobStatusSql}`;
+    }
+
     const total = await pageRepository.countAdminPages(where, params);
 
     const rows = await pageRepository.selectAdminPageList(where, params, orderDir, limit, offset);
+    const data = rows.map((row) => ({
+      ...row,
+      lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(row)) ?? "",
+      qualityFlags: buildPageQualityFlags(row)
+    }));
 
     const categories = await pageRepository.selectDistinctCategories();
     const statuses = await pageRepository.selectDistinctStatusesAll();
@@ -87,7 +103,7 @@ const getAllPages = async (req, res) => {
 
     return res.json({
       success: true,
-      data: rows,
+      data,
       pagination: {
         total,
         page,
@@ -96,7 +112,8 @@ const getAllPages = async (req, res) => {
       },
       meta: {
         categories,
-        statuses
+        statuses,
+        expiry: expiry || ""
       }
     });
   } catch (error) {
@@ -340,6 +357,58 @@ const getDashboardStats = async (req, res) => {
     ]);
     const brokenSites = Array.isArray(sites) ? sites.filter((s) => Number(s && s.broken) === 1).length : 0;
     const telegramOk = canSendTelegram();
+    const expirySummary = await pageRepository.selectExpirySummary();
+
+    const actionInbox = [];
+    if (failedJobs > 0) {
+      actionInbox.push({
+        type: "queue",
+        label: `${failedJobs} failed queue job(s)`,
+        href: "/admin/monitoring",
+        priority: 1
+      });
+    }
+    if (brokenSites > 0) {
+      actionInbox.push({
+        type: "monitor",
+        label: `${brokenSites} broken monitored site(s)`,
+        href: "/admin/monitoring",
+        priority: 2
+      });
+    }
+    if (expirySummary.counts.expiredLive > 0) {
+      actionInbox.push({
+        type: "expired",
+        label: `${expirySummary.counts.expiredLive} expired job(s) still live`,
+        href: "/admin/page-manager?expiry=expired",
+        priority: 3
+      });
+    }
+    if (expirySummary.counts.closingSoon > 0) {
+      actionInbox.push({
+        type: "closing",
+        label: `${expirySummary.counts.closingSoon} job(s) closing in 3 days`,
+        href: "/admin/page-manager?expiry=closing_soon",
+        priority: 4
+      });
+    }
+    if (expirySummary.counts.missingLastDate > 0) {
+      actionInbox.push({
+        type: "missing_date",
+        label: `${expirySummary.counts.missingLastDate} active job(s) without last date`,
+        href: "/admin/page-manager?expiry=no_last_date",
+        priority: 5
+      });
+    }
+    if (pdfsToday > 0) {
+      actionInbox.push({
+        type: "pdf",
+        label: `${pdfsToday} PDF upload(s) today — review alerts`,
+        href: "/admin/alerts",
+        priority: 6
+      });
+    }
+    actionInbox.sort((a, b) => a.priority - b.priority);
 
     const stats = {
       totalPages: Number(agg.totalPages) || 0,
@@ -368,7 +437,11 @@ const getDashboardStats = async (req, res) => {
         brokenSites,
         telegramConfigured: telegramOk,
         telegramStatus: telegramOk ? "ready" : "not_configured"
-      }
+      },
+      expiry: expirySummary.counts,
+      closingSoonPages: expirySummary.closingSoon,
+      expiredLivePages: expirySummary.expiredLive,
+      actionInbox
     };
 
     return res.json({
@@ -426,6 +499,51 @@ const getAdminPageBySlug = async (req, res) => {
   }
 };
 
+const checkDuplicatePages = async (req, res) => {
+  try {
+    const title = String(req.query.title || "").trim();
+    const slug = String(req.query.slug || req.query.excludeSlug || "").trim();
+    const department = String(req.query.department || "").trim();
+    const state = String(req.query.state || "").trim();
+
+    if (!title) {
+      return res.json({ success: true, data: { matches: [], hasStrongMatch: false } });
+    }
+
+    const candidates = await pageRepository.findSimilarPages({
+      title,
+      slug,
+      department,
+      state,
+      limit: 8
+    });
+
+    const matches = candidates
+      .map((row) => ({
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        status: row.status,
+        department: row.department,
+        state: row.state,
+        lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(row)) ?? "",
+        score: titleSimilarityScore(title, row.title)
+      }))
+      .filter((row) => row.score >= 0.55)
+      .sort((a, b) => b.score - a.score);
+
+    const hasStrongMatch = matches.some((m) => m.score >= 0.92);
+
+    return res.json({
+      success: true,
+      data: { matches, hasStrongMatch }
+    });
+  } catch (error) {
+    console.error("❌ DUPLICATE CHECK:", error);
+    return res.status(500).json({ success: false });
+  }
+};
+
 const getSmallBoxSlots = async (req, res) => {
   try {
     const smallBoxService = require("../../services/smallBox.service");
@@ -445,6 +563,7 @@ module.exports = {
   getTrashPages,
   getAdminActivity,
   getDashboardStats,
+  checkDuplicatePages,
   getAdminPageBySlug,
   getSmallBoxSlots
 };

@@ -4,7 +4,7 @@ let totalPageCount = 1;
 let totalItemCount = 0;
 let pageLimit = 20;
 let sortOrder = "desc";
-let currentFilters = { search: "", category: "", status: "" };
+let currentFilters = { search: "", category: "", status: "", expiry: "" };
 let selectedSlugs = new Set();
 
 function escapeAttr(value) {
@@ -39,6 +39,7 @@ function buildPagesQuery() {
   if (currentFilters.status) params.set("status", currentFilters.status);
   if (currentFilters.category === "__notag") params.set("notag", "1");
   else if (currentFilters.category) params.set("category", currentFilters.category);
+  if (currentFilters.expiry) params.set("expiry", currentFilters.expiry);
   return params.toString();
 }
 
@@ -58,6 +59,54 @@ function formatPageDate(value) {
 
 function pageUpdatedAt(page) {
   return page.content_updated_at || page.updated_at || page.created_at || null;
+}
+
+function renderExpiryFilterChips() {
+  const host = document.getElementById("expiryFilterChips");
+  if (!host) return;
+  const chips = [
+    { value: "", label: "All dates" },
+    { value: "closing_soon", label: "Closing ≤3d" },
+    { value: "expired", label: "Expired live" },
+    { value: "no_last_date", label: "No last date" }
+  ];
+  host.innerHTML = chips
+    .map(
+      (chip) =>
+        `<button type="button" class="status-chip${currentFilters.expiry === chip.value ? " is-active" : ""}" data-expiry="${escapeAttr(chip.value)}">${escapeAttr(chip.label)}</button>`
+    )
+    .join("");
+  host.querySelectorAll(".status-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentFilters.expiry = btn.getAttribute("data-expiry") || "";
+      currentPage = 1;
+      loadPageManager();
+    });
+  });
+}
+
+function formatLastDateBadge(page) {
+  const raw = page.lastDate || page.last_date || "";
+  if (!raw) return "";
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return "";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const day = new Date(d);
+  day.setHours(0, 0, 0, 0);
+  const diff = Math.round((day - today) / (24 * 60 * 60 * 1000));
+  if (diff < 0) return `<span class="page-quality-flag page-quality-flag--danger">Expired</span>`;
+  if (diff <= 3) return `<span class="page-quality-flag page-quality-flag--warn">Closes ${diff === 0 ? "today" : `in ${diff}d`}</span>`;
+  return "";
+}
+
+function renderQualityFlags(page) {
+  const flags = Array.isArray(page.qualityFlags) ? page.qualityFlags : [];
+  const parts = flags
+    .slice(0, 2)
+    .map((f) => `<span class="page-quality-flag">${escapeHtmlText(f.label || f.code || "")}</span>`)
+    .join("");
+  return formatLastDateBadge(page) + parts;
 }
 
 function renderStatusFilterChips(meta) {
@@ -304,7 +353,7 @@ function renderPages(pages) {
     const statusClass = getStatusBadgeClass(statusLabel);
     const isChecked = selectedSlugs.has(slug);
     const views = Number(p.views) || 0;
-    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
+    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span><span class="page-row-flags">${renderQualityFlags(p)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${p.lastDate ? `<span class="page-row-meta">Last: ${escapeAttr(p.lastDate)}</span>` : ""}${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
     const actions = row.querySelector(".row-actions");
     const edit = document.createElement("a");
     edit.href = "/generator?slug=" + encodeURIComponent(slug);
@@ -392,6 +441,7 @@ async function loadPageManager(opts = {}) {
   renderPages(activePages);
   populateFiltersFromMeta(data.meta);
   renderStatusFilterChips(data.meta);
+  renderExpiryFilterChips();
   renderPagination(pagination);
   renderBulkBar();
   if (opts.scrollToTop) scrollPageListIntoView();
@@ -468,4 +518,12 @@ document.getElementById("pageSearchClear")?.addEventListener("click", () => {
 
 initSearch();
 window.adminPageRefreshHandler = () => loadPageManager();
+
+(function initExpiryFromUrl() {
+  const expiry = new URLSearchParams(window.location.search).get("expiry");
+  if (expiry && ["closing_soon", "expired", "no_last_date"].includes(expiry)) {
+    currentFilters.expiry = expiry;
+  }
+})();
+
 loadPageManager();

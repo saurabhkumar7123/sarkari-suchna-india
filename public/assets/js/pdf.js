@@ -221,6 +221,16 @@ function buildNotifyCard(item) {
       }, 1600);
     });
     actions.appendChild(copyBtn);
+
+    const draftLink = document.createElement("a");
+    const draftParams = new URLSearchParams();
+    draftParams.set("fromPdf", "1");
+    if (item.name) draftParams.set("pdfName", item.name);
+    if (copyUrl) draftParams.set("pdfUrl", copyUrl);
+    draftLink.href = `/generator?${draftParams.toString()}`;
+    draftLink.className = "action-link draft";
+    draftLink.textContent = "Open in generator";
+    actions.appendChild(draftLink);
   }
 
   wrap.appendChild(top);

@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=3">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=1">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=2">
 <link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=2">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Dashboard">
@@ -109,6 +109,44 @@
     </div>
   </section>
 
+  <section class="dashboard-action-inbox is-hidden" id="dashboardActionInbox" aria-label="Action inbox">
+    <div class="dashboard-panel-head">
+      <h2>Action inbox</h2>
+      <span class="dashboard-panel-hint">Items that need attention today</span>
+    </div>
+    <ul class="dashboard-action-list" id="dashboardActionList"></ul>
+  </section>
+
+  <section class="dashboard-expiry-panel" id="dashboardExpiryPanel" aria-label="Last date watch">
+    <div class="dashboard-panel-head">
+      <h2>Last date watch</h2>
+      <a href="/admin/page-manager?expiry=closing_soon" class="header-action-btn dashboard-panel-link">Manage pages</a>
+    </div>
+    <div class="dashboard-expiry-stats" id="dashboardExpiryStats">
+      <span class="saas-stat"><strong id="expiryClosingCount">0</strong> closing in 3 days</span>
+      <span class="saas-stat saas-stat--warn"><strong id="expiryExpiredCount">0</strong> expired live</span>
+      <span class="saas-stat"><strong id="expiryMissingCount">0</strong> missing last date</span>
+    </div>
+    <div class="dashboard-expiry-grid">
+      <div class="dashboard-expiry-col">
+        <h3>Closing soon</h3>
+        <div id="dashboardClosingSoon" class="dashboard-expiry-list"></div>
+      </div>
+      <div class="dashboard-expiry-col">
+        <h3>Expired but live</h3>
+        <div id="dashboardExpiredLive" class="dashboard-expiry-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard-traffic-panel" aria-label="Top traffic">
+    <div class="dashboard-panel-head">
+      <h2>Top traffic</h2>
+      <span class="dashboard-panel-hint">Most viewed pages — use this to pick homepage highlights</span>
+    </div>
+    <div id="dashboardTopTraffic" class="dashboard-traffic-list"></div>
+  </section>
+
   <section class="stats-section dashboard-kpi-strip" aria-label="Actionable analytics">
     <h2 class="section-heading">Key metrics</h2>
     <div class="cards stats-cards">
@@ -189,6 +227,6 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-dashboard.js?v=3"></script>
+<script src="/js/admin-dashboard.js?v=4"></script>
 </body>
 </html>

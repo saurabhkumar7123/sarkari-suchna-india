@@ -13,6 +13,9 @@ const { adminSensitiveLimiter } = require("../../config/rateLimits");
 // 📄 GET ALL
 router.get("/pages", asyncHandler(controller.getAllPages));
 
+// 🔍 Duplicate check (before /pages/:slug)
+router.get("/pages/duplicate-check", asyncHandler(controller.checkDuplicatePages));
+
 // 📊 DASHBOARD
 router.get("/dashboard", asyncHandler(controller.getDashboardStats));
 

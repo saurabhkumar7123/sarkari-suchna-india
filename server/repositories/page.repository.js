@@ -787,7 +787,8 @@ async function countAdminPages(where, params, executor = db) {
 async function selectAdminPageList(where, params, orderDir, limit, offset, executor = db) {
   const dir = String(orderDir || "DESC").toUpperCase() === "ASC" ? "ASC" : "DESC";
   const [rows] = await executor.query(
-    `SELECT id, title, slug, category, status, created_at, updated_at, content_updated_at, views 
+    `SELECT id, title, slug, category, status, created_at, updated_at, content_updated_at, views,
+            last_date, qualification, state, department, post_name
      FROM pages 
      ${where}
      ORDER BY COALESCE(content_updated_at, updated_at, created_at) ${dir}, id ${dir}
@@ -795,6 +796,83 @@ async function selectAdminPageList(where, params, orderDir, limit, offset, execu
     [...params, limit, offset]
   );
   return rows;
+}
+
+async function selectExpirySummary(executor = db) {
+  const jobStatusSql = `LOWER(status) IN ('latest job', 'new form', 'new', 'form')`;
+  const [countRows] = await executor.query(
+    `SELECT
+      SUM(CASE WHEN last_date IS NOT NULL AND last_date >= CURDATE()
+        AND last_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND ${jobStatusSql} THEN 1 ELSE 0 END) AS closingSoon,
+      SUM(CASE WHEN last_date IS NOT NULL AND last_date < CURDATE() AND ${jobStatusSql} THEN 1 ELSE 0 END) AS expiredLive,
+      SUM(CASE WHEN (last_date IS NULL OR last_date = '0000-00-00')
+        AND ${jobStatusSql} THEN 1 ELSE 0 END) AS missingLastDate
+     FROM pages WHERE deleted = 0`
+  );
+  const [closingSoon] = await executor.query(
+    `SELECT id, title, slug, status, last_date
+     FROM pages
+     WHERE deleted = 0 AND ${jobStatusSql}
+       AND last_date IS NOT NULL
+       AND last_date >= CURDATE()
+       AND last_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+     ORDER BY last_date ASC
+     LIMIT 8`
+  );
+  const [expiredLive] = await executor.query(
+    `SELECT id, title, slug, status, last_date
+     FROM pages
+     WHERE deleted = 0 AND ${jobStatusSql}
+       AND last_date IS NOT NULL
+       AND last_date < CURDATE()
+     ORDER BY last_date DESC
+     LIMIT 8`
+  );
+  const counts = countRows[0] || {};
+  return {
+    counts: {
+      closingSoon: Number(counts.closingSoon) || 0,
+      expiredLive: Number(counts.expiredLive) || 0,
+      missingLastDate: Number(counts.missingLastDate) || 0
+    },
+    closingSoon: closingSoon || [],
+    expiredLive: expiredLive || []
+  };
+}
+
+async function findSimilarPages({ title, slug, department, state, limit = 5 }, executor = db) {
+  const titleTrim = String(title || "").trim();
+  if (!titleTrim) return [];
+
+  const slugTrim = String(slug || "")
+    .trim()
+    .replace(/^\/+|\.html$/gi, "");
+  const like = `%${titleTrim.slice(0, 64)}%`;
+  const params = [like, like];
+  let where = "WHERE deleted = 0 AND (title LIKE ? OR slug LIKE ?)";
+  if (slugTrim) {
+    where += " AND slug <> ?";
+    params.push(slugTrim);
+  }
+
+  const [rows] = await executor.query(
+    `SELECT id, title, slug, status, department, state, last_date
+     FROM pages
+     ${where}
+     ORDER BY updated_at DESC, id DESC
+     LIMIT ?`,
+    [...params, Math.min(Math.max(Number(limit) || 5, 1), 10)]
+  );
+
+  const dept = String(department || "").trim().toLowerCase();
+  const st = String(state || "").trim().toLowerCase();
+  return (rows || []).filter((row) => {
+    if (dept && String(row.department || "").trim().toLowerCase() === dept) return true;
+    if (st && String(row.state || "").trim().toLowerCase() === st) return true;
+    const a = titleTrim.toLowerCase();
+    const b = String(row.title || "").toLowerCase();
+    return a.includes(b.slice(0, 20)) || b.includes(a.slice(0, 20));
+  });
 }
 
 async function selectDistinctCategories(executor = db) {
@@ -1418,6 +1496,8 @@ module.exports = {
   findJobById,
   countAdminPages,
   selectAdminPageList,
+  selectExpirySummary,
+  findSimilarPages,
   selectDistinctCategories,
   selectDistinctStatusesAll,
   selectTrashPages,
