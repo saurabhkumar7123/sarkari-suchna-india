@@ -642,21 +642,21 @@ function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw
   const tabDefs = [
     {
       key: "departments",
-      label: "All Departments",
+      label: "Departments",
       tabId: "categoriesTabDepartments",
       panelId: "categoriesBoards",
       pills: renderCategoriesPanelPills(departmentItems, formatBrowseLabel)
     },
     {
       key: "qualifications",
-      label: "All Qualifications",
+      label: "Qualifications",
       tabId: "categoriesTabQualifications",
       panelId: "categoriesQualifications",
       pills: renderCategoriesPanelPills(qualificationItems, formatBrowseLabel)
     },
     {
       key: "states",
-      label: "All States",
+      label: "States",
       tabId: "categoriesTabStates",
       panelId: "categoriesStates",
       pills: renderCategoriesPanelPills(stateItems, formatBrowseLabel)

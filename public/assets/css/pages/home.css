@@ -2500,8 +2500,9 @@ body.page-home .popular-categories {
 /* Browse Categories page */
 body.page-categories .site-main .main-container {
   margin-top: var(--space-24, 24px);
-  margin-bottom: var(--space-24, 24px);
+  margin-bottom: var(--space-32, 32px);
   padding: 0 var(--space-12, 12px);
+  max-width: 960px;
 }
 
 .categories-page__title {
@@ -2521,29 +2522,127 @@ body.page-categories .site-main .main-container {
 
 body.page-categories .categories-browse {
   margin-top: 4px;
+  background: #eef2f8;
+  border: 1px solid #c5d4eb;
+  border-radius: var(--home-radius-sm, 12px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-body.page-categories .categories-browse .taxonomy-panel {
+body.page-categories .categories-browse .taxonomy-tabs {
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: #eef2f8;
+  border-bottom: 1px solid #c5d4eb;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  border: none;
+  border-right: 1px solid #c5d4eb;
+  border-radius: 0;
+  margin: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: #eef2f8;
+  color: var(--site-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__btn:last-child {
+  border-right: none;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__btn.is-active {
+  color: var(--home-cta-text);
+  background: var(--home-cta-bg);
+  border: none;
+  border-right: 1px solid #c5d4eb;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding-bottom: 10px;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__btn.is-active:last-child {
+  border-right: none;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__btn.is-active::after {
+  content: none;
+  display: none;
+}
+
+body.page-categories .categories-browse .taxonomy-tabs__label {
+  text-align: center;
+}
+
+body.page-categories .categories-browse .taxonomy-panels {
+  min-height: 0;
+  background: #fff;
+}
+
+body.page-categories .categories-browse .taxonomy-panel,
+body.page-categories .categories-browse .categories-browse__panel {
   display: none;
   margin: 0;
   padding: 0;
   border: none;
   box-shadow: none;
+  background: transparent;
+  min-height: 0;
 }
 
 body.page-categories .categories-browse .taxonomy-panel.taxonomy-panel--active {
   display: block;
-  background: #eef2f8;
-  border: 1px solid #c5d4eb;
-  border-radius: var(--home-radius-sm, 12px);
-  box-shadow: none;
-  padding: 14px;
+  background: #fff;
+  padding: 14px 16px 16px;
+}
+
+body.page-categories .categories-browse .popular-categories {
+  min-height: 0;
+  padding: 0;
 }
 
 body.page-categories .categories-browse .popular-categories__grid--browse {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--home-gap-grid);
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+  max-width: none;
+  align-items: stretch;
+}
+
+body.page-categories .categories-browse .popular-categories__pill {
+  min-height: 44px;
+  height: auto;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.25;
+  white-space: normal;
+  word-break: break-word;
+  background: #f8fafc;
+  border: 1px solid #c5d4eb;
+  color: #334155;
+}
+
+body.page-categories .categories-browse .popular-categories__pill:hover,
+body.page-categories .categories-browse .popular-categories__pill:focus-visible {
+  background: #e4ebf5;
+  border-color: #94a3b8;
+  color: var(--brand-navy);
+  transform: none;
+  box-shadow: none;
 }
 
 .categories-browse__empty {
@@ -2551,6 +2650,31 @@ body.page-categories .categories-browse .popular-categories__grid--browse {
   padding: 12px 0;
   font-size: 14px;
   color: #64748b;
+}
+
+@media (min-width: 769px) and (hover: hover) and (pointer: fine) {
+  body.page-categories .categories-browse .taxonomy-tabs__btn:not(.is-active):hover {
+    background: #e4ebf5;
+    color: var(--brand-navy);
+  }
+}
+
+@media (min-width: 769px) {
+  body.page-categories .categories-browse .taxonomy-tabs__btn {
+    font-size: 14px;
+    padding: 12px 14px;
+    min-height: 48px;
+  }
+
+  body.page-categories .categories-browse .popular-categories__grid--browse {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 12px;
+  }
+
+  body.page-categories .categories-browse .popular-categories__pill {
+    font-size: 14px;
+    padding: 11px 14px;
+  }
 }
 
 /* ---------- Homepage taxonomy tabs — compact single-row accordion ---------- */
@@ -2765,6 +2889,91 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
   box-shadow: none;
 }
 
+/* Homepage taxonomy — compact link row (same on mobile + desktop) */
+body.page-home .taxonomy-discovery--mobile-links {
+  box-sizing: border-box;
+  background: #eef2f8;
+  border: 1px solid #c5d4eb;
+  border-radius: var(--home-radius-sm, 12px);
+  overflow: hidden;
+  padding: 0;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-panels {
+  display: none;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs {
+  gap: 0;
+  margin: 0;
+  background: #eef2f8;
+  overflow-x: visible;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--site-primary);
+  background: #eef2f8;
+  border: none;
+  border-right: 1px solid #c5d4eb;
+  border-radius: 0;
+  margin-bottom: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 12px;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:last-child {
+  border-right: none;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.15;
+  color: var(--site-primary);
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active {
+  color: var(--site-primary);
+  background: #eef2f8;
+  border: none;
+  border-right: 1px solid #c5d4eb;
+  border-bottom: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 8px 10px;
+  box-shadow: none;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active:last-child {
+  border-right: none;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:active {
+  background: #e4ebf5;
+}
+
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn::after,
+body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active::after {
+  content: "→";
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: 0.85em;
+  line-height: 1;
+  margin-left: 4px;
+  opacity: 0.88;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
 @media (min-width: 769px) {
   .taxonomy-tabs {
     gap: var(--home-gap-grid);
@@ -2789,116 +2998,31 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
     box-shadow: none;
   }
 
-  body.page-home .taxonomy-discovery .taxonomy-panel.taxonomy-panel--active {
-    background: #eef2f8;
-    border: 1px solid #c5d4eb;
-    border-top: none;
-    border-radius: 0 var(--home-radius-sm, 12px) var(--home-radius-sm, 12px) var(--home-radius-sm, 12px);
-    box-shadow: none;
-    padding: 12px 14px;
-  }
-
-  body.page-home .taxonomy-discovery .popular-categories__row {
-    gap: var(--home-gap-grid);
-    overflow-x: visible;
-  }
-
-  body.page-home .taxonomy-discovery .popular-categories__pill {
-    font-size: 14px;
-    padding: 10px 14px;
-  }
-
-  body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):hover,
-  body.page-home .taxonomy-discovery .popular-categories__pill:not(.popular-categories__pill--view-all):focus-visible {
-    transform: none;
-    background: #e4ebf5;
-    border-color: #94a3b8;
-    box-shadow: none;
-    color: var(--brand-navy);
-  }
-}
-
-@media (max-width: 768px) {
-  body.page-home .taxonomy-discovery--mobile-links {
-    box-sizing: border-box;
-    background: #eef2f8;
-    border: 1px solid #c5d4eb;
-    border-radius: var(--home-radius-sm, 12px);
-    overflow: hidden;
-    padding: 0;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-panels {
-    display: none;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs {
-    gap: 0;
-    margin: 0;
-    background: #eef2f8;
-  }
-
   body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn {
-    flex: 1 1 0;
-    min-width: 0;
-    justify-content: space-between;
-    gap: 4px;
-    color: var(--site-primary);
-    background: #eef2f8;
-    border: none;
-    border-right: 1px solid #c5d4eb;
-    border-radius: 0;
-    margin-bottom: 0;
-    min-height: 40px;
-    padding: 8px 10px;
-    box-shadow: none;
-    font-weight: 600;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:last-child {
-    border-right: none;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__label {
-    flex: 1 1 auto;
-    min-width: 0;
-    text-align: left;
     font-size: 12px;
-    line-height: 1.15;
-    color: var(--site-primary);
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active {
-    color: var(--site-primary);
-    background: #eef2f8;
-    border: none;
-    border-right: 1px solid #c5d4eb;
-    border-bottom: none;
-    border-radius: 0;
-    margin-bottom: 0;
     padding: 8px 10px;
-    box-shadow: none;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active:last-child {
-    border-right: none;
-  }
-
-  body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:active {
-    background: #e4ebf5;
+    min-height: 40px;
   }
 
   body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn::after,
   body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn.is-active::after {
     content: "→";
-    display: inline-block;
-    flex-shrink: 0;
-    font-size: 0.85em;
-    line-height: 1;
-    margin-left: 4px;
-    opacity: 0.88;
   }
 
+  @media (hover: hover) and (pointer: fine) {
+    body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:hover {
+      background: #e4ebf5;
+      color: var(--brand-navy);
+    }
+
+    body.page-home .taxonomy-discovery--mobile-links .taxonomy-tabs__btn:hover::after {
+      opacity: 1;
+      transform: translateX(2px);
+    }
+  }
+}
+
+@media (max-width: 768px) {
   .taxonomy-tabs__btn {
     font-size: 12px;
     padding: 8px 8px;
@@ -2955,5 +3079,90 @@ body.page-home .taxonomy-discovery .popular-categories__pill--view-all:focus-vis
 
   .categories-page__title {
     font-size: 1.35rem;
+  }
+}
+
+/* Categories page — mobile overrides (after generic taxonomy rules) */
+@media (max-width: 768px) {
+  body.page-categories .site-main .main-container {
+    margin-top: 12px;
+    margin-bottom: 20px;
+    padding: 0 12px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  body.page-categories .categories-page__lead {
+    margin-bottom: 14px;
+    font-size: 14px;
+  }
+
+  body.page-categories .categories-browse {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.page-categories .categories-browse .taxonomy-tabs {
+    overflow: visible;
+    gap: 0;
+  }
+
+  body.page-categories .categories-browse .taxonomy-tabs__btn {
+    flex: 1 1 0;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: none;
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 11px;
+    line-height: 1.15;
+    white-space: normal;
+    border-radius: 0;
+  }
+
+  body.page-categories .categories-browse .taxonomy-tabs__btn.is-active {
+    border-radius: 0;
+    margin-bottom: 0;
+    padding-bottom: 8px;
+    border-bottom: none;
+  }
+
+  body.page-categories .categories-browse .taxonomy-tabs__btn.is-active::after {
+    content: none;
+    display: none;
+  }
+
+  body.page-categories .categories-browse .taxonomy-tabs__label {
+    overflow: visible;
+    text-overflow: unset;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+    font-size: 11px;
+  }
+
+  body.page-categories .categories-browse .taxonomy-panels {
+    min-height: 0;
+  }
+
+  body.page-categories .categories-browse .taxonomy-panel.taxonomy-panel--active {
+    padding: 12px 10px 14px;
+    border: none;
+    border-radius: 0;
+    background: #fff;
+  }
+
+  body.page-categories .categories-browse .popular-categories__grid--browse {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  body.page-categories .categories-browse .popular-categories__pill {
+    font-size: 12px;
+    padding: 8px 10px;
+    min-height: 42px;
+    height: auto;
+    line-height: 1.2;
+    border-radius: 10px;
   }
 }
