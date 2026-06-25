@@ -21,7 +21,7 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=7">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=9">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=2">
@@ -285,6 +285,12 @@
       </div>
     </div>
 
+    <div class="editor-fullscreen-toolbar" id="editorFullscreenToolbar" hidden aria-label="Expanded editor actions">
+      <button type="button" id="editorFsPreviewBtn" class="editor-fs-action editor-fs-action--preview">Preview</button>
+      <button type="button" id="editorFsSaveBtn" class="editor-fs-action editor-fs-action--save">Save</button>
+      <button type="button" id="editorFsCloseBtn" class="editor-fs-action editor-fs-action--close">Done</button>
+    </div>
+
     <div class="pdf-extract-bar" id="pdfExtractBar">
       <div class="pdf-extract-bar__intro">
         <span class="pdf-extract-bar__icon" aria-hidden="true">📄</span>
@@ -297,7 +303,8 @@
         <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
         <label for="pdfFile" id="pdfDropZone" class="pdf-extract-drop" title="Choose or drop PDF">
           <span class="pdf-extract-drop__ico" aria-hidden="true">⤴</span>
-          <span class="pdf-extract-drop__text">Choose PDF</span>
+          <span class="pdf-extract-drop__text pdf-extract-drop__text--desktop">Choose PDF</span>
+          <span class="pdf-extract-drop__text pdf-extract-drop__text--mobile">PDF</span>
         </label>
         <div class="pdf-extract-bar__meta">
           <span id="pdfSelectedName" class="pdf-extract-file" title="Selected file">No file selected</span>
@@ -331,6 +338,7 @@
     <div class="panel-head">
       <h3>Live Preview</h3>
       <span class="preview-hint">Rendered output (same pipeline as publish)</span>
+      <button type="button" id="mobilePreviewCloseBtn" class="mobile-preview-close" hidden aria-label="Close preview">Close</button>
     </div>
     <iframe id="previewFrame"></iframe>
   </section>
@@ -339,12 +347,21 @@
 <div class="action-bar is-sticky-publish">
   <div class="action-bar__inner">
     <div class="action-group action-group-tools">
-      <button type="button" id="previewBtn" class="btn-tool btn-tool--preview">👁 Preview</button>
-      <button type="button" id="aiConvertBtn" class="btn-tool btn-tool--ai">✨ Convert with AI</button>
-      <button type="button" id="deleteBtn" class="btn-tool btn-tool--delete is-hidden">🗑 Delete Page</button>
+      <button type="button" id="previewBtn" class="btn-tool btn-tool--preview" data-label-desktop="👁 Preview" data-label-mobile="Preview">
+        <span class="action-btn__label action-btn__label--desktop">👁 Preview</span>
+        <span class="action-btn__label action-btn__label--mobile">Preview</span>
+      </button>
+      <button type="button" id="aiConvertBtn" class="btn-tool btn-tool--ai" data-label-desktop="✨ Convert with AI" data-label-mobile="AI">
+        <span class="action-btn__label action-btn__label--desktop">✨ Convert with AI</span>
+        <span class="action-btn__label action-btn__label--mobile">AI</span>
+      </button>
+      <button type="button" id="deleteBtn" class="btn-tool btn-tool--delete is-hidden">🗑 Delete</button>
     </div>
     <div class="action-group action-group-primary">
-      <button type="button" id="savePageBtn" class="btn btn-save btn-primary">🚀 Save / Update Page</button>
+      <button type="button" id="savePageBtn" class="btn btn-save btn-primary" data-label-desktop="🚀 Save / Update" data-label-mobile="Save">
+        <span class="action-btn__label action-btn__label--desktop">🚀 Save / Update</span>
+        <span class="action-btn__label action-btn__label--mobile">Save</span>
+      </button>
     </div>
   </div>
 </div>
@@ -365,8 +382,8 @@
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-seo-checklist.js"></script>
 <script src="/js/admin-generator-ui.js"></script>
-<script src="/js/generator-mobile.js?v=1"></script>
+<script src="/js/generator-mobile.js?v=2"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/generator.js?v=3"></script>
+<script src="/js/generator.js?v=4"></script>
 </body>
 </html>

@@ -94,6 +94,12 @@ body.standalone-admin-page.generator-page.has-sticky-publish-bar #standaloneAdmi
   padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));
 }
 
+@media (max-width:768px){
+  body.standalone-admin-page.generator-page.has-sticky-publish-bar #standaloneAdminShell{
+    padding-bottom:calc(52px + env(safe-area-inset-bottom,0px));
+  }
+}
+
 body.standalone-admin-page.generator-page .action-bar.is-sticky-publish{
   left:250px;
   width:calc(100% - 250px);

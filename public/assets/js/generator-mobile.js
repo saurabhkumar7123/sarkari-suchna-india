@@ -79,20 +79,78 @@
       document.body.classList.toggle("generator-editor-fullscreen", on);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
       if (labelEl) labelEl.textContent = on ? "Collapse" : "Expand";
+      const fsToolbar = document.getElementById("editorFullscreenToolbar");
+      if (fsToolbar) fsToolbar.hidden = !on;
       if (on) {
+        closeMobilePreview();
         textarea.focus();
       }
     }
+
+    const fsPreviewBtn = document.getElementById("editorFsPreviewBtn");
+    const fsSaveBtn = document.getElementById("editorFsSaveBtn");
+    const fsCloseBtn = document.getElementById("editorFsCloseBtn");
+
+    fsPreviewBtn?.addEventListener("click", () => {
+      setFullscreen(false);
+      openMobilePreview();
+    });
+    fsSaveBtn?.addEventListener("click", () => {
+      document.getElementById("savePageBtn")?.click();
+    });
+    fsCloseBtn?.addEventListener("click", () => {
+      setFullscreen(false);
+    });
 
     btn.addEventListener("click", () => {
       setFullscreen(!document.body.classList.contains("generator-editor-fullscreen"));
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && document.body.classList.contains("generator-editor-fullscreen")) {
+      if (e.key !== "Escape") return;
+      if (document.body.classList.contains("generator-mobile-preview-open")) {
+        e.preventDefault();
+        closeMobilePreview();
+        return;
+      }
+      if (document.body.classList.contains("generator-editor-fullscreen")) {
         e.preventDefault();
         setFullscreen(false);
       }
+    });
+  }
+
+  function openMobilePreview() {
+    if (!mobileMq.matches) {
+      document.getElementById("previewBtn")?.click();
+      return;
+    }
+    document.body.classList.add("generator-mobile-preview-open");
+    const closeBtn = document.getElementById("mobilePreviewCloseBtn");
+    if (closeBtn) closeBtn.hidden = false;
+    document.getElementById("previewBtn")?.click();
+  }
+
+  function closeMobilePreview() {
+    document.body.classList.remove("generator-mobile-preview-open");
+    const closeBtn = document.getElementById("mobilePreviewCloseBtn");
+    if (closeBtn) closeBtn.hidden = true;
+  }
+
+  function initMobilePreview() {
+    const previewBtn = document.getElementById("previewBtn");
+    const closeBtn = document.getElementById("mobilePreviewCloseBtn");
+    if (!previewBtn) return;
+
+    closeBtn?.addEventListener("click", closeMobilePreview);
+
+    previewBtn.addEventListener("click", () => {
+      if (!mobileMq.matches) return;
+      document.body.classList.remove("generator-editor-fullscreen");
+      const fsToolbar = document.getElementById("editorFullscreenToolbar");
+      if (fsToolbar) fsToolbar.hidden = true;
+      document.body.classList.add("generator-mobile-preview-open");
+      if (closeBtn) closeBtn.hidden = false;
     });
   }
 
@@ -164,6 +222,7 @@
     initQuickModeLinkForMobile();
     initMobileAccordion();
     initFullscreenEditor();
+    initMobilePreview();
     initTabletClass();
     initPwaHint();
   });

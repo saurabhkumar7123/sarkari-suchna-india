@@ -10,6 +10,43 @@ function escapeAttr(s) {
     .replace(/>/g, "&gt;");
 }
 
+function getActionBtnLabel(btn) {
+  if (!btn) return "";
+  const mobile = btn.querySelector(".action-btn__label--mobile");
+  const desktop = btn.querySelector(".action-btn__label--desktop");
+  if (window.matchMedia("(max-width: 768px)").matches && mobile) {
+    return mobile.textContent.trim();
+  }
+  if (desktop) return desktop.textContent.trim();
+  const any = btn.querySelector(".action-btn__label");
+  if (any) return any.textContent.trim();
+  return btn.textContent.trim();
+}
+
+function setActionBtnLabel(btn, text) {
+  if (!btn) return;
+  const labels = btn.querySelectorAll(".action-btn__label");
+  if (labels.length) {
+    labels.forEach((el) => {
+      el.textContent = text;
+    });
+    return;
+  }
+  btn.textContent = text;
+}
+
+function restoreActionBtnLabels(btn) {
+  if (!btn) return;
+  const desktop = btn.querySelector(".action-btn__label--desktop");
+  const mobile = btn.querySelector(".action-btn__label--mobile");
+  if (desktop && btn.dataset.labelDesktop) desktop.textContent = btn.dataset.labelDesktop;
+  if (mobile && btn.dataset.labelMobile) mobile.textContent = btn.dataset.labelMobile;
+  if (!desktop && !mobile) {
+    const fallback = btn.dataset.labelDesktop || btn.dataset.labelMobile;
+    if (fallback) setActionBtnLabel(btn, fallback);
+  }
+}
+
 function setDeleteButtonVisible(visible) {
   const delBtn = document.getElementById("deleteBtn");
   if (delBtn) delBtn.classList.toggle("is-hidden", !visible);
@@ -1298,12 +1335,11 @@ async function generatePage(){
   console.log("[generator] save payload keys:", Object.keys(payload));
 
   const btn = document.getElementById("savePageBtn");
-  const prevText = btn ? btn.textContent : "";
   const aiBtn = document.getElementById("aiConvertBtn");
   const previewBtn = document.getElementById("previewBtn");
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Saving…";
+    setActionBtnLabel(btn, "Saving…");
   }
   if (aiBtn) aiBtn.disabled = true;
   if (previewBtn) previewBtn.disabled = true;
@@ -1404,7 +1440,7 @@ async function generatePage(){
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = prevText || "🚀 Save / Update Page";
+      restoreActionBtnLabels(btn);
     }
     if (previewBtn) previewBtn.disabled = false;
     syncAiConvertButton();
@@ -1615,10 +1651,9 @@ function updatePreview(){
 
   clearTimeout(previewTimer);
   const previewBtn = document.getElementById("previewBtn");
-  const prevText = previewBtn ? previewBtn.textContent : "";
   if (previewBtn) {
     previewBtn.disabled = true;
-    previewBtn.textContent = "Rendering...";
+    setActionBtnLabel(previewBtn, "Rendering...");
   }
 
   previewTimer = setTimeout(async ()=>{
@@ -1649,7 +1684,7 @@ function updatePreview(){
     } finally {
       if (previewBtn) {
         previewBtn.disabled = false;
-        previewBtn.textContent = prevText || "👁 Preview";
+        restoreActionBtnLabels(previewBtn);
       }
     }
 
@@ -1842,11 +1877,10 @@ ${payloadText}
 
   const prev = payloadText;
   const aiBtn = document.getElementById("aiConvertBtn");
-  const aiPrevText = aiBtn ? aiBtn.textContent : "";
 
   aiConvertInProgress = true;
   setEditorActionsBusy(true);
-  if (aiBtn) aiBtn.textContent = "Converting...";
+  if (aiBtn) setActionBtnLabel(aiBtn, "Converting...");
   try {
     const body = JSON.stringify({
       text: payloadText,
@@ -1898,7 +1932,9 @@ ${payloadText}
     setGeneratorFeedback("error", "AI conversion failed");
   } finally {
     aiConvertInProgress = false;
-    if (aiBtn) aiBtn.textContent = aiPrevText || "✨ Convert with AI";
+    if (aiBtn) {
+      restoreActionBtnLabels(aiBtn);
+    }
     setEditorActionsBusy(false);
     syncAiConvertButton();
   }
@@ -1930,6 +1966,8 @@ function formatPdfFileSize(bytes) {
 function updatePdfSelectedFileName(file) {
   const nameEl = document.getElementById("pdfSelectedName");
   const sizeEl = document.getElementById("pdfFileSize");
+  const bar = document.getElementById("pdfExtractBar");
+  if (bar) bar.classList.toggle("pdf-extract-bar--has-file", Boolean(file));
   if (!nameEl) return;
   if (!file) {
     nameEl.textContent = "No file selected";
