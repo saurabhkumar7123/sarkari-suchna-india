@@ -10,7 +10,8 @@ const { embedRelatedJobsInJobHtml } = require("../../lib/relatedJobsEmbed");
 const { getRelatedPagesForSlug } = require("../../services/relatedPages.service");
 const fileService = require("../../services/file.service");
 const { siteCheckQueue } = require("../../services/queue/siteQueue");
-const { recordActivity, listActivity } = require("../../services/adminActivity.service");
+const { recordActivity, listActivity, countActivity } = require("../../services/adminActivity.service");
+const { getTodayViewCount } = require("../../services/pageViews.service");
 const { canSendTelegram } = require("../../services/updates/telegramNotifier");
 const { fetchSites } = require("../../services/updates/updates.repository");
 
@@ -334,7 +335,7 @@ async function countActivityEventsToday() {
 
 const getDashboardStats = async (req, res) => {
   try {
-    const { agg, catRow, todayRow } = await pageRepository.selectDashboardAggregate();
+    const { agg, catRow } = await pageRepository.selectDashboardAggregate();
     const counts = await siteCheckQueue.getJobCounts("waiting", "active", "completed", "failed").catch(() => ({}));
     const waitingJobs = Number(counts && counts.waiting ? counts.waiting : 0);
     const activeJobs = Number(counts && counts.active ? counts.active : 0);
@@ -349,11 +350,15 @@ const getDashboardStats = async (req, res) => {
     ]);
     const totalUploads = (Array.isArray(pdfFiles) ? pdfFiles.length : 0) + (Array.isArray(imageFiles) ? imageFiles.length : 0);
 
-    const [pdfsToday, importsToday, activityToday, sites] = await Promise.all([
+    const [pdfsToday, importsToday, activityToday, sites, todayViews, successfulPublishes, failedActions] =
+      await Promise.all([
       countPdfsUploadedToday(),
       countImportsToday(),
       countActivityEventsToday(),
-      fetchSites().catch(() => [])
+      fetchSites().catch(() => []),
+      getTodayViewCount(),
+      countActivity({ action: "page_publish", status: "success" }),
+      countActivity({ status: "failed" })
     ]);
     const brokenSites = Array.isArray(sites) ? sites.filter((s) => Number(s && s.broken) === 1).length : 0;
     const telegramOk = canSendTelegram();
@@ -416,8 +421,9 @@ const getDashboardStats = async (req, res) => {
       trashPages: Number(agg.trashPages) || 0,
       totalViews: Number(agg.totalViews) || 0,
       totalCategories: Number(catRow.totalCategories) || 0,
-      todayViews: Number(todayRow.todayViews) || 0,
-      liveVisitors: 0,
+      todayViews,
+      successfulPublishes,
+      failedActions,
       totalUploads,
       failedJobs,
       pendingJobs: waitingJobs + activeJobs,

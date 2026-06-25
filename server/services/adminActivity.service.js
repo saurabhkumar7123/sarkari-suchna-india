@@ -75,6 +75,22 @@ async function recordActivity(meta = {}) {
   }
 }
 
+async function countActivity({ action = "", status = "", from = "", to = "" } = {}) {
+  const actionFilter = String(action || "").trim().toLowerCase();
+  const statusFilter = String(status || "").trim().toLowerCase();
+  const fromTs = from ? Date.parse(from) : NaN;
+  const toTs = to ? Date.parse(to) : NaN;
+  const all = await readAll();
+  return all.filter((row) => {
+    if (actionFilter && String(row.action || "").toLowerCase() !== actionFilter) return false;
+    if (statusFilter && String(row.status || "").toLowerCase() !== statusFilter) return false;
+    const ts = Date.parse(row.timestamp);
+    if (!Number.isNaN(fromTs) && ts < fromTs) return false;
+    if (!Number.isNaN(toTs) && ts > toTs) return false;
+    return true;
+  }).length;
+}
+
 async function listActivity({ page = 1, limit = 20, action = "", from = "", to = "" } = {}) {
   const p = Math.max(1, Number(page) || 1);
   const l = Math.min(100, Math.max(1, Number(limit) || 20));
@@ -109,5 +125,6 @@ async function listActivity({ page = 1, limit = 20, action = "", from = "", to =
 
 module.exports = {
   recordActivity,
-  listActivity
+  listActivity,
+  countActivity
 };

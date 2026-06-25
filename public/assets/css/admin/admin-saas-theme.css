@@ -667,3 +667,15 @@ body.dark.admin-saas-v2 .saas-btn{
     width:auto !important;
   }
 }
+
+body.admin-saas-v2 .card--coming-soon{
+  opacity:.92;
+}
+
+body.admin-saas-v2 .dashboard-metric-soon{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  color:var(--saas-muted);
+  letter-spacing:.01em;
+}

@@ -12,6 +12,11 @@ const BOT_UA =
 
 const COOLDOWN_SEC = parseInt(process.env.PAGE_VIEW_COOLDOWN_SEC || "1800", 10);
 const ENABLED = String(process.env.PAGE_VIEWS_ENABLED || "1").trim() !== "0";
+const DAILY_VIEWS_TTL_SEC = 60 * 60 * 24 * 95;
+
+function dailyViewsKey(date = new Date()) {
+  return `pageviews:daily:${date.toISOString().slice(0, 10)}`;
+}
 
 function isEnabled() {
   return ENABLED;
@@ -57,6 +62,34 @@ async function acquireViewCooldown(visitorKey, slug) {
   return true;
 }
 
+async function bumpDailyViewTotal() {
+  const key = dailyViewsKey();
+  try {
+    if (redis.isOpen) {
+      await redis.incr(key);
+      await redis.expire(key, DAILY_VIEWS_TTL_SEC);
+      return;
+    }
+  } catch (err) {
+    logger.warn("pageViews: daily counter redis failed", { message: err.message });
+  }
+  const memKey = `pvd:${key}`;
+  memCache.set(memKey, (Number(memCache.get(memKey)) || 0) + 1, 60 * 60 * 24);
+}
+
+async function getTodayViewCount() {
+  const key = dailyViewsKey();
+  try {
+    if (redis.isOpen) {
+      const value = await redis.get(key);
+      return Number(value) || 0;
+    }
+  } catch (err) {
+    logger.warn("pageViews: daily counter read failed", { message: err.message });
+  }
+  return Number(memCache.get(`pvd:${key}`)) || 0;
+}
+
 /**
  * Fire-and-forget job page view (anti-spam, bot filter).
  * @param {import("express").Request} req
@@ -76,12 +109,16 @@ async function trackJobPageView(req, slug) {
 
   const affected = await pageRepository.incrementViewsBySlug(cleanSlug);
   if (affected > 0) {
+    await bumpDailyViewTotal().catch(() => {});
     await delCache("pages:topviews").catch(() => {});
   }
 }
 
 module.exports = {
   trackJobPageView,
+  getTodayViewCount,
+  bumpDailyViewTotal,
+  dailyViewsKey,
   isEnabled,
   isLikelyBot,
   isAdminTraffic

@@ -986,12 +986,7 @@ async function selectDashboardAggregate(executor = db) {
     `SELECT COUNT(DISTINCT NULLIF(TRIM(category), '')) AS totalCategories
      FROM pages WHERE deleted = 0`
   );
-  const [[todayRow]] = await executor.query(
-    `SELECT IFNULL(SUM(views), 0) AS todayViews
-     FROM pages
-     WHERE deleted = 0 AND DATE(created_at) = CURDATE()`
-  );
-  return { agg, catRow, todayRow };
+  return { agg, catRow };
 }
 
 async function findAdminPageBySlug(slug, executor = db) {

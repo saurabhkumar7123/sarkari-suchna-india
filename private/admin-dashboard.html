@@ -187,9 +187,9 @@
       <div class="card card-purple"><h3><span class="card-icon">📑</span> Small Pages</h3><p id="smallPages">0</p></div>
       <div class="card card-red"><h3><span class="card-icon">🗑</span> Trash</h3><p id="trashPages">0</p></div>
       <div class="card card-green"><h3><span class="card-icon">👁</span> Total Views</h3><p id="totalViews">0</p></div>
-      <div class="card card-orange"><h3><span class="card-icon">📊</span> Today Views</h3><p id="todayViews">0</p></div>
+      <div class="card card-orange" title="Counts real visitor page views recorded today (bots and admin traffic excluded)."><h3><span class="card-icon">📊</span> Today Views</h3><p id="todayViews">0</p></div>
       <div class="card card-indigo"><h3><span class="card-icon">📂</span> Total Categories</h3><p id="totalCategories">0</p></div>
-      <div class="card card-teal"><h3><span class="card-icon">🟢</span> Live Visitors</h3><p id="liveVisitors">0</p></div>
+      <div class="card card-teal card--coming-soon"><h3><span class="card-icon">🟢</span> Live Visitors</h3><p class="dashboard-metric-soon">Coming soon</p></div>
       <div class="card card-blue"><h3><span class="card-icon">✅</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
       <div class="card card-red"><h3><span class="card-icon">⚠️</span> Failed Actions</h3><p id="failedActions">0</p></div>
       <div class="card card-purple"><h3><span class="card-icon">📝</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
@@ -197,7 +197,6 @@
   <section class="charts-section" aria-label="Charts">
     <div class="chart-card"><h3 class="chart-block-title">Pages by status</h3><div class="chart-wrap"><canvas id="statusChart" height="100"></canvas></div></div>
     <div class="chart-card"><h3 class="chart-block-title">Top viewed pages</h3><div class="chart-wrap"><canvas id="viewsChart" height="100"></canvas></div></div>
-    <div class="chart-card"><h3 class="chart-block-title">Live traffic (24h)</h3><div class="chart-wrap"><canvas id="trafficChart" height="100"></canvas></div></div>
   </section>
   <div class="dashboard-grid">
     <div class="recent"><h3>Recent Activity</h3><div id="activityLog"></div><div class="row-actions" style="margin-top:8px;"><a href="/admin/activity">View Full Activity</a></div></div>
@@ -212,7 +211,7 @@
     </div>
     <div class="recent"><h3>Most Viewed Page</h3><div id="topPage"></div></div>
     <div class="recent"><h3>🔥 Trending Pages</h3><div id="trendingPages"></div></div>
-    <div class="recent"><h3>🔥 Top Pages Today</h3><div id="topTodayPages"></div></div>
+    <div class="recent"><h3>🔥 Top Pages (all time)</h3><div id="topTodayPages"></div></div>
   </div>
       </div>
     </details>
@@ -227,6 +226,6 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-dashboard.js?v=4"></script>
+<script src="/js/admin-dashboard.js?v=5"></script>
 </body>
 </html>

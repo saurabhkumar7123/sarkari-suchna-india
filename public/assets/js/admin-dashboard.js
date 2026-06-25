@@ -5,8 +5,6 @@ function escapeAttr(value) {
     .replace(/</g, "&lt;");
 }
 
-const ADMIN_METRICS_KEY = "adminUxMetrics_v1";
-
 let lastDashboardStats = null;
 let dashboardLiveTimer = null;
 let dashboardLivePaused = false;
@@ -183,7 +181,8 @@ async function loadStatsCards() {
   set("totalViews", d.totalViews ?? 0);
   set("todayViews", d.todayViews ?? 0);
   set("totalCategories", d.totalCategories ?? 0);
-  set("liveVisitors", d.liveVisitors ?? 0);
+  set("successfulPublishes", d.successfulPublishes ?? 0);
+  set("failedActions", d.failedActions ?? 0);
   set("kpiTotalPages", d.totalPages ?? 0);
   set("kpiTotalUploads", d.totalUploads ?? 0);
   set("kpiFailedJobs", d.failedJobs ?? 0);
@@ -198,26 +197,10 @@ async function loadStatsCards() {
   renderActionInbox(d);
 }
 
-function loadAdminUxMetrics() {
-  let metrics = { publishesSuccess: 0, actionsFailed: 0 };
-  try {
-    const raw = localStorage.getItem(ADMIN_METRICS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      metrics = {
-        publishesSuccess: Number(parsed && parsed.publishesSuccess) || 0,
-        actionsFailed: Number(parsed && parsed.actionsFailed) || 0
-      };
-    }
-  } catch {}
+function loadPendingDraftMetric() {
   const pendingDrafts = Number(localStorage.getItem("generatorPendingDrafts") || "0") > 0 ? 1 : 0;
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = String(value);
-  };
-  set("successfulPublishes", metrics.publishesSuccess);
-  set("failedActions", metrics.actionsFailed);
-  set("pendingDrafts", pendingDrafts);
+  const el = document.getElementById("pendingDrafts");
+  if (el) el.textContent = String(pendingDrafts);
 }
 
 async function loadActivityLog() {
@@ -279,7 +262,7 @@ async function checkServerHealth() {
   setEl("healthApi", apiOk, apiOk ? "Working" : "Error");
 }
 
-function renderChartsFromPages(pages, stats) {
+function renderChartsFromPages(pages) {
   const counts = {};
   pages.forEach((p) => {
     const st = String(p.status || "unknown").trim().toLowerCase() || "unknown";
@@ -304,29 +287,16 @@ function renderChartsFromPages(pages, stats) {
       options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } } }
     });
   }
-  if (window.trafficChart) window.trafficChart.destroy();
-  const trEl = document.getElementById("trafficChart");
-  if (trEl && typeof Chart !== "undefined") {
-    const hours = Array.from({ length: 24 }, (_, i) => `${i}h`);
-    const tv = stats && typeof stats.todayViews === "number" ? stats.todayViews : 0;
-    const perHour = tv > 0 ? Math.max(1, Math.round(tv / 24)) : 0;
-    const data24 = hours.map((_, i) => (i < 12 ? perHour : Math.round(perHour * 0.7)));
-    window.trafficChart = new Chart(trEl, {
-      type: "line",
-      data: { labels: hours, datasets: [{ label: "Estimated hourly traffic", data: tv ? data24 : hours.map(() => 0), borderColor: "rgba(99,102,241,0.8)", tension: 0.3 }] },
-      options: { responsive: true, plugins: { legend: { display: true } } }
-    });
-  }
 }
 
 async function loadChartsData() {
   const res = await window.adminSafeFetch("/api/admin/pages?page=1&limit=60&sort=desc");
   if (!res || !res.success || !Array.isArray(res.data)) return;
-  renderChartsFromPages(res.data, lastDashboardStats);
+  renderChartsFromPages(res.data);
 }
 
 async function initAdminDashboard() {
-  loadAdminUxMetrics();
+  loadPendingDraftMetric();
   await loadStatsCards();
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
   updateLiveStripLabel();
