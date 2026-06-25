@@ -11,7 +11,7 @@ describe("contentFreshness", () => {
     status: "latest job",
     category: "latest-job",
     qualification: "graduate",
-    state: "all india",
+    state: "central",
     department: "ssc",
     post_name: "Assistant",
     total_posts: "1000",

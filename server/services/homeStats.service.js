@@ -3,7 +3,7 @@
 const pageRepository = require("../repositories/page.repository");
 const { getCache, setCache, delCache } = require("./cache.services");
 const { allBoardHubs, BOARD_SLUG_SET } = require("../lib/boardHubs");
-const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("../lib/structuredFields");
+const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES, normalizeStateSlug } = require("../lib/structuredFields");
 const {
   buildDepartmentPath,
   buildQualificationPath,
@@ -26,7 +26,7 @@ const QUALIFICATION_REGISTRY = [
 
 /** Display labels aligned with Finder state options + whitelist. */
 const STATE_REGISTRY = [
-  { slug: "all india", label: "All India" },
+  { slug: "central", label: "Central" },
   { slug: "uttar pradesh", label: "Uttar Pradesh" },
   { slug: "bihar", label: "Bihar" },
   { slug: "madhya pradesh", label: "Madhya Pradesh" },
@@ -48,6 +48,16 @@ function buildQualificationHref(slug) {
 
 function buildStateHref(slug) {
   return buildStatePath(slug);
+}
+
+function mergeStateCountSlug(slug) {
+  return normalizeStateSlug(slug) || "";
+}
+
+function addStateCount(countBySlug, slug, pageCount) {
+  const canonical = mergeStateCountSlug(slug);
+  if (!canonical || !ALLOWED_JOB_STATES.has(canonical)) return;
+  countBySlug.set(canonical, (countBySlug.get(canonical) || 0) + pageCount);
 }
 
 function buildPopularQualificationsFromCounts(rows) {
@@ -73,9 +83,7 @@ function buildPopularStatesFromCounts(rows) {
   const countBySlug = new Map();
 
   for (const row of rows) {
-    const slug = String(row.slug || "").trim().toLowerCase();
-    if (!slug || !ALLOWED_JOB_STATES.has(slug)) continue;
-    countBySlug.set(slug, Number(row.page_count) || 0);
+    addStateCount(countBySlug, row.slug, Number(row.page_count) || 0);
   }
 
   return STATE_REGISTRY.map((entry) => ({
@@ -113,9 +121,7 @@ function buildBrowseStatesFromCounts(rows) {
   const countBySlug = new Map();
 
   for (const row of rows) {
-    const slug = String(row.slug || "").trim().toLowerCase();
-    if (!slug || !ALLOWED_JOB_STATES.has(slug)) continue;
-    countBySlug.set(slug, Number(row.page_count) || 0);
+    addStateCount(countBySlug, row.slug, Number(row.page_count) || 0);
   }
 
   return STATE_REGISTRY.map((entry) => ({

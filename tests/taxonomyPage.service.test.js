@@ -67,18 +67,18 @@ describe("taxonomyPage.service", () => {
 
     const html = await taxonomyPageService.buildTaxonomyPage({
       type: "state",
-      slug: "all-india",
+      slug: "central",
       baseUrl: "",
       headerHtml: "",
       footerHtml: ""
     });
 
     expect(pageService.listJobs).toHaveBeenCalledWith({
-      state: "all india",
+      state: "central",
       page: 1,
       limit: 25
     });
-    expect(html).toContain("<h1>All India Jobs</h1>");
+    expect(html).toContain("<h1>Central Jobs</h1>");
   });
 
   it("returns null for unknown taxonomy slug", async () => {

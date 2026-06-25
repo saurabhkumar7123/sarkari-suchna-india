@@ -20,7 +20,7 @@
   ]);
 
   const ALLOWED_STATES = new Set([
-    "all india",
+    "central",
     "uttar pradesh",
     "bihar",
     "madhya pradesh",
@@ -29,6 +29,12 @@
     "delhi",
     "uttarakhand"
   ]);
+
+  function normalizeStateSlug(value) {
+    const n = normalize(value);
+    if (n === "all india") return "central";
+    return n;
+  }
 
   const ALLOWED_DEPARTMENTS = new Set([
     "ssc",
@@ -54,13 +60,13 @@
     if (!n) return true;
     if (n === "all" || n === "select") return true;
     if (/^select(\s|$)/.test(n)) return true;
-    if (n === "all departments" || n === "all states" || n === "all india") return true;
+    if (n === "all departments" || n === "all states" || n === "central" || n === "all india") return true;
     return false;
   }
 
   function resolveFilterValue(value, allowedSet) {
     if (isPlaceholderValue(value)) return "";
-    const n = normalize(value);
+    const n = allowedSet === ALLOWED_STATES ? normalizeStateSlug(value) : normalize(value);
     return allowedSet.has(n) ? n : "";
   }
 
@@ -94,7 +100,7 @@
     );
     return {
       qualification: normalize(params.get("qualification")),
-      state: normalize(params.get("state")),
+      state: normalizeStateSlug(params.get("state")),
       department: normalize(params.get("department")),
       jobType: normalize(params.get("jobType")),
       status: normalize(params.get("status")),

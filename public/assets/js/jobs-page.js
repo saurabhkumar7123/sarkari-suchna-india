@@ -46,6 +46,14 @@
       .join(" ");
   }
 
+  function formatStateLabel(value) {
+    const normalized = normalizeFilterValue(value);
+    if (!normalized) return "";
+    if (normalized === "central" || normalized === "all india") return "Central";
+    if (normalized === "other") return "Other State";
+    return titleCase(normalized);
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -104,16 +112,16 @@
   function getActiveFilterParts(filters) {
     const parts = [];
     FILTER_CHIP_KEYS.forEach((key) => {
-      if (filters[key]) {
-        parts.push({ key, label: titleCase(filters[key]) });
-      }
+      if (!filters[key]) return;
+      const label = key === "state" ? formatStateLabel(filters[key]) : titleCase(filters[key]);
+      parts.push({ key, label });
     });
     return parts;
   }
 
   function buildContextualHeading(filters) {
     const qual = filters.qualification ? titleCase(filters.qualification) : "";
-    const state = filters.state ? titleCase(filters.state) : "";
+    const state = filters.state ? formatStateLabel(filters.state) : "";
     const dept = filters.department ? titleCase(filters.department) : "";
 
     if (qual && state) return `${qual} Jobs in ${state}`;
@@ -196,7 +204,7 @@
     }
 
     if (inclusiveEl) {
-      inclusiveEl.hidden = !(filters.state && filters.state !== "all india");
+      inclusiveEl.hidden = true;
     }
 
     updatePageMeta(filters);
@@ -281,11 +289,6 @@
     }
   }
 
-  function shouldShowAllIndiaTag(job, filters) {
-    if (!filters.state || filters.state === "all india") return false;
-    return normalizeFilterValue(job.state) === "all india";
-  }
-
   function sortJobs(jobs, sortMode) {
     const list = [...jobs];
     if (sortMode === "latest") {
@@ -326,20 +329,19 @@
         const showLastDate = (normalizedStatus === "latest job" || normalizedStatus === "new form") && formattedDate != null;
         const href = safeUrl(job.page || "#");
         const qualMeta = job.qualification ? titleCase(job.qualification) : "";
-        const allIndiaTag = shouldShowAllIndiaTag(job, filters)
-          ? `<span class="job-all-india-tag">Also open: All India</span>`
-          : "";
+        const stateMeta = job.state ? formatStateLabel(job.state) : "";
         const lastDateHtml =
           showLastDate
             ? `<p class="job-date"><span class="job-last-date-badge">Last Date: ${formattedDate}</span></p>`
             : "";
-        const footHtml = [allIndiaTag, lastDateHtml].filter(Boolean).join("");
+        const footHtml = lastDateHtml;
 
         const metaParts = [
-          `<span>${escapeHtml(titleCase(job.department || "General"))}</span>`,
-          `<span class="job-meta-sep">•</span>`,
-          `<span>${escapeHtml(titleCase(job.state || "All India"))}</span>`
+          `<span>${escapeHtml(titleCase(job.department || "General"))}</span>`
         ];
+        if (stateMeta) {
+          metaParts.push(`<span class="job-meta-sep">•</span>`, `<span>${escapeHtml(stateMeta)}</span>`);
+        }
         if (qualMeta) {
           metaParts.push(`<span class="job-meta-sep">•</span>`, `<span>${escapeHtml(qualMeta)}</span>`);
         }
@@ -374,7 +376,7 @@
     return `
       <div class="jobs-empty">
         <p class="jobs-empty__title">No jobs match these filters yet</p>
-        <p class="jobs-empty__text">${filterLine} Try removing a filter, choosing <strong>All India</strong>, or search again.</p>
+        <p class="jobs-empty__text">${filterLine} Try removing a filter, choosing <strong>Central</strong> (Railway, Army, SSC…), or search again.</p>
         <div class="jobs-empty__actions">
           <button type="button" class="jobs-btn jobs-btn--primary" id="jobsEmptyEditBtn">Search again</button>
           <a href="/" class="jobs-btn jobs-btn--ghost">Go to Home</a>

@@ -880,7 +880,10 @@ function setNormalizedSelectValue(selectId, rawValue) {
   const select = document.getElementById(selectId);
   if (!select) return;
 
-  const normalized = normalizeSelectKey(rawValue);
+  let normalized = normalizeSelectKey(rawValue);
+  if (selectId === "structuredState" && normalized === "all india") {
+    normalized = "central";
+  }
   if (!normalized) {
     select.value = "";
     return;

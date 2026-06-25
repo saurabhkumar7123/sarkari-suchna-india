@@ -34,7 +34,7 @@ const {
   buildQualificationPath,
   buildStatePath
 } = require("./lib/taxonomySlugs");
-const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("./lib/structuredFields");
+const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES, normalizeStateSlug } = require("./lib/structuredFields");
 const searchService = require("./services/search.service");
 const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
@@ -1130,9 +1130,10 @@ app.get("/jobs.html", asyncHandler(async (req, res, next) => {
   const qual = String(req.query.qualification || "")
     .trim()
     .toLowerCase();
-  const state = String(req.query.state || "")
+  const stateRaw = String(req.query.state || "")
     .trim()
     .toLowerCase();
+  const state = normalizeStateSlug(stateRaw);
   const hasExtra = req.query.status || req.query.jobType || req.query.source;
 
   if (!hasExtra) {
@@ -1213,6 +1214,9 @@ async function sendTaxonomyHubHtml(req, res, type) {
   const slug = String(req.params.slug || "").trim();
   if (!slug) {
     return res.redirect(302, "/search");
+  }
+  if (type === "state" && slug.toLowerCase() === "all-india") {
+    return res.redirect(301, buildStatePath("central"));
   }
   const html = await taxonomyPageService.buildTaxonomyPage({
     type,

@@ -4,6 +4,7 @@ const db = require("../config/db");
 const logger = require("../utils/logger");
 const { pageContentFieldsChanged } = require("../lib/contentFreshness");
 const { topicSearchTokens } = require("../lib/topicTags");
+const { normalizeStateSlug } = require("../lib/structuredFields");
 const IS_NON_PROD = process.env.NODE_ENV !== "production";
 
 function stripInvisible(s) {
@@ -41,6 +42,10 @@ function normalizeStructuredColumn(value) {
     .trim()
     .toLowerCase();
   return s || null;
+}
+
+function normalizeStateColumn(value) {
+  return normalizeStateSlug(value);
 }
 
 /**
@@ -678,15 +683,15 @@ function buildJobsWhere({ qualification, state, department, jobType, status }) {
     where += ` AND qualification IS NOT NULL AND TRIM(qualification) <> '' AND ${normalizedQualificationColumn} = ?`;
     params.push(normalizeFilterValue(qualification));
   }
-  // State filter: single-value equality today. Future multi-state: see structuredFields.stateCoverageMatchesFilter.
+  // State filter: exact match. Central also matches legacy rows stored as "all india".
   if (state) {
-    const normalizedState = normalizeFilterValue(state);
-    if (normalizedState === "all india") {
-      where += ` AND state IS NOT NULL AND TRIM(state) <> '' AND ${normalizedStateColumn} = ?`;
-      params.push("all india");
-    } else {
+    const normalizedState = normalizeStateSlug(normalizeFilterValue(state));
+    if (normalizedState === "central") {
       where += ` AND state IS NOT NULL AND TRIM(state) <> '' AND ${normalizedStateColumn} IN (?, ?)`;
-      params.push(normalizedState, "all india");
+      params.push("central", "all india");
+    } else if (normalizedState) {
+      where += ` AND state IS NOT NULL AND TRIM(state) <> '' AND ${normalizedStateColumn} = ?`;
+      params.push(normalizedState);
     }
   }
   if (department) {
@@ -957,7 +962,7 @@ async function insertPage(
 ) {
   const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
-  const sVal = normalizeStructuredColumn(state);
+  const sVal = normalizeStateColumn(state);
   const dVal = normalizeStructuredColumn(department);
   const qSql = bindStructuredForMysql(qVal);
   const sSql = bindStructuredForMysql(sVal);
@@ -1165,7 +1170,7 @@ async function updatePageBySlug(
 ) {
   const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
-  const sVal = normalizeStructuredColumn(state);
+  const sVal = normalizeStateColumn(state);
   const dVal = normalizeStructuredColumn(department);
   const qSql = bindStructuredForMysql(qVal);
   const sSql = bindStructuredForMysql(sVal);

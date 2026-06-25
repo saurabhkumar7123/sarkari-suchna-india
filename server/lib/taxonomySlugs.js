@@ -1,6 +1,6 @@
 "use strict";
 
-const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES } = require("./structuredFields");
+const { ALLOWED_JOB_QUALIFICATIONS, ALLOWED_JOB_STATES, normalizeStateSlug } = require("./structuredFields");
 
 function toTaxonomyPathSlug(value) {
   return String(value || "")
@@ -25,8 +25,9 @@ function resolveQualificationFromPath(pathSlug) {
 
 function resolveStateFromPath(pathSlug) {
   const normalized = normalizePathSegment(pathSlug);
-  if (!normalized || !ALLOWED_JOB_STATES.has(normalized)) return null;
-  return normalized;
+  const slug = normalizeStateSlug(normalized);
+  if (!slug || !ALLOWED_JOB_STATES.has(slug)) return null;
+  return slug;
 }
 
 function buildDepartmentPath(slug) {

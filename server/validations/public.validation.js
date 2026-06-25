@@ -2,7 +2,8 @@ const Joi = require("joi");
 const {
   ALLOWED_JOB_QUALIFICATIONS,
   ALLOWED_JOB_STATES,
-  ALLOWED_JOB_DEPARTMENTS
+  ALLOWED_JOB_DEPARTMENTS,
+  normalizeStateSlug
 } = require("../lib/structuredFields");
 
 function normalizeFilterValue(value) {
@@ -56,7 +57,19 @@ const pagesListQuerySchema = Joi.object({
 
 const jobsQuerySchema = Joi.object({
   qualification: optionalWhitelistedString(ALLOWED_JOB_QUALIFICATIONS),
-  state: optionalWhitelistedString(ALLOWED_JOB_STATES),
+  state: Joi.string()
+    .trim()
+    .max(80)
+    .allow("")
+    .optional()
+    .custom((value) => {
+      if (value === undefined || value === null || value === "") {
+        return undefined;
+      }
+      const normalized = normalizeStateSlug(normalizeFilterValue(value));
+      if (normalized && ALLOWED_JOB_STATES.has(normalized)) return normalized;
+      return undefined;
+    }),
   department: optionalWhitelistedString(ALLOWED_JOB_DEPARTMENTS),
   jobType: Joi.string().trim().max(80).allow("").optional(),
   status: Joi.string().trim().max(80).allow("").optional(),

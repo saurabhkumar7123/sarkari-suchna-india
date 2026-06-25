@@ -79,7 +79,8 @@ describe("homeStats.service", () => {
   it("returns only whitelist states with count > 0, sorted by count desc", async () => {
     pageRepository.selectDepartmentCounts.mockResolvedValue([]);
     pageRepository.selectStateCounts.mockResolvedValue([
-      { slug: "all india", page_count: 6 },
+      { slug: "central", page_count: 4 },
+      { slug: "all india", page_count: 2 },
       { slug: "uttar pradesh", page_count: 4 },
       { slug: "bihar", page_count: 0 },
       { slug: "invalid-state", page_count: 99 }
@@ -87,11 +88,11 @@ describe("homeStats.service", () => {
 
     const stats = await homeStats.recomputeTaxonomyStats();
 
-    expect(stats.states.map((s) => s.slug)).toEqual(["all india", "uttar pradesh"]);
+    expect(stats.states.map((s) => s.slug)).toEqual(["central", "uttar pradesh"]);
     expect(stats.states[0]).toMatchObject({
-      slug: "all india",
-      label: "All India",
-      href: "/state/all-india",
+      slug: "central",
+      label: "Central",
+      href: "/state/central",
       count: 6
     });
     expect(stats.states[1]).toMatchObject({

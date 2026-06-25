@@ -12,6 +12,7 @@ const {
 
 describe("taxonomySlugs", () => {
   it("converts spaced values to hyphenated path slugs", () => {
+    expect(toTaxonomyPathSlug("central")).toBe("central");
     expect(toTaxonomyPathSlug("all india")).toBe("all-india");
     expect(toTaxonomyPathSlug("post graduation")).toBe("post-graduation");
     expect(toTaxonomyPathSlug("10th")).toBe("10th");
@@ -24,7 +25,8 @@ describe("taxonomySlugs", () => {
   });
 
   it("resolves state path slugs against whitelist", () => {
-    expect(resolveStateFromPath("all-india")).toBe("all india");
+    expect(resolveStateFromPath("central")).toBe("central");
+    expect(resolveStateFromPath("all-india")).toBe("central");
     expect(resolveStateFromPath("uttar-pradesh")).toBe("uttar pradesh");
     expect(resolveStateFromPath("invalid")).toBeNull();
   });
@@ -33,6 +35,7 @@ describe("taxonomySlugs", () => {
     expect(buildDepartmentPath("railway")).toBe("/department/railway");
     expect(buildBoardPath("railway")).toBe("/department/railway");
     expect(buildQualificationPath("10th")).toBe("/qualification/10th");
+    expect(buildStatePath("central")).toBe("/state/central");
     expect(buildStatePath("all india")).toBe("/state/all-india");
   });
 });

@@ -50,11 +50,13 @@ describe("structuredFields", () => {
       expect(parseStateCoverageSet("Uttar Pradesh")).toEqual(["uttar pradesh"]);
     });
 
-    it("stateCoverageMatchesFilter mirrors Finder all-india OR logic", () => {
+    it("stateCoverageMatchesFilter uses exact slug match", () => {
       expect(stateCoverageMatchesFilter("uttar pradesh", "uttar pradesh")).toBe(true);
-      expect(stateCoverageMatchesFilter("all india", "uttar pradesh")).toBe(true);
+      expect(stateCoverageMatchesFilter("all india", "uttar pradesh")).toBe(false);
+      expect(stateCoverageMatchesFilter("central", "uttar pradesh")).toBe(false);
       expect(stateCoverageMatchesFilter("bihar", "uttar pradesh")).toBe(false);
-      expect(stateCoverageMatchesFilter("all india", "all india")).toBe(true);
+      expect(stateCoverageMatchesFilter("all india", "central")).toBe(true);
+      expect(stateCoverageMatchesFilter("central", "central")).toBe(true);
     });
   });
 

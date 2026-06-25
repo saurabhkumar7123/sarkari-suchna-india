@@ -39,9 +39,9 @@ const ALLOWED_JOB_QUALIFICATIONS = new Set([
   "phd"
 ]);
 
-/** Canonical state coverage slugs for Finder (single-select today). */
+/** Canonical state coverage slugs for Finder / generator (single-select today). */
 const ALLOWED_JOB_STATES = new Set([
-  "all india",
+  "central",
   "uttar pradesh",
   "bihar",
   "madhya pradesh",
@@ -50,6 +50,20 @@ const ALLOWED_JOB_STATES = new Set([
   "delhi",
   "uttarakhand"
 ]);
+
+/** Legacy DB / URL values mapped to canonical state slugs on read. */
+const LEGACY_STATE_ALIASES = new Map([["all india", "central"]]);
+
+/**
+ * Normalize a state slug for filters, counts, and saves.
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function normalizeStateSlug(value) {
+  const normalized = normalizeStructuredFieldValue(value);
+  if (!normalized) return null;
+  return LEGACY_STATE_ALIASES.get(normalized) || normalized;
+}
 
 /** Board department slugs — must match boardHubs.js and pages.department for /tag/{board}. */
 const ALLOWED_JOB_DEPARTMENTS = BOARD_SLUG_SET;
@@ -115,18 +129,19 @@ function parseStateCoverageSet(stored) {
 }
 
 /**
- * Whether a stored coverage set matches a Finder state filter.
- * Mirrors buildJobsWhere logic: specific state includes nationally scoped rows.
+ * Whether a stored coverage set matches a Finder state filter (exact slug match).
+ * Legacy stored "all india" is treated as "central".
  * @param {unknown} storedState
  * @param {unknown} filterState
  */
 function stateCoverageMatchesFilter(storedState, filterState) {
-  const filter = normalizeStructuredFieldValue(filterState);
+  const filter = normalizeStateSlug(filterState);
   if (!filter) return true;
-  const coverage = parseStateCoverageSet(storedState);
+  const coverage = parseStateCoverageSet(storedState).map(
+    (slug) => LEGACY_STATE_ALIASES.get(slug) || slug
+  );
   if (!coverage.length) return false;
-  if (filter === "all india") return coverage.includes("all india");
-  return coverage.includes(filter) || coverage.includes("all india");
+  return coverage.includes(filter);
 }
 
 // ---------------------------------------------------------------------------
@@ -167,9 +182,11 @@ module.exports = {
   ALLOWED_JOB_QUALIFICATIONS,
   ALLOWED_JOB_STATES,
   ALLOWED_JOB_DEPARTMENTS,
+  LEGACY_STATE_ALIASES,
   STATE_COVERAGE_DELIMITER,
   QUALIFICATION_DELIMITER,
   normalizeStructuredFieldValue,
+  normalizeStateSlug,
   isValidBoardDepartment,
   getInvalidDepartmentReason,
   auditInvalidBoardDepartment,
