@@ -353,6 +353,21 @@ function setDataFromServer(el, val) {
     return;
   }
   el.value = next;
+  syncSectionEditorFromData();
+}
+
+/** Refresh visual section builder after #data changes programmatically. */
+function syncSectionEditorFromData() {
+  if (typeof window.sectionEditor?.syncFromTextarea === "function") {
+    window.sectionEditor.syncFromTextarea();
+  }
+}
+
+/** Compile visual sections into #data before save/preview. */
+function flushSectionEditorBeforeRead() {
+  if (typeof window.sectionEditor?.flushToTextarea === "function") {
+    window.sectionEditor.flushToTextarea();
+  }
 }
 
 let aiConvertInProgress = false;
@@ -493,6 +508,7 @@ function resetGeneratorForm() {
   applyBadgesToForm([]);
   updateEditorStats();
   updateBreakingOrderVisibility();
+  syncSectionEditorFromData();
 }
 
 function createSlugFromTitle(title) {
@@ -570,6 +586,7 @@ function restoreDraftFromStorage() {
     if (document.getElementById("total_posts") && d.total_posts != null)
       document.getElementById("total_posts").value = d.total_posts;
     if (document.getElementById("data") && d.data) document.getElementById("data").value = d.data;
+    syncSectionEditorFromData();
     syncAiConvertButton();
     if (document.getElementById("category")) {
       document.getElementById("category").value = d.category || "";
@@ -601,6 +618,10 @@ function restoreDraftFromStorage() {
 setInterval(saveDraftToStorage, 5000);
 
 window.addEventListener("DOMContentLoaded", async () => {
+  if (typeof window.sectionEditor?.init === "function") {
+    window.sectionEditor.init();
+  }
+
   const pdfExtractForm = document.getElementById("pdfExtractForm");
   if (pdfExtractForm) {
     pdfExtractForm.addEventListener("submit", (e) => {
@@ -973,6 +994,7 @@ async function loadContentImportFromURL() {
     resetGeneratorForm();
     const ta = document.getElementById("data");
     if (ta) ta.value = String(row.content || "");
+    syncSectionEditorFromData();
     setPageUrlLocked(false);
     syncAiConvertButton();
     updateEditorStats();
@@ -1093,6 +1115,7 @@ async function loadPageFromURL(){
     setNormalizedSelectValue("structuredDepartment", page.department);
     document.getElementById("pageUrl").value = page.url || "";
     document.getElementById("data").value = page.rawText || "";
+    syncSectionEditorFromData();
     document.getElementById("oldSlug").value = (page.slug || "").replace(/^\//, "");
     document.getElementById("pageId").value = page.id || "";
 
@@ -1274,6 +1297,7 @@ async function selectPage(p){
     setNormalizedSelectValue("structuredDepartment", page.department);
     document.getElementById("pageUrl").value = page.url || "";
     document.getElementById("data").value = page.rawText || "";
+    syncSectionEditorFromData();
     document.getElementById("oldSlug").value = (page.slug || "").replace(/^\//, "");
     document.getElementById("pageId").value = page.id || "";
     document.getElementById("breaking").checked = !!page.breaking;
@@ -1318,6 +1342,7 @@ function inputValueById(id) {
 
 // ================= GENERATE PAGE =================
 async function generatePage(){
+  flushSectionEditorBeforeRead();
   const titleOk = validateFieldNow("title");
   const lastDateOk = validateFieldNow("lastDate");
   const pageUrlOk = validateFieldNow("pageUrl");
@@ -1730,6 +1755,7 @@ let previewTimer;
 
 function updatePreview(){
 
+  flushSectionEditorBeforeRead();
   clearTimeout(previewTimer);
   const previewBtn = document.getElementById("previewBtn");
   if (previewBtn) {
@@ -2007,6 +2033,7 @@ ${payloadText}
     const next = ensureSections(aiOut || "", prev);
 
     ta.value = safeSet(ta, next);
+    syncSectionEditorFromData();
     if (!aiOut || aiOut.length <= AI_ACCEPT_MIN_LEN) {
       console.warn("[AI] Weak or empty API text — structured sections merged from input");
     }

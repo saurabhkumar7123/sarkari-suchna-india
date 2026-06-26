@@ -21,8 +21,8 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=5">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=12">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=3">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=13">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=11">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=3">
@@ -302,12 +302,57 @@
       <button type="button" id="editorFsCloseBtn" class="editor-fs-action editor-fs-action--close">Done</button>
     </div>
 
+    <div class="editor-toolbar editor-toolbar--saas">
+      <span class="editor-toolbar__chip">Structured editor</span>
+      <span class="editor-toolbar__chip editor-toolbar__chip--muted">Auto-saves draft</span>
+      <span class="editor-toolbar-hint">Section builder compiles to publish format automatically</span>
+    </div>
+
+    <div class="section-editor-wrap" id="sectionEditorWrap">
+      <div class="section-editor-toolbar">
+        <div class="section-editor-mode" role="tablist" aria-label="Editor mode">
+          <button type="button" id="editorModeVisual" class="section-editor-mode__btn is-active" role="tab" aria-selected="true">Section builder</button>
+          <button type="button" id="editorModeRaw" class="section-editor-mode__btn" role="tab" aria-selected="false">Raw text</button>
+        </div>
+        <button type="button" id="sectionEditorAddBtn" class="section-editor-add-btn">+ Add Section</button>
+      </div>
+      <p id="sectionEditorNotice" class="section-editor-notice" hidden aria-live="polite"></p>
+      <div id="sectionEditorRoot" class="section-editor-root"></div>
+    </div>
+
+    <textarea
+      id="data"
+      class="content-editor"
+      placeholder="Write ShortInfo, Sections, and FAQs here"></textarea>
+  </section>
+
+  <section class="preview-panel" id="gen-step-preview">
+    <div class="panel-head">
+      <h3>Live Preview</h3>
+      <span class="preview-hint">Rendered output (same pipeline as publish)</span>
+      <button type="button" id="mobilePreviewCloseBtn" class="mobile-preview-close" hidden aria-label="Close preview">Close</button>
+    </div>
+    <iframe id="previewFrame"></iframe>
+  </section>
+
+  <details class="content-analysis-panel" id="contentAnalysisPanel" hidden>
+    <summary class="panel-head content-analysis-panel__summary">
+      <span class="content-analysis-panel__title">
+        <h3>Content analysis</h3>
+        <span class="preview-hint" id="contentAnalysisSummary">—</span>
+      </span>
+      <span class="content-analysis-panel__chevron" aria-hidden="true">▾</span>
+    </summary>
+    <div id="contentAnalysisBody" class="content-analysis-body"></div>
+  </details>
+
+  <section class="pdf-extract-panel" id="pdfExtractSection" aria-label="PDF Extract">
     <div class="pdf-extract-bar" id="pdfExtractBar">
       <div class="pdf-extract-bar__intro">
         <span class="pdf-extract-bar__icon" aria-hidden="true">📄</span>
         <div class="pdf-extract-bar__copy">
           <strong>PDF Extract</strong>
-          <span>Upload a recruitment PDF to fill the editor below</span>
+          <span>Upload a recruitment PDF to fill the editor above</span>
         </div>
       </div>
       <form id="pdfExtractForm" class="pdf-extract-bar__form" action="#" autocomplete="off">
@@ -325,33 +370,6 @@
         <button type="button" id="pdfUploadBtn" class="pdf-extract-btn">Extract text</button>
       </form>
     </div>
-
-    <div class="editor-toolbar editor-toolbar--saas">
-      <span class="editor-toolbar__chip">Structured editor</span>
-      <span class="editor-toolbar__chip editor-toolbar__chip--muted">Auto-saves draft</span>
-      <span class="editor-toolbar-hint">Use <code>[Section: Vacancy | table]</code> for stable tables</span>
-    </div>
-    <textarea
-      id="data"
-      class="content-editor"
-      placeholder="Write ShortInfo, Sections, and FAQs here"></textarea>
-  </section>
-
-  <section class="content-analysis-panel" id="contentAnalysisPanel" aria-label="Content analysis" hidden>
-    <div class="panel-head">
-      <h3>Content analysis</h3>
-      <span class="preview-hint" id="contentAnalysisSummary">—</span>
-    </div>
-    <div id="contentAnalysisBody" class="content-analysis-body"></div>
-  </section>
-
-  <section class="preview-panel" id="gen-step-preview">
-    <div class="panel-head">
-      <h3>Live Preview</h3>
-      <span class="preview-hint">Rendered output (same pipeline as publish)</span>
-      <button type="button" id="mobilePreviewCloseBtn" class="mobile-preview-close" hidden aria-label="Close preview">Close</button>
-    </div>
-    <iframe id="previewFrame"></iframe>
   </section>
 </div>
 
@@ -395,6 +413,8 @@
 <script src="/js/admin-generator-ui.js"></script>
 <script src="/js/generator-mobile.js?v=3"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/generator.js?v=6"></script>
+<script src="/js/sectionEditorModel.js?v=6"></script>
+<script src="/js/sectionEditor.js?v=8"></script>
+<script src="/js/generator.js?v=8"></script>
 </body>
 </html>

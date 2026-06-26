@@ -464,6 +464,32 @@ body.generator-saas-v2 .editor-fullscreen-btn:hover{
   box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 
+body.generator-saas-v2 .content-analysis-panel{
+  min-height:0;
+  gap:0;
+}
+
+body.generator-saas-v2 .content-analysis-panel__summary{
+  padding:2px 0;
+}
+
+body.generator-saas-v2 .content-analysis-panel[open] .content-analysis-body{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--saas-line);
+}
+
+body.generator-saas-v2 .pdf-extract-panel{
+  border-color:#bfdbfe;
+  background:linear-gradient(180deg,#f8fbff,#f1f5f9);
+}
+
+body.generator-saas-v2 .pdf-extract-panel .pdf-extract-bar{
+  border:0;
+  border-radius:14px;
+  background:transparent;
+}
+
 body.generator-saas-v2 .pdf-extract-bar{
   border-radius:var(--saas-radius-sm);
   border-color:#bfdbfe;
@@ -955,5 +981,577 @@ body.generator-saas-v2 .generator-pdf-draft-banner__actions{
 
   body.generator-saas-v2 .admin-workflow-banner{
     grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+/* ---- Section builder (visual editor) ---- */
+body.generator-saas-v2 .section-editor-wrap{
+  margin:0 0 12px;
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  background:var(--saas-surface-soft);
+  overflow:hidden;
+}
+
+body.generator-saas-v2 .section-editor-wrap.is-raw-mode .section-editor-root,
+body.generator-saas-v2 .section-editor-wrap.is-raw-mode .section-editor-add-btn{
+  display:none;
+}
+
+body.generator-saas-v2 .content-editor.is-hidden-raw-off{
+  display:none;
+}
+
+body.generator-saas-v2 .section-editor-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border-bottom:1px solid var(--saas-line);
+  background:var(--saas-surface);
+}
+
+body.generator-saas-v2 .section-editor-mode{
+  display:inline-flex;
+  padding:3px;
+  border:1px solid var(--saas-line);
+  border-radius:999px;
+  background:#f1f5f9;
+}
+
+body.generator-saas-v2 .section-editor-mode__btn{
+  border:0;
+  background:transparent;
+  color:var(--saas-muted);
+  font-size:12px;
+  font-weight:700;
+  padding:7px 14px;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .section-editor-mode__btn.is-active{
+  background:#fff;
+  color:var(--saas-brand);
+  box-shadow:0 1px 2px rgba(15,23,42,.08);
+}
+
+body.generator-saas-v2 .section-editor-add-btn{
+  border:1px dashed var(--saas-line-strong);
+  background:#fff;
+  color:var(--saas-brand);
+  font-size:12px;
+  font-weight:700;
+  padding:8px 14px;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .section-editor-add-btn:hover{
+  border-color:var(--saas-brand);
+  background:var(--saas-brand-soft);
+}
+
+body.generator-saas-v2 .section-editor-notice{
+  margin:0;
+  padding:8px 12px;
+  font-size:12px;
+  line-height:1.45;
+}
+
+body.generator-saas-v2 .section-editor-notice.is-warn{
+  background:#fffbeb;
+  color:#92400e;
+  border-bottom:1px solid #fde68a;
+}
+
+body.generator-saas-v2 .section-editor-notice.is-info{
+  background:#eff6ff;
+  color:#1e40af;
+  border-bottom:1px solid #bfdbfe;
+}
+
+body.generator-saas-v2 .section-editor-root{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:12px;
+  max-height:min(68vh,720px);
+  overflow:auto;
+}
+
+body.generator-saas-v2 .sec-card{
+  border:1px solid var(--saas-line);
+  border-radius:var(--saas-radius-sm);
+  background:#fff;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+body.generator-saas-v2 .sec-card__head{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px 12px;
+  align-items:start;
+  padding:12px;
+  border-bottom:1px solid var(--saas-line);
+  background:linear-gradient(180deg,#fff,#f8fafc);
+}
+
+body.generator-saas-v2 .sec-card.is-collapsed .sec-card__head{
+  border-bottom:none;
+  cursor:default;
+}
+
+body.generator-saas-v2 .sec-toggle-btn{
+  width:32px;
+  height:32px;
+  margin-top:2px;
+  border:1px solid var(--saas-line);
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:11px;
+  line-height:1;
+  cursor:pointer;
+  flex-shrink:0;
+}
+
+body.generator-saas-v2 .sec-toggle-btn:hover{
+  border-color:var(--saas-brand);
+  color:var(--saas-brand);
+  background:var(--saas-brand-soft);
+}
+
+body.generator-saas-v2 .sec-card__head-main{
+  min-width:0;
+}
+
+body.generator-saas-v2 .sec-card__collapsed-bar{
+  display:none;
+  align-items:center;
+  gap:10px;
+  min-height:36px;
+  padding:4px 0;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-card.is-collapsed .sec-card__collapsed-bar{
+  display:flex;
+}
+
+body.generator-saas-v2 .sec-card.is-collapsed .sec-card__expandable{
+  display:none;
+}
+
+body.generator-saas-v2 .sec-card:not(.is-collapsed) .sec-card__collapsed-bar{
+  display:none;
+}
+
+body.generator-saas-v2 .sec-card__collapsed-name{
+  font-size:15px;
+  font-weight:800;
+  color:var(--saas-text);
+  letter-spacing:-.01em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .sec-card__collapsed-type{
+  flex:0 0 auto;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-brand);
+  background:var(--saas-brand-soft);
+  border:1px solid #bfdbfe;
+  border-radius:999px;
+  padding:4px 8px;
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .sec-card.is-collapsed .sec-card__body{
+  display:none;
+}
+
+body.generator-saas-v2 .sec-card__title-row,
+body.generator-saas-v2 .sec-card__meta-row{
+  min-width:0;
+}
+
+body.generator-saas-v2 .sec-card__tools{
+  display:flex;
+  gap:6px;
+  align-items:start;
+  grid-column:3;
+  grid-row:1;
+}
+
+body.generator-saas-v2 .sec-card__body{
+  padding:12px;
+}
+
+body.generator-saas-v2 .sec-field-label{
+  display:block;
+  margin:0 0 4px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+}
+
+body.generator-saas-v2 .sec-field-hint{
+  margin:10px 0 6px;
+  font-size:12px;
+  font-weight:700;
+  color:#475569;
+}
+
+body.generator-saas-v2 .sec-input,
+body.generator-saas-v2 .sec-select,
+body.generator-saas-v2 .sec-textarea{
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  padding:9px 11px;
+  font-size:14px;
+  background:#fff;
+  color:var(--saas-text);
+}
+
+body.generator-saas-v2 .sec-input--title{
+  font-weight:700;
+}
+
+body.generator-saas-v2 .sec-textarea{
+  min-height:72px;
+  resize:vertical;
+  line-height:1.5;
+}
+
+body.generator-saas-v2 .sec-textarea--compact{
+  min-height:56px;
+}
+
+body.generator-saas-v2 .sec-textarea--mono{
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12px;
+}
+
+body.generator-saas-v2 .sec-rows{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+body.generator-saas-v2 .sec-row{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:8px;
+  align-items:center;
+}
+
+body.generator-saas-v2 .sec-faq-pair{
+  padding:10px;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:#f8fafc;
+}
+
+body.generator-saas-v2 .sec-faq-pair .sec-field-label{
+  margin-top:8px;
+}
+
+body.generator-saas-v2 .sec-faq-pair .sec-field-label:first-child{
+  margin-top:0;
+}
+
+body.generator-saas-v2 .sec-row-actions{
+  display:flex;
+  gap:4px;
+}
+
+body.generator-saas-v2 .sec-row-actions--block{
+  justify-content:flex-end;
+  margin-top:6px;
+}
+
+body.generator-saas-v2 .sec-row-btn,
+body.generator-saas-v2 .sec-tool-btn{
+  width:32px;
+  height:32px;
+  border:1px solid var(--saas-line);
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-tool-btn--danger{
+  color:#b91c1c;
+}
+
+body.generator-saas-v2 .sec-add-row-btn{
+  margin-top:8px;
+  border:0;
+  background:transparent;
+  color:var(--saas-brand);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  padding:4px 0;
+}
+
+body.generator-saas-v2 .sec-check{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  color:#475569;
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .sec-field-label-muted{
+  font-weight:600;
+  text-transform:none;
+  letter-spacing:0;
+  color:#94a3b8;
+}
+
+body.generator-saas-v2 .sec-check--block{
+  margin:10px 0 8px;
+}
+
+body.generator-saas-v2 .is-hidden{
+  display:none !important;
+}
+
+body.generator-saas-v2 .sec-link-entry{
+  margin-bottom:14px;
+  padding:12px;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:#f8fafc;
+}
+
+body.generator-saas-v2 .sec-link-entry-tools{
+  margin-top:10px;
+  display:flex;
+  justify-content:flex-end;
+}
+
+body.generator-saas-v2 .sec-link-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+body.generator-saas-v2 .sec-link-action{
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:8px;
+  align-items:center;
+}
+
+body.generator-saas-v2 .sec-link-single .sec-field-label{
+  margin-top:8px;
+}
+
+body.generator-saas-v2 .sec-table-blocks{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+body.generator-saas-v2 .sec-table-block{
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:#f8fafc;
+  padding:12px;
+}
+
+body.generator-saas-v2 .sec-table-block__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+body.generator-saas-v2 .sec-table-block__label{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-brand);
+}
+
+body.generator-saas-v2 .sec-table-block__tools{
+  display:flex;
+  gap:6px;
+}
+
+body.generator-saas-v2 .sec-table-block-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  margin-top:12px;
+}
+
+body.generator-saas-v2 .sec-table-actions--inline{
+  margin-top:8px;
+}
+
+body.generator-saas-v2 .sec-table-editor{
+  margin-top:4px;
+}
+
+body.generator-saas-v2 .sec-table-hint{
+  margin:0 0 10px;
+  font-size:12px;
+  line-height:1.5;
+  color:#475569;
+}
+
+body.generator-saas-v2 .sec-table-hint code{
+  font-size:11px;
+  background:#f1f5f9;
+  border:1px solid var(--saas-line);
+  border-radius:4px;
+  padding:1px 5px;
+}
+
+body.generator-saas-v2 .sec-table-scroll{
+  overflow:auto;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:#fff;
+}
+
+body.generator-saas-v2 .sec-table-grid{
+  width:100%;
+  border-collapse:collapse;
+  min-width:480px;
+}
+
+body.generator-saas-v2 .sec-table-grid th,
+body.generator-saas-v2 .sec-table-grid td{
+  border:1px solid var(--saas-line);
+  padding:6px;
+  vertical-align:top;
+}
+
+body.generator-saas-v2 .sec-table-cell--head{
+  background:#eff6ff;
+}
+
+body.generator-saas-v2 .sec-table-cell--body{
+  min-width:140px;
+}
+
+body.generator-saas-v2 .sec-table-cell-link-toggle{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  margin:0 0 6px;
+  font-size:11px;
+  font-weight:700;
+  color:#64748b;
+  cursor:pointer;
+  user-select:none;
+}
+
+body.generator-saas-v2 .sec-table-cell-link-toggle input{
+  margin:0;
+}
+
+body.generator-saas-v2 .sec-table-cell-text-wrap,
+body.generator-saas-v2 .sec-table-cell-link-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+body.generator-saas-v2 .sec-table-cell-link-wrap .sec-table-cell-input{
+  min-width:120px;
+}
+
+body.generator-saas-v2 .sec-table-cell-input{
+  min-width:110px;
+  font-size:13px;
+  padding:7px 8px;
+}
+
+body.generator-saas-v2 .sec-table-mini-btn{
+  display:block;
+  margin-top:4px;
+  width:100%;
+  border:0;
+  background:transparent;
+  color:#94a3b8;
+  font-size:14px;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-table-mini-btn:hover{
+  color:#b91c1c;
+}
+
+body.generator-saas-v2 .sec-table-row-tools{
+  width:36px;
+  text-align:center;
+  background:#f8fafc;
+}
+
+body.generator-saas-v2 .sec-table-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  margin-top:10px;
+}
+
+body.generator-saas-v2 .sec-dates-add-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 12px;
+  margin-top:10px;
+}
+
+body.generator-saas-v2 .sec-dates-block{
+  margin-bottom:8px;
+}
+
+body.generator-saas-v2 .sec-dates-block--para,
+body.generator-saas-v2 .sec-dates-block--list{
+  padding:10px;
+  border:1px dashed var(--saas-line);
+  border-radius:10px;
+  background:#f8fafc;
+}
+
+@media (max-width:768px){
+  body.generator-saas-v2 .sec-card__head{
+    grid-template-columns:auto 1fr;
+  }
+
+  body.generator-saas-v2 .sec-card__tools{
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-content:flex-end;
+  }
+
+  body.generator-saas-v2 .sec-row{
+    grid-template-columns:1fr;
+  }
+
+  body.generator-saas-v2 .section-editor-root{
+    max-height:none;
   }
 }
