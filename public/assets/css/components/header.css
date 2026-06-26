@@ -5,7 +5,7 @@
   font-family:'Segoe UI',sans-serif;
   position:relative;
   z-index:var(--z-sticky);
-  margin-bottom:10px;
+  margin-bottom:0;
 }
 
 .main-header.is-scrolled .navbar,
@@ -264,6 +264,10 @@
 @media (min-width: 769px){
   .site-updated-indicator--title{
     display:inline-flex;
+  }
+
+  body.page-home .site-updated-indicator--title{
+    display:none !important;
   }
 
   .site-updated-indicator--below-social{
@@ -691,6 +695,18 @@
 
 .site-updated-indicator--below-social{
   display:none !important;
+}
+
+/* Homepage: Stay Updated chip lives between breaking + small boxes (see home.css) */
+body.page-home .main-header .site-updated-indicator--title{
+  display:none !important;
+}
+
+/* Mobile: hide header chip on non-home pages too */
+@media (max-width: 768px) {
+  .main-header .site-updated-indicator--title{
+    display:none !important;
+  }
 }
 
 /* HIDE DESKTOP NAV */

@@ -45,6 +45,77 @@
   --home-card-inset-mobile: var(--space-12);
 }
 
+/* Homepage-only Stay Updated band — between breaking + small boxes (all viewports) */
+.home-content-start-gap {
+  display: none;
+}
+
+body.page-home .home-content-start-gap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 26px;
+  margin: 0;
+  padding: 6px 12px;
+  flex: 0 0 auto;
+  background: var(--site-bg-page, #ffffff);
+  box-sizing: border-box;
+}
+
+body.page-home .site-updated-indicator--home-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  border: 1px solid #3b82f6;
+  box-shadow: none;
+}
+
+body.page-home .site-updated-indicator--home-start .site-updated-indicator__dot {
+  width: 6px;
+  height: 6px;
+}
+
+body.page-home .site-updated-indicator--home-start .site-updated-indicator__label {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #fff;
+  opacity: 1;
+}
+
+body.page-home .site-updated-indicator--home-start .site-updated-indicator__tooltip {
+  top: calc(100% + 6px);
+}
+
+@media (min-width: 769px) {
+  body.page-home .site-updated-indicator--home-start {
+    gap: 5px;
+    padding: 4px 10px;
+  }
+
+  body.page-home .site-updated-indicator--home-start .site-updated-indicator__dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  body.page-home .site-updated-indicator--home-start .site-updated-indicator__label {
+    font-size: 8.5px;
+  }
+
+  body.page-home .site-updated-indicator--home-start:hover .site-updated-indicator__tooltip,
+  body.page-home .site-updated-indicator--home-start:focus-visible .site-updated-indicator__tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 .visually-hidden-seo {
   position: absolute;
   width: 1px;
@@ -129,7 +200,7 @@
    * Full-bleed alignment: all primary blocks share the same left/right axis.
    * Horizontal gutter comes from tokens.css .main-container only.
    */
-  body.page-home .main-container > .section,
+  body.page-home .main-container > .section:not(#smallBoxes),
   body.page-home .main-container > #countdownBox {
     box-sizing: border-box;
     width: 100%;
@@ -147,7 +218,6 @@
   }
 
   body.page-home .main-container .breaking-news,
-  body.page-home .main-container .small-boxes,
   body.page-home .main-container .cards-section,
   body.page-home .main-container .taxonomy-discovery,
   body.page-home .main-container .trending-section,
@@ -156,6 +226,16 @@
     max-width: 100%;
     margin: 0;
     padding: 0;
+  }
+
+  /* Small boxes: horizontal flush only — top gap lives in mobile #smallBoxes rule */
+  body.page-home .main-container .small-boxes {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
   }
 
   body.page-home .main-container > .section .card-grid,
@@ -2172,10 +2252,13 @@
     min-height: 44px;
     margin: 0;
     overflow: hidden;
+    border-radius: 0;
+    border-top: none;
   }
 
-  body.page-home .main-header {
-    margin-bottom: 0;
+  body.page-home .site-main {
+    margin-top: 0;
+    padding-top: 0;
   }
 
   body.page-home .site-main .main-container {
@@ -2183,9 +2266,25 @@
     padding-top: 0;
   }
 
-  /* Tighter rhythm: breaking → small boxes → finder → categories → sections */
+  /* Tighter rhythm: breaking → gap → small boxes → finder → categories → sections */
   body.page-home .main-container {
     gap: 12px;
+  }
+
+  body.page-home .home-content-start-gap {
+    order: 1;
+  }
+
+  body.page-home .main-container > #smallBoxes.section.small-boxes {
+    order: 2;
+    margin-top: 0;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   body.page-home #dynamicSections.card-grid {
@@ -2303,39 +2402,28 @@
     align-items: center;
   }
 
-  body.page-home .main-container > #smallBoxes {
-    order: 1;
-    margin-top: 16px;
-    padding-top: 14px;
-    padding-left: 0;
-    padding-right: 0;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
   body.page-home .main-container > #openFinder {
-    order: 2;
-  }
-
-  body.page-home .main-container > #countdownBox {
-    order: 2;
-  }
-
-  body.page-home .main-container > #taxonomyDiscovery {
     order: 3;
   }
 
-  body.page-home .main-container > #dynamicSections {
+  body.page-home .main-container > #countdownBox {
+    order: 3;
+  }
+
+  body.page-home .main-container > #taxonomyDiscovery {
     order: 4;
   }
 
-  body.page-home .main-container > .trending-section {
+  body.page-home .main-container > #dynamicSections {
     order: 5;
   }
 
-  body.page-home .main-container > #about-site {
+  body.page-home .main-container > .trending-section {
     order: 6;
+  }
+
+  body.page-home .main-container > #about-site {
+    order: 7;
   }
 
   /* Adjacent-sibling borders follow DOM, not visual order — rely on flex gap */
