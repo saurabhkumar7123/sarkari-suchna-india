@@ -1237,14 +1237,36 @@ mark{
 
   body.generator-page .action-bar__inner{
     flex-direction:row;
-    flex-wrap:nowrap;
+    flex-wrap:wrap;
     align-items:stretch;
     gap:6px;
   }
 
+  body.generator-page .action-bar__inner .sticky-draft-status{
+    flex:1 1 100%;
+    width:100%;
+    order:-1;
+    margin:0;
+    padding:0 4px 2px;
+    text-align:center;
+    font-size:10px;
+    font-weight:600;
+    line-height:1.2;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    border:none;
+    background:transparent;
+    border-radius:0;
+  }
+
+  body.generator-page .action-bar__inner .sticky-draft-status:empty{
+    display:none;
+  }
+
   body.generator-page .action-group-tools{
     display:flex;
-    flex:1.35 1 0;
+    flex:2 1 0;
     min-width:0;
     gap:6px;
     width:auto;
@@ -1262,16 +1284,20 @@ mark{
   body.generator-page .action-group-tools .btn-tool,
   body.generator-page .action-group-primary .btn-save{
     flex:1 1 0;
-    min-width:0;
+    min-width:0 !important;
     width:auto;
-    height:34px;
-    min-height:34px;
+    height:40px;
+    min-height:40px;
     padding:0 6px;
-    font-size:11px;
+    font-size:12px;
     font-weight:700;
     border-radius:9px;
     box-shadow:0 1px 4px rgba(15,23,42,.08);
     white-space:nowrap;
+  }
+
+  body.generator-page .action-bar .btn-primary{
+    min-width:0 !important;
   }
 
   body.generator-page .action-group-primary .btn-save{

@@ -10,13 +10,15 @@
     document.body.classList.add("has-sticky-publish-bar");
 
     let statusEl = document.getElementById("stickyDraftStatus");
+    const inner = bar.querySelector(".action-bar__inner") || bar;
     if (!statusEl) {
-      const group = bar.querySelector(".action-group-tools") || bar.querySelector(".action-bar__inner") || bar;
       statusEl = document.createElement("span");
       statusEl.id = "stickyDraftStatus";
       statusEl.className = "sticky-draft-status";
       statusEl.setAttribute("aria-live", "polite");
-      group.insertBefore(statusEl, group.firstChild);
+      inner.insertBefore(statusEl, inner.firstChild);
+    } else if (statusEl.parentElement !== inner) {
+      inner.insertBefore(statusEl, inner.firstChild);
     }
 
     function updateDraftStatus() {
