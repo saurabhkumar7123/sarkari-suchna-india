@@ -131,6 +131,26 @@
     line-height:1.45;
     word-break:break-word;
     }
+
+    .meta-item--static .meta-label{
+    color:#94a3b8;
+    font-weight:600;
+    }
+
+    .meta-item--static .meta-value{
+    color:#64748b;
+    font-weight:500;
+    }
+
+    .meta-item--tag,
+    .meta-item:has(.meta-tag){
+    pointer-events:none;
+    }
+
+    .meta-item--tag .meta-tag,
+    .meta-item:has(.meta-tag) .meta-tag{
+    pointer-events:auto;
+    }
   
     .meta-info-section .meta-tag,
     .meta-info-section a.meta-tag{
@@ -156,6 +176,19 @@
     .meta-info-section a.meta-tag:hover{
     background:#1d4ed8;
     color:#ffffff;
+    }
+
+    .meta-info-section a.meta-tag:focus-visible{
+    outline:2px solid #ffffff;
+    outline-offset:2px;
+    box-shadow:0 0 0 4px rgba(37,99,235,0.55);
+    }
+
+    .meta-info-section .meta-item--static:focus,
+    .meta-info-section .meta-item--static:focus-visible,
+    .meta-info-section .meta-item--static:focus-within{
+    outline:none;
+    box-shadow:none;
     }
 
     /* Desktop: shrink box to content width */
