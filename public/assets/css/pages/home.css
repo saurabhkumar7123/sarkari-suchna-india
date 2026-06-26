@@ -1214,17 +1214,18 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     /* Categories — mobile: 3×2 grid; slots 7–8 hidden (desktop only) */
     body.page-home .small-boxes{
       grid-template-columns:repeat(3,1fr);
-      gap:0;
+      gap:6px;
       width:100%;
       max-width:100%;
     }
 
     body.page-home .small-boxes .cat{
-      border-radius:0;
+      border-radius:6px;
     }
 
     body.page-home .small-boxes .cat::before{
-      border-radius:0;
+      border-top-left-radius:6px;
+      border-bottom-left-radius:6px;
     }
 
     .small-boxes{
