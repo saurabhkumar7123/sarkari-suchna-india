@@ -66,6 +66,42 @@
     accordion.removeAttribute("open");
   }
 
+  function mountExpandTopbar(on) {
+    const topbar = document.getElementById("editorExpandTopbar");
+    const headBar = document.getElementById("editorHeadBar");
+    if (!topbar || !headBar) return;
+
+    const fsToolbar = document.getElementById("editorFullscreenToolbar");
+    const seoBtn = document.getElementById("seoChecklistToggle");
+    const actions = headBar.querySelector(".panel-head__actions");
+
+    if (on) {
+      if (fsToolbar) {
+        fsToolbar.hidden = false;
+        topbar.appendChild(fsToolbar);
+      }
+      if (seoBtn) topbar.appendChild(seoBtn);
+      if (actions) topbar.appendChild(actions);
+      topbar.hidden = false;
+      if (typeof window.__applyGeneratorMobileLabels === "function") {
+        window.__applyGeneratorMobileLabels();
+      }
+      return;
+    }
+
+    if (fsToolbar) {
+      fsToolbar.hidden = true;
+      headBar.insertBefore(fsToolbar, headBar.firstChild);
+    }
+    if (seoBtn && actions) {
+      headBar.insertBefore(seoBtn, actions);
+    } else if (seoBtn) {
+      headBar.appendChild(seoBtn);
+    }
+    if (actions) headBar.appendChild(actions);
+    topbar.hidden = true;
+  }
+
   function initFullscreenEditor() {
     if (isQuickMode) return;
 
@@ -80,8 +116,7 @@
       document.body.classList.toggle("generator-editor-fullscreen", on);
       btn.setAttribute("aria-pressed", on ? "true" : "false");
       if (labelEl) labelEl.textContent = on ? "Collapse" : "Expand";
-      const fsToolbar = document.getElementById("editorFullscreenToolbar");
-      if (fsToolbar) fsToolbar.hidden = !on;
+      mountExpandTopbar(on);
       if (on) {
         closeMobilePreview();
         textarea.focus();
@@ -157,8 +192,7 @@
 
   function exitFullscreenEditorUi() {
     document.body.classList.remove("generator-editor-fullscreen");
-    const fsToolbar = document.getElementById("editorFullscreenToolbar");
-    if (fsToolbar) fsToolbar.hidden = true;
+    mountExpandTopbar(false);
     const fsBtn = document.getElementById("editorFullscreenBtn");
     const labelEl = fsBtn?.querySelector(".editor-fullscreen-btn__label");
     if (fsBtn) fsBtn.setAttribute("aria-pressed", "false");
@@ -248,6 +282,36 @@
     if (window.matchMedia("(display-mode: standalone)").matches) return;
   }
 
+  function initMobileSectionEditorLabels() {
+    const visual = document.getElementById("editorModeVisual");
+    const raw = document.getElementById("editorModeRaw");
+    const addBtn = document.getElementById("sectionEditorAddBtn");
+    const seoBtn = document.getElementById("seoChecklistToggle");
+    const defaults = {
+      visual: "Section builder",
+      raw: "Raw text",
+      add: "+ Add Section",
+      seo: "SEO Checklist"
+    };
+    const short = { visual: "Builder", raw: "Raw", add: "+ Add", seo: "SEO" };
+
+    function apply() {
+      const mobile = mobileMq.matches;
+      if (visual) visual.textContent = mobile ? short.visual : defaults.visual;
+      if (raw) raw.textContent = mobile ? short.raw : defaults.raw;
+      if (addBtn) addBtn.textContent = mobile ? short.add : defaults.add;
+      if (seoBtn) seoBtn.textContent = mobile ? short.seo : defaults.seo;
+    }
+
+    apply();
+    window.__applyGeneratorMobileLabels = apply;
+    if (typeof mobileMq.addEventListener === "function") {
+      mobileMq.addEventListener("change", apply);
+    } else if (typeof mobileMq.addListener === "function") {
+      mobileMq.addListener(apply);
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initQuickMode();
     initQuickModeLinkForMobile();
@@ -256,5 +320,6 @@
     initMobilePreview();
     initTabletClass();
     initPwaHint();
+    initMobileSectionEditorLabels();
   });
 })();

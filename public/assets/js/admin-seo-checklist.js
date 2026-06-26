@@ -119,6 +119,7 @@
 
   function ensureUi() {
     const panelHead = document.querySelector(".editor-panel .panel-head");
+    const headBar = document.getElementById("editorHeadBar");
     if (!panelHead || document.getElementById("seoChecklistToggle")) return;
 
     const btn = document.createElement("button");
@@ -126,7 +127,16 @@
     btn.id = "seoChecklistToggle";
     btn.className = "seo-checklist-toggle";
     btn.textContent = "SEO Checklist";
-    panelHead.appendChild(btn);
+
+    const actions = headBar?.querySelector(".panel-head__actions");
+    if (headBar && actions) {
+      headBar.insertBefore(btn, actions);
+    } else if (panelHead) {
+      panelHead.appendChild(btn);
+    }
+    if (typeof window.__applyGeneratorMobileLabels === "function") {
+      window.__applyGeneratorMobileLabels();
+    }
 
     const drawer = document.createElement("aside");
     drawer.id = "seoChecklistDrawer";
