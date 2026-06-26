@@ -8,52 +8,58 @@ const { smartCleanJobText } = require("../utils/smartClean");
 const {
   detectSections,
   formatBucketsForPrompt,
-  bucketsToStructuredDocument
+  bucketsToPublisherDocument
 } = require("../utils/sectionDetector");
 const { finalizeStructuredJobOutput } = require("../utils/jobSectionStructure");
+const { tryPreserveStructuredInput, prepareInputForStructuring } = require("../utils/publisherSections");
 
 const MIN_CHARS_REJECT = 20;
 const MIN_CHARS_FORCE_OUTPUT = 50;
 const OPENAI_MAX_INPUT = 120000;
 const FALLBACK_SLICE = 500;
 
-const SYSTEM_REFINE_PROMPT = `You are a structured job data extractor.
+const SYSTEM_REFINE_PROMPT = `You are a structured job data extractor for Indian government recruitment pages.
 
-INPUT: PRE-CLASSIFIED lines (DATES, QUALIFICATION, AGE, VACANCY, STATE, SELECTION, LINKS, OTHER_HINTS). Noise is already reduced.
+INPUT: PRE-CLASSIFIED lines (DATES, QUALIFICATION, AGE, VACANCY, STATE, SELECTION, LINKS, FEE, OTHER_HINTS). Noise is already reduced.
 
-GOAL: VALUE-ONLY extraction. Do NOT leave a section empty if the input contains ANY relevant line for that section. Prefer the closest reasonable value over "—". Do NOT paste long paragraphs, RTI, legal text, or instructions.
+GOAL: VALUE-ONLY extraction into PUBLISHER sections. Do NOT leave a section empty if input has relevant lines. Prefer real values over "—". No fake data.
 
 FORMATTING (strict):
-- Each [Section: …] alone on its own line; newline before every [Section: …]
-- One data line per row under each section (no comma-joined section headers)
+- Each [Section: …] on its own line; blank line between sections optional
+- Short Information = 1–3 short paragraph lines (organization, post name, total posts)
+- Important Dates = one date per line as "Label : value" (e.g. Online Apply Start Date : 04 September 2025)
+- Application Fee = fee rows like "For General / OBC / EWS : ₹ 125/-"
+- Important Links = Label=https://… one per line
+- Vacancy = if comma-grid (header + data rows), keep as CSV lines under [Section: Vacancy | table]
 
-[Section: ShortInfo]
-Exactly 2 short lines: organization + (post name and/or total vacancy if present). No long prose.
+SECTIONS (use these exact titles):
+
+[Section: Short Information]
 
 [Section: Eligibility]
-Qualification: bullet lines — only qualification level (12th, Graduation, Degree, etc.), no notes.
-Age Limit: bullet lines — numeric range only (e.g. 18-25) when possible; else shortest relevant fragment.
-State: state name(s) only, or "—".
+Qualification: …
+Age Limit: …
+State: …
 
-[Section: ImportantDates]
-Notification Date / Application Start Date / Last Date / Fee Payment Last Date / Exam Date — calendar values ONLY (no sentences). "Notify Soon" allowed for exam if stated. "—" only if nothing parseable.
+[Section: Important Dates]
 
-[Section: SelectionProcess]
-Steps only: Written Exam, Interview, Physical Test, Document Verification — no syllabus, marks, or instructions.
+[Section: Application Fee]
+
+[Section: Selection Process]
 
 [Section: Vacancy]
-Structured where possible: Post/Category/Count style lines (e.g. Constable, General, 13093). Short fragments OK; no explanations.
+(or [Section: Vacancy | table] when body is comma-separated grid)
 
-[Section: ImportantLinks]
-Label=https://… one per line.
+[Section: Important Links]
 
-[Section: अक्सर पूछे जाने वाले प्रश्न]
-Generate 1–2 simple Q&A in Hindi (or English if input is English-only) from the classified facts (last date, age, qualification, etc.). If no basis, Q: — / A: —.
+[Section: Important Questions]
+Only when input has Q:/A: lines — copy exact wording and language from input. Do not translate. Do not invent questions.
 
 RULES:
-- Fill every section from input when possible; use "—" only when truly nothing applies.
-- Never output {{TEXT}} or dollar-brace placeholders.
-- No JSON, no markdown # headings.`;
+- Fee lines (₹, Rs, General/OBC/EWS amounts) → Application Fee, NOT Vacancy
+- URLs → Important Links only
+- Dates with labels → Important Dates (preserve label text)
+- Never output {{TEXT}} or placeholders. No JSON.`;
 
 const JOB_LINE_HINT =
   /(vacancy|vacancies|भर्ती|नौकरी|recruit|recruitment|exam|परीक्षा|admit|admit\s*card|result|आयु|age|qualification|शिक्षा|fee|शुल्क|salary|वेतन|last\s*date|closing|opening|apply|आवेदन|notification|विज्ञापन|post|पद|posts|department|मंत्रालय|commission|आयोग|ssc|upsc|railway|bank|police|teacher|lecturer|सहायक|क्लर्क|officer|grade|कुल\s*पद|total\s*post)/i;
@@ -120,8 +126,8 @@ function isStrongAiOutput(s) {
   if (!s || typeof s !== "string") return false;
   const t = s.trim();
   if (t.length < 100) return false;
-  if (!/\[Section:\s*Eligibility\]/i.test(t)) return false;
-  if (!/\[Section:\s*ShortInfo\]/i.test(t)) return false;
+  if (!/\[Section:\s*(Short\s*Information|ShortInfo)\]/i.test(t)) return false;
+  if (!/\[Section:\s*(Eligibility|Important\s*Dates|ImportantDates)\]/i.test(t)) return false;
   return true;
 }
 
@@ -185,11 +191,19 @@ async function processJobParse(rawText) {
 
   logger.info("ai-parse extractedText length", { inputLen });
 
+  const preparedInput = prepareInputForStructuring(inputText);
+  const preserved = tryPreserveStructuredInput(inputText);
+  if (preserved) {
+    const result = finalizeStructuredJobOutput(preserved, inputText);
+    logger.info("ai-parse preserved existing sections", { resultLen: result.length });
+    return { result };
+  }
+
   if (!inputText || inputLen < MIN_CHARS_REJECT) {
     return { result: "No usable data found" };
   }
 
-  let cleanedText = smartCleanJobText(inputText);
+  let cleanedText = smartCleanJobText(preparedInput || inputText);
   if (cleanedText.length < 40) {
     cleanedText = cleanText(inputText);
   }
@@ -209,6 +223,7 @@ async function processJobParse(rawText) {
       state: buckets.state.length,
       selection: buckets.selection.length,
       links: buckets.links.length,
+      fee: buckets.fee.length,
       other: buckets.other.length
     }
   });
@@ -217,7 +232,7 @@ async function processJobParse(rawText) {
   const forAi =
     nonWs >= 24 ? classifiedBlock : cleanedText.slice(0, Math.min(OPENAI_MAX_INPUT, cleanedText.length));
 
-  const ruleDoc = bucketsToStructuredDocument(buckets);
+  const ruleDoc = bucketsToPublisherDocument(buckets);
 
   let aiRaw = null;
   if (process.env.OPENAI_API_KEY) {

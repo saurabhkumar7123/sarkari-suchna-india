@@ -1,10 +1,14 @@
 "use strict";
 
-const { formatImportantDatesFromBucket, formatVacancyStructured } = require("./sectionDetector");
+const { formatImportantDatesPublisher } = require("./sectionDetector");
+const {
+  formatVacancyStructured,
+  resolveVacancySectionHeader
+} = require("./tableDetect");
 
 const GARBAGE = /\b(rti|annexure|syllabus|how\s+to\s+apply|exam\s*pattern|marks\s*distribution|click\s+here\s+to\s+apply|negative\s*marking)\b/i;
 
-const SECTION_NAMES = ["ShortInfo", "Eligibility", "ImportantDates", "SelectionProcess", "Vacancy", "ImportantLinks"];
+const SECTION_BLOCK_RE = /(\[Section:\s*[^\]]+\]\s*)([\s\S]*?)(?=\n\[Section:|$)/gi;
 
 /**
  * @param {string} block
@@ -28,7 +32,7 @@ function stripGarbageLines(block) {
  */
 function setSectionContent(text, sectionName, newBody) {
   const re = new RegExp(
-    `(\\[Section:\\s*${sectionName}\\]\\s*)([\\s\\S]*?)(?=\\n\\[Section:|$)`,
+    `(\\[Section:\\s*${sectionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\]\\s*)([\\s\\S]*?)(?=\\n\\[Section:|$)`,
     "i"
   );
   if (!re.test(text)) return text;
@@ -37,19 +41,40 @@ function setSectionContent(text, sectionName, newBody) {
 
 /**
  * @param {string} text
+ * @param {string[]} names
+ * @param {string} newBody
+ */
+function setSectionContentAny(text, names, newBody) {
+  let out = text;
+  for (const name of names) {
+    const next = setSectionContent(out, name, newBody);
+    if (next !== out) return next;
+  }
+  return out;
+}
+
+/**
+ * @param {string} text
  */
 function hasMeaningfulDates(text) {
-  const m = text.match(/\[Section:\s*ImportantDates\]\s*([\s\S]*?)(?=\n\[Section:|$)/i);
+  const m =
+    text.match(/\[Section:\s*Important\s*Dates\]\s*([\s\S]*?)(?=\n\[Section:|$)/i) ||
+    text.match(/\[Section:\s*ImportantDates\]\s*([\s\S]*?)(?=\n\[Section:|$)/i);
   if (!m) return false;
   const body = m[1].replace(/—/g, "").trim();
-  return body.length > 2 && (/\d{1,2}[./-]\d{1,2}/.test(body) || /\b(last|exam|start|notification|date|schedule)\b/i.test(body));
+  return (
+    body.length > 2 &&
+    (/\d{1,2}[./-]\d{1,2}/.test(body) ||
+      /\b(september|january|february|march|april|may|june|july|august|october|november|december)\b/i.test(body) ||
+      /\b(last|exam|start|notification|date|schedule|apply)\b/i.test(body))
+  );
 }
 
 /**
  * @param {string} text
  */
 function hasMeaningfulVacancy(text) {
-  const m = text.match(/\[Section:\s*Vacancy\]\s*([\s\S]*?)(?=\n\[Section:|$)/i);
+  const m = text.match(/\[Section:\s*Vacancy(?:\s*\|\s*table)?\]\s*([\s\S]*?)(?=\n\[Section:|$)/i);
   if (!m) return false;
   const body = m[1].replace(/—/g, "").trim();
   return body.length > 2 && /\d/.test(body);
@@ -62,19 +87,23 @@ function hasMeaningfulVacancy(text) {
  */
 function validateAndRepair(structured, buckets) {
   let text = String(structured || "").trim();
-  for (const name of SECTION_NAMES) {
-    const re = new RegExp(
-      `(\\[Section:\\s*${name}\\]\\s*)([\\s\\S]*?)(?=\\n\\[Section:|$)`,
-      "i"
-    );
-    text = text.replace(re, (_, header, body) => `${header}${stripGarbageLines(body)}\n`);
-  }
+  text = text.replace(SECTION_BLOCK_RE, (_, header, body) => `${header}${stripGarbageLines(body)}\n`);
 
   if (!hasMeaningfulDates(text) && buckets.dates.length) {
-    text = setSectionContent(text, "ImportantDates", formatImportantDatesFromBucket(buckets.dates));
+    text = setSectionContentAny(text, ["Important Dates", "ImportantDates"], formatImportantDatesPublisher(buckets.dates));
   }
   if (!hasMeaningfulVacancy(text) && buckets.vacancy.length) {
-    text = setSectionContent(text, "Vacancy", formatVacancyStructured(buckets.vacancy));
+    const body = formatVacancyStructured(buckets.vacancy);
+    const sec = resolveVacancySectionHeader(body);
+    text = setSectionContentAny(text, ["Vacancy | table", "Vacancy"], sec.body);
+  }
+  if (buckets.fee && buckets.fee.length) {
+    const feeBody = buckets.fee.map((l) => l.replace(/^[-*•]\s*/, "").trim()).join("\n");
+    const feeMatch = text.match(/\[Section:\s*Application\s*Fee\]\s*([\s\S]*?)(?=\n\[Section:|$)/i);
+    const feeExisting = feeMatch ? feeMatch[1].replace(/—/g, "").trim() : "";
+    if (!feeExisting) {
+      text = setSectionContentAny(text, ["Application Fee"], feeBody);
+    }
   }
 
   const ok =

@@ -2,8 +2,35 @@
 
 const { extractStrictDateFromText, extractDateValueForDisplay } = require("./extractDateValue");
 const { shouldDropLine } = require("./smartClean");
+const {
+  tryExtractTableRunAt,
+  detectRowDelimiter,
+  resolveVacancySectionHeader,
+  formatVacancyStructured
+} = require("./tableDetect");
+const {
+  pushPublisherSection,
+  joinPublisherParts,
+  prepareInputForStructuring
+} = require("./publisherSections");
+const { parseSectionsFromText } = require("../../generator/parse/sectionParse");
 
 const MAX_CLASSIFY_LINE = 280;
+
+/**
+ * @param {string} line
+ * @returns {boolean}
+ */
+function isFeeLine(line) {
+  const s = String(line || "").trim();
+  const l = s.toLowerCase();
+  if (/\b(application\s*)?fee(s)?\b|शुल्क|exam\s*fee|registration\s*fee/i.test(l)) return true;
+  if (/(₹|rs\.?)\s*[\d,]+/i.test(s) && /\b(general|obc|ews|sc\b|st\b|ur\b|pwd|ph|female|male)\b/i.test(l)) {
+    return true;
+  }
+  if (/\/-\s*$/.test(s) && /[\d,]+/.test(s) && /\b(for|general|obc|ews|sc|st)\b/i.test(l)) return true;
+  return false;
+}
 
 /**
  * @param {string} line
@@ -19,12 +46,15 @@ function isNoiseLine(line) {
 
 /**
  * @param {string} line
- * @returns {"dates"|"age"|"qualification"|"vacancy"|"selection"|"links"|"state"|"other"}
+ * @returns {"dates"|"age"|"qualification"|"vacancy"|"selection"|"links"|"state"|"fee"|"other"}
  */
 function classifyLine(line) {
   const s = line.trim();
   const l = s.toLowerCase();
+  if (/^\[\s*section\s*:/i.test(s)) return "other";
   if (/https?:\/\/|www\./i.test(s)) return "links";
+  if (isFeeLine(s)) return "fee";
+  if (/^(Q|Question)\s*[:：]/i.test(s) || /^(A|Answer)\s*[:：]/i.test(s)) return "faq";
   if (/^\s*state\s*[:/-]|^राज्य\s*[:：]/i.test(s)) return "state";
   if (
     /\b(domicile|निवास|residing\s+in|only\s+for\s+candidates\s+of)\b/i.test(l) &&
@@ -42,9 +72,15 @@ function classifyLine(line) {
   ) {
     return "selection";
   }
-  if (/\b(last\s*date|closing\s*date|opening\s*date|notification\s*date|exam\s*date|start\s*date|fee\s*payment|application\s*begin)\b/i.test(l)) {
+  if (
+    /\b(last\s*date|closing\s*date|opening\s*date|notification\s*date|exam\s*date|start\s*date|apply\s*start|online\s*apply|application\s*begin)\b/i.test(
+      l
+    ) &&
+    !isFeeLine(s)
+  ) {
     return "dates";
   }
+  if (/\bfee\s*payment\s*last\b/i.test(l)) return "dates";
   if (/\d{1,2}[\s./-]+\d{1,2}[\s./-]+\d{2,4}/.test(s)) return "dates";
   if (/\b(last|exam|date|notification|start|schedule)\b/i.test(l) && /\d/.test(s)) return "dates";
   if (/\b(age|years?|आयु|वर्ष|born)\b/i.test(l) && /\d/.test(s)) return "age";
@@ -54,15 +90,30 @@ function classifyLine(line) {
     return "qualification";
   }
   if (
-    (/\b(vacancy|vacancies|vacant|posts?|category|obc|sc\b|st\b|ews|ur\b|gen|total)\b/i.test(l) && /\d/.test(s)) ||
-    /\b(vacancy|vacancies|posts?\s*per|post\s*[:-]|category\s*[:/-])\b/i.test(l) ||
-    (/\b(recruitment|भर्ती)\b/i.test(l) &&
-      /\b(posts?|vacancies|vacant|vacancy|पद|seats?)\b/i.test(l) &&
-      /\d/.test(s))
+    !isFeeLine(s) &&
+    ((/\b(vacancy|vacancies|vacant|posts?|category|total)\b/i.test(l) && /\d/.test(s)) ||
+      /\b(vacancy|vacancies|posts?\s*per|post\s*[:-]|category\s*[:/-])\b/i.test(l) ||
+      (/\b(recruitment|भर्ती)\b/i.test(l) &&
+        /\b(posts?|vacancies|vacant|vacancy|पद|seats?)\b/i.test(l) &&
+        /\d/.test(s)) ||
+      (/\b(obc|sc\b|st\b|ews|ur\b|gen)\b/i.test(l) && /\b(post|vacancy|seat)\b/i.test(l) && /\d/.test(s)))
   ) {
     return "vacancy";
   }
-  if (/\b(written|interview|\btest\b|examination|phase\s*[ivx\d])\b/i.test(l)) return "selection";
+  if (/\b(written|interview|\btest\b|phase\s*[ivx\d]|prelims|mains|objective|descriptive)\b/i.test(l)) {
+    return "selection";
+  }
+  if (/\bexamination\b/i.test(l) && /\b(tier|phase|stage|written|computer\s*based|cbt)\b/i.test(l)) {
+    return "selection";
+  }
+  if (
+    detectRowDelimiter(s) &&
+    s.length < 220 &&
+    !isFeeLine(s) &&
+    !/https?:\/\//i.test(s)
+  ) {
+    return "vacancy";
+  }
   return "other";
 }
 
@@ -88,9 +139,28 @@ function uniq(lines) {
  *   selection: string[],
  *   links: string[],
  *   state: string[],
+ *   fee: string[],
+ *   faq: string[],
  *   other: string[]
  * }}
  */
+function linesForBucketDetection(text) {
+  const normalized = prepareInputForStructuring(text);
+  const parsed = parseSectionsFromText(normalized);
+  if (parsed.length) {
+    return parsed.flatMap((sec) =>
+      String(sec.content || "")
+        .split("\n")
+        .map((x) => x.trim())
+        .filter((x) => x.length && !/^\[\s*section\s*:/i.test(x))
+    );
+  }
+  return normalized
+    .split("\n")
+    .map((x) => x.trim())
+    .filter((x) => x.length);
+}
+
 function detectSections(text) {
   const buckets = {
     dates: [],
@@ -100,16 +170,27 @@ function detectSections(text) {
     selection: [],
     links: [],
     state: [],
+    fee: [],
+    faq: [],
     other: []
   };
-  const lines = String(text || "")
-    .split("\n")
-    .map((x) => x.trim())
-    .filter((x) => x.length);
-  for (const line of lines) {
-    if (isNoiseLine(line)) continue;
+  const lines = linesForBucketDetection(text);
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (isNoiseLine(line)) {
+      i += 1;
+      continue;
+    }
+    const run = tryExtractTableRunAt(lines, i);
+    if (run) {
+      buckets.vacancy.push(run.csvBody);
+      i = run.endIndex;
+      continue;
+    }
     const k = classifyLine(line);
     buckets[k].push(line);
+    i += 1;
   }
   for (const key of Object.keys(buckets)) {
     buckets[key] = uniq(buckets[key]);
@@ -139,6 +220,10 @@ function formatBucketsForPrompt(buckets) {
     fmt("SELECTION", buckets.selection),
     "",
     fmt("LINKS", buckets.links),
+    "",
+    fmt("FEE", buckets.fee || []),
+    "",
+    fmt("FAQ", buckets.faq || []),
     "",
     fmt("OTHER_HINTS", buckets.other.slice(0, 12))
   ].join("\n");
@@ -308,35 +393,43 @@ function formatSelectionSteps(selection) {
 }
 
 /**
- * @param {string[]} vacancy
+ * @param {string[]} vacancy — re-exported from tableDetect
  */
-function formatVacancyStructured(vacancy) {
-  if (!vacancy.length) return "—";
-  return vacancy
-    .map((raw) => {
-      let t = raw.replace(/^[-*•]\s*/, "").trim();
-      if (/\b(candidates?\s+are|therefore|accordingly|shall\s+be\s+eligible|general\s+information)\b/i.test(t)) {
-        return "";
-      }
-      if (t.length > 140) t = t.slice(0, 140).trim();
-      const parts = t.split(/[|,]/).map((x) => x.trim()).filter(Boolean);
-      if (parts.length >= 2 && /\d/.test(parts[parts.length - 1])) {
-        return parts.join(", ");
-      }
-      const nums = t.match(/\d[\d,\s]*/);
-      const textOnly = nums ? t.replace(nums[0], "").replace(/\s+/g, " ").trim() : t;
-      if (nums && textOnly.length > 2) return `${textOnly}, ${nums[0].replace(/\s/g, "")}`;
-      return t;
-    })
-    .filter(Boolean)
-    .join("\n") || "—";
-}
 
 /**
  * @param {ReturnType<typeof detectSections>} buckets
  * @returns {[string, string]}
  */
+function isProseLine(line) {
+  const s = String(line || "").trim();
+  if (!s || s.length < 10) return false;
+  if (isFeeLine(s) || /https?:\/\/|www\./i.test(s)) return false;
+  if (/^\[\s*section\s*:/i.test(s)) return false;
+  if (/\d{1,2}[\s./-]+\d{1,2}[\s./-]+\d{2,4}/.test(s)) return false;
+  if (/\b(date|fee|age|qualification|last\s*date|apply\s*online)\b/i.test(s) && /:\s*/.test(s)) return false;
+  const kind = classifyLine(s);
+  return kind === "other" || kind === "state";
+}
+
 function buildShortInfoLines(buckets) {
+  const prose = buckets.other.filter(isProseLine).map((x) => x.replace(/\s+/g, " ").trim().slice(0, 240));
+  if (prose.length) {
+    let line2 = "—";
+    if (buckets.vacancy[0]) {
+      line2 = buckets.vacancy[0].replace(/^[-*•]\s*/, "").trim().slice(0, 140);
+    }
+    const joined = buckets.vacancy.join(" ");
+    const total =
+      joined.match(/(?:कुल|total)\s*(?:posts?|पद)?\s*[:\s]*([\d,]+)/i) ||
+      joined.match(/\b([\d,]{2,})\s*posts?\b/i);
+    if (total && line2 !== "—" && !line2.includes(total[1])) {
+      line2 = `${line2} | Total posts: ${total[1]}`;
+    } else if (total && line2 === "—") {
+      line2 = `Total posts: ${total[1]}`;
+    }
+    return [prose[0], prose[1] || (line2 !== "—" ? line2 : prose[2])].filter(Boolean);
+  }
+
   const orgHint =
     buckets.other.find((x) => /commission|board|department|ministry|आयोग|विभाग|निगम|corporation/i.test(x)) ||
     buckets.other.find((x) => /recruitment|notification|police|railway|ssc|upsc|vacancy|भर्ती/i.test(x)) ||
@@ -356,80 +449,102 @@ function buildShortInfoLines(buckets) {
 }
 
 /**
+ * @param {string[]} faqLines
+ * @returns {string}
+ */
+function formatFaqFromBucket(faqLines) {
+  if (!faqLines || !faqLines.length) return "";
+  return faqLines
+    .map((line) => line.replace(/^[-*•]\s*/, "").trim())
+    .filter((l) => l.length > 0 && !/^Q:\s*—\s*$/i.test(l) && !/^A:\s*—\s*$/i.test(l))
+    .join("\n");
+}
+
+/**
+ * Only user-provided Q/A lines — no auto Hindi generation.
  * @param {ReturnType<typeof detectSections>} buckets
  */
 function buildFaqFromBuckets(buckets) {
-  const rows = [];
-  const lastLine = buckets.dates.find((d) => /last|closing|submission|आखिरी/i.test(d));
-  const lastVal = lastLine ? extractDateValueForDisplay(lastLine) : null;
-  if (lastVal && lastVal !== "—") {
-    rows.push({ q: "आवेदन की अंतिम तिथि क्या है?", a: lastVal });
-  }
-  const ageLine = buckets.age[0];
-  if (ageLine) {
-    const ar = extractAgeRangeOnly(ageLine);
-    if (ar && ar !== "—") rows.push({ q: "आयु सीमा क्या है?", a: ar });
-  }
-  if (rows.length < 2 && buckets.qualification[0]) {
-    rows.push({ q: "शैक्षणिक योग्यता क्या है?", a: extractQualificationSnippet(buckets.qualification[0]) });
-  }
-  if (!rows.length) return "Q: —\nA: —";
-  if (rows.length === 1) return `Q: ${rows[0].q}\nA: ${rows[0].a}`;
-  return `Q: ${rows[0].q}\nA: ${rows[0].a}\nQ: ${rows[1].q}\nA: ${rows[1].a}`;
+  return formatFaqFromBucket(buckets.faq);
 }
 
-function bucketsToStructuredDocument(buckets) {
-  const [short1, short2] = buildShortInfoLines(buckets);
+function formatImportantDatesPublisher(dates) {
+  if (!dates.length) return "—";
+  const rows = dates
+    .map((line) => {
+      const t = line.replace(/^[-*•]\s*/, "").trim();
+      if (!t || /^\[\s*section\s*:/i.test(t)) return "";
+      if (/:\s*/.test(t)) return t;
+      const val = extractDateValueForDisplay(t);
+      return val !== "—" ? val : t;
+    })
+    .filter(Boolean);
+  return rows.length ? rows.join("\n") : "—";
+}
+
+/**
+ * @param {string[]} fee
+ */
+function formatApplicationFeeFromBucket(fee) {
+  if (!fee || !fee.length) return "—";
+  const rows = fee.map((line) => line.replace(/^[-*•]\s*/, "").trim()).filter(Boolean);
+  return rows.length ? rows.join("\n") : "—";
+}
+
+function bucketsToPublisherDocument(buckets) {
+  const shortLines = buildShortInfoLines(buckets);
+  const shortBody = shortLines.filter((x) => x && x !== "—").join("\n");
 
   const q = buckets.qualification.length
     ? buckets.qualification.map((x) => `- ${extractQualificationSnippet(x)}`).join("\n")
-    : "—";
-  const a = buckets.age.length ? buckets.age.map((x) => `- ${extractAgeRangeOnly(x)}`).join("\n") : "—";
+    : "";
+  const a = buckets.age.length ? buckets.age.map((x) => `- ${extractAgeRangeOnly(x)}`).join("\n") : "";
   const st = formatStateLine(buckets.state);
-  const d = formatImportantDatesFromBucket(buckets.dates);
+  const d = formatImportantDatesPublisher(buckets.dates);
+  const fee = formatApplicationFeeFromBucket(buckets.fee);
   const v = formatVacancyStructured(buckets.vacancy);
+  const vacancySec = resolveVacancySectionHeader(v);
   const sel = formatSelectionSteps(buckets.selection);
   const links = formatImportantLinksFromBucket(buckets.links);
   const faq = buildFaqFromBuckets(buckets);
 
-  return `[Section: ShortInfo]
-${short1}
-${short2}
+  const eligLines = [];
+  if (q && q !== "—") eligLines.push(`Qualification: ${q}`);
+  if (a && a !== "—") eligLines.push(`Age Limit: ${a}`);
+  if (st && st !== "—") eligLines.push(`State: ${st}`);
 
-[Section: Eligibility]
-Qualification:
-${q}
-Age Limit:
-${a}
-State:
-${st}
+  const parts = [];
+  pushPublisherSection(parts, "Short Information", shortBody);
+  pushPublisherSection(parts, "Eligibility", eligLines.join("\n"));
+  pushPublisherSection(parts, "Important Dates", d !== "—" ? d : "");
+  pushPublisherSection(parts, "Application Fee", fee !== "—" ? fee : "");
+  pushPublisherSection(parts, "Selection Process", sel !== "—" ? sel : "");
+  pushPublisherSection(parts, vacancySec.title, vacancySec.body !== "—" ? vacancySec.body : "");
+  pushPublisherSection(parts, "Important Links", links !== "—" ? links : "");
+  pushPublisherSection(parts, "Important Questions", faq);
 
-[Section: ImportantDates]
-${d}
+  return joinPublisherParts(parts);
+}
 
-[Section: SelectionProcess]
-${sel}
-
-[Section: Vacancy]
-${v}
-
-[Section: ImportantLinks]
-${links}
-
-[Section: अक्सर पूछे जाने वाले प्रश्न]
-${faq}
-`;
+function bucketsToStructuredDocument(buckets) {
+  return bucketsToPublisherDocument(buckets);
 }
 
 module.exports = {
   detectSections,
+  linesForBucketDetection,
   formatBucketsForPrompt,
   bucketsToStructuredDocument,
+  bucketsToPublisherDocument,
   formatImportantDatesFromBucket,
+  formatImportantDatesPublisher,
+  formatApplicationFeeFromBucket,
   formatImportantLinksFromBucket,
   formatVacancyStructured,
+  resolveVacancySectionHeader,
   extractStrictDateFromText,
   extractDateValueForDisplay,
   classifyLine,
-  isNoiseLine
+  isNoiseLine,
+  isFeeLine
 };

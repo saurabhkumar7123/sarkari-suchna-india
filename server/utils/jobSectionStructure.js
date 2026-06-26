@@ -1,9 +1,10 @@
 "use strict";
 
 const { smartCleanJobText } = require("./smartClean");
-const { detectSections, bucketsToStructuredDocument } = require("./sectionDetector");
+const { detectSections, bucketsToPublisherDocument } = require("./sectionDetector");
 const { validateAndRepair } = require("./validateOutput");
 const { normalizeSectionFormatting } = require("./normalizeSectionFormatting");
+const { tryPreserveStructuredInput } = require("./publisherSections");
 
 /**
  * Deterministic sectioning from noisy PDF/OCR plain text (server).
@@ -13,19 +14,20 @@ const { normalizeSectionFormatting } = require("./normalizeSectionFormatting");
 function structurePlainTextIntoSections(plainText) {
   const cleaned = smartCleanJobText(plainText);
   const buckets = detectSections(cleaned);
-  return normalizeSectionFormatting(bucketsToStructuredDocument(buckets));
+  return normalizeSectionFormatting(bucketsToPublisherDocument(buckets));
 }
 
 function trimShortInfoInStructuredText(text) {
   const t = String(text || "");
-  const re = /\[Section:\s*ShortInfo\]\s*([\s\S]*?)(?=\n\[Section:|$)/i;
+  const re = /\[Section:\s*(Short\s*Information|ShortInfo)\]\s*([\s\S]*?)(?=\n\[Section:|$)/i;
   const m = t.match(re);
   if (!m) return t;
-  const body = m[1].trim();
-  const two = body.split("\n").filter(Boolean).slice(0, 2).join("\n") || "—";
+  const body = m[2].trim();
+  const lines = body.split("\n").filter(Boolean);
+  const trimmed = lines.slice(0, 4).join("\n") || "—";
   const start = m.index ?? 0;
   const end = start + m[0].length;
-  return `${t.slice(0, start)}[Section: ShortInfo]\n${two}${t.slice(end)}`;
+  return `${t.slice(0, start)}[Section: Short Information]\n${trimmed}${t.slice(end)}`;
 }
 
 /**
@@ -34,6 +36,11 @@ function trimShortInfoInStructuredText(text) {
  * @returns {string}
  */
 function finalizeStructuredJobOutput(aiResult, cleanedSource) {
+  const preserved = tryPreserveStructuredInput(cleanedSource);
+  if (preserved) {
+    return normalizeSectionFormatting(preserved);
+  }
+
   let r = normalizeSectionFormatting(
     String(aiResult || "")
       .trim()
@@ -47,7 +54,7 @@ function finalizeStructuredJobOutput(aiResult, cleanedSource) {
   const junk = /^(Input too short|No usable data found)$/i;
   if (junk.test(r)) r = "";
 
-  if (r && /\[Section:\s*Eligibility\]/i.test(r)) {
+  if (r && /\[Section:\s*(Eligibility|Short\s*Information|ShortInfo|Important\s*Dates|ImportantDates)\]/i.test(r)) {
     const v = validateAndRepair(trimShortInfoInStructuredText(r), buckets);
     return normalizeSectionFormatting(v.text);
   }

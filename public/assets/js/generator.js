@@ -1795,17 +1795,23 @@ const AI_ACCEPT_MIN_LEN = 50;
 
 /**
  * Normalize section blocks (same logic as server finalize).
- * Bugfix: previously anything without [Section: Eligibility] dumped the entire textarea into ShortInfo.
+ * @param {string} aiResult — API / rule output
+ * @param {string} [originalSource] — raw textarea before convert (for pattern detection)
  */
-function ensureSections(text) {
-  const t = String(text || "")
+function ensureSections(aiResult, originalSource) {
+  const src = String(originalSource ?? aiResult ?? "")
+    .replace(/\{\{TEXT\}\}/gi, "")
+    .replace(/\$\{text\}/gi, "")
+    .trim();
+  const ai = String(aiResult ?? "")
     .replace(/\{\{TEXT\}\}/gi, "")
     .replace(/\$\{text\}/gi, "")
     .trim();
   const u = typeof window !== "undefined" && window.__jobSectionUtil;
   if (u && typeof u.finalizeStructuredJobOutput === "function") {
-    return u.finalizeStructuredJobOutput(t, t);
+    return u.finalizeStructuredJobOutput(ai, src);
   }
+  const t = ai || src;
   if (!t) {
     return `[Section: ShortInfo]
 —
@@ -1828,7 +1834,7 @@ State: —
 [Section: ImportantLinks]
 —
 
-[Section: अक्सर पूछे जाने वाले प्रश्न]
+[Section: Important Questions]
 —
 `;
   }
@@ -1854,7 +1860,7 @@ State: —
 [Section: ImportantLinks]
 —
 
-[Section: अक्सर पूछे जाने वाले प्रश्न]
+[Section: Important Questions]
 —
 `;
 }
@@ -1935,7 +1941,7 @@ Exam Date: <extract>
 [Section: ImportantLinks]
 <extract real URLs>
 
-[Section: अक्सर पूछे जाने वाले प्रश्न]
+[Section: Important Questions]
 <extract if present>
 
 ----------------------------------------
@@ -1998,8 +2004,7 @@ ${payloadText}
       aiOut = "";
     }
 
-    const sourceForSections = aiOut && aiOut.length > 0 ? aiOut : prev;
-    const next = ensureSections(sourceForSections);
+    const next = ensureSections(aiOut || "", prev);
 
     ta.value = safeSet(ta, next);
     if (!aiOut || aiOut.length <= AI_ACCEPT_MIN_LEN) {
