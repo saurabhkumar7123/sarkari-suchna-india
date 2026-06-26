@@ -485,38 +485,20 @@
     }
 
     .right-link.link-box-actions{
-    justify-content:stretch;
-    max-width:100%;
-    padding-left:0;
-    }
-
-    .link-box:has(.link-box-actions){
-    grid-template-columns:1fr;
-    grid-template-areas:
-    "label"
-    "action";
-    row-gap:8px;
-    align-items:stretch;
-    }
-
-    .link-box:has(.link-box-actions)::after{
-    display:none;
-    }
-
-    .link-box:has(.link-box-actions) .left-text{
-    text-align:center;
-    padding-right:0;
+    justify-content:flex-end;
+    padding-left:4px;
     }
 
     .link-box-actions__group{
-    max-width:none;
-    gap:8px;
+    gap:4px;
+    max-width:100%;
+    min-width:0;
     }
 
     .link-box-actions__group a{
-    min-height:40px;
-    font-size:14px;
-    padding:8px 14px;
+    min-height:36px;
+    font-size:12px;
+    padding:7px 8px;
     }
 
     .link-box-status{
@@ -1178,9 +1160,9 @@
     }
 
     .link-box-actions__group a{
-    min-height:40px;
-    font-size:14px;
-    padding:8px 14px;
+    min-height:36px;
+    font-size:12px;
+    padding:7px 8px;
     }
     
     .related-grid{
