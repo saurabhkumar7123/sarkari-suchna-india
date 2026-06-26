@@ -122,6 +122,7 @@ Official Website=https://ssc.gov.in`;
     );
     expect(html).toContain('<div class="left-text">Download Syllabus</div>');
     expect(html).toContain('class="right-link link-box-actions"');
+    expect(html).toContain('class="link-box-actions__group"');
     expect(html).toContain('href="https://hindi.com/');
     expect(html).toContain('href="https://english.com/');
     expect(html).toContain(">Hindi</a>");

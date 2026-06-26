@@ -69,11 +69,12 @@ function renderLinkBoxAnchors(displayLabel, actions) {
     })
     .join("");
   const rightClass = multi ? "right-link link-box-actions" : "right-link";
+  const rightInner = multi ? `<div class="link-box-actions__group">${buttonsHtml}</div>` : buttonsHtml;
   return `
             <div class="link-box">
               <div class="left-text">${left}</div>
               <div class="${rightClass}">
-                ${buttonsHtml}
+                ${rightInner}
               </div>
             </div>
           `;
