@@ -60,7 +60,7 @@
       }
     }
 
-    if (m === "raw" && mode === "visual") {
+    if (m === "raw" && mode === "visual" && !options.skipCompile) {
       pushSectionsToTextarea({ silent: true });
     }
 
@@ -1209,8 +1209,8 @@
     if (!ta) return;
     const text = ta.value || "";
     if (text.trim() && !M().isVisualEditorSafeForText(text)) {
-      setMode("raw", { force: true, silent: true });
-      showEditorNotice("Switched to Raw text — content has advanced formatting.", "warn");
+      setMode("raw", { force: true, silent: true, skipCompile: true });
+      showEditorNotice("Showing Raw text — this page uses advanced formatting.", "info");
       return;
     }
     sections = M().parseTextToEditorSections(text);
@@ -1255,7 +1255,8 @@
     });
 
     const initialText = ta?.value || "";
-    if (initialText.trim() && !M().isVisualEditorSafeForText(initialText)) {
+    const initialUnsafe = initialText.trim() && !M().isVisualEditorSafeForText(initialText);
+    if (initialUnsafe) {
       mode = "raw";
     } else if (mode === "visual") {
       sections = M().parseTextToEditorSections(initialText);
@@ -1268,7 +1269,7 @@
       }
     }
 
-    setMode(mode, { force: true, silent: true });
+    setMode(mode, { force: true, silent: true, skipCompile: initialUnsafe });
   }
 
   function flushToTextarea() {

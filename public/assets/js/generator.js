@@ -618,10 +618,6 @@ function restoreDraftFromStorage() {
 setInterval(saveDraftToStorage, 5000);
 
 window.addEventListener("DOMContentLoaded", async () => {
-  if (typeof window.sectionEditor?.init === "function") {
-    window.sectionEditor.init();
-  }
-
   const pdfExtractForm = document.getElementById("pdfExtractForm");
   if (pdfExtractForm) {
     pdfExtractForm.addEventListener("submit", (e) => {
@@ -684,23 +680,19 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   if (slug) {
     await loadPageFromURL();
-    return;
+  } else if (initPdfDraftFromUrl()) {
+    /* pdf draft loaded */
+  } else if (await loadContentImportFromURL()) {
+    /* import loaded */
+  } else {
+    const restored = restoreDraftFromStorage();
+    if (!restored) {
+      resetGeneratorForm();
+    }
   }
 
-  if (initPdfDraftFromUrl()) {
-    scheduleContentAnalysis();
-    return;
-  }
-
-  const importLoaded = await loadContentImportFromURL();
-  if (importLoaded) {
-    scheduleContentAnalysis();
-    return;
-  }
-
-  const restored = restoreDraftFromStorage();
-  if (!restored) {
-    resetGeneratorForm();
+  if (typeof window.sectionEditor?.init === "function") {
+    window.sectionEditor.init();
   }
   scheduleContentAnalysis();
 });
@@ -1115,7 +1107,6 @@ async function loadPageFromURL(){
     setNormalizedSelectValue("structuredDepartment", page.department);
     document.getElementById("pageUrl").value = page.url || "";
     document.getElementById("data").value = page.rawText || "";
-    syncSectionEditorFromData();
     document.getElementById("oldSlug").value = (page.slug || "").replace(/^\//, "");
     document.getElementById("pageId").value = page.id || "";
 
