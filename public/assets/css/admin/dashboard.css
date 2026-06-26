@@ -1430,14 +1430,16 @@ body.sidebar-collapsed .main{
 
 @media(max-width:768px){
   .toggle-btn{display:block}
-  .toggle-btn{z-index:var(--z-toast)}
+  .toggle-btn{z-index:calc(var(--z-modal, 1000) + 30)}
   .sidebar{
     transform:translateX(-100%);
     width:250px !important;
-    z-index:var(--z-toast);
+    z-index:calc(var(--z-modal, 1000) + 20);
+    pointer-events:none;
   }
   .sidebar.active{
     transform:translateX(0);
+    pointer-events:auto;
   }
   body.dashboard-sidebar-open{
     overflow:hidden;

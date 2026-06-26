@@ -142,6 +142,24 @@
     return sidebarBackdropEl;
   }
 
+  function syncMobileToggleButton() {
+    const toggle = document.getElementById("sidebarToggle");
+    const sidebar = document.getElementById("sidebar");
+    if (!toggle || !sidebar) return;
+    const open = sidebar.classList.contains("active");
+    const mobile = isMobileSidebarMode();
+    const icon = toggle.querySelector(".toggle-btn__icon");
+    const label = toggle.querySelector(".toggle-btn__label");
+    if (mobile) {
+      if (icon) icon.textContent = open ? "✕" : "☰";
+      if (label) label.textContent = open ? "Close" : "Menu";
+    } else if (icon && !icon.textContent.trim()) {
+      icon.textContent = "☰";
+    }
+    toggle.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
   function setSidebarOpen(open) {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
@@ -155,6 +173,7 @@
       sidebarBackdropEl.classList.remove("active");
       document.body.classList.remove("dashboard-sidebar-open");
     }
+    syncMobileToggleButton();
   }
 
   function syncCollapsedNavTooltips() {
@@ -269,8 +288,12 @@
     const toggle = document.getElementById("sidebarToggle");
     if (toggle && toggle.dataset.shellBound !== "1") {
       toggle.dataset.shellBound = "1";
+      toggle.addEventListener("pointerdown", (e) => {
+        e.stopPropagation();
+      });
       toggle.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const sidebar = document.getElementById("sidebar");
         if (!sidebar) return;
         setSidebarOpen(!sidebar.classList.contains("active"));
@@ -297,6 +320,7 @@
     markActiveSidebarLink();
     syncCollapsedNavTooltips();
     syncDarkModeToggleButton();
+    syncMobileToggleButton();
     if (typeof window.AdminShellRebind === "function" && bindShellEvents._rebindPending) {
       bindShellEvents._rebindPending = false;
     }
@@ -330,17 +354,21 @@
 
   dashboardMobileMq.addEventListener("change", () => {
     if (!isMobileSidebarMode()) setSidebarOpen(false);
+    syncMobileToggleButton();
   });
 
-  document.getElementById("sidebar")?.addEventListener("click", (e) => {
+  document.addEventListener("click", (e) => {
     if (!isMobileSidebarMode()) return;
-    const link = e.target.closest("a[href]");
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar || !sidebar.classList.contains("active")) return;
+    const link = e.target.closest("#sidebar a[href]");
     if (!link) return;
     setSidebarOpen(false);
   });
 
   applySidebarStateFromStorage();
   bindShellEvents();
+  syncMobileToggleButton();
 
   window.adminSafeFetch = adminSafeFetch;
   window.AdminShellRebind = bindShellEvents;
