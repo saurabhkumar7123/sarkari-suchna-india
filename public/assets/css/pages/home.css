@@ -2176,6 +2176,8 @@
   body.page-home #dynamicSections.card-grid {
     margin-top: 0;
     padding-top: 10px;
+    row-gap: 10px;
+    gap: 10px;
   }
 
   body.page-home .breaking-news.breaking {
