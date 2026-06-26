@@ -32,7 +32,7 @@
 
   /* Small boxes — 2-line min-height (no truncation); pills use --home-pill-* below */
   --home-cat-2line-min-h: calc(2 * 1.3em + 22px);
-  --home-cat-2line-min-h-mobile: calc(2 * 1.28em + 12px);
+  --home-cat-2line-min-h-mobile: calc(2 * 1.28em + 18px);
   --home-pill-2line-min-h: calc(2 * 1.25em + 20px);
   --home-pill-2line-min-h-mobile: calc(2 * 1.25em + 20px);
 
@@ -1275,7 +1275,7 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     body.page-home .small-boxes .cat[data-small-box-slot="1"],
     body.page-home .small-boxes .cat[data-small-box-slot="2"],
     body.page-home .small-boxes .cat[data-small-box-slot="3"]{
-      padding:8px 6px 8px 10px;
+      padding:10px 6px 10px 10px;
       font-size:12px;
       font-weight:700;
       line-height:1.28;
@@ -1284,7 +1284,7 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     }
 
     .small-boxes .cat{
-      padding:8px 6px 8px 10px;
+      padding:10px 6px 10px 10px;
       font-size:12px;
       font-weight:700;
       line-height:1.28;
