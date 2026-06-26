@@ -73,33 +73,40 @@
 
     const fsToolbar = document.getElementById("editorFullscreenToolbar");
     const seoBtn = document.getElementById("seoChecklistToggle");
-    const actions = headBar.querySelector(".panel-head__actions");
+    const actions =
+      headBar.querySelector(".panel-head__actions") ||
+      topbar.querySelector(".panel-head__actions");
 
     if (on) {
+      topbar.hidden = false;
       if (fsToolbar) {
         fsToolbar.hidden = false;
         topbar.appendChild(fsToolbar);
       }
       if (seoBtn) topbar.appendChild(seoBtn);
       if (actions) topbar.appendChild(actions);
-      topbar.hidden = false;
       if (typeof window.__applyGeneratorMobileLabels === "function") {
         window.__applyGeneratorMobileLabels();
       }
       return;
     }
 
+    topbar.hidden = true;
     if (fsToolbar) {
       fsToolbar.hidden = true;
       headBar.insertBefore(fsToolbar, headBar.firstChild);
     }
-    if (seoBtn && actions) {
-      headBar.insertBefore(seoBtn, actions);
-    } else if (seoBtn) {
-      headBar.appendChild(seoBtn);
+    if (actions) {
+      headBar.appendChild(actions);
     }
-    if (actions) headBar.appendChild(actions);
-    topbar.hidden = true;
+    if (seoBtn) {
+      const actionsInHead = headBar.querySelector(".panel-head__actions");
+      if (actionsInHead) {
+        headBar.insertBefore(seoBtn, actionsInHead);
+      } else {
+        headBar.appendChild(seoBtn);
+      }
+    }
   }
 
   function initFullscreenEditor() {

@@ -924,10 +924,6 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     display:none;
   }
 
-  body.generator-saas-v2.generator-editor-fullscreen .editor-panel{
-    padding-top:calc(48px + env(safe-area-inset-top,0px));
-  }
-
   body.generator-saas-v2.generator-editor-fullscreen .editor-fs-actions:not([hidden]){
     display:flex;
     flex:1 1 auto;
@@ -1781,11 +1777,14 @@ body.generator-saas-v2 .sec-dates-block--list{
     overscroll-behavior:contain;
   }
 
-  /* Expand / fullscreen — use full height, scroll inside section list */
+  /* Expand / fullscreen — edge-to-edge editor on mobile */
   body.generator-saas-v2.generator-editor-fullscreen .editor-panel{
-    padding:calc(48px + env(safe-area-inset-top,0px)) 10px calc(8px + env(safe-area-inset-bottom,0px));
-    gap:6px;
+    padding:calc(48px + env(safe-area-inset-top,0px)) 0 calc(8px + env(safe-area-inset-bottom,0px));
+    gap:4px;
     overflow:hidden;
+    border:none;
+    border-radius:0;
+    box-shadow:none;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .panel-head--editor{
@@ -1822,10 +1821,15 @@ body.generator-saas-v2 .sec-dates-block--list{
     flex:1 1 auto;
     min-height:0;
     margin:0;
+    width:100%;
+    max-width:none;
+    border-radius:0;
+    border-left:none;
+    border-right:none;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .section-editor-toolbar{
-    padding:6px 8px;
+    padding:6px 10px;
     gap:6px;
   }
 
@@ -1841,8 +1845,27 @@ body.generator-saas-v2 .sec-dates-block--list{
 
   body.generator-saas-v2.generator-editor-fullscreen .section-editor-root{
     max-height:none;
-    padding:8px;
+    padding:6px 8px;
     gap:8px;
+  }
+
+  body.generator-saas-v2.generator-editor-fullscreen .content-editor{
+    width:100%;
+    max-width:none;
+    margin:0;
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+    box-sizing:border-box;
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none;
+  }
+
+  body.generator-saas-v2.generator-editor-fullscreen .sec-card{
+    border-radius:0;
+    border-left:none;
+    border-right:none;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .sec-card__head{
