@@ -1024,6 +1024,7 @@ async function insertPage(
     department,
     postName,
     totalPosts,
+    advertisementNo,
     lastDate,
     position,
     breaking,
@@ -1064,11 +1065,12 @@ async function insertPage(
    * title, slug, status, category, then structured fields, then content, …
    */
   if (IS_NON_PROD) {
-    console.log("REPO INPUT:", { postName, totalPosts });
+    console.log("REPO INPUT:", { postName, totalPosts, advertisementNo });
   }
 
   const postNameSql = toOptionalDbVarchar(postName, 512);
   const totalPostsSql = toOptionalDbVarchar(totalPosts, 64);
+  const advertisementNoSql = toOptionalDbVarchar(advertisementNo, 128);
 
   const insertParams = [
     title,
@@ -1081,6 +1083,7 @@ async function insertPage(
     dSql,
     postNameSql,
     totalPostsSql,
+    advertisementNoSql,
     lastDate ?? null,
     finalHTML,
     text,
@@ -1092,7 +1095,7 @@ async function insertPage(
 
   if (IS_NON_PROD) {
     console.log("SQL PARAMS:", insertParams.map((v, i) => (i === 10 || i === 11 ? summarizeBindValue(v) : v)));
-    console.log("SQL PARAMS post_name/total_posts [7],[8]:", insertParams[7], insertParams[8]);
+    console.log("SQL PARAMS post_name/total_posts/advertisement_no [7],[8],[9]:", insertParams[7], insertParams[8], insertParams[9]);
   }
 
   logger.info("structured fields pipeline [4 repo args → 5 SQL params]", {
@@ -1106,7 +1109,7 @@ async function insertPage(
   await logDatabaseName(conn, "same conn, immediately before INSERT pages");
 
   const insertColumnOrder =
-    "title, slug, status, badges, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at=NOW()";
+    "title, slug, status, badges, category, qualification, state, department, post_name, total_posts, advertisement_no, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at=NOW()";
   logger.info("insertPage full bind array pre-EXECUTE (order matches columns)", {
     insertColumnOrder,
     insertParamsFull: insertParams.map((v, i) =>
@@ -1123,6 +1126,7 @@ async function insertPage(
       ["department", dSql],
       ["post_name", postNameSql],
       ["total_posts", totalPostsSql],
+      ["advertisement_no", advertisementNoSql],
       ["last_date", lastDate ?? null],
       ["content", summarizeBindValue(finalHTML)],
       ["raw_text", summarizeBindValue(text)],
@@ -1131,7 +1135,7 @@ async function insertPage(
       ["breaking_order", breakingOrder ?? 0],
       ["event_time", eventTime ?? null]
     ],
-    placeholderCount: 17
+    placeholderCount: 18
   });
 
   if (IS_NON_PROD) {
@@ -1141,8 +1145,8 @@ async function insertPage(
 
   const [insResult] = await conn.query(
     `INSERT INTO \`pages\` 
-     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at, updated_at, content_updated_at) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
+     (title, slug, status, \`badges\`, category, \`qualification\`, \`state\`, \`department\`, post_name, total_posts, advertisement_no, last_date, content, raw_text, position, breaking, breaking_order, event_time, created_at, updated_at, content_updated_at) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
     insertParams
   );
 
@@ -1232,6 +1236,7 @@ async function updatePageBySlug(
     department,
     postName,
     totalPosts,
+    advertisementNo,
     lastDate,
     position,
     breaking,
@@ -1272,11 +1277,12 @@ async function updatePageBySlug(
    * SET clause order MUST match updateParams order exactly.
    */
   if (IS_NON_PROD) {
-    console.log("REPO INPUT:", { postName, totalPosts });
+    console.log("REPO INPUT:", { postName, totalPosts, advertisementNo });
   }
 
   const postNameSql = toOptionalDbVarchar(postName, 512);
   const totalPostsSql = toOptionalDbVarchar(totalPosts, 64);
+  const advertisementNoSql = toOptionalDbVarchar(advertisementNo, 128);
 
   const updateParams = [
     title,
@@ -1288,6 +1294,7 @@ async function updatePageBySlug(
     dSql,
     postNameSql,
     totalPostsSql,
+    advertisementNoSql,
     lastDate ?? null,
     finalHTML,
     text,
@@ -1299,8 +1306,8 @@ async function updatePageBySlug(
   ].map((v) => (v === undefined ? null : v));
 
   if (IS_NON_PROD) {
-    console.log("SQL PARAMS:", updateParams.map((v, i) => (i === 8 || i === 9 ? summarizeBindValue(v) : v)));
-    console.log("SQL PARAMS post_name/total_posts [6],[7]:", updateParams[6], updateParams[7]);
+    console.log("SQL PARAMS:", updateParams.map((v, i) => (i === 9 || i === 10 ? summarizeBindValue(v) : v)));
+    console.log("SQL PARAMS post_name/total_posts/advertisement_no [7],[8],[9]:", updateParams[7], updateParams[8], updateParams[9]);
   }
 
   logger.info("structured fields pipeline [4 repo args → 5 SQL params] UPDATE", {
@@ -1314,7 +1321,7 @@ async function updatePageBySlug(
   await logDatabaseName(conn, "same conn, immediately before UPDATE pages");
 
   const updateSetOrder =
-    "title, status, badges, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text, position, breaking, breaking_order, event_time, WHERE slug";
+    "title, status, badges, category, qualification, state, department, post_name, total_posts, advertisement_no, last_date, content, raw_text, position, breaking, breaking_order, event_time, WHERE slug";
   logger.info("updatePageBySlug full bind array pre-EXECUTE (order matches SET)", {
     updateSetOrder,
     updateParamsFull: updateParams.map((v, i) =>
@@ -1330,6 +1337,7 @@ async function updatePageBySlug(
       ["department", dSql],
       ["post_name", postNameSql],
       ["total_posts", totalPostsSql],
+      ["advertisement_no", advertisementNoSql],
       ["last_date", lastDate ?? null],
       ["content", summarizeBindValue(finalHTML)],
       ["raw_text", summarizeBindValue(text)],
@@ -1348,7 +1356,7 @@ async function updatePageBySlug(
   logger.info("updatePageBySlug saving last_date", { slug, last_date: lastDate ?? null });
 
   const [[existingRow]] = await conn.query(
-    `SELECT title, status, category, qualification, state, department, post_name, total_posts, last_date, content, raw_text
+    `SELECT title, status, category, qualification, state, department, post_name, total_posts, advertisement_no, last_date, content, raw_text
      FROM \`pages\` WHERE slug = ? AND deleted = 0 LIMIT 1`,
     [slug]
   );
@@ -1361,6 +1369,7 @@ async function updatePageBySlug(
     department,
     postName,
     totalPosts,
+    advertisementNo,
     lastDate,
     finalHTML,
     text
@@ -1375,7 +1384,7 @@ async function updatePageBySlug(
 
   const [result] = await conn.query(
     `UPDATE \`pages\`
-     SET title = ?, status = ?, \`badges\` = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
+     SET title = ?, status = ?, \`badges\` = ?, category = ?, \`qualification\` = ?, \`state\` = ?, \`department\` = ?, post_name = ?, total_posts = ?, advertisement_no = ?, last_date = ?, content = ?, raw_text = ?, position = ?, 
          breaking = ?, breaking_order = ?, event_time = ?, updated_at = NOW()${contentUpdatedAtSql}
      WHERE slug = ? AND deleted = 0`,
     updateParams

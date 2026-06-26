@@ -58,6 +58,8 @@ const adminPagePayloadSchema = Joi.object({
   postName: Joi.string().trim().max(512).allow("", null).optional(),
   total_posts: Joi.string().trim().max(64).allow("", null).optional(),
   totalPosts: Joi.string().trim().max(64).allow("", null).optional(),
+  advertisement_no: Joi.string().trim().max(128).allow("", null).optional(),
+  advertisementNo: Joi.string().trim().max(128).allow("", null).optional(),
   lastDate: Joi.alternatives(Joi.date(), Joi.string().trim().allow(""), Joi.valid(null))
     .optional()
     .custom((v) => {

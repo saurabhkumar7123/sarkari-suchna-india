@@ -76,7 +76,8 @@ const previewPage = asyncHandler(async (req, res) => {
     category: row.category || row.tag || "general",
     normalizedStatus: row.status || row.normalizedStatus || "general",
     postName: row.post_name ?? row.postName ?? null,
-    totalPosts: row.total_posts ?? row.totalPosts ?? null
+    totalPosts: row.total_posts ?? row.totalPosts ?? null,
+    advertisementNo: row.advertisement_no ?? row.advertisementNo ?? null
   });
 
   console.log({

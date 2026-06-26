@@ -50,7 +50,7 @@ function normalizeStatus(input) {
 
 async function main() {
   const [rows] = await db.query(
-    "SELECT title, slug, raw_text, category, status, post_name, total_posts FROM pages WHERE deleted=0"
+    "SELECT title, slug, raw_text, category, status, post_name, total_posts, advertisement_no FROM pages WHERE deleted=0"
   );
 
   let ok = 0;
@@ -70,7 +70,8 @@ async function main() {
         category: row.category || "",
         normalizedStatus,
         postName: row.post_name != null ? String(row.post_name) : null,
-        totalPosts: row.total_posts != null ? String(row.total_posts) : null
+        totalPosts: row.total_posts != null ? String(row.total_posts) : null,
+        advertisementNo: row.advertisement_no != null ? String(row.advertisement_no) : null
       });
       await pipeline.writeJobHtmlFile(slug, html);
       slugs.push(slug);

@@ -15,7 +15,8 @@ async function generateHTML(data) {
     category: data.category || "general",
     normalizedStatus: data.normalizedStatus || data.status || "general",
     postName: data.postName ?? data.post_name ?? null,
-    totalPosts: data.totalPosts ?? data.total_posts ?? null
+    totalPosts: data.totalPosts ?? data.total_posts ?? null,
+    advertisementNo: data.advertisementNo ?? data.advertisement_no ?? null
   });
 
   await pipeline.writeJobHtmlFile(slug, html);

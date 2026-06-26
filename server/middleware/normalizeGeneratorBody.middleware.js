@@ -55,6 +55,13 @@ function normalizeGeneratorBody(req, res, next) {
   }
   console.warn("FINAL total_posts:", req.body.total_posts, typeof req.body.total_posts);
 
+  if (req.body.advertisement_no == null || req.body.advertisement_no === "") {
+    req.body.advertisement_no = "";
+  } else {
+    req.body.advertisement_no = String(req.body.advertisement_no).trim();
+  }
+  console.warn("FINAL advertisement_no:", req.body.advertisement_no, typeof req.body.advertisement_no);
+
   if (!req.body.lastDate) {
     req.body.lastDate = null;
   } else {

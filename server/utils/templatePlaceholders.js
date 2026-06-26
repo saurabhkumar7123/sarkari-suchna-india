@@ -114,7 +114,8 @@ function assertJobBannerPlaceholdersResolved(html) {
  *   normalizedStatus?: string,
  *   now?: Date,
  *   postName?: string | null,
- *   totalPosts?: string | null
+ *   totalPosts?: string | null,
+ *   advertisementNo?: string | null
  * }} opts
  */
 function buildJobTemplateVariables(opts) {
@@ -126,7 +127,8 @@ function buildJobTemplateVariables(opts) {
     normalizedStatus = "general",
     now = new Date(),
     postName = null,
-    totalPosts = null
+    totalPosts = null,
+    advertisementNo = null
   } = opts;
 
   let dynamicSections;
@@ -166,7 +168,10 @@ function buildJobTemplateVariables(opts) {
   const stateRaw = extractFieldFromText(String(text || ""), "State");
   const departmentRaw = extractFieldFromText(String(text || ""), "Department");
   const lastDateIso = parseFlexibleDateToIso(lastDateRaw);
-  const advertisementNo = extractAdvertisementNo(String(text || ""));
+  const explicitAdvt = String(advertisementNo ?? "").trim();
+  const extractedAdvt = extractAdvertisementNo(String(text || ""));
+  const advertisementNoForTemplate =
+    explicitAdvt.length > 0 ? explicitAdvt.replace(/\s+/g, " ") : extractedAdvt;
   const explicitTotal = String(totalPosts ?? "").trim();
   const extractedTotal = extractTotalPosts(String(text || ""));
   const totalPostsForTemplate =
@@ -179,7 +184,7 @@ function buildJobTemplateVariables(opts) {
     normalizedStatus: String(normalizedStatus || ""),
     postName: postNameForTemplate,
     totalPosts: totalPostsForTemplate,
-    advertisementNo
+    advertisementNo: advertisementNoForTemplate
   });
 
   const slugClean = String(slug || "")
@@ -244,7 +249,7 @@ function buildJobTemplateVariables(opts) {
     TAG_SLUG: tagSlugForUrls,
     TAG_HREF: tagHref,
     TAG_META_HIDDEN: tagMetaHidden,
-    ADVERTISEMENT_NO: escapeHtml(advertisementNo),
+    ADVERTISEMENT_NO: escapeHtml(advertisementNoForTemplate),
     CANONICAL_URL: canonicalUrl,
     META_DESCRIPTION: escapeHtml(metaDescription),
     BASE_URL: escapeHtml(baseUrl),

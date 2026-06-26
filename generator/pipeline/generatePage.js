@@ -22,7 +22,8 @@ const TEMPLATE_PATH = path.join(__dirname, "../../server/templates/template.html
  *   category?: string,
  *   normalizedStatus: string,
  *   postName?: string | null,
- *   totalPosts?: string | null
+ *   totalPosts?: string | null,
+ *   advertisementNo?: string | null
  * }} input
  * @returns {Promise<string>}
  */
@@ -33,7 +34,8 @@ async function buildJobHtml({
   category,
   normalizedStatus,
   postName = null,
-  totalPosts = null
+  totalPosts = null,
+  advertisementNo = null
 }) {
   let template;
   try {
@@ -52,7 +54,8 @@ async function buildJobHtml({
     category,
     normalizedStatus,
     postName,
-    totalPosts
+    totalPosts,
+    advertisementNo
   });
 
   const html = applyTemplatePlaceholders(template, variables);

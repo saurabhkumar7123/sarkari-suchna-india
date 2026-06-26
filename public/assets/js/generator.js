@@ -482,6 +482,7 @@ function resetGeneratorForm() {
   setVal("title", "");
   setVal("post_name", "");
   setVal("total_posts", "");
+  setVal("advertisement_no", "");
   setVal("data", "");
   setVal("status", "");
   setVal("customStatus", "");
@@ -543,6 +544,7 @@ function saveDraftToStorage() {
       title: document.getElementById("title") && document.getElementById("title").value,
       post_name: document.getElementById("post_name") && document.getElementById("post_name").value,
       total_posts: document.getElementById("total_posts") && document.getElementById("total_posts").value,
+      advertisement_no: document.getElementById("advertisement_no") && document.getElementById("advertisement_no").value,
       data: document.getElementById("data") && document.getElementById("data").value,
       status: document.getElementById("status") && document.getElementById("status").value,
       customStatus: document.getElementById("customStatus") && document.getElementById("customStatus").value,
@@ -585,6 +587,8 @@ function restoreDraftFromStorage() {
       document.getElementById("post_name").value = d.post_name;
     if (document.getElementById("total_posts") && d.total_posts != null)
       document.getElementById("total_posts").value = d.total_posts;
+    if (document.getElementById("advertisement_no") && d.advertisement_no != null)
+      document.getElementById("advertisement_no").value = d.advertisement_no;
     if (document.getElementById("data") && d.data) document.getElementById("data").value = d.data;
     syncSectionEditorFromData();
     syncAiConvertButton();
@@ -1099,6 +1103,8 @@ async function loadPageFromURL(){
     if (postNameEl) postNameEl.value = page.post_name != null ? String(page.post_name) : "";
     const totalPostsEl = document.getElementById("total_posts");
     if (totalPostsEl) totalPostsEl.value = page.total_posts != null ? String(page.total_posts) : "";
+    const advertisementNoEl = document.getElementById("advertisement_no");
+    if (advertisementNoEl) advertisementNoEl.value = page.advertisement_no != null ? String(page.advertisement_no) : "";
     applyStatusToForm(page.status || "");
     document.getElementById("category").value = page.category || "";
     setCategoryTagsFromString(page.category || "");
@@ -1280,6 +1286,8 @@ async function selectPage(p){
     if (postNameEl) postNameEl.value = page.post_name != null ? String(page.post_name) : "";
     const totalPostsEl = document.getElementById("total_posts");
     if (totalPostsEl) totalPostsEl.value = page.total_posts != null ? String(page.total_posts) : "";
+    const advertisementNoEl = document.getElementById("advertisement_no");
+    if (advertisementNoEl) advertisementNoEl.value = page.advertisement_no != null ? String(page.advertisement_no) : "";
     applyStatusToForm(page.status || "");
     document.getElementById("category").value = page.category || "";
     setCategoryTagsFromString(page.category || "");
@@ -1368,6 +1376,7 @@ async function generatePage(){
     slug: pageUrlValue || "",
     post_name: String(document.getElementById("post_name")?.value ?? ""),
     total_posts: String(document.getElementById("total_posts")?.value ?? ""),
+    advertisement_no: String(document.getElementById("advertisement_no")?.value ?? ""),
     status: rawStatus,
     category: document.getElementById("category").value.trim(),
     qualification: qualificationValue || null,
@@ -1427,7 +1436,7 @@ async function generatePage(){
     sentSmallBoxSlot: payload.smallBoxSlot
   });
   console.log("Submitting lastDate:", payload.lastDate);
-  console.log("Submitting post_name / total_posts:", payload.post_name, payload.total_posts);
+  console.log("Submitting post_name / total_posts / advertisement_no:", payload.post_name, payload.total_posts, payload.advertisement_no);
   console.log("Submitting status (raw):", JSON.stringify(rawStatus), "normalized:", JSON.stringify(statusNormalized));
   console.log("[generator] save payload keys:", Object.keys(payload));
 
@@ -1760,6 +1769,7 @@ function updatePreview(){
       title: document.getElementById("title").value.trim(),
       post_name: String(document.getElementById("post_name")?.value ?? ""),
       total_posts: String(document.getElementById("total_posts")?.value ?? ""),
+      advertisement_no: String(document.getElementById("advertisement_no")?.value ?? ""),
       text: document.getElementById("data").value.trim()
     };
 

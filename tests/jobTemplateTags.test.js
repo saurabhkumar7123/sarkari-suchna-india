@@ -42,4 +42,30 @@ describe("job template tag placeholders", () => {
 
     expect(vars.TAG_HREF).toBe("/department/police");
   });
+
+  test("explicit advertisementNo overrides text extraction", () => {
+    const vars = buildJobTemplateVariables({
+      title: "SSC CGL Online Form 2026",
+      text: "Advt No: 99/2020",
+      slug: "ssc-cgl-2026",
+      category: "ssc",
+      normalizedStatus: "latest job",
+      advertisementNo: "14/2026"
+    });
+
+    expect(vars.ADVERTISEMENT_NO).toBe("14/2026");
+    expect(vars.BANNER_ADVT_DISPLAY).toBe("14/2026");
+  });
+
+  test("falls back to text extraction when advertisementNo empty", () => {
+    const vars = buildJobTemplateVariables({
+      title: "SSC CGL Online Form 2026",
+      text: "Advt No: 99/2020",
+      slug: "ssc-cgl-2026",
+      category: "ssc",
+      normalizedStatus: "latest job"
+    });
+
+    expect(vars.ADVERTISEMENT_NO).toBe("99/2020");
+  });
 });

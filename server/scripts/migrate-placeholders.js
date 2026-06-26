@@ -42,7 +42,7 @@ function normalizeStatus(input) {
 
 async function run() {
   const [rows] = await db.query(
-    `SELECT id, slug, title, status, category, raw_text, content, post_name, total_posts
+    `SELECT id, slug, title, status, category, raw_text, content, post_name, total_posts, advertisement_no
      FROM pages
      WHERE deleted = 0 AND content LIKE '%{{%'`
   );
@@ -70,7 +70,8 @@ async function run() {
         category: row.category || "",
         normalizedStatus: normalizeStatus(row.status),
         postName: row.post_name != null ? String(row.post_name) : null,
-        totalPosts: row.total_posts != null ? String(row.total_posts) : null
+        totalPosts: row.total_posts != null ? String(row.total_posts) : null,
+        advertisementNo: row.advertisement_no != null ? String(row.advertisement_no) : null
       });
     } catch (e) {
       console.error(`[migrate-placeholders] skip slug=${slug}:`, e.message || e);

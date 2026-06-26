@@ -216,8 +216,14 @@ const generatePage = async (req, res) => {
 
     const postNameRaw = readBodyFieldWithAliases(req.body, ["post_name", "postName", "POST_NAME"]);
     const totalPostsRaw = readBodyFieldWithAliases(req.body, ["total_posts", "totalPosts", "TOTAL_POSTS"]);
+    const advertisementNoRaw = readBodyFieldWithAliases(req.body, [
+      "advertisement_no",
+      "advertisementNo",
+      "ADVERTISEMENT_NO"
+    ]);
     const normalizedPostName = postNameRaw ? String(postNameRaw).trim().slice(0, 512) : "";
     const normalizedTotalPosts = totalPostsRaw ? String(totalPostsRaw).trim().slice(0, 64) : "";
+    const normalizedAdvertisementNo = advertisementNoRaw ? String(advertisementNoRaw).trim().slice(0, 128) : "";
     const smallBoxService = require("../../services/smallBox.service");
     const { positionFromSlot } = require("../../lib/smallBoxSlots");
     const slotParsed = smallBoxService.parseSmallBoxSlot(req.body.smallBoxSlot);
@@ -277,6 +283,7 @@ const generatePage = async (req, res) => {
         department: normalizedDepartment,
         post_name: normalizedPostName,
         total_posts: normalizedTotalPosts,
+        advertisement_no: normalizedAdvertisementNo,
         lastDate: finalLastDate
       },
       stage3_typeof: {
@@ -349,7 +356,8 @@ const generatePage = async (req, res) => {
         category,
         normalizedStatus,
         postName: normalizedPostName,
-        totalPosts: normalizedTotalPosts
+        totalPosts: normalizedTotalPosts,
+        advertisementNo: normalizedAdvertisementNo
       });
     } catch (buildErr) {
       await conn.rollback();
@@ -389,6 +397,7 @@ const generatePage = async (req, res) => {
           department: normalizedDepartment,
           postName: normalizedPostName,
           totalPosts: normalizedTotalPosts,
+          advertisementNo: normalizedAdvertisementNo,
           lastDate: finalLastDate,
           position: normalizedPosition,
           breaking: req.body.breaking,
@@ -417,6 +426,7 @@ const generatePage = async (req, res) => {
           department: normalizedDepartment,
           postName: normalizedPostName,
           totalPosts: normalizedTotalPosts,
+          advertisementNo: normalizedAdvertisementNo,
           lastDate: finalLastDate,
           position: normalizedPosition,
           breaking: req.body.breaking,

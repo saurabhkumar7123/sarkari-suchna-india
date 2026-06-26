@@ -15,6 +15,7 @@ const CONTENT_FRESHNESS_FIELD_KEYS = [
   "department",
   "post_name",
   "total_posts",
+  "advertisement_no",
   "last_date"
 ];
 
@@ -82,6 +83,7 @@ function buildExistingContentSnapshot(row) {
     department: normalizeStructured(row.department),
     post_name: normalizeOptionalVarchar(row.post_name),
     total_posts: normalizeOptionalVarchar(row.total_posts),
+    advertisement_no: normalizeOptionalVarchar(row.advertisement_no),
     last_date: normalizeLastDate(row.last_date)
   };
 }
@@ -102,6 +104,7 @@ function buildIncomingContentSnapshot(params) {
     department: normalizeStructured(params.department),
     post_name: normalizeOptionalVarchar(params.postName ?? params.post_name),
     total_posts: normalizeOptionalVarchar(params.totalPosts ?? params.total_posts),
+    advertisement_no: normalizeOptionalVarchar(params.advertisementNo ?? params.advertisement_no),
     last_date: normalizeLastDate(params.lastDate ?? params.last_date)
   };
 }

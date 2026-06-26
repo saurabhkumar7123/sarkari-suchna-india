@@ -232,7 +232,8 @@ const restorePage = async (req, res) => {
       category: page.category || "",
       normalizedStatus: normalizeStatusForPipeline(page.status),
       postName: page.post_name != null ? String(page.post_name) : null,
-      totalPosts: page.total_posts != null ? String(page.total_posts) : null
+      totalPosts: page.total_posts != null ? String(page.total_posts) : null,
+      advertisementNo: page.advertisement_no != null ? String(page.advertisement_no) : null
     });
     try {
       const relatedItems = await getRelatedPagesForSlug(page.slug, 6);
@@ -490,6 +491,7 @@ const getAdminPageBySlug = async (req, res) => {
         department: p.department != null ? String(p.department) : "",
         post_name: p.post_name != null ? String(p.post_name) : "",
         total_posts: p.total_posts != null ? String(p.total_posts) : "",
+        advertisement_no: p.advertisement_no != null ? String(p.advertisement_no) : "",
         lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(p)) ?? "",
         rawText: p.raw_text || "",
         breaking: !!p.breaking,
