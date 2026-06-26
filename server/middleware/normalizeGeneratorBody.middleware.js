@@ -96,6 +96,9 @@ function normalizeGeneratorBody(req, res, next) {
     req.body.content = req.body.text;
   }
 
+  const { normalizeGeneratorBodyTextFields } = require("../../generator/lib/normalizeGeneratorInput");
+  normalizeGeneratorBodyTextFields(req.body);
+
   console.log("FINAL BODY:", req.body);
   console.warn("FINAL BODY:", req.body);
   next();

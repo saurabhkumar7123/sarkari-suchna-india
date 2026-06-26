@@ -521,11 +521,19 @@ const generatePage = async (req, res) => {
       data: {
         url,
         id: savedPageId,
+        title: String(title || ""),
+        content: String(text || ""),
+        post_name: normalizedPostName,
+        category: String(category || ""),
         warnings: parserWarnings,
         contentAnalysis
       },
       url,
       id: savedPageId,
+      title: String(title || ""),
+      content: String(text || ""),
+      post_name: normalizedPostName,
+      category: String(category || ""),
       warnings: parserWarnings,
       contentAnalysis
     });

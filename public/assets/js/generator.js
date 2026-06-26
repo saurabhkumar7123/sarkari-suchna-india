@@ -1532,6 +1532,25 @@ async function generatePage(){
     document.getElementById("oldSlug").value = newSlug;
     document.getElementById("pageUrl").value = resolvedUrl.startsWith("/") ? resolvedUrl : "/" + resolvedUrl;
     if (resolvedId != null && resolvedId !== "") document.getElementById("pageId").value = String(resolvedId);
+
+    const savedTitle = String(dataRes?.title || dataRes?.data?.title || "").trim();
+    const savedContent = String(dataRes?.content || dataRes?.data?.content || "").trim();
+    const savedPostName = String(dataRes?.post_name || dataRes?.data?.post_name || "").trim();
+    const savedCategory = String(dataRes?.category || dataRes?.data?.category || "").trim();
+    if (savedTitle) document.getElementById("title").value = savedTitle;
+    if (savedContent) {
+      document.getElementById("data").value = savedContent;
+      if (window.sectionEditor && typeof window.sectionEditor.syncFromTextarea === "function") {
+        window.sectionEditor.syncFromTextarea();
+      }
+    }
+    if (savedPostName && document.getElementById("post_name")) {
+      document.getElementById("post_name").value = savedPostName;
+    }
+    if (savedCategory && document.getElementById("category")) {
+      document.getElementById("category").value = savedCategory;
+    }
+
     setDeleteButtonVisible(true);
     setPageUrlLocked(true);
     updateSlugPreview();
