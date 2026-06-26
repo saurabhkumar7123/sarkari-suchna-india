@@ -110,7 +110,7 @@
     const ta = getTextarea();
     if (!ta || syncing) return;
     syncing = true;
-    const compiled = M().compileEditorSectionsToText(sections);
+    const compiled = M().normalizeEditorText(M().compileEditorSectionsToText(sections));
     if (ta.value !== compiled) {
       ta.value = compiled;
       ta.dispatchEvent(new Event("input", { bubbles: true }));
@@ -1203,11 +1203,31 @@
     }
   }
 
+  function isEditingExistingPage() {
+    const params = new URLSearchParams(window.location.search);
+    const slugParam = String(params.get("slug") || "").trim();
+    const oldSlug = String(el("oldSlug")?.value || "").trim();
+    const pageId = String(el("pageId")?.value || "").trim();
+    return Boolean(slugParam || oldSlug || pageId);
+  }
+
+  function preferVisualIfSafe() {
+    const ta = getTextarea();
+    if (!ta) return false;
+    const text = M().normalizeEditorText(ta.value || "");
+    if (text !== ta.value) ta.value = text;
+    if (!text.trim() || !M().isVisualEditorSafeForText(text)) return false;
+    sections = M().parseTextToEditorSections(text);
+    if (!sections.length) return false;
+    return setMode("visual", { force: true, silent: true, skipCompile: true });
+  }
+
   function syncFromTextarea() {
     if (mode !== "visual" || syncing) return;
     const ta = getTextarea();
     if (!ta) return;
-    const text = ta.value || "";
+    const text = M().normalizeEditorText(ta.value || "");
+    if (text !== ta.value) ta.value = text;
     if (text.trim() && !M().isVisualEditorSafeForText(text)) {
       setMode("raw", { force: true, silent: true, skipCompile: true });
       showEditorNotice("Showing Raw text — this page uses advanced formatting.", "info");
@@ -1254,11 +1274,13 @@
       if (secId) toggleSectionCollapsed(secId);
     });
 
-    const initialText = ta?.value || "";
+    const initialText = M().normalizeEditorText(ta?.value || "");
+    if (ta && initialText !== (ta.value || "")) ta.value = initialText;
     const initialUnsafe = initialText.trim() && !M().isVisualEditorSafeForText(initialText);
     if (initialUnsafe) {
       mode = "raw";
-    } else if (mode === "visual") {
+    } else if (isEditingExistingPage() || mode === "visual") {
+      mode = "visual";
       sections = M().parseTextToEditorSections(initialText);
       if (!sections.length) {
         sections = [
@@ -1282,6 +1304,7 @@
     init,
     syncFromTextarea,
     flushToTextarea,
+    preferVisualIfSafe,
     getMode,
     setMode,
     addSection

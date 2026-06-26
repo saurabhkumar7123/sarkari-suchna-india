@@ -176,6 +176,17 @@ Official website par verify karein.`;
     ).toBe("Result=https://example.com/result");
   });
 
+  test("canonicalizes extra spaces in date lines for visual round-trip", () => {
+    const text = `[Section: Important Dates]
+Online Apply Start Date : 18 June 2026
+Online Apply Last Date :  08 July 2026
+Candidates Are Advised To Confirm From The SBI Official Website :
+`;
+    const normalized = normalizeEditorText(text);
+    expect(normalized).toContain("Online Apply Last Date : 08 July 2026");
+    expect(isVisualEditorSafeForText(normalized)).toBe(true);
+  });
+
   test("forced table section compiles with | table suffix", () => {
     const text = `[Section: Vacancy | table]
 Post Name, Posts, Qualification

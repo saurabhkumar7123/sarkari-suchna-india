@@ -698,6 +698,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (typeof window.sectionEditor?.init === "function") {
     window.sectionEditor.init();
   }
+  if (slug && typeof window.sectionEditor?.preferVisualIfSafe === "function") {
+    window.sectionEditor.preferVisualIfSafe();
+  }
   scheduleContentAnalysis();
 });
 
@@ -1112,7 +1115,10 @@ async function loadPageFromURL(){
     setNormalizedSelectValue("structuredState", page.state);
     setNormalizedSelectValue("structuredDepartment", page.department);
     document.getElementById("pageUrl").value = page.url || "";
-    document.getElementById("data").value = page.rawText || "";
+    document.getElementById("data").value =
+      window.SectionEditorModel && typeof window.SectionEditorModel.normalizeEditorText === "function"
+        ? window.SectionEditorModel.normalizeEditorText(page.rawText || "")
+        : page.rawText || "";
     document.getElementById("oldSlug").value = (page.slug || "").replace(/^\//, "");
     document.getElementById("pageId").value = page.id || "";
 
@@ -1295,8 +1301,14 @@ async function selectPage(p){
     setNormalizedSelectValue("structuredState", page.state);
     setNormalizedSelectValue("structuredDepartment", page.department);
     document.getElementById("pageUrl").value = page.url || "";
-    document.getElementById("data").value = page.rawText || "";
+    document.getElementById("data").value =
+      window.SectionEditorModel && typeof window.SectionEditorModel.normalizeEditorText === "function"
+        ? window.SectionEditorModel.normalizeEditorText(page.rawText || "")
+        : page.rawText || "";
     syncSectionEditorFromData();
+    if (typeof window.sectionEditor?.preferVisualIfSafe === "function") {
+      window.sectionEditor.preferVisualIfSafe();
+    }
     document.getElementById("oldSlug").value = (page.slug || "").replace(/^\//, "");
     document.getElementById("pageId").value = page.id || "";
     document.getElementById("breaking").checked = !!page.breaking;

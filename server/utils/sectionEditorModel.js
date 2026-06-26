@@ -23,10 +23,38 @@ function isUrlLike(value) {
 }
 
 function normalizeEditorText(text) {
-  return String(text || "")
+  let s = String(text || "")
     .replace(/\r\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  if (!s) return "";
+  return s
+    .split("\n")
+    .map((line) => canonicalizeEditorLine(line))
+    .join("\n");
+}
+
+function canonicalizeEditorLine(line) {
+  const raw = String(line ?? "");
+  const trimmed = raw.trim();
+  if (!trimmed) return raw;
+  if (/^\[\s*section\s*:/i.test(trimmed)) return raw;
+  if (/^---table---$/i.test(trimmed) || /^---endtable---$/i.test(trimmed)) return raw;
+
+  const kind = lineType(trimmed);
+  if (kind === "link" || kind === "faq_q" || kind === "faq_a" || kind === "list" || kind === "list_ordered") {
+    return raw;
+  }
+  if (kind === "table_row") return raw;
+
+  if (kind === "date") {
+    const { label, value } = parseDateLine(trimmed);
+    if (!label) return raw;
+    if (!value) return `${label} :`;
+    return `${label} : ${value}`;
+  }
+
+  return raw;
 }
 
 function parseSectionsFromText(text) {
@@ -57,7 +85,7 @@ function lineType(line) {
     const parts = raw.split(":");
     const label = parts[0].trim();
     const value = parts.slice(1).join(":").trim();
-    if (label && value && !isUrlLike(value)) return "date";
+    if (label && !isUrlLike(value) && (value || parts.length > 1)) return "date";
   }
   if (raw.includes(",") && raw.split(",").length >= 3) return "table_row";
   return "paragraph";
@@ -314,7 +342,8 @@ function compileDatesSection(payload) {
       orderedListIndex = 0;
       const label = String(b.label || "").trim();
       const value = String(b.value || "").trim();
-      if (label || value) lines.push(`${label} : ${value}`);
+      if (!label && !value) continue;
+      lines.push(value ? `${label} : ${value}` : `${label} :`);
       continue;
     }
     if (b.type === "paragraph") {

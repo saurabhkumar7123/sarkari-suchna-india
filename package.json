@@ -11,6 +11,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "migrate:placeholders": "node server/scripts/migrate-placeholders.js",
+    "migrate:advertisement-no": "node scripts/apply-advertisement-no-migration.js",
     "sitemap": "node scripts/sitemap.js",
     "regenerate:jobs": "node scripts/regenerate-all-jobs.js",
     "load:test": "node scripts/load-test.js",
