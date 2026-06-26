@@ -1657,21 +1657,22 @@
   }
 
   .highlight-banner-top {
-    padding: 7px 10px 5px;
+    padding: 14px 12px 12px;
   }
 
   .highlight-banner-top-inner {
-    gap: 5px;
-    margin-bottom: 5px;
+    gap: 7px;
+    margin-bottom: 8px;
   }
 
   .highlight-banner-top-badge {
-    padding: 4px 9px;
-    font-size: 9px;
+    padding: 6px 11px;
+    font-size: 10px;
   }
 
   .highlight-banner-top-advt {
-    font-size: 10px;
+    font-size: 11px;
+    line-height: 1.35;
   }
 
   .highlight-banner-main {
@@ -1732,13 +1733,22 @@
 }
 
 @media (max-width: 480px) {
+  .highlight-banner-top {
+    padding: 12px 10px 10px;
+  }
+
   .highlight-banner-top-inner {
-    gap: 4px;
+    gap: 6px;
+    margin-bottom: 7px;
   }
 
   .highlight-banner-top-badge {
-    padding: 3px 8px;
-    font-size: 8px;
+    padding: 5px 10px;
+    font-size: 9px;
+  }
+
+  .highlight-banner-top-advt {
+    font-size: 10px;
   }
 
   .highlight-banner-main {

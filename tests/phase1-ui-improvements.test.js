@@ -62,7 +62,7 @@ A: Sample answer.`,
     expect(html).toContain("Total Posts");
     expect(html).toContain("meta-item--tag");
     expect(html).not.toContain("keyFactsSection");
-    expect(html).toContain("vacancy-details.css?v=86");
+    expect(html).toContain("vacancy-details.css?v=87");
     expect(html).toContain("job-page-share.js?v=3");
     expect(html).toContain("highlight-banner-theme.js?v=2");
     expect(html).toContain("Apply Online");
