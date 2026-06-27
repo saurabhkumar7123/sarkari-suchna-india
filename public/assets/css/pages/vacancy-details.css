@@ -1043,6 +1043,46 @@
 .table-responsive{
   padding-inline:4px;
   }
+
+/* Desktop — larger readable text (title / post date / author meta unchanged) */
+.page-vacancy .advt-label{
+  font-size:16px;
+  }
+
+.page-vacancy .advt-value{
+  font-size:15px;
+  }
+
+.page-vacancy .card-header h2,
+.page-vacancy .card-header .section-title{
+  font-size:17px;
+  }
+
+.page-vacancy .card-content p,
+.page-vacancy .card-content .content-list,
+.page-vacancy .date-row{
+  font-size:17px;
+  }
+
+.page-vacancy .table th{
+  font-size:17px;
+  }
+
+.page-vacancy .table td{
+  font-size:16px;
+  }
+
+.page-vacancy .left-text,
+.page-vacancy .faq-q{
+  font-size:17px;
+  }
+
+.page-vacancy .faq-a,
+.page-vacancy .right-link a,
+.page-vacancy .link-box-actions__group a,
+.page-vacancy .link-box-status{
+  font-size:16px;
+  }
 }
     
     /* ================= MOBILE ================= */
