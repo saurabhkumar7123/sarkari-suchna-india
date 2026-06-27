@@ -1218,6 +1218,13 @@ async function sendTaxonomyHubHtml(req, res, type) {
   if (type === "state" && slug.toLowerCase() === "all-india") {
     return res.redirect(301, buildStatePath("central"));
   }
+  if (type === "board") {
+    const rawNorm = slug.replace(/-/g, " ").trim().toLowerCase();
+    const canonical = normalizeBoardSlug(rawNorm);
+    if (canonical && canonical !== rawNorm && isBoardSlug(canonical)) {
+      return res.redirect(301, buildDepartmentPath(canonical));
+    }
+  }
   const html = await taxonomyPageService.buildTaxonomyPage({
     type,
     slug,

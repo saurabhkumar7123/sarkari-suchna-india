@@ -27,12 +27,19 @@
     "rajasthan",
     "other",
     "delhi",
-    "uttarakhand"
+    "uttarakhand",
+    "gujarat"
   ]);
 
   function normalizeStateSlug(value) {
     const n = normalize(value);
     if (n === "all india") return "central";
+    return n;
+  }
+
+  function normalizeDepartmentSlug(value) {
+    const n = normalize(value);
+    if (n === "defence") return "army";
     return n;
   }
 
@@ -43,7 +50,8 @@
     "bank",
     "police",
     "teaching",
-    "defence",
+    "army",
+    "upsssc",
     "health"
   ]);
 
@@ -66,7 +74,15 @@
 
   function resolveFilterValue(value, allowedSet) {
     if (isPlaceholderValue(value)) return "";
-    const n = allowedSet === ALLOWED_STATES ? normalizeStateSlug(value) : normalize(value);
+    if (allowedSet === ALLOWED_STATES) {
+      const n = normalizeStateSlug(value);
+      return allowedSet.has(n) ? n : "";
+    }
+    if (allowedSet === ALLOWED_DEPARTMENTS) {
+      const n = normalizeDepartmentSlug(value);
+      return allowedSet.has(n) ? n : "";
+    }
+    const n = normalize(value);
     return allowedSet.has(n) ? n : "";
   }
 
@@ -101,7 +117,7 @@
     return {
       qualification: normalize(params.get("qualification")),
       state: normalizeStateSlug(params.get("state")),
-      department: normalize(params.get("department")),
+      department: normalizeDepartmentSlug(params.get("department")),
       jobType: normalize(params.get("jobType")),
       status: normalize(params.get("status")),
       source: normalize(params.get("source")),

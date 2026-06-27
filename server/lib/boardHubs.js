@@ -60,14 +60,23 @@ const BOARD_HUBS = {
     h1: "Teaching Jobs",
     sub: "Latest teaching and education department recruitment updates."
   },
-  defence: {
-    slug: "defence",
-    label: "Defence",
-    title: "Defence Jobs 2026 | Sarkari Suchna India",
+  army: {
+    slug: "army",
+    label: "Army",
+    title: "Army Jobs 2026 | Sarkari Suchna India",
     description:
-      "Browse Indian Army, Navy, Air Force and defence recruitment notifications on Sarkari Suchna India.",
-    h1: "Defence Jobs",
-    sub: "Latest defence and armed forces recruitment updates."
+      "Browse Indian Army, Agniveer and armed forces recruitment notifications on Sarkari Suchna India.",
+    h1: "Army Jobs",
+    sub: "Latest Indian Army and armed forces recruitment updates."
+  },
+  upsssc: {
+    slug: "upsssc",
+    label: "UPSSSC",
+    title: "UPSSSC Jobs 2026 | Sarkari Suchna India",
+    description:
+      "Browse latest UPSSSC recruitment notifications, exam forms, results and admit cards on Sarkari Suchna India.",
+    h1: "UPSSSC Jobs",
+    sub: "Latest UPSSSC recruitment and examination updates."
   },
   health: {
     slug: "health",
@@ -80,13 +89,17 @@ const BOARD_HUBS = {
   }
 };
 
+const { LEGACY_DEPARTMENT_ALIASES } = require("./structuredFields");
+
 const BOARD_SLUG_SET = new Set(Object.keys(BOARD_HUBS));
 
 function normalizeBoardSlug(raw) {
-  return String(raw || "")
+  const normalized = String(raw || "")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+  if (!normalized) return "";
+  return LEGACY_DEPARTMENT_ALIASES.get(normalized) || normalized;
 }
 
 function isBoardSlug(slug) {

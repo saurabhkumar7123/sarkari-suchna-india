@@ -3,7 +3,8 @@ const {
   ALLOWED_JOB_QUALIFICATIONS,
   ALLOWED_JOB_STATES,
   ALLOWED_JOB_DEPARTMENTS,
-  normalizeStateSlug
+  normalizeStateSlug,
+  normalizeDepartmentSlug
 } = require("../lib/structuredFields");
 
 function normalizeFilterValue(value) {
@@ -50,7 +51,19 @@ const pagesListQuerySchema = Joi.object({
   /** Alias for section (e.g. type=new-form); normalized in controller */
   type: Joi.string().trim().max(32).optional(),
   /** Board hub filter — must match pages.department (ssc, railway, …) */
-  department: optionalWhitelistedString(ALLOWED_JOB_DEPARTMENTS),
+  department: Joi.string()
+    .trim()
+    .max(80)
+    .allow("")
+    .optional()
+    .custom((value) => {
+      if (value === undefined || value === null || value === "") {
+        return undefined;
+      }
+      const normalized = normalizeDepartmentSlug(normalizeFilterValue(value));
+      if (normalized && ALLOWED_JOB_DEPARTMENTS.has(normalized)) return normalized;
+      return undefined;
+    }),
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(50).default(20)
 });
@@ -70,7 +83,19 @@ const jobsQuerySchema = Joi.object({
       if (normalized && ALLOWED_JOB_STATES.has(normalized)) return normalized;
       return undefined;
     }),
-  department: optionalWhitelistedString(ALLOWED_JOB_DEPARTMENTS),
+  department: Joi.string()
+    .trim()
+    .max(80)
+    .allow("")
+    .optional()
+    .custom((value) => {
+      if (value === undefined || value === null || value === "") {
+        return undefined;
+      }
+      const normalized = normalizeDepartmentSlug(normalizeFilterValue(value));
+      if (normalized && ALLOWED_JOB_DEPARTMENTS.has(normalized)) return normalized;
+      return undefined;
+    }),
   jobType: Joi.string().trim().max(80).allow("").optional(),
   status: Joi.string().trim().max(80).allow("").optional(),
   source: Joi.string().trim().valid("finder").optional(),

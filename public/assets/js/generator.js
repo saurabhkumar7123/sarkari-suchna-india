@@ -946,6 +946,9 @@ function setNormalizedSelectValue(selectId, rawValue) {
   if (selectId === "structuredState" && normalized === "all india") {
     normalized = "central";
   }
+  if (selectId === "structuredDepartment" && normalized === "defence") {
+    normalized = "army";
+  }
   if (!normalized) {
     select.value = "";
     return;

@@ -4,7 +4,7 @@ const db = require("../config/db");
 const logger = require("../utils/logger");
 const { pageContentFieldsChanged } = require("../lib/contentFreshness");
 const { topicSearchTokens } = require("../lib/topicTags");
-const { normalizeStateSlug } = require("../lib/structuredFields");
+const { normalizeStateSlug, normalizeDepartmentSlug } = require("../lib/structuredFields");
 const IS_NON_PROD = process.env.NODE_ENV !== "production";
 
 function stripInvisible(s) {
@@ -46,6 +46,10 @@ function normalizeStructuredColumn(value) {
 
 function normalizeStateColumn(value) {
   return normalizeStateSlug(value);
+}
+
+function normalizeDepartmentColumn(value) {
+  return normalizeDepartmentSlug(value);
 }
 
 /**
@@ -205,7 +209,13 @@ async function selectPublicListPage(
 
 function buildPublicListWhereDepartment(department) {
   const normalizedDepartmentColumn = buildNormalizedColumnSql("department");
-  const dept = normalizeFilterValue(department);
+  const dept = normalizeDepartmentSlug(normalizeFilterValue(department));
+  if (dept === "army") {
+    return {
+      baseQuery: `FROM pages WHERE deleted=0 AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} IN (?, ?)`,
+      params: ["army", "defence"]
+    };
+  }
   return {
     baseQuery: `FROM pages WHERE deleted=0 AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} = ?`,
     params: [dept]
@@ -695,8 +705,14 @@ function buildJobsWhere({ qualification, state, department, jobType, status }) {
     }
   }
   if (department) {
-    where += ` AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} = ?`;
-    params.push(normalizeFilterValue(department));
+    const normalizedDepartment = normalizeDepartmentSlug(normalizeFilterValue(department));
+    if (normalizedDepartment === "army") {
+      where += ` AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} IN (?, ?)`;
+      params.push("army", "defence");
+    } else if (normalizedDepartment) {
+      where += ` AND department IS NOT NULL AND TRIM(department) <> '' AND ${normalizedDepartmentColumn} = ?`;
+      params.push(normalizedDepartment);
+    }
   }
   return { where, params };
 }
@@ -1037,7 +1053,7 @@ async function insertPage(
   const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
   const sVal = normalizeStateColumn(state);
-  const dVal = normalizeStructuredColumn(department);
+  const dVal = normalizeDepartmentColumn(department);
   const qSql = bindStructuredForMysql(qVal);
   const sSql = bindStructuredForMysql(sVal);
   const dSql = bindStructuredForMysql(dVal);
@@ -1249,7 +1265,7 @@ async function updatePageBySlug(
   const badgesSql = badgesToDbValue(badges);
   const qVal = normalizeStructuredColumn(qualification);
   const sVal = normalizeStateColumn(state);
-  const dVal = normalizeStructuredColumn(department);
+  const dVal = normalizeDepartmentColumn(department);
   const qSql = bindStructuredForMysql(qVal);
   const sSql = bindStructuredForMysql(sVal);
   const dSql = bindStructuredForMysql(dVal);

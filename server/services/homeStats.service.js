@@ -33,7 +33,8 @@ const STATE_REGISTRY = [
   { slug: "rajasthan", label: "Rajasthan" },
   { slug: "other", label: "Other" },
   { slug: "delhi", label: "Delhi" },
-  { slug: "uttarakhand", label: "Uttarakhand" }
+  { slug: "uttarakhand", label: "Uttarakhand" },
+  { slug: "gujarat", label: "Gujarat" }
 ];
 
 /**
@@ -52,6 +53,13 @@ function buildStateHref(slug) {
 
 function mergeStateCountSlug(slug) {
   return normalizeStateSlug(slug) || "";
+}
+
+function mergeDepartmentCountSlug(slug) {
+  const normalized = String(slug || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "defence") return "army";
+  return normalized;
 }
 
 function addStateCount(countBySlug, slug, pageCount) {
@@ -135,9 +143,9 @@ function buildBrowseStatesFromCounts(rows) {
 function buildBrowseBoardsFromCounts(rows) {
   const countByDept = new Map();
   for (const row of rows) {
-    const slug = String(row.slug || "").trim().toLowerCase();
+    const slug = mergeDepartmentCountSlug(row.slug);
     if (!slug || !BOARD_SLUG_SET.has(slug)) continue;
-    countByDept.set(slug, Number(row.page_count) || 0);
+    countByDept.set(slug, (countByDept.get(slug) || 0) + (Number(row.page_count) || 0));
   }
 
   return allBoardHubs()
@@ -176,9 +184,9 @@ async function recomputeTaxonomyStats() {
 
   const countByDept = new Map();
   for (const row of departmentRows) {
-    const slug = String(row.slug || "").trim().toLowerCase();
+    const slug = mergeDepartmentCountSlug(row.slug);
     if (!slug || !BOARD_SLUG_SET.has(slug)) continue;
-    countByDept.set(slug, Number(row.page_count) || 0);
+    countByDept.set(slug, (countByDept.get(slug) || 0) + (Number(row.page_count) || 0));
   }
 
   const boards = allBoardHubs()

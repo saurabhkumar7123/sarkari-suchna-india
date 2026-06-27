@@ -48,11 +48,15 @@ const ALLOWED_JOB_STATES = new Set([
   "rajasthan",
   "other",
   "delhi",
-  "uttarakhand"
+  "uttarakhand",
+  "gujarat"
 ]);
 
 /** Legacy DB / URL values mapped to canonical state slugs on read. */
 const LEGACY_STATE_ALIASES = new Map([["all india", "central"]]);
+
+/** Legacy department slugs mapped to canonical board slugs on read. */
+const LEGACY_DEPARTMENT_ALIASES = new Map([["defence", "army"]]);
 
 /**
  * Normalize a state slug for filters, counts, and saves.
@@ -63,6 +67,17 @@ function normalizeStateSlug(value) {
   const normalized = normalizeStructuredFieldValue(value);
   if (!normalized) return null;
   return LEGACY_STATE_ALIASES.get(normalized) || normalized;
+}
+
+/**
+ * Normalize a department slug for filters, counts, and saves.
+ * @param {unknown} value
+ * @returns {string | null}
+ */
+function normalizeDepartmentSlug(value) {
+  const normalized = normalizeStructuredFieldValue(value);
+  if (!normalized) return null;
+  return LEGACY_DEPARTMENT_ALIASES.get(normalized) || normalized;
 }
 
 /** Board department slugs — must match boardHubs.js and pages.department for /tag/{board}. */
@@ -183,10 +198,12 @@ module.exports = {
   ALLOWED_JOB_STATES,
   ALLOWED_JOB_DEPARTMENTS,
   LEGACY_STATE_ALIASES,
+  LEGACY_DEPARTMENT_ALIASES,
   STATE_COVERAGE_DELIMITER,
   QUALIFICATION_DELIMITER,
   normalizeStructuredFieldValue,
   normalizeStateSlug,
+  normalizeDepartmentSlug,
   isValidBoardDepartment,
   getInvalidDepartmentReason,
   auditInvalidBoardDepartment,
