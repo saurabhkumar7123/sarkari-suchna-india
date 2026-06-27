@@ -546,6 +546,25 @@ async function selectBreakingNews(executor = db) {
   return rows;
 }
 
+/** Homepage countdown — future events + live window (1h after event_time; cleared when admin removes event_time). */
+async function selectUpcomingCountdownPages(limit = 16, executor = db) {
+  const safeLimit = Math.max(1, Math.min(50, Number(limit) || 16));
+  const [rows] = await executor.query(
+    `SELECT title, slug, status, event_time AS eventTime, created_at AS date
+     FROM pages
+     WHERE deleted = 0
+       AND event_time IS NOT NULL
+       AND (
+         event_time > NOW()
+         OR event_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+       )
+     ORDER BY event_time ASC
+     LIMIT ?`,
+    [safeLimit]
+  );
+  return rows;
+}
+
 /** Admin read-only: all active breaking rows (includes order; homepage ticker caps at 10). */
 async function selectHomepageBreakingAdmin(executor = db) {
   const [rows] = await executor.query(
@@ -1501,6 +1520,7 @@ module.exports = {
   setSmallBoxSlotForPage,
   clearSmallBoxSlotForPage,
   selectBreakingNews,
+  selectUpcomingCountdownPages,
   selectHomepageBreakingAdmin,
   selectPagesWithBadges,
   updateBreakingFieldsBySlug,

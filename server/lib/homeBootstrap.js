@@ -5,6 +5,7 @@ const BOOTSTRAP_VERSION = 1;
 /**
  * @param {{
  *   breakingNews: unknown[],
+ *   countdownEvents?: unknown[],
  *   smallBoxes: unknown[],
  *   trendingJobs: unknown[],
  *   sectionDefs: unknown[],
@@ -17,6 +18,7 @@ const BOOTSTRAP_VERSION = 1;
 function buildHomeBootstrap(input) {
   const {
     breakingNews = [],
+    countdownEvents = [],
     smallBoxes = [],
     trendingJobs = [],
     sectionDefs = [],
@@ -30,6 +32,7 @@ function buildHomeBootstrap(input) {
     v: BOOTSTRAP_VERSION,
     generatedAt: new Date().toISOString(),
     breakingNews: Array.isArray(breakingNews) ? breakingNews : [],
+    countdownEvents: Array.isArray(countdownEvents) ? countdownEvents : [],
     smallBoxes: Array.isArray(smallBoxes) ? smallBoxes : [],
     sections: Array.isArray(sectionDefs) ? sectionDefs : [],
     sectionPages: Array.isArray(sectionResults) ? sectionResults : [],

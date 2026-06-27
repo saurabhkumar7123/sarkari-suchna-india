@@ -112,6 +112,31 @@ function rowEventTime(n) {
   return s === "" ? null : s;
 }
 
+/** Parse DB/API event time (MySQL datetime or datetime-local). */
+function parseEventDate(value) {
+  const s = rowEventTime({ eventTime: value });
+  if (!s) return null;
+  const normalized = s.includes("T") ? s : s.replace(" ", "T");
+  const d = new Date(normalized);
+  if (!isNaN(d.getTime())) return d;
+  const fallback = new Date(s);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function hideCountdownBox(box) {
+  if (!box) return;
+  box.classList.add("is-hidden");
+  box.style.removeProperty("display");
+  box.setAttribute("aria-hidden", "true");
+}
+
+function showCountdownBox(box) {
+  if (!box) return;
+  box.classList.remove("is-hidden");
+  box.style.display = "flex";
+  box.setAttribute("aria-hidden", "false");
+}
+
 /**
  * Homepage badges — breaking rotator uses unified `.home-badge` (max 1); cards use group + en-dash.
  */
@@ -286,57 +311,55 @@ function renderBreakingNewsIntoContainer(data) {
   mountBreakingRotator(container);
 }
 
-function initBreakingFromBootstrap(data) {
+function initBreakingFromBootstrap(breakingNews, countdownEvents) {
   const box = document.getElementById("countdownBox");
   const container = document.getElementById("breakingNews");
+  const news = Array.isArray(breakingNews) ? breakingNews : [];
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!news.length) {
     if (container) container.style.display = "none";
-    if (box) box.style.display = "none";
-    clearCountdownInterval();
-    return;
-  }
-
-  if (container) container.style.display = "";
-
-  const root = container && container.querySelector("[data-breaking-rotator]");
-  const wantsStatic = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!root || (wantsStatic && !root.classList.contains("breaking-rotator--static"))) {
-    renderBreakingNewsIntoContainer(data);
   } else {
-    mountBreakingRotator(container);
+    if (container) container.style.display = "";
+
+    const root = container && container.querySelector("[data-breaking-rotator]");
+    const wantsStatic = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!root || (wantsStatic && !root.classList.contains("breaking-rotator--static"))) {
+      renderBreakingNewsIntoContainer(news);
+    } else {
+      mountBreakingRotator(container);
+    }
   }
 
-  startCountdown(data);
+  startCountdown(countdownEvents);
 }
 
 // ================= BREAKING NEWS =================
 async function loadBreaking(){
-  const box = document.getElementById("countdownBox");
-  // Avoid stale browser cache for countdown source data.
-  const data = await safeFetch("/api/breaking-news", { cache: "no-store" });
-  if(!data){
-    if (box) box.style.display = "none";
-    clearCountdownInterval();
-    return;
-  }
+  const [breakingNews, countdownEvents] = await Promise.all([
+    safeFetch("/api/breaking-news", { cache: "no-store" }),
+    safeFetch("/api/countdown-events", { cache: "no-store" })
+  ]);
 
   const container = document.getElementById("breakingNews");
-  if (!container) return;
-
-  if (!Array.isArray(data) || data.length === 0) {
-    container.style.display = "none";
-    if (box) box.style.display = "none";
-    clearCountdownInterval();
+  if (!container) {
+    startCountdown(countdownEvents);
     return;
   }
 
-  renderBreakingNewsIntoContainer(data);
+  if (!Array.isArray(breakingNews) || breakingNews.length === 0) {
+    container.style.display = "none";
+  } else {
+    container.style.display = "";
+    renderBreakingNewsIntoContainer(breakingNews);
+  }
 
-  startCountdown(data); // 🔥 existing logic preserved
+  startCountdown(countdownEvents);
 }
 
 // ================= COUNTDOWN =================
+const COUNTDOWN_MAX_EVENTS = 8;
+const COUNTDOWN_LIVE_MS = 60 * 60 * 1000;
+
 function padTime(n) {
   return String(Math.floor(Math.max(0, n))).padStart(2, "0");
 }
@@ -357,60 +380,148 @@ function clearCountdownInterval() {
   }
 }
 
+function buildCountdownEvents(data, now = Date.now()) {
+  if (!Array.isArray(data) || !data.length) return [];
+  const events = [];
+
+  for (const n of data) {
+    const eventDate = parseEventDate(rowEventTime(n));
+    if (!eventDate) continue;
+    const t = eventDate.getTime();
+    const liveEnds = t + COUNTDOWN_LIVE_MS;
+    if (now > liveEnds) continue;
+    events.push({
+      n,
+      t,
+      liveEnds,
+      phase: t > now ? "upcoming" : "live"
+    });
+  }
+
+  events.sort((a, b) => a.t - b.t);
+  return events.slice(0, COUNTDOWN_MAX_EVENTS);
+}
+
+function countdownItemHref(item) {
+  if (!item || typeof item !== "object") return "";
+  const rawUrl = item.url != null ? String(item.url).trim() : "";
+  const rawSlug = item.slug != null ? String(item.slug).trim() : "";
+  const href = rawUrl
+    ? safePageHref({ url: rawUrl, slug: rawSlug })
+    : rawSlug
+      ? safePageHref({ slug: rawSlug })
+      : "#";
+  return href === "#" ? "" : href;
+}
+
+const LIVE_TIMER_INNER =
+  '<span class="countdown-item__live-dot" aria-hidden="true"></span><span class="countdown-item__live-text">LIVE</span>';
+
+function setLiveTimerEl(timerEl) {
+  timerEl.classList.add("countdown-item__timer--live");
+  timerEl.setAttribute("aria-label", "Live now");
+  timerEl.innerHTML = LIVE_TIMER_INNER;
+}
+
+function countdownTimerMarkup(item) {
+  if (item.phase === "live") {
+    return `<span class="countdown-item__timer countdown-item__timer--live" aria-label="Live now">${LIVE_TIMER_INNER}</span>`;
+  }
+  return `<span class="countdown-item__timer" aria-label="Time remaining">${formatCountdownHMS(item.t - Date.now())}</span>`;
+}
+
+function renderCountdownListMarkup(events) {
+  return events
+    .map((item) => {
+      const title = escapeHtml(String(item.n.title || "Result").slice(0, 88));
+      const href = countdownItemHref(item.n);
+      const rowInner = `<span class="countdown-item__title">${title}</span>${countdownTimerMarkup(item)}`;
+      const attrs = `data-event-ms="${item.t}" data-live-ends="${item.liveEnds}" data-phase="${item.phase}"`;
+      if (href) {
+        return `<li class="countdown-item countdown-item--${item.phase}" ${attrs}><a class="countdown-item__link" href="${escapeAttr(href)}">${rowInner}</a></li>`;
+      }
+      return `<li class="countdown-item countdown-item--${item.phase}" ${attrs}><div class="countdown-item__row">${rowInner}</div></li>`;
+    })
+    .join("");
+}
+
+function syncCountdownListDom(list, events) {
+  const signature = events
+    .map((item) => `${item.phase}:${item.t}:${item.n.title || ""}`)
+    .join("|");
+  if (list.dataset.countdownSig === signature) return;
+  list.dataset.countdownSig = signature;
+  list.innerHTML = renderCountdownListMarkup(events);
+}
+
+function tickCountdownTimers(list, events, nowTick) {
+  const active = events.filter((item) => nowTick <= item.liveEnds);
+  active.forEach((item) => {
+    item.phase = item.t > nowTick ? "upcoming" : "live";
+  });
+  syncCountdownListDom(list, active);
+
+  list.querySelectorAll(".countdown-item").forEach((el) => {
+    const ms = Number(el.getAttribute("data-event-ms"));
+    const liveEnds = Number(el.getAttribute("data-live-ends"));
+    const timerEl = el.querySelector(".countdown-item__timer");
+    if (!timerEl || !Number.isFinite(ms) || !Number.isFinite(liveEnds)) return;
+
+    if (nowTick > liveEnds) {
+      el.remove();
+      return;
+    }
+
+    const diff = ms - nowTick;
+    if (diff <= 0) {
+      el.classList.remove("countdown-item--upcoming");
+      el.classList.add("countdown-item--live");
+      el.setAttribute("data-phase", "live");
+      setLiveTimerEl(timerEl);
+      return;
+    }
+
+    el.classList.remove("countdown-item--live");
+    el.classList.add("countdown-item--upcoming");
+    el.setAttribute("data-phase", "upcoming");
+    timerEl.classList.remove("countdown-item__timer--live");
+    timerEl.setAttribute("aria-label", "Time remaining");
+    timerEl.textContent = formatCountdownHMS(diff);
+  });
+
+  return active;
+}
+
 /**
- * Countdown strip: only when at least one row has a valid FUTURE event_time.
- * null / invalid / past → hide box and clear interval.
+ * Countdown panel — upcoming timers; after event_time shows LIVE for 1 hour (or until event_time cleared in admin).
  */
 function startCountdown(data) {
   const box = document.getElementById("countdownBox");
-  const titleEl = document.getElementById("countdownTitle");
-  const timer = document.getElementById("countdownTimer");
+  const list = document.getElementById("countdownList");
 
   clearCountdownInterval();
 
-  if (!box || !titleEl || !timer) return;
+  if (!box || !list) return;
 
-  if (!Array.isArray(data) || data.length === 0) {
-    box.style.display = "none";
-    return;
-  }
-
-  const now = new Date();
-  const upcoming = [];
-
-  for (let i = 0; i < data.length && upcoming.length < 16; i++) {
-    const n = data[i];
-    const event_time = rowEventTime(n);
-    if (!event_time) continue;
-    const eventDate = new Date(event_time);
-    if (isNaN(eventDate.getTime()) || eventDate <= now) continue;
-    upcoming.push({ n, t: eventDate });
-  }
-
-  if (!upcoming.length) {
-    box.style.display = "none";
-    return;
-  }
-
-  upcoming.sort((a, b) => a.t - b.t);
-
-  box.style.display = "flex";
+  const source = Array.isArray(data) ? data : [];
 
   function update() {
-    const nowTick = new Date();
-    const pick = upcoming.find((x) => x.t > nowTick);
-    if (!pick) {
+    const nowTick = Date.now();
+    const events = tickCountdownTimers(list, buildCountdownEvents(source, nowTick), nowTick);
+    if (!events.length) {
       clearCountdownInterval();
-      box.style.display = "none";
+      hideCountdownBox(box);
+      list.innerHTML = "";
+      delete list.dataset.countdownSig;
       return;
     }
-    titleEl.textContent = (pick.n.title || "Result").slice(0, 72);
-    const diff = pick.t - nowTick;
-    timer.innerHTML = `<span class="cd-hms" aria-live="polite">${formatCountdownHMS(diff)}</span>`;
+    showCountdownBox(box);
   }
 
   update();
-  window.countdownInterval = setInterval(update, 1000);
+  if (list.children.length) {
+    window.countdownInterval = setInterval(update, 1000);
+  }
 }
 
 // ================= SMALL BOX =================
@@ -702,7 +813,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const boot = readHomeBootstrap();
     if (boot) {
-      initBreakingFromBootstrap(boot.breakingNews);
+      initBreakingFromBootstrap(boot.breakingNews, boot.countdownEvents);
       initTrendingFromBootstrap(boot);
       if (!initHomeCardsFromBootstrap(boot)) {
         loadHomeCards();

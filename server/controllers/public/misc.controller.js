@@ -39,6 +39,12 @@ const getBreakingNews = asyncHandler(async (req, res) => {
   res.json(data);
 });
 
+const getCountdownEvents = asyncHandler(async (req, res) => {
+  const data = await miscService.getCountdownEvents();
+  res.set("Cache-Control", "public, max-age=15");
+  res.json(data);
+});
+
 const getTagPage = asyncHandler(async (req, res) => {
   const { isBoardSlug } = require("../../lib/boardHubs");
   const { normalizeTopicSlug } = require("../../lib/topicTags");
@@ -170,6 +176,7 @@ const postRelatedClick = asyncHandler(async (req, res) => {
 module.exports = {
   getSmallBoxes,
   getBreakingNews,
+  getCountdownEvents,
   getTagPage,
   previewPage,
   aiParse,

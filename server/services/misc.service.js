@@ -5,6 +5,18 @@ const {
   buildHomepageSectionDefs,
   isPredefinedSectionStatus
 } = require("../lib/homeSectionOrder");
+const { formatEventTimeForClient } = require("../lib/eventTimeFormat");
+
+function mapCountdownEventRow(p) {
+  return {
+    title: p.title,
+    url: "/" + p.slug,
+    slug: p.slug,
+    status: (p.status || "").toLowerCase(),
+    eventTime: formatEventTimeForClient(p.eventTime),
+    date: p.date
+  };
+}
 
 async function getSmallBoxes() {
   return pageRepository.selectSmallBoxes();
@@ -17,9 +29,14 @@ async function getBreakingNews() {
     url: "/" + p.slug,
     status: (p.status || "").toLowerCase(),
     badges: parseBadges(p.badges),
-    eventTime: p.eventTime,
+    eventTime: formatEventTimeForClient(p.eventTime),
     date: p.date
   }));
+}
+
+async function getCountdownEvents() {
+  const rows = await pageRepository.selectUpcomingCountdownPages();
+  return rows.map(mapCountdownEventRow).filter((row) => row.eventTime);
 }
 
 async function getPagesByTag(tag) {
@@ -47,6 +64,7 @@ async function getHomepageSections() {
 module.exports = {
   getSmallBoxes,
   getBreakingNews,
+  getCountdownEvents,
   getPagesByTag,
   getSitemapRows,
   getRelatedPages,

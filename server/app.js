@@ -878,8 +878,9 @@ async function buildSearchFallbackHtml(req, query) {
 }
 
 async function buildHomepageInitialSections() {
-  const [breakingNews, smallBoxes, trendingJobs, sectionDefs, taxonomyStats] = await Promise.all([
+  const [breakingNews, countdownEvents, smallBoxes, trendingJobs, sectionDefs, taxonomyStats] = await Promise.all([
     miscService.getBreakingNews().catch(() => []),
+    miscService.getCountdownEvents().catch(() => []),
     miscService.getSmallBoxes().catch(() => []),
     pageService.getTopViews().catch(() => []),
     miscService.getHomepageSections().catch(() => []),
@@ -907,6 +908,7 @@ async function buildHomepageInitialSections() {
 
   const bootstrap = buildHomeBootstrap({
     breakingNews,
+    countdownEvents,
     smallBoxes,
     trendingJobs,
     sectionDefs,

@@ -50,6 +50,7 @@ describe("homeBootstrap", () => {
       expect(boot.v).toBe(BOOTSTRAP_VERSION);
       expect(boot.generatedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
       expect(boot.breakingNews).toEqual(breakingNews);
+      expect(boot.countdownEvents).toEqual([]);
       expect(boot.smallBoxes).toEqual(smallBoxes);
       expect(boot.sections).toEqual(sectionDefs);
       expect(boot.sectionPages).toEqual(sectionResults);
@@ -62,6 +63,7 @@ describe("homeBootstrap", () => {
     it("defaults missing arrays to empty", () => {
       const boot = buildHomeBootstrap({});
       expect(boot.breakingNews).toEqual([]);
+      expect(boot.countdownEvents).toEqual([]);
       expect(boot.smallBoxes).toEqual([]);
       expect(boot.sections).toEqual([]);
       expect(boot.sectionPages).toEqual([]);

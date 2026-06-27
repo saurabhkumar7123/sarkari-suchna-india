@@ -10,6 +10,7 @@ const aiParseForm = multer({
 const {
   getSmallBoxes,
   getBreakingNews,
+  getCountdownEvents,
   getTagPage,
   previewPage,
   aiParse,
@@ -32,6 +33,7 @@ const {
 
 router.get("/small-boxes", requireDb, getSmallBoxes);
 router.get("/breaking-news", requireDb, getBreakingNews);
+router.get("/countdown-events", requireDb, getCountdownEvents);
 router.get("/public/notifications", getNotifications);
 router.get("/tag/:tag", requireDb, validate(tagParamSchema, "params"), getTagPage);
 
