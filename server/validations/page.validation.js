@@ -30,3 +30,12 @@ exports.validateSlugParam = (req, res, next) => {
   }
   next();
 };
+
+exports.validateSmallBoxSlotParam = (req, res, next) => {
+  const slot = Number(req.params.slot);
+  if (!Number.isInteger(slot) || slot < 1 || slot > 8) {
+    return res.status(400).json({ success: false, message: "Invalid slot (must be 1–8)" });
+  }
+  req.params.slot = String(slot);
+  next();
+};

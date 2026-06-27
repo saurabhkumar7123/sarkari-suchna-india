@@ -494,6 +494,10 @@
   width: 100%;
 }
 
+.hp-slot-card__picker .hp-page-search__suggestions {
+  z-index: 60;
+}
+
 .hp-slot-card__picker .hp-page-search__input {
   width: 100%;
 }

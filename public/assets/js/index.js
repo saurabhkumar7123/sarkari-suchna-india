@@ -815,6 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (boot) {
       initBreakingFromBootstrap(boot.breakingNews, boot.countdownEvents);
       initTrendingFromBootstrap(boot);
+      loadTopCategories();
       if (!initHomeCardsFromBootstrap(boot)) {
         loadHomeCards();
       }

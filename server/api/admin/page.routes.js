@@ -3,9 +3,15 @@ const router = express.Router();
 
 const controller = require("../../controllers/admin/page.controller");
 const asyncHandler = require("../../utils/asyncHandler");
-const { validateSlugParam } = require("../../validations/page.validation");
+const { validateSlugParam, validateSmallBoxSlotParam } = require("../../validations/page.validation");
 const validateJoi = require("../../middleware/validateJoi.middleware");
-const { emptyBodySchema, homepageBreakingPatchSchema, homepageBadgesPatchSchema, homepageSmallBoxPatchSchema } = require("../../validations/admin.validation");
+const {
+  emptyBodySchema,
+  homepageBreakingPatchSchema,
+  homepageBadgesPatchSchema,
+  homepageSmallBoxPatchSchema,
+  homepageSmallBoxSlotPatchSchema
+} = require("../../validations/admin.validation");
 const { adminSensitiveLimiter } = require("../../config/rateLimits");
 
 // Auth: app.use("/api/admin", verifyToken) already applied
@@ -42,6 +48,13 @@ router.patch(
   validateSlugParam,
   validateJoi(homepageBadgesPatchSchema, "body"),
   asyncHandler(homepageManagementController.patchHomepageBadges)
+);
+router.patch(
+  "/homepage-management/small-box-slots/:slot",
+  adminSensitiveLimiter,
+  validateSmallBoxSlotParam,
+  validateJoi(homepageSmallBoxSlotPatchSchema, "body"),
+  asyncHandler(homepageManagementController.patchHomepageSmallBoxSlot)
 );
 router.patch(
   "/homepage-management/small-box/:slug",

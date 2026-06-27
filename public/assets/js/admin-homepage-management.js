@@ -5,6 +5,8 @@
     smallBoxSlotsMax: 8,
     smallBoxMobileMax: 6
   };
+  const slotPickers = new Map();
+  let smallBoxesActionsWired = false;
 
   function smallBoxSlotNumbers() {
     const max = Number(overviewMeta.smallBoxSlotsMax) || 8;
@@ -140,15 +142,31 @@
       }, 280);
     });
 
+    suggestEl.addEventListener("mousedown", (e) => {
+      const btn = e.target.closest(".hp-page-search__option");
+      if (!btn) return;
+      e.preventDefault();
+      const idx = parseInt(btn.getAttribute("data-index"), 10);
+      if (items[idx]) selectPage(items[idx]);
+    });
+
     suggestEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".hp-page-search__option");
       if (!btn) return;
+      e.preventDefault();
       const idx = parseInt(btn.getAttribute("data-index"), 10);
       if (items[idx]) selectPage(items[idx]);
     });
 
     queryEl.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeSuggestions();
+      if (e.key === "Escape") {
+        closeSuggestions();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (items[0]) selectPage(items[0]);
+      }
     });
 
     document.addEventListener("click", (e) => {
@@ -226,17 +244,35 @@
   }
 
   async function patchPlacement(url, body, successMessage) {
-    const res = await window.adminSafeFetch(url, {
-      method: "PATCH",
-      body: JSON.stringify(body)
-    });
-    if (!res || !res.success) {
-      const msg = (res && res.message) || "Update failed.";
-      notifyError(msg);
+    try {
+      const headers = {};
+      if (typeof window.getAdminCsrfToken === "function") {
+        headers["X-CSRF-Token"] = await window.getAdminCsrfToken();
+      }
+      headers["Content-Type"] = "application/json";
+      const res = await fetch(url, {
+        method: "PATCH",
+        credentials: "include",
+        headers,
+        body: JSON.stringify(body)
+      });
+      const ct = res.headers.get("content-type") || "";
+      const data = ct.includes("application/json") ? await res.json() : null;
+      if (!res.ok || !data || data.success === false) {
+        const msg =
+          (data && (data.message || (Array.isArray(data.errors) && data.errors[0]?.message))) ||
+          `Update failed (${res.status})`;
+        notifyError(msg);
+        return false;
+      }
+      notifySuccess(successMessage || "Saved");
+      window.AdminIdleSession?.touch?.();
+      return true;
+    } catch (err) {
+      console.error("patchPlacement failed", url, err);
+      notifyError("Update failed.");
       return false;
     }
-    notifySuccess(successMessage || "Saved");
-    return true;
   }
 
   function badgeCheckboxesHtml(prefix, selected) {
@@ -338,7 +374,7 @@
         const replaceLabel = filled ? "Replace with another page" : "Assign a page";
         const actionLabel = filled ? "Replace" : "Assign";
         const secondaryActions = filled
-          ? `<button type="button" class="header-action-btn header-action-btn--danger smallbox-clear" data-slug="${escapeHtml(slug)}">Clear slot</button>
+          ? `<button type="button" class="header-action-btn header-action-btn--danger smallbox-clear" data-slot="${slot}" data-slug="${escapeHtml(slug)}">Clear slot</button>
              <a href="${generatorEditLink(slug)}">Edit in Generator</a>
              <a href="/${escapeHtml(slug)}" target="_blank" rel="noopener">View</a>`
           : "";
@@ -494,17 +530,31 @@
     });
   }
 
-  function wireSmallBoxesActions() {
+  function wireSmallBoxPickers() {
+    slotPickers.clear();
     document.querySelectorAll(".hp-slot-card[data-slot]").forEach((card) => {
       const slot = card.getAttribute("data-slot");
       if (!slot) return;
-      const picker = wirePageSearchPicker(`smallboxSlot${slot}`);
-      const assignBtn = card.querySelector(".smallbox-assign");
-      const filled = card.classList.contains("hp-slot-card--filled");
-      const currentSlug = card.getAttribute("data-current-slug") || "";
+      slotPickers.set(String(slot), wirePageSearchPicker(`smallboxSlot${slot}`));
+    });
+  }
 
-      assignBtn?.addEventListener("click", async () => {
-        const slug = picker.getSelectedSlug();
+  function ensureSmallBoxesActions() {
+    if (smallBoxesActionsWired) return;
+    const host = document.getElementById("smallBoxesList");
+    if (!host) return;
+    smallBoxesActionsWired = true;
+
+    host.addEventListener("click", async (e) => {
+      const assignBtn = e.target.closest(".smallbox-assign");
+      if (assignBtn) {
+        const card = assignBtn.closest(".hp-slot-card[data-slot]");
+        if (!card) return;
+        const slot = card.getAttribute("data-slot");
+        const picker = slotPickers.get(String(slot));
+        const slug = picker ? picker.getSelectedSlug() : "";
+        const filled = card.classList.contains("hp-slot-card--filled");
+        const currentSlug = card.getAttribute("data-current-slug") || "";
         if (!slug) {
           notifyError("Search by title and select a page from the list");
           return;
@@ -524,32 +574,39 @@
         const successMessage = filled ? `Slot ${slot} replaced` : `Slot ${slot} assigned`;
         await withSaveLoading(assignBtn, async () => {
           const ok = await patchPlacement(
-            `/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`,
-            { smallBoxSlot: Number(slot) },
+            `/api/admin/homepage-management/small-box-slots/${encodeURIComponent(slot)}`,
+            { slug },
             successMessage
           );
           if (ok) {
-            picker.clear();
+            picker?.clear?.();
             loadOverview();
           }
         }, filled ? "Replacing..." : "Assigning...");
-      });
-    });
+        return;
+      }
 
-    document.querySelectorAll(".smallbox-clear").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const slug = btn.getAttribute("data-slug");
-        if (!slug || !window.confirm(`Clear small box slot for "${slug}"?`)) return;
-        await withSaveLoading(btn, async () => {
+      const clearBtn = e.target.closest(".smallbox-clear");
+      if (clearBtn) {
+        const slot = clearBtn.getAttribute("data-slot");
+        const slug = clearBtn.getAttribute("data-slug") || "";
+        if (!slot) return;
+        if (!window.confirm(`Clear small box slot ${slot}${slug ? ` ("${slug}")` : ""}?`)) return;
+        await withSaveLoading(clearBtn, async () => {
           const ok = await patchPlacement(
-            `/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`,
-            { smallBoxSlot: null },
+            `/api/admin/homepage-management/small-box-slots/${encodeURIComponent(slot)}`,
+            { slug: null },
             "Slot cleared"
           );
           if (ok) loadOverview();
         }, "Clearing...");
-      });
+      }
     });
+  }
+
+  function wireSmallBoxesActions() {
+    wireSmallBoxPickers();
+    ensureSmallBoxesActions();
   }
 
   function renderBreakingList(items) {

@@ -177,6 +177,18 @@ const homepageSmallBoxPatchSchema = Joi.object({
   .required()
   .unknown(false);
 
+const homepageSmallBoxSlotPatchSchema = Joi.object({
+  slug: Joi.alternatives()
+    .try(
+      Joi.string().trim().pattern(/^[a-z0-9][a-z0-9._-]*$/i),
+      Joi.string().trim().valid(""),
+      Joi.valid(null)
+    )
+    .required()
+})
+  .required()
+  .unknown(false);
+
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
@@ -186,6 +198,7 @@ module.exports = {
   homepageBreakingPatchSchema,
   homepageBadgesPatchSchema,
   homepageSmallBoxPatchSchema,
+  homepageSmallBoxSlotPatchSchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

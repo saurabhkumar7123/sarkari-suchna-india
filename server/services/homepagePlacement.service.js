@@ -5,7 +5,8 @@ const pageRepository = require("../repositories/page.repository");
 const smallBoxService = require("./smallBox.service");
 
 async function ensureActivePageIdBySlug(slug, conn) {
-  const pageId = await pageRepository.findActiveIdBySlug(slug, conn);
+  const row = await pageRepository.findActiveIdBySlug(slug, conn);
+  const pageId = row && row.id != null ? Number(row.id) : null;
   if (!pageId) {
     const err = new Error("Page not found");
     err.code = "PAGE_NOT_FOUND";
@@ -121,8 +122,54 @@ async function updateSmallBoxPlacement(slug, smallBoxSlot) {
   }
 }
 
+/**
+ * Assign, replace, or clear a homepage small-box slot by slot number.
+ * @param {number | string} slot
+ * @param {string | null | undefined} slug
+ */
+async function updateSmallBoxSlotPlacement(slot, slug) {
+  const slotParsed = smallBoxService.parseSmallBoxSlot(slot);
+  if (!slotParsed.ok || slotParsed.value === null) {
+    const err = new Error(slotParsed.error || "Invalid slot");
+    err.code = "INVALID_SLOT";
+    throw err;
+  }
+
+  const targetSlot = slotParsed.value;
+  const map = await smallBoxService.getSmallBoxSlotMap();
+  const previous = map.find((row) => Number(row.slot) === targetSlot) || null;
+  const cleanSlug =
+    slug == null || slug === ""
+      ? null
+      : String(slug || "")
+          .trim()
+          .replace(/^\/+|\.html$/gi, "");
+
+  if (!cleanSlug) {
+    if (!previous) {
+      return { slot: targetSlot, slug: null, previousSlug: null, smallBoxSlot: null };
+    }
+    const cleared = await updateSmallBoxPlacement(previous.slug, null);
+    return {
+      slot: targetSlot,
+      slug: null,
+      previousSlug: previous.slug,
+      smallBoxSlot: cleared.smallBoxSlot
+    };
+  }
+
+  const result = await updateSmallBoxPlacement(cleanSlug, targetSlot);
+  return {
+    slot: targetSlot,
+    slug: cleanSlug,
+    previousSlug: previous ? previous.slug : null,
+    ...result
+  };
+}
+
 module.exports = {
   updateBreakingPlacement,
   updateBadgePlacement,
-  updateSmallBoxPlacement
+  updateSmallBoxPlacement,
+  updateSmallBoxSlotPlacement
 };

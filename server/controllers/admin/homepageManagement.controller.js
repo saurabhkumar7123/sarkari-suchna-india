@@ -1,6 +1,7 @@
 const pageRepository = require("../../repositories/page.repository");
 const smallBoxService = require("../../services/smallBox.service");
 const homepagePlacementService = require("../../services/homepagePlacement.service");
+const { invalidatePageCaches } = require("../../services/cache.services");
 const { parseBadges } = require("../../services/page.service");
 const { recordActivity } = require("../../services/adminActivity.service");
 const { ALLOWED_BADGE_CODES, HOMEPAGE_BADGE_MAX } = require("../../lib/homepageBadges");
@@ -129,11 +130,20 @@ const patchHomepageBadges = async (req, res) => {
   }
 };
 
+async function invalidateSmallBoxPlacementCaches(result) {
+  const slugs = new Set();
+  if (result && result.slug) slugs.add(result.slug);
+  if (result && result.previousSlug) slugs.add(result.previousSlug);
+  if (!slugs.size) return;
+  await invalidatePageCaches([...slugs]).catch(() => {});
+}
+
 const patchHomepageSmallBox = async (req, res) => {
   try {
     const slug = req.params.slug;
     const { smallBoxSlot } = req.body;
     const result = await homepagePlacementService.updateSmallBoxPlacement(slug, smallBoxSlot);
+    await invalidateSmallBoxPlacementCaches(result);
 
     await recordActivity({
       admin: req.user && req.user.username ? req.user.username : "admin",
@@ -154,9 +164,36 @@ const patchHomepageSmallBox = async (req, res) => {
   }
 };
 
+const patchHomepageSmallBoxSlot = async (req, res) => {
+  try {
+    const slot = req.params.slot;
+    const { slug } = req.body;
+    const result = await homepagePlacementService.updateSmallBoxSlotPlacement(slot, slug);
+    await invalidateSmallBoxPlacementCaches(result);
+
+    await recordActivity({
+      admin: req.user && req.user.username ? req.user.username : "admin",
+      action: result.slug == null ? "homepage_smallbox_clear" : "homepage_smallbox_set",
+      target: result.slug || `slot-${slot}`,
+      status: "success",
+      ip: req.ip,
+      userAgent: String(req.headers["user-agent"] || ""),
+      requestId: req.id || ""
+    }).catch(() => {});
+
+    return res.json({ success: true, data: result });
+  } catch (error) {
+    const handled = placementErrorResponse(res, error);
+    if (handled) return handled;
+    console.error("ADMIN HOMEPAGE SMALL BOX SLOT PATCH:", error);
+    return res.status(500).json({ success: false, message: "Failed to update small box slot" });
+  }
+};
+
 module.exports = {
   getHomepageManagementOverview,
   patchHomepageBreaking,
   patchHomepageBadges,
-  patchHomepageSmallBox
+  patchHomepageSmallBox,
+  patchHomepageSmallBoxSlot
 };
