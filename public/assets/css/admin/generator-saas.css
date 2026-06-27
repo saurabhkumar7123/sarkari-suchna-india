@@ -635,6 +635,39 @@ body.generator-saas-v2 .editor-fs-action{
   border-radius:var(--saas-radius-sm);
 }
 
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel .panel-head{
+  flex-shrink:0;
+  gap:8px;
+}
+
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel .preview-hint{
+  display:none;
+}
+
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open .mobile-preview-close{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:0 12px;
+  border-radius:8px;
+  font-weight:800;
+  background:#fff;
+  border:1px solid #cbd5e1;
+  color:#0f172a;
+}
+
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open #previewFrame{
+  flex:1;
+  min-height:0;
+  max-height:none;
+}
+
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open .action-bar,
+body.generator-saas-v2.generator-editor-fullscreen.generator-mobile-preview-open .action-bar.is-sticky-publish{
+  display:none !important;
+}
+
 /* ---- Dark mode ---- */
 body.dark.generator-saas-v2.generator-page{
   --saas-bg:#0b1220;
@@ -715,6 +748,20 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     background:#1e293b;
     color:#f1f5f9;
     border-color:#475569;
+  }
+
+  body.dark.generator-saas-v2.generator-fs-mobile-groups .editor-fs-group-toggle,
+  body.dark.generator-saas-v2.generator-fs-mobile-groups .sec-rich-group-toggle,
+  body.dark.generator-saas-v2.generator-fs-mobile-groups .sec-card__tools-toggle,
+  body.dark.generator-saas-v2.generator-fs-mobile-groups .sec-inline-group-toggle{
+    background:#1e293b;
+    color:#f1f5f9;
+    border-color:#475569;
+  }
+
+  body.dark.generator-saas-v2.generator-fs-mobile-groups .editor-fs-group-panel{
+    background:#0f172a;
+    border-color:#334155;
   }
 }
 
@@ -893,8 +940,275 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     opacity:.55;
   }
 
+  /* Expand mode — grouped topbar on mobile (Page / Editor pills + Done / Collapse) */
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-expand-topbar:not([hidden]){
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:100001;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    margin:0;
+    padding:0;
+    background:var(--saas-surface,#fff);
+    border-bottom:1px solid var(--saas-line,#e2e8f0);
+    box-shadow:0 2px 12px rgba(15,23,42,.08);
+    overflow:visible;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-chrome{
+    display:flex;
+    flex-direction:column;
+    width:100%;
+    position:relative;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav{
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:4px;
+    padding:8px 10px;
+    padding-top:calc(8px + env(safe-area-inset-top,0px));
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav__spacer{
+    flex:1 1 auto;
+    min-width:4px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-toggle{
+    flex:0 0 auto;
+    min-height:30px;
+    height:30px;
+    padding:0 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#f8fafc;
+    color:#0f172a;
+    font-size:10px;
+    font-weight:800;
+    touch-action:manipulation;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-toggle[aria-expanded="true"]{
+    background:#e0e7ff;
+    border-color:#818cf8;
+    color:#312e81;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+    padding:6px 10px 8px;
+    background:var(--saas-surface-soft,#f8fafc);
+    border-top:1px solid var(--saas-line,#e2e8f0);
+    box-shadow:0 8px 16px rgba(15,23,42,.08);
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel[hidden]{
+    display:none !important;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .editor-fs-action,
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .seo-checklist-toggle{
+    flex:1 1 auto;
+    min-width:0;
+    min-height:30px;
+    height:30px;
+    padding:0 8px;
+    font-size:10px;
+    font-weight:800;
+    border-radius:8px;
+    touch-action:manipulation;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .editor-fs-action--preview{
+    background:#fff;
+    border:1px solid #cbd5e1;
+    color:#0f172a;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .editor-fs-action--save{
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:#fff;
+    border:none;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .section-editor-mode{
+    flex:1 1 auto;
+    min-width:0;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .section-editor-mode__btn{
+    font-size:10px;
+    padding:5px 8px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .section-editor-toolbar__actions{
+    display:flex;
+    flex:1 1 100%;
+    gap:4px;
+    width:100%;
+    margin:0;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .section-editor-repair-btn,
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-group-panel .section-editor-add-btn{
+    flex:1 1 auto;
+    min-height:30px;
+    padding:5px 8px;
+    font-size:10px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav .editor-fs-action--close,
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav .editor-fullscreen-btn{
+    flex:0 0 auto;
+    min-height:30px;
+    height:30px;
+    padding:0 10px;
+    font-size:10px;
+    font-weight:800;
+    border-radius:8px;
+    touch-action:manipulation;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav .editor-fs-action--close{
+    background:linear-gradient(135deg,#16a34a,#15803d);
+    color:#fff;
+    border:none;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-mobile-nav .editor-fullscreen-btn{
+    background:#fff;
+    border:1px solid #cbd5e1;
+    color:#0f172a;
+    min-width:0;
+    box-shadow:none;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-fs-actions:not([hidden]),
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .panel-head__actions{
+    display:none !important;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .section-editor-toolbar.is-fs-toolbar-host{
+    display:none;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-panel{
+    padding-top:calc(46px + env(safe-area-inset-top,0px));
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen.generator-fs-group-open .editor-panel{
+    padding-top:calc(88px + env(safe-area-inset-top,0px));
+  }
+
+  /* Section-level collapsible button groups */
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-rich-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+    padding:4px 0;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-rich-group-toggle,
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-card__tools-toggle,
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-inline-group-toggle{
+    flex:0 0 auto;
+    min-height:28px;
+    height:28px;
+    padding:0 8px;
+    border:1px solid #cbd5e1;
+    border-radius:6px;
+    background:#fff;
+    color:#334155;
+    font-size:10px;
+    font-weight:800;
+    touch-action:manipulation;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-card__tools-toggle{
+    width:28px;
+    padding:0;
+    font-size:14px;
+    line-height:1;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-rich-toolbar__controls{
+    display:none;
+    flex:1 1 100%;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-rich-field.is-format-open .sec-rich-toolbar__controls{
+    display:flex;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-rich-field.is-format-open .sec-rich-group-toggle{
+    background:#e0e7ff;
+    border-color:#818cf8;
+    color:#312e81;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-card__tools{
+    display:none;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-card.is-tools-open .sec-card__tools{
+    display:flex;
+    flex:1 1 100%;
+    justify-content:flex-end;
+    gap:4px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-card.is-tools-open .sec-card__tools-toggle{
+    background:#e0e7ff;
+    border-color:#818cf8;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-inline-group__body{
+    display:none;
+    flex:1 1 100%;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-inline-group__body[hidden]{
+    display:none !important;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .is-inline-group-open .sec-inline-group__body{
+    display:flex;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .is-inline-group-open .sec-inline-group-toggle{
+    background:#e0e7ff;
+    border-color:#818cf8;
+    color:#312e81;
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-dates-add-actions,
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-table-block-actions,
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-table-block__tools,
+  body.generator-saas-v2.generator-fs-mobile-groups .sec-row-actions{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:4px;
+  }
+
   /* Expand mode — fixed top row: Preview | Save | Done | SEO | Collapse */
-  body.generator-saas-v2.generator-editor-fullscreen .editor-expand-topbar:not([hidden]){
+  body.generator-saas-v2.generator-editor-fullscreen:not(.generator-fs-mobile-groups) .editor-expand-topbar:not([hidden]){
     position:fixed;
     top:0;
     left:0;
@@ -1016,6 +1330,50 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
   body.generator-saas-v2 .section-editor-add-btn{
     font-size:10px;
     padding:5px 8px;
+  }
+
+  body.generator-saas-v2 .section-editor-toolbar__actions{
+    gap:6px;
+    width:100%;
+    margin-left:0;
+    justify-content:stretch;
+  }
+
+  body.generator-saas-v2 .section-editor-repair-btn,
+  body.generator-saas-v2 .section-editor-add-btn{
+    flex:1 1 auto;
+    min-height:32px;
+    padding:6px 10px;
+    font-size:10px;
+  }
+
+  body.generator-saas-v2 .section-editor-repair-btn__label{
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  body.generator-saas-v2 .sec-rich-toolbar{
+    gap:4px;
+    padding:5px 6px;
+  }
+
+  body.generator-saas-v2 .sec-rich-toolbar__label{
+    width:100%;
+    margin-right:0;
+    margin-bottom:2px;
+  }
+
+  body.generator-saas-v2 .sec-rich-btn{
+    min-width:30px;
+    height:28px;
+    padding:0 8px;
+    font-size:11px;
+  }
+
+  body.generator-saas-v2 .sec-rich-select{
+    flex:1 1 72px;
+    min-width:72px;
+    height:28px;
   }
 
   /* Section card — inline label + field */
@@ -1272,6 +1630,326 @@ body.generator-saas-v2 .section-editor-notice.is-info{
   background:#eff6ff;
   color:#1e40af;
   border-bottom:1px solid #bfdbfe;
+}
+
+body.generator-saas-v2 .section-editor-toolbar__actions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  margin-left:auto;
+}
+
+body.generator-saas-v2 .section-editor-repair-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:34px;
+  padding:7px 14px;
+  font-size:12px;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+  border:1px solid #fcd34d;
+  border-radius:999px;
+  background:linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  color:#92400e;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(146,64,14,.08);
+  transition:background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+body.generator-saas-v2 .section-editor-repair-btn__icon{
+  font-size:11px;
+  line-height:1;
+  opacity:.9;
+}
+
+body.generator-saas-v2 .section-editor-repair-btn:hover{
+  border-color:#f59e0b;
+  background:linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+  box-shadow:0 2px 6px rgba(146,64,14,.12);
+}
+
+body.generator-saas-v2 .section-editor-repair-btn:active{
+  transform:translateY(1px);
+}
+
+body.generator-saas-v2 .sec-card.is-unsafe{
+  border-color:#fbbf24;
+}
+
+body.generator-saas-v2 .sec-card__unsafe-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 6px;
+  margin-left:6px;
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  color:#92400e;
+  background:#fef3c7;
+  border-radius:4px;
+}
+
+body.generator-saas-v2 .sec-rich-field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+body.generator-saas-v2 .sec-rich-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  width:100%;
+  padding:6px 8px;
+  border:1px solid var(--saas-line);
+  border-radius:10px;
+  background:#f8fafc;
+  box-sizing:border-box;
+}
+
+body.generator-saas-v2 .sec-rich-toolbar__label{
+  margin-right:2px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--saas-muted);
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .sec-rich-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:34px;
+  height:30px;
+  padding:0 10px;
+  border:1px solid var(--saas-line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--saas-text);
+  font-size:12px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,23,42,.05);
+  transition:background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+body.generator-saas-v2 .sec-rich-btn:hover{
+  border-color:var(--saas-brand);
+  background:var(--saas-brand-soft);
+  color:var(--saas-brand);
+}
+
+body.generator-saas-v2 .sec-rich-btn--bold{
+  font-family:Georgia, "Times New Roman", serif;
+  font-size:13px;
+}
+
+body.generator-saas-v2 .sec-rich-btn--highlight{
+  background:#fef9c3;
+  border-color:#fde047;
+  color:#854d0e;
+}
+
+body.generator-saas-v2 .sec-rich-btn--highlight:hover{
+  background:#fef08a;
+  border-color:#eab308;
+  color:#713f12;
+}
+
+body.generator-saas-v2 .sec-rich-btn--link{
+  min-width:auto;
+  padding:0 12px;
+  font-size:11px;
+  font-weight:700;
+}
+
+body.generator-saas-v2 .sec-rich-select{
+  height:30px;
+  min-width:84px;
+  max-width:120px;
+  padding:0 28px 0 10px;
+  border:1px solid var(--saas-line);
+  border-radius:8px;
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M3 4.5 6 7.5 9 4.5'/%3E%3C/svg%3E") no-repeat right 8px center;
+  color:var(--saas-text);
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  appearance:none;
+  -webkit-appearance:none;
+  box-shadow:0 1px 2px rgba(15,23,42,.05);
+}
+
+body.generator-saas-v2 .sec-rich-select:hover,
+body.generator-saas-v2 .sec-rich-select:focus{
+  border-color:var(--saas-brand);
+  outline:none;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+
+body.generator-saas-v2 .sec-rich-field .sec-field-label{
+  margin-bottom:0;
+}
+
+body.generator-saas-v2 .sec-rich-field .sec-textarea{
+  margin-top:0;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal{
+  position:fixed;
+  inset:0;
+  z-index:100020;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  box-sizing:border-box;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal.is-open{
+  display:flex;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,.35);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__panel{
+  position:relative;
+  z-index:1;
+  width:min(400px,100%);
+  padding:18px 18px 16px;
+  border-radius:16px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  background:#fff;
+  box-shadow:0 20px 40px rgba(15,23,42,.18);
+  box-sizing:border-box;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__title{
+  margin:0 0 6px;
+  font-size:16px;
+  font-weight:800;
+  color:var(--saas-text, #0f172a);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__hint{
+  margin:0 0 14px;
+  font-size:12px;
+  line-height:1.45;
+  color:var(--saas-muted, #64748b);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__label{
+  display:block;
+  margin:0 0 4px;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:var(--saas-muted, #64748b);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__input{
+  display:block;
+  width:100%;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  border-radius:10px;
+  font-size:14px;
+  line-height:1.3;
+  color:var(--saas-text, #0f172a);
+  background:#fff;
+  box-sizing:border-box;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__input:focus{
+  outline:none;
+  border-color:var(--saas-brand, #2563eb);
+  box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__error{
+  margin:-6px 0 10px;
+  font-size:12px;
+  color:#b45309;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:4px;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__btn{
+  min-height:36px;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  border:1px solid transparent;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__btn--ghost{
+  background:#f8fafc;
+  border-color:var(--saas-line, #e2e8f0);
+  color:var(--saas-muted, #64748b);
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__btn--ghost:hover{
+  background:#f1f5f9;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__btn--primary{
+  background:var(--saas-brand, #2563eb);
+  color:#fff;
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__btn--primary:hover{
+  filter:brightness(1.05);
+}
+
+body.generator-saas-v2 .sec-flex-blocks{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+body.generator-saas-v2 .sec-flex-block{
+  padding:8px;
+  border:1px dashed var(--saas-border, #d1d5db);
+  border-radius:8px;
+}
+
+body.generator-saas-v2 .sec-flex-block__label{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  color:var(--saas-muted, #6b7280);
+  margin-bottom:6px;
+}
+
+body.generator-saas-v2 .sec-field-hint--warn{
+  color:#b45309;
 }
 
 body.generator-saas-v2 .section-editor-root{
@@ -1787,6 +2465,14 @@ body.generator-saas-v2 .sec-dates-block--list{
     box-shadow:none;
   }
 
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-panel{
+    padding-top:calc(46px + env(safe-area-inset-top,0px));
+  }
+
+  body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen.generator-fs-group-open .editor-panel{
+    padding-top:calc(88px + env(safe-area-inset-top,0px));
+  }
+
   body.generator-saas-v2.generator-editor-fullscreen .panel-head--editor{
     display:none;
   }
@@ -1838,9 +2524,15 @@ body.generator-saas-v2 .sec-dates-block--list{
     padding:5px 9px;
   }
 
-  body.generator-saas-v2.generator-editor-fullscreen .section-editor-add-btn{
+  body.generator-saas-v2.generator-editor-fullscreen .section-editor-add-btn,
+  body.generator-saas-v2.generator-editor-fullscreen .section-editor-repair-btn{
     font-size:10px;
     padding:5px 10px;
+    min-height:30px;
+  }
+
+  body.generator-saas-v2.generator-editor-fullscreen .section-editor-toolbar__actions{
+    gap:6px;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .section-editor-root{

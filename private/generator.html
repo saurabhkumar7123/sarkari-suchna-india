@@ -21,8 +21,8 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=19">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=17">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=20">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=21">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=4">
@@ -322,10 +322,33 @@
           <button type="button" id="editorModeVisual" class="section-editor-mode__btn is-active" role="tab" aria-selected="true">Section builder</button>
           <button type="button" id="editorModeRaw" class="section-editor-mode__btn" role="tab" aria-selected="false">Raw text</button>
         </div>
-        <button type="button" id="sectionEditorAddBtn" class="section-editor-add-btn">+ Add Section</button>
+        <div class="section-editor-toolbar__actions">
+          <button type="button" id="sectionEditorRepairBtn" class="section-editor-repair-btn" title="Normalize table markers, color tags, and section headers">
+            <span class="section-editor-repair-btn__icon" aria-hidden="true">✦</span>
+            <span class="section-editor-repair-btn__label">Fix for section builder</span>
+          </button>
+          <button type="button" id="sectionEditorAddBtn" class="section-editor-add-btn">+ Add Section</button>
+        </div>
       </div>
       <p id="sectionEditorNotice" class="section-editor-notice" hidden aria-live="polite"></p>
       <div id="sectionEditorRoot" class="section-editor-root"></div>
+    </div>
+
+    <div id="secRichLinkModal" class="sec-rich-link-modal" hidden aria-hidden="true">
+      <div class="sec-rich-link-modal__backdrop" data-rich-link-action="cancel" aria-hidden="true"></div>
+      <div class="sec-rich-link-modal__panel" role="dialog" aria-modal="true" aria-labelledby="secRichLinkModalTitle">
+        <h4 id="secRichLinkModalTitle" class="sec-rich-link-modal__title">Insert link</h4>
+        <p class="sec-rich-link-modal__hint">Paragraph / date text ke andar clickable link — format: [text](url)</p>
+        <label class="sec-rich-link-modal__label" for="secRichLinkLabel">Link text</label>
+        <input type="text" id="secRichLinkLabel" class="sec-rich-link-modal__input" placeholder="e.g. Apply Online" autocomplete="off">
+        <label class="sec-rich-link-modal__label" for="secRichLinkUrl">URL</label>
+        <input type="url" id="secRichLinkUrl" class="sec-rich-link-modal__input sec-rich-link-modal__input--url" placeholder="https://example.com/apply" autocomplete="off" inputmode="url">
+        <p id="secRichLinkUrlError" class="sec-rich-link-modal__error" hidden>Please enter a valid URL (https://...)</p>
+        <div class="sec-rich-link-modal__actions">
+          <button type="button" class="sec-rich-link-modal__btn sec-rich-link-modal__btn--ghost" data-rich-link-action="cancel">Cancel</button>
+          <button type="button" class="sec-rich-link-modal__btn sec-rich-link-modal__btn--primary" data-rich-link-action="insert">Insert link</button>
+        </div>
+      </div>
     </div>
 
     <textarea
@@ -419,10 +442,10 @@
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-seo-checklist.js"></script>
 <script src="/js/admin-generator-ui.js?v=2"></script>
-<script src="/js/generator-mobile.js?v=6"></script>
+<script src="/js/generator-mobile.js?v=8"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/sectionEditorModel.js?v=7"></script>
-<script src="/js/sectionEditor.js?v=10"></script>
+<script src="/js/sectionEditorModel.js?v=8"></script>
+<script src="/js/sectionEditor.js?v=14"></script>
 <script src="/js/generator.js?v=11"></script>
 </body>
 </html>

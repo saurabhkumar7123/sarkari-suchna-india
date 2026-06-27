@@ -2380,6 +2380,31 @@ body.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel{
   box-sizing:border-box;
 }
 
+body.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel .panel-head{
+  flex-shrink:0;
+  gap:8px;
+}
+
+body.generator-editor-fullscreen.generator-mobile-preview-open .preview-panel .preview-hint{
+  display:none;
+}
+
+body.generator-editor-fullscreen.generator-mobile-preview-open .mobile-preview-close{
+  display:inline-flex;
+  align-items:center;
+}
+
+body.generator-editor-fullscreen.generator-mobile-preview-open #previewFrame{
+  flex:1;
+  min-height:0;
+  max-height:none;
+}
+
+body.generator-editor-fullscreen.generator-mobile-preview-open .action-bar,
+body.generator-editor-fullscreen.generator-mobile-preview-open .action-bar.is-sticky-publish{
+  display:none !important;
+}
+
 body.generator-editor-fullscreen.has-sticky-publish-bar #standaloneAdminShell,
 body.generator-editor-fullscreen.has-sticky-publish-bar .main-container{
   padding-bottom:0 !important;

@@ -32,6 +32,249 @@
     return mode;
   }
 
+  function showSafetyNotice(text) {
+    if (!text) {
+      clearEditorNotice();
+      return;
+    }
+    showEditorNotice(text, "info");
+  }
+
+  function formatSafetySummary(analysis) {
+    if (!analysis || analysis.safe) return "";
+    const parts = [];
+    if (analysis.unsafeCount > 0) {
+      parts.push(
+        `${analysis.safeCount} section(s) visual, ${analysis.unsafeCount} advanced — edit advanced blocks below or use Fix for section builder.`
+      );
+    }
+    const detail = (analysis.reasons || []).slice(0, 4).join(" · ");
+    if (detail) parts.push(detail);
+    return parts.join(" ");
+  }
+
+  function loadSectionsFromText(text, options = {}) {
+    const normalized = M().normalizeEditorText(text || "");
+    sections = M().parseTextToEditorSections(normalized);
+    if (!sections.length && normalized.trim()) {
+      sections = [
+        {
+          ...M().createEmptySection("Content", M().CONTENT_TYPES.MIXED),
+          payload: { raw: normalized },
+          editorSafe: false,
+          unsafeReason: "No [Section:] headers found"
+        }
+      ];
+    }
+    if (!sections.length && !options.allowEmpty) {
+      sections = [
+        M().createEmptySection("Short Information", M().CONTENT_TYPES.PARAGRAPH),
+        M().createEmptySection("Important Dates", M().CONTENT_TYPES.DATES),
+        M().createEmptySection("Important Links", M().CONTENT_TYPES.LINKS)
+      ];
+    }
+    const analysis = M().analyzeVisualEditorSafety(normalized);
+    if (!options.silent) {
+      const msg = formatSafetySummary(analysis);
+      if (msg) showSafetyNotice(msg);
+      else clearEditorNotice();
+    }
+    return analysis;
+  }
+
+  function wrapRichField(innerHtml, fieldKey) {
+    return `<div class="sec-rich-field" data-rich-field="${escapeHtml(fieldKey)}">
+      <div class="sec-rich-toolbar" role="toolbar" aria-label="Rich formatting">
+        <span class="sec-rich-toolbar__label">Format</span>
+        <button type="button" class="sec-rich-btn sec-rich-btn--bold" data-rich-action="bold" title="Bold [b]" aria-label="Bold">B</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--highlight" data-rich-action="highlight" title="Highlight" aria-label="Highlight">HL</button>
+        <select class="sec-rich-select" data-rich-action="color" title="Text color" aria-label="Text color">
+          <option value="">Color</option>
+          ${(M().ALLOWED_RICH_COLORS || []).map((c) => `<option value="${c}">${c}</option>`).join("")}
+        </select>
+        <button type="button" class="sec-rich-btn sec-rich-btn--link" data-rich-action="link" title="Markdown link" aria-label="Insert link">Link</button>
+      </div>
+      ${innerHtml}
+    </div>`;
+  }
+
+  let richLinkContext = null;
+
+  function isRichLinkUrlValid(url) {
+    const u = String(url || "").trim();
+    if (!u) return false;
+    return /^(https?:\/\/|www\.|\/)/i.test(u);
+  }
+
+  function insertMarkdownLinkAt(textarea, start, end, label, url) {
+    const val = String(textarea.value || "");
+    const linkLabel = String(label || "").trim();
+    const href = String(url || "").trim();
+    let insert;
+    let cursorPos;
+    if (linkLabel) {
+      insert = `[${linkLabel}](${href})`;
+      cursorPos = start + insert.length;
+    } else {
+      insert = `[](${href})`;
+      cursorPos = start + 1;
+    }
+    textarea.value = val.slice(0, start) + insert + val.slice(end);
+    textarea.setSelectionRange(cursorPos, cursorPos);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.focus();
+  }
+
+  function closeRichLinkModal() {
+    const modal = el("secRichLinkModal");
+    const err = el("secRichLinkUrlError");
+    if (modal) {
+      modal.hidden = true;
+      modal.setAttribute("aria-hidden", "true");
+      modal.classList.remove("is-open");
+    }
+    if (err) err.hidden = true;
+    richLinkContext = null;
+  }
+
+  function openRichLinkModal(textarea) {
+    const modal = el("secRichLinkModal");
+    const labelInput = el("secRichLinkLabel");
+    const urlInput = el("secRichLinkUrl");
+    const err = el("secRichLinkUrlError");
+    if (!modal || !labelInput || !urlInput || !textarea) return;
+
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const val = String(textarea.value || "");
+    const selected = start !== end ? val.slice(start, end) : "";
+
+    labelInput.value = selected;
+    urlInput.value = "";
+    if (err) err.hidden = true;
+
+    richLinkContext = { textarea, start, end };
+
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    modal.classList.add("is-open");
+
+    window.setTimeout(() => {
+      if (selected) urlInput.focus();
+      else labelInput.focus();
+    }, 0);
+  }
+
+  function confirmRichLinkModal() {
+    const labelInput = el("secRichLinkLabel");
+    const urlInput = el("secRichLinkUrl");
+    const err = el("secRichLinkUrlError");
+    if (!richLinkContext || !labelInput || !urlInput) return;
+
+    const url = String(urlInput.value || "").trim();
+    if (!isRichLinkUrlValid(url)) {
+      if (err) err.hidden = false;
+      urlInput.focus();
+      return;
+    }
+    if (err) err.hidden = true;
+
+    const label = String(labelInput.value || "").trim();
+    const { textarea, start, end } = richLinkContext;
+    closeRichLinkModal();
+    insertMarkdownLinkAt(textarea, start, end, label, url);
+    syncSectionsFromDom();
+    scheduleCompile();
+  }
+
+  function initRichLinkModal() {
+    const modal = el("secRichLinkModal");
+    if (!modal) return;
+
+    modal.addEventListener("click", (ev) => {
+      const action = ev.target.closest("[data-rich-link-action]")?.getAttribute("data-rich-link-action");
+      if (action === "cancel") {
+        const ta = richLinkContext?.textarea;
+        closeRichLinkModal();
+        ta?.focus();
+        return;
+      }
+      if (action === "insert") confirmRichLinkModal();
+    });
+
+    const urlInput = el("secRichLinkUrl");
+    urlInput?.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        confirmRichLinkModal();
+      }
+    });
+
+    const labelInput = el("secRichLinkLabel");
+    labelInput?.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        urlInput?.focus();
+      }
+    });
+
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Escape" || modal.hidden) return;
+      if (!modal.classList.contains("is-open")) return;
+      const ta = richLinkContext?.textarea;
+      closeRichLinkModal();
+      ta?.focus();
+    });
+  }
+
+  function applyRichAction(textarea, action, colorValue) {
+    if (!textarea) return;
+    const start = textarea.selectionStart ?? 0;
+    const end = textarea.selectionEnd ?? 0;
+    const val = String(textarea.value || "");
+    const hasSelection = start !== end;
+    const selected = hasSelection ? val.slice(start, end) : "";
+
+    let insert = "";
+    let cursorPos = start;
+
+    if (action === "bold") {
+      if (hasSelection) {
+        insert = `[b]${selected}[/b]`;
+        cursorPos = start + insert.length;
+      } else {
+        insert = "[b][/b]";
+        cursorPos = start + 3;
+      }
+    } else if (action === "highlight") {
+      if (hasSelection) {
+        insert = `[highlight]${selected}[/highlight]`;
+        cursorPos = start + insert.length;
+      } else {
+        insert = "[highlight][/highlight]";
+        cursorPos = start + "[highlight]".length;
+      }
+    } else if (action === "color" && colorValue) {
+      const open = `[color=${colorValue}]`;
+      const close = "[/color]";
+      if (hasSelection) {
+        insert = `${open}${selected}${close}`;
+        cursorPos = start + insert.length;
+      } else {
+        insert = `${open}${close}`;
+        cursorPos = start + open.length;
+      }
+    } else if (action === "link") {
+      openRichLinkModal(textarea);
+      return;
+    } else return;
+
+    textarea.value = val.slice(0, start) + insert + val.slice(end);
+    textarea.setSelectionRange(cursorPos, cursorPos);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.focus();
+  }
+
   function setMode(next, options = {}) {
     const m = next === "raw" ? "raw" : "visual";
     const ta = getTextarea();
@@ -41,17 +284,9 @@
 
     if (m === "visual" && ta && !options.force) {
       const text = ta.value || "";
-      if (text.trim() && !M().isVisualEditorSafeForText(text)) {
-        if (!options.silent) {
-          showEditorNotice(
-            "This content uses advanced formatting. Stay on Raw text, or simplify sections first.",
-            "warn"
-          );
-        }
-        return false;
-      }
-      sections = M().parseTextToEditorSections(text);
-      if (!sections.length) {
+      if (text.trim()) {
+        loadSectionsFromText(text, { silent: options.silent, allowEmpty: true });
+      } else if (!sections.length) {
         sections = [
           M().createEmptySection("Short Information", M().CONTENT_TYPES.PARAGRAPH),
           M().createEmptySection("Important Dates", M().CONTENT_TYPES.DATES),
@@ -208,8 +443,9 @@
 
   function renderParagraphBody(sec) {
     const text = escapeHtml(sec.payload?.text || "");
-    return `<label class="sec-field-label">Paragraph text</label>
-      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="4" placeholder="Plain paragraph — no colon or Q: needed">${text}</textarea>`;
+    const inner = `<label class="sec-field-label">Paragraph text</label>
+      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="4" placeholder="Supports [highlight], [color=red], [b], and [label](url)">${text}</textarea>`;
+    return wrapRichField(inner, "paragraph");
   }
 
   function ensureDatesBlocks(sec) {
@@ -240,12 +476,13 @@
 
   function renderDatesBlock(block, index) {
     if (block.type === "paragraph") {
-      return `
+      const inner = `
       <div class="sec-dates-block sec-dates-block--para" data-block-index="${index}" data-block-type="paragraph">
         <label class="sec-field-label">Paragraph</label>
-        <textarea class="sec-textarea sec-textarea--compact" data-field="dates-para" rows="2" placeholder="Note or extra text (no colon needed)">${escapeHtml(block.text)}</textarea>
+        <textarea class="sec-textarea sec-textarea--compact" data-field="dates-para" rows="2" placeholder="Note or extra text">${escapeHtml(block.text)}</textarea>
         <div class="sec-row-actions sec-row-actions--block">${renderRowActions()}</div>
       </div>`;
+      return wrapRichField(inner, "dates-para");
     }
     if (block.type === "list") {
       return `
@@ -514,7 +751,7 @@
             <button type="button" class="sec-tool-btn sec-tool-btn--danger" data-action="table-remove-block" data-block-index="${blockIndex}" title="Remove" ${totalBlocks <= 1 ? "disabled" : ""}>✕</button>
           </div>
         </div>
-        <textarea class="sec-textarea" data-field="table-block-text" data-block-index="${blockIndex}" rows="3" placeholder="Heading or paragraph before/after table">${escapeHtml(block.text || "")}</textarea>
+        <textarea class="sec-textarea" data-field="table-block-text" data-block-index="${blockIndex}" rows="3" placeholder="Heading or paragraph — rich tags supported">${escapeHtml(block.text || "")}</textarea>
       </div>`;
     }
 
@@ -548,13 +785,57 @@
       </div>`;
   }
 
+  function renderBlockSectionMini(block, blockIndex, secId) {
+    if (block.type === "text") {
+      const inner = `<textarea class="sec-textarea sec-textarea--compact" data-field="flex-text" data-block-index="${blockIndex}" rows="3">${escapeHtml(block.text || "")}</textarea>`;
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="text">
+        <span class="sec-flex-block__label">Text</span>
+        ${wrapRichField(inner, "flex-text")}
+      </div>`;
+    }
+    if (block.type === "table") {
+      const fakeSec = { id: secId, payload: { blocks: [{ type: "table", grid: M().normalizeTableGrid(block.grid) }] } };
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="table">${renderTableBlock({ type: "table", grid: block.grid }, 0, 1, secId)}</div>`;
+    }
+    if (block.type === "dates") {
+      const fakeSec = { id: `${secId}_b${blockIndex}`, payload: block };
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="dates">${renderDatesBody(fakeSec)}</div>`;
+    }
+    if (block.type === "links") {
+      const fakeSec = { id: `${secId}_b${blockIndex}`, payload: { rows: block.rows || [] } };
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="links">${renderLinksBody(fakeSec)}</div>`;
+    }
+    if (block.type === "faq") {
+      const fakeSec = { id: `${secId}_b${blockIndex}`, payload: { pairs: block.pairs || [] } };
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="faq">${renderFaqBody(fakeSec)}</div>`;
+    }
+    if (block.type === "list") {
+      const fakeSec = { id: `${secId}_b${blockIndex}`, payload: { items: block.items || [] } };
+      return `<div class="sec-flex-block" data-block-index="${blockIndex}" data-block-type="list">${renderListBody(fakeSec)}</div>`;
+    }
+    return "";
+  }
+
+  function renderBlocksBody(sec) {
+    const blocks = sec.payload?.blocks?.length ? sec.payload.blocks : [];
+    const html = blocks.map((b, i) => renderBlockSectionMini(b, i, sec.id)).join("");
+    return `<div class="sec-flex-blocks" data-sec-id="${sec.id}">${html}</div>
+      <p class="sec-field-hint">Multiple content blocks in one section — text, tables, dates, links, etc.</p>`;
+  }
+
   function renderRawBody(sec, label) {
     const raw = escapeHtml(sec.payload?.raw ?? "");
-    return `<label class="sec-field-label">${escapeHtml(label)}</label>
+    const warn = sec.editorSafe === false
+      ? `<p class="sec-field-hint sec-field-hint--warn">${escapeHtml(sec.unsafeReason || "Advanced formatting in this section")}</p>`
+      : "";
+    return `${warn}<label class="sec-field-label">${escapeHtml(label)}</label>
       <textarea class="sec-textarea sec-textarea--mono" data-sec-id="${sec.id}" data-field="raw-text" rows="6" placeholder="One line per row. Table: comma-separated columns.">${raw}</textarea>`;
   }
 
   function renderSectionBody(sec) {
+    if (sec.editorSafe === false && sec.contentType === M().CONTENT_TYPES.MIXED) {
+      return renderRawBody(sec, "Advanced content (raw)");
+    }
     switch (sec.contentType) {
       case M().CONTENT_TYPES.DATES:
         return renderDatesBody(sec);
@@ -568,6 +849,8 @@
         return renderParagraphListBody(sec);
       case M().CONTENT_TYPES.TABLE:
         return renderTableBody(sec);
+      case M().CONTENT_TYPES.BLOCKS:
+        return renderBlocksBody(sec);
       case M().CONTENT_TYPES.MIXED:
         return renderRawBody(sec, "Free text (advanced). Switch to Raw text for full control.");
       default:
@@ -595,14 +878,19 @@
     const collapsed = Boolean(sec.collapsed);
     const typeLabel = sectionTypeLabel(sec.contentType);
     const displayName = String(sec.name || "").trim() || "Untitled";
+    const unsafeBadge =
+      sec.editorSafe === false
+        ? `<span class="sec-card__unsafe-badge" title="${escapeHtml(sec.unsafeReason || "Advanced")}">Advanced</span>`
+        : "";
     const html = `
-      <article class="sec-card${collapsed ? " is-collapsed" : ""}" data-section-id="${sec.id}">
+      <article class="sec-card${collapsed ? " is-collapsed" : ""}${sec.editorSafe === false ? " is-unsafe" : ""}" data-section-id="${sec.id}">
         <header class="sec-card__head" data-sec-id="${sec.id}">
           <button type="button" class="sec-toggle-btn" data-action="toggle" data-sec-id="${sec.id}" aria-expanded="${collapsed ? "false" : "true"}" title="${collapsed ? "Open section" : "Close section"}">${collapsed ? "▶" : "▼"}</button>
           <div class="sec-card__head-main">
             <div class="sec-card__collapsed-bar" data-action="toggle" data-sec-id="${sec.id}" role="button" tabindex="0" aria-label="Open section ${escapeHtml(displayName)}">
               <span class="sec-card__collapsed-name">${escapeHtml(displayName)}</span>
               <span class="sec-card__collapsed-type">${escapeHtml(typeLabel)}</span>
+              ${unsafeBadge}
             </div>
             <div class="sec-card__expandable">
               <div class="sec-card__title-row">
@@ -789,6 +1077,48 @@
     };
   }
 
+  function collectBlocksFromCard(card, sec) {
+    const blocks = [];
+    card.querySelectorAll(".sec-flex-block").forEach((node) => {
+      const type = node.getAttribute("data-block-type") || "text";
+      if (type === "text") {
+        blocks.push({ type: "text", text: node.querySelector('[data-field="flex-text"]')?.value || "" });
+        return;
+      }
+      if (type === "table") {
+        const fake = { id: sec.id, payload: {} };
+        collectTableBlocksFromCard(node, fake);
+        const tbl = (fake.payload?.blocks || []).find((b) => b.type === "table");
+        if (tbl) blocks.push({ type: "table", grid: tbl.grid });
+        return;
+      }
+      if (type === "dates") {
+        const fake = { id: sec.id, payload: {}, contentType: M().CONTENT_TYPES.DATES };
+        collectDatesFromCard(node, fake);
+        blocks.push({ type: "dates", ...fake.payload });
+        return;
+      }
+      if (type === "links") {
+        const fake = { id: sec.id, payload: {}, contentType: M().CONTENT_TYPES.LINKS };
+        collectLinksFromCard(node, fake);
+        blocks.push({ type: "links", rows: fake.payload.rows });
+        return;
+      }
+      if (type === "faq") {
+        const fake = { id: sec.id, payload: {}, contentType: M().CONTENT_TYPES.FAQ };
+        collectFaqFromCard(node, fake);
+        blocks.push({ type: "faq", pairs: fake.payload.pairs });
+        return;
+      }
+      if (type === "list") {
+        const fake = { id: sec.id, payload: {}, contentType: M().CONTENT_TYPES.LIST };
+        collectListFromCard(node, fake);
+        blocks.push({ type: "list", items: fake.payload.items });
+      }
+    });
+    sec.payload = { blocks: blocks.length ? blocks : sec.payload?.blocks || [] };
+  }
+
   function collectSectionFromDom(sec) {
     const card = document.querySelector(`[data-section-id="${sec.id}"]`);
     if (!card) return sec;
@@ -818,6 +1148,9 @@
       }
       case M().CONTENT_TYPES.TABLE:
         collectTableBlocksFromCard(card, sec);
+        break;
+      case M().CONTENT_TYPES.BLOCKS:
+        collectBlocksFromCard(card, sec);
         break;
       case M().CONTENT_TYPES.MIXED:
       default: {
@@ -914,6 +1247,26 @@
   }
 
   function handleRootClick(ev) {
+    if (ev.target.matches(".sec-rich-btn")) {
+      const wrap = ev.target.closest(".sec-rich-field");
+      const textarea = wrap?.querySelector("textarea");
+      applyRichAction(textarea, ev.target.getAttribute("data-rich-action"), "");
+      syncSectionsFromDom();
+      scheduleCompile();
+      return;
+    }
+    if (ev.target.matches(".sec-rich-select")) {
+      const color = ev.target.value;
+      if (!color) return;
+      const wrap = ev.target.closest(".sec-rich-field");
+      const textarea = wrap?.querySelector("textarea");
+      applyRichAction(textarea, "color", color);
+      ev.target.value = "";
+      syncSectionsFromDom();
+      scheduleCompile();
+      return;
+    }
+
     const collapsedBar = ev.target.closest(".sec-card__collapsed-bar[data-action='toggle']");
     if (collapsedBar) {
       const secId = collapsedBar.getAttribute("data-sec-id");
@@ -1216,9 +1569,8 @@
     if (!ta) return false;
     const text = M().normalizeEditorText(ta.value || "");
     if (text !== ta.value) ta.value = text;
-    if (!text.trim() || !M().isVisualEditorSafeForText(text)) return false;
-    sections = M().parseTextToEditorSections(text);
-    if (!sections.length) return false;
+    if (!text.trim()) return false;
+    loadSectionsFromText(text, { silent: true, allowEmpty: true });
     return setMode("visual", { force: true, silent: true, skipCompile: true });
   }
 
@@ -1228,16 +1580,22 @@
     if (!ta) return;
     const text = M().normalizeEditorText(ta.value || "");
     if (text !== ta.value) ta.value = text;
-    if (text.trim() && !M().isVisualEditorSafeForText(text)) {
-      setMode("raw", { force: true, silent: true, skipCompile: true });
-      showEditorNotice("Showing Raw text — this page uses advanced formatting.", "info");
-      return;
-    }
-    sections = M().parseTextToEditorSections(text);
-    if (!sections.length && mode === "visual") {
-      sections = [M().createEmptySection("Short Information", M().CONTENT_TYPES.PARAGRAPH)];
-    }
+    loadSectionsFromText(text, { silent: false, allowEmpty: true });
     renderAllSections();
+  }
+
+  function runRepairFromTextarea() {
+    const ta = getTextarea();
+    if (!ta || !M().repairEditorText) return;
+    const result = M().repairEditorText(ta.value || "");
+    ta.value = result.text;
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    if (mode === "visual") {
+      loadSectionsFromText(result.text, { silent: false, allowEmpty: true });
+      renderAllSections();
+    }
+    const changeList = result.changes?.length ? result.changes.join("; ") : "No changes needed";
+    showEditorNotice(`Repair done: ${changeList}`, result.changes?.length ? "info" : "warn");
   }
 
   function init() {
@@ -1260,6 +1618,8 @@
     el("editorModeVisual")?.addEventListener("click", () => setMode("visual"));
     el("editorModeRaw")?.addEventListener("click", () => setMode("raw"));
     el("sectionEditorAddBtn")?.addEventListener("click", addSection);
+    el("sectionEditorRepairBtn")?.addEventListener("click", runRepairFromTextarea);
+    initRichLinkModal();
 
     const root = el("sectionEditorRoot");
     root?.addEventListener("input", handleRootInput);
@@ -1276,22 +1636,20 @@
 
     const initialText = M().normalizeEditorText(ta?.value || "");
     if (ta && initialText !== (ta.value || "")) ta.value = initialText;
-    const initialUnsafe = initialText.trim() && !M().isVisualEditorSafeForText(initialText);
-    if (initialUnsafe) {
-      mode = "raw";
-    } else if (isEditingExistingPage() || mode === "visual") {
-      mode = "visual";
-      sections = M().parseTextToEditorSections(initialText);
-      if (!sections.length) {
+    if (isEditingExistingPage() || mode === "visual") {
+      if (initialText.trim()) {
+        loadSectionsFromText(initialText, { silent: true, allowEmpty: true });
+      } else if (!sections.length) {
         sections = [
           M().createEmptySection("Short Information", M().CONTENT_TYPES.PARAGRAPH),
           M().createEmptySection("Important Dates", M().CONTENT_TYPES.DATES),
           M().createEmptySection("Important Links", M().CONTENT_TYPES.LINKS)
         ];
       }
+      mode = "visual";
     }
 
-    setMode(mode, { force: true, silent: true, skipCompile: initialUnsafe });
+    setMode(mode, { force: true, silent: true, skipCompile: true });
   }
 
   function flushToTextarea() {
@@ -1305,6 +1663,7 @@
     syncFromTextarea,
     flushToTextarea,
     preferVisualIfSafe,
+    runRepairFromTextarea,
     getMode,
     setMode,
     addSection

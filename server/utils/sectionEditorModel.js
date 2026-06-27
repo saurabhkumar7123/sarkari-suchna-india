@@ -13,13 +13,39 @@ const CONTENT_TYPES = Object.freeze({
   LIST: "list",
   PARAGRAPH_LIST: "paragraph_list",
   TABLE: "table",
+  BLOCKS: "blocks",
   MIXED: "mixed"
 });
 
 const SECTION_HEADER_RE = /\[\s*section\s*:\s*(.*?)\]([\s\S]*?)(?=\n\[\s*section\s*:|$)/gi;
 
+const ALLOWED_RICH_COLORS = ["red", "green", "blue", "orange", "purple", "gray", "yellow"];
+
 function isUrlLike(value) {
   return /^(https?:\/\/|www\.|\/)/i.test(String(value || "").trim());
+}
+
+function normalizeRichInlineInLine(line) {
+  let s = String(line ?? "");
+  s = s.replace(/\[color=([a-z]+)\]/gi, (_, c) => {
+    const lower = String(c || "").toLowerCase();
+    return ALLOWED_RICH_COLORS.includes(lower) ? `[color=${lower}]` : `[color=${lower}]`;
+  });
+  s = s.replace(/\[\/color\]/gi, "[/color]");
+  s = s.replace(/\[\/Color\]/g, "[/color]");
+  s = s.replace(/\[b\]/gi, "[b]");
+  s = s.replace(/\[\/b\]/gi, "[/b]");
+  s = s.replace(/\[highlight\]/gi, "[highlight]");
+  s = s.replace(/\[\/highlight\]/gi, "[/highlight]");
+  return s;
+}
+
+function normalizeSectionHeaderLine(line) {
+  const raw = String(line ?? "");
+  const m = raw.match(/^(\s*\[\s*section\s*:\s*)(.*?)(\]\s*)$/i);
+  if (!m) return raw;
+  const title = String(m[2] || "").replace(/\s+/g, " ").trim();
+  return `${m[1]}${title}${m[3]}`;
 }
 
 function normalizeEditorText(text) {
@@ -28,18 +54,23 @@ function normalizeEditorText(text) {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   if (!s) return "";
-  return s
+  s = s
     .split("\n")
-    .map((line) => canonicalizeEditorLine(line))
+    .map((line) => {
+      if (/^\s*\[\s*section\s*:/i.test(line)) return normalizeSectionHeaderLine(line);
+      return canonicalizeEditorLine(line);
+    })
     .join("\n");
+  return s.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function canonicalizeEditorLine(line) {
   const raw = String(line ?? "");
   const trimmed = raw.trim();
   if (!trimmed) return raw;
-  if (/^\[\s*section\s*:/i.test(trimmed)) return raw;
-  if (/^---table---$/i.test(trimmed) || /^---endtable---$/i.test(trimmed)) return raw;
+  if (/^\[\s*section\s*:/i.test(trimmed)) return normalizeSectionHeaderLine(raw);
+  if (/^---table---$/i.test(trimmed)) return "---table---";
+  if (/^---endtable---$/i.test(trimmed)) return "---endtable---";
 
   const kind = lineType(trimmed);
   if (kind === "link" || kind === "faq_q" || kind === "faq_a" || kind === "list" || kind === "list_ordered") {
@@ -49,12 +80,12 @@ function canonicalizeEditorLine(line) {
 
   if (kind === "date") {
     const { label, value } = parseDateLine(trimmed);
-    if (!label) return raw;
-    if (!value) return `${label} :`;
-    return `${label} : ${value}`;
+    if (!label) return normalizeRichInlineInLine(raw);
+    const normalized = !value ? `${label} :` : `${label} : ${value}`;
+    return normalizeRichInlineInLine(normalized);
   }
 
-  return raw;
+  return normalizeRichInlineInLine(raw);
 }
 
 function parseSectionsFromText(text) {
@@ -121,7 +152,163 @@ function detectContentType(lines, forceTable, content) {
   if (hasList && hasPara && !hasLink && !hasDate && !hasFaq) return CONTENT_TYPES.PARAGRAPH_LIST;
   if (hasTable && !hasLink && !hasDate && !hasFaq) return CONTENT_TYPES.TABLE;
 
+  const flex = tryDetectFlexibleBlocks(content, lines);
+  if (flex) return CONTENT_TYPES.BLOCKS;
+
   return CONTENT_TYPES.MIXED;
+}
+
+function tryDetectFlexibleBlocks(content, lines) {
+  const parsed = parseFlexibleSectionBlocks(content, lines);
+  return parsed && parsed.blocks && parsed.blocks.length > 1 ? parsed : null;
+}
+
+/**
+ * Multi-block section: text, table, dates, links, list, faq in one section.
+ * @param {string} content
+ * @param {string[]} [linesIn]
+ */
+function parseFlexibleSectionBlocks(content, linesIn) {
+  const src = String(content || "").replace(/\r?\n/g, "\n");
+  if (contentHasTableMarkers(src)) {
+    const tablePayload = parseTableSection(src);
+    const { blocks } = migrateLegacyTablePayload(tablePayload);
+    if (blocks.length > 1) {
+      return {
+        blocks: blocks.map((b) =>
+          b.type === "text"
+            ? { type: "text", text: String(b.text || "") }
+            : { type: "table", grid: normalizeTableGrid(b.grid) }
+        )
+      };
+    }
+  }
+
+  const lines = Array.isArray(linesIn)
+    ? linesIn
+    : src
+        .split("\n")
+        .map((x) => x.trim())
+        .filter(Boolean);
+  if (lines.length < 2) return null;
+
+  const blocks = [];
+  let i = 0;
+
+  const pushText = (textLines) => {
+    const text = textLines.join("\n").trim();
+    if (text) blocks.push({ type: "text", text });
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const t = lineType(line);
+
+    if (t === "link") {
+      const linkLines = [];
+      while (i < lines.length && lineType(lines[i]) === "link") {
+        linkLines.push(lines[i]);
+        i += 1;
+      }
+      blocks.push({ type: "links", rows: linkLines.map(parseLinkRow) });
+      continue;
+    }
+
+    if (t === "faq_q" || t === "faq_a") {
+      const faqLines = [];
+      while (i < lines.length) {
+        const lt = lineType(lines[i]);
+        if (lt !== "faq_q" && lt !== "faq_a" && lt !== "paragraph") break;
+        if (lt === "paragraph" && faqLines.length) break;
+        faqLines.push(lines[i]);
+        i += 1;
+      }
+      blocks.push({ type: "faq", pairs: parseFaqLines(faqLines) });
+      continue;
+    }
+
+    if (t === "date") {
+      const dateLines = [];
+      while (i < lines.length) {
+        const lt = lineType(lines[i]);
+        if (lt === "date" || lt === "list" || lt === "list_ordered" || lt === "paragraph") {
+          dateLines.push(lines[i]);
+          i += 1;
+          continue;
+        }
+        break;
+      }
+      blocks.push({ type: "dates", ...parseDatesSection(dateLines) });
+      continue;
+    }
+
+    if (t === "list" || t === "list_ordered") {
+      const listLines = [];
+      while (i < lines.length && (lineType(lines[i]) === "list" || lineType(lines[i]) === "list_ordered")) {
+        listLines.push(lines[i]);
+        i += 1;
+      }
+      blocks.push({ type: "list", items: parseListLines(listLines) });
+      continue;
+    }
+
+    if (t === "table_row") {
+      const tableLines = [];
+      while (i < lines.length && lineType(lines[i]) === "table_row") {
+        tableLines.push(lines[i]);
+        i += 1;
+      }
+      blocks.push({ type: "table", grid: normalizeTableGrid(tableLines.map(splitTableRow)) });
+      continue;
+    }
+
+    const textLines = [];
+    while (i < lines.length) {
+      const lt = lineType(lines[i]);
+      if (["link", "faq_q", "faq_a", "date", "list", "list_ordered", "table_row"].includes(lt)) break;
+      textLines.push(lines[i]);
+      i += 1;
+    }
+    pushText(textLines);
+  }
+
+  if (blocks.length < 2) return null;
+  return { blocks };
+}
+
+function compileFlexibleSectionBlocks(payload) {
+  const parts = [];
+  for (const block of payload?.blocks || []) {
+    switch (block.type) {
+      case "text": {
+        const t = String(block.text || "").trim();
+        if (t) parts.push(t);
+        break;
+      }
+      case "table": {
+        const tableLines = compileTableGrid(block.grid);
+        if (tableLines.length) {
+          parts.push(`---table---\n${tableLines.join("\n")}\n---endtable---`);
+        }
+        break;
+      }
+      case "dates":
+        parts.push(compileDatesSection(block));
+        break;
+      case "links":
+        parts.push(compileLinks(block.rows));
+        break;
+      case "faq":
+        parts.push(compileFaq(block.pairs));
+        break;
+      case "list":
+        parts.push(compileList(block.items));
+        break;
+      default:
+        break;
+    }
+  }
+  return parts.join("\n\n");
 }
 
 function parsePipeLinkLine(rawLine) {
@@ -616,6 +803,8 @@ function compileSectionBody(section) {
       return compileParagraphList(payload);
     case CONTENT_TYPES.TABLE:
       return compileTableSection(payload);
+    case CONTENT_TYPES.BLOCKS:
+      return compileFlexibleSectionBlocks(payload);
     case CONTENT_TYPES.MIXED:
     default:
       return String(payload.raw ?? "").trim();
@@ -673,19 +862,26 @@ function parseTextToEditorSections(text) {
       case CONTENT_TYPES.TABLE:
         payload = parseTableSection(sec.content);
         break;
+      case CONTENT_TYPES.BLOCKS:
+        payload = tryDetectFlexibleBlocks(sec.content, lines) || { blocks: [], raw: sec.content };
+        break;
       case CONTENT_TYPES.MIXED:
       default:
         payload = { raw: sec.content };
         break;
     }
 
-    return {
+    const section = {
       id: newSectionId(),
       name: sec.cleanHeaderTitle || "Untitled",
       forceTable: contentType === CONTENT_TYPES.TABLE && isPureTableBlocks(payload),
       contentType,
       payload
     };
+    const safety = analyzeSectionEditorSafety(section, sec.content);
+    section.editorSafe = safety.safe;
+    section.unsafeReason = safety.reason || "";
+    return section;
   });
 }
 
@@ -726,6 +922,8 @@ function defaultPayloadForType(contentType) {
       return { paragraphs: [""], items: [{ text: "", ordered: false }] };
     case CONTENT_TYPES.TABLE:
       return defaultTablePayload();
+    case CONTENT_TYPES.BLOCKS:
+      return { blocks: [{ type: "text", text: "" }, { type: "dates", blocks: [{ type: "date", label: "", value: "" }] }] };
     default:
       return { raw: "" };
   }
@@ -742,15 +940,151 @@ function createEmptySection(name = "New Section", contentType = CONTENT_TYPES.PA
 }
 
 /**
+ * Per-section round-trip check for partial visual loading.
+ * @param {{ name: string, contentType: string, payload: object }} section
+ * @param {string} originalContent
+ */
+function analyzeSectionEditorSafety(section, originalContent) {
+  const original = normalizeEditorText(String(originalContent || ""));
+  if (!original) return { safe: true, reason: "" };
+
+  const compiled = normalizeEditorText(compileSectionBody(section));
+  if (compiled === original) return { safe: true, reason: "" };
+
+  if (section.contentType === CONTENT_TYPES.MIXED) {
+    return {
+      safe: false,
+      reason: "Advanced / mixed formatting — edit in the raw block below or use Fix for section builder"
+    };
+  }
+
+  const hints = [];
+  if (/---table---/i.test(original) && !/---table---/.test(compiled)) {
+    hints.push("table marker case");
+  }
+  if (/\[color=/i.test(original) || /\[\/color\]/i.test(original) || /\[\/Color\]/i.test(original)) {
+    hints.push("rich color tags");
+  }
+  if (/\[highlight\]/i.test(original) || /\[b\]/i.test(original)) {
+    hints.push("rich highlight/bold tags");
+  }
+  if (/\[[^\]]+\]\(https?:\/\//i.test(original)) {
+    hints.push("markdown links");
+  }
+
+  return {
+    safe: false,
+    reason:
+      hints.length > 0
+        ? `Formatting: ${hints.join(", ")}`
+        : "Section text changed when parsed — check spacing, colons, or table syntax"
+  };
+}
+
+/**
+ * @param {string} text
+ * @returns {{ safe: boolean, reasons: string[], sections: object[], safeCount: number, unsafeCount: number }}
+ */
+function analyzeVisualEditorSafety(text) {
+  const normalized = normalizeEditorText(text);
+  if (!normalized) {
+    return { safe: true, reasons: [], sections: [], safeCount: 0, unsafeCount: 0 };
+  }
+
+  const sections = parseTextToEditorSections(normalized);
+  const roundTrip = normalizeEditorText(compileEditorSectionsToText(sections));
+  const reasons = [];
+
+  if (roundTrip !== normalized) {
+    reasons.push("Document structure differs after parse — some sections may need repair");
+  }
+
+  let safeCount = 0;
+  let unsafeCount = 0;
+  for (const sec of sections) {
+    if (sec.editorSafe) safeCount += 1;
+    else {
+      unsafeCount += 1;
+      reasons.push(`"${sec.name}": ${sec.unsafeReason || "advanced content"}`);
+    }
+  }
+
+  return {
+    safe: roundTrip === normalized && unsafeCount === 0,
+    reasons,
+    sections,
+    safeCount,
+    unsafeCount
+  };
+}
+
+/**
+ * Auto-repair common formatting issues for section builder compatibility.
+ * @param {string} text
+ * @returns {{ text: string, changes: string[] }}
+ */
+function repairEditorText(text) {
+  const changes = [];
+  let src = String(text || "");
+
+  if (!src.trim()) return { text: "", changes };
+
+  if (/\r\n/.test(src)) {
+    changes.push("Normalized Windows line endings");
+    src = src.replace(/\r\n/g, "\n");
+  }
+
+  if (/---Endtable---|---ENDTABLE---/i.test(src)) {
+    changes.push("Lowercased table end markers");
+  }
+  if (/---Table---/i.test(src) && !/---table---/.test(src)) {
+    changes.push("Lowercased table start markers");
+  }
+
+  if (/\[\/Color\]/i.test(src)) {
+    changes.push("Normalized [/color] closing tags");
+  }
+
+  const lines = src.split("\n");
+  const repaired = [];
+  let orphanBuf = [];
+
+  const flushOrphan = () => {
+    if (!orphanBuf.length) return;
+    const body = orphanBuf.join("\n").trim();
+    if (body) {
+      repaired.push(`[Section: Additional Content]\n${body}`);
+      changes.push("Wrapped leading content without [Section:] header");
+    }
+    orphanBuf = [];
+  };
+
+  for (const line of lines) {
+    if (/^\s*\[\s*section\s*:/i.test(line)) {
+      flushOrphan();
+      repaired.push(line);
+    } else if (!repaired.length && !/^\s*\[\s*section\s*:/i.test(line)) {
+      orphanBuf.push(line);
+    } else {
+      repaired.push(line);
+    }
+  }
+  flushOrphan();
+
+  const normalized = normalizeEditorText(repaired.join("\n"));
+  if (normalized !== normalizeEditorText(text)) {
+    if (!changes.length) changes.push("Normalized spacing and date/table syntax");
+  }
+
+  return { text: normalized, changes };
+}
+
+/**
  * True when visual editor can load text without changing compiled output.
  * @param {string} text
  */
 function isVisualEditorSafeForText(text) {
-  const normalized = normalizeEditorText(text);
-  if (!normalized) return true;
-  const sections = parseTextToEditorSections(normalized);
-  const roundTrip = normalizeEditorText(compileEditorSectionsToText(sections));
-  return roundTrip === normalized;
+  return analyzeVisualEditorSafety(text).safe;
 }
 
 function compileTableCellFromEditor({ mode, text, label, url }) {
@@ -795,6 +1129,7 @@ const CONTENT_TYPE_LABELS = Object.freeze({
   [CONTENT_TYPES.LIST]: "List",
   [CONTENT_TYPES.PARAGRAPH_LIST]: "Paragraph + list",
   [CONTENT_TYPES.TABLE]: "Table (+ text & links)",
+  [CONTENT_TYPES.BLOCKS]: "Multiple blocks (advanced)",
   [CONTENT_TYPES.MIXED]: "Mixed / advanced"
 });
 
@@ -808,6 +1143,12 @@ module.exports = {
   createEmptySection,
   defaultPayloadForType,
   isVisualEditorSafeForText,
+  analyzeVisualEditorSafety,
+  analyzeSectionEditorSafety,
+  repairEditorText,
+  parseFlexibleSectionBlocks,
+  compileFlexibleSectionBlocks,
+  ALLOWED_RICH_COLORS,
   newSectionId,
   detectContentType,
   compileSectionBody,

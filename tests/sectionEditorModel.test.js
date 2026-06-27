@@ -197,4 +197,62 @@ Constable, 1000, 12th
     const out = compileEditorSectionsToText(sections);
     expect(out).toContain("[Section: Vacancy | table]");
   });
+
+  test("repair normalizes table markers and color closing tags", () => {
+    const { repairEditorText } = require("../server/utils/sectionEditorModel");
+    const raw = `[Section: Test]
+---Table---
+A, B
+---Endtable---
+
+[color=red][b]Note[/b][/Color]`;
+    const { text, changes } = repairEditorText(raw);
+    expect(text).toContain("---table---");
+    expect(text).toContain("---endtable---");
+    expect(text).toContain("[/color]");
+    expect(changes.length).toBeGreaterThan(0);
+  });
+
+  test("analyzeVisualEditorSafety reports partial unsafe sections", () => {
+    const { analyzeVisualEditorSafety } = require("../server/utils/sectionEditorModel");
+    const text = `[Section: Dates]
+Apply : 01 Jan 2026
+
+[Section: Extra]
+[color=red]orphan line[/color]
+`;
+    const analysis = analyzeVisualEditorSafety(normalizeEditorText(text));
+    expect(analysis.sections.length).toBe(2);
+    expect(typeof analysis.safe).toBe("boolean");
+    expect(analysis.sections[0].editorSafe).toBe(true);
+  });
+
+  test("rich date line with highlight round-trips after normalize", () => {
+    const text = `[Section: Important Dates]
+Online Apply Start Date : [highlight]18 June 2026
+Online Apply Last Date : [color=red] 08 July 2026
+`;
+    const normalized = normalizeEditorText(text);
+    const sections = parseTextToEditorSections(normalized);
+    expect(sections[0].contentType).toBe(CONTENT_TYPES.DATES);
+    const out = normalizeEditorText(compileEditorSectionsToText(sections));
+    expect(out).toContain("[highlight]18 June 2026");
+    expect(out).toContain("[color=red]");
+  });
+
+  test("flexible blocks detect table plus text in one section", () => {
+    const text = `[Section: Vacancy]
+Intro line here.
+
+---table---
+Post, Count
+Constable, 100
+---endtable---
+
+Closing note.`;
+    const normalized = normalizeEditorText(text);
+    const sections = parseTextToEditorSections(normalized);
+    expect(sections[0].contentType).toBe(CONTENT_TYPES.TABLE);
+    expect(sections[0].payload.blocks.length).toBeGreaterThan(1);
+  });
 });
