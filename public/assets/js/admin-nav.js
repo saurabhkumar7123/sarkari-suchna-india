@@ -2,7 +2,7 @@
  * Shared admin sidebar navigation — single source for all admin pages.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "3";
+  const ADMIN_NAV_VERSION = "6";
 
   const SIDEBAR_TOP_HTML = `
   <a href="/admin/dashboard" class="sidebar-brand" title="Admin dashboard">
@@ -27,6 +27,35 @@
   <a href="/" class="sidebar-view-site" target="_blank" rel="noopener noreferrer"><span class="nav-ico">↗</span><span class="nav-text">View website</span></a>
   <div class="nav-group-title">Publish</div>
   <a href="/generator" data-nav-path="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <div class="sidebar-drafts" id="sidebarGeneratorDrafts" aria-label="Generator parked drafts">
+    <div class="sidebar-drafts__head">
+      <span class="sidebar-drafts__title">Parked drafts</span>
+      <span class="sidebar-drafts__count" id="sidebarDraftCount">Total 0</span>
+    </div>
+    <div class="sidebar-drafts__section" data-draft-section="draft">
+      <button type="button" class="sidebar-drafts__toggle" data-draft-toggle="draft" aria-expanded="false">
+        <span class="sidebar-drafts__toggle-label">Unpublished</span>
+        <span class="sidebar-drafts__badge" id="sidebarDraftBadgeDraft">0</span>
+        <span class="sidebar-drafts__chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="sidebar-drafts__body" id="sidebarDraftBodyDraft" hidden>
+        <ul class="sidebar-drafts__list" id="sidebarDraftListDraft" role="list"></ul>
+        <p class="sidebar-drafts__section-empty" id="sidebarDraftEmptyDraft" hidden>No unpublished drafts.</p>
+      </div>
+    </div>
+    <div class="sidebar-drafts__section sidebar-drafts__section--published" data-draft-section="published">
+      <button type="button" class="sidebar-drafts__toggle" data-draft-toggle="published" aria-expanded="false">
+        <span class="sidebar-drafts__toggle-label">Published</span>
+        <span class="sidebar-drafts__badge is-muted" id="sidebarDraftBadgePublished">0</span>
+        <span class="sidebar-drafts__chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="sidebar-drafts__body" id="sidebarDraftBodyPublished" hidden>
+        <ul class="sidebar-drafts__list" id="sidebarDraftListPublished" role="list"></ul>
+        <p class="sidebar-drafts__section-empty" id="sidebarDraftEmptyPublished" hidden>No published-from-draft pages yet.</p>
+      </div>
+    </div>
+    <p class="sidebar-drafts__empty" id="sidebarDraftsEmpty">No parked drafts yet. Use <strong>Save draft</strong> in the generator.</p>
+  </div>
   <a href="/upload" data-nav-path="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
   <a href="/trash" data-nav-path="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
   <div class="nav-group-title">Homepage</div>
@@ -53,7 +82,14 @@
   function hydrateSidebarNav() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return false;
-    if (sidebar.dataset.navVersion === ADMIN_NAV_VERSION) return true;
+
+    const panel = document.getElementById("sidebarGeneratorDrafts");
+    const needsDraftsPanel = !panel;
+    const needsAccordionUpgrade = !!(panel && !panel.querySelector("[data-draft-toggle]"));
+    if (sidebar.dataset.navVersion === ADMIN_NAV_VERSION && !needsDraftsPanel && !needsAccordionUpgrade) {
+      document.dispatchEvent(new CustomEvent("adminNavHydrated"));
+      return true;
+    }
 
     const top = sidebar.querySelector(".sidebar-top");
     if (top) {
@@ -83,6 +119,7 @@
     });
 
     sidebar.dataset.navVersion = ADMIN_NAV_VERSION;
+    document.dispatchEvent(new CustomEvent("adminNavHydrated"));
     return true;
   }
 

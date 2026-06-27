@@ -102,6 +102,203 @@ body.generator-saas-v2 .generator-hero::before{
   background:linear-gradient(90deg,#2563eb,#4f46e5,#7c3aed);
 }
 
+/* ---- Parked drafts quick bar (generator page) ---- */
+body.generator-saas-v2 .generator-drafts-bar{
+  margin:0 0 16px;
+  padding:14px 16px;
+  border:1px solid #c7d2fe;
+  border-radius:var(--saas-radius-sm,12px);
+  background:linear-gradient(135deg,#eef2ff,#f8fafc);
+  box-shadow:var(--saas-shadow);
+}
+
+body.generator-saas-v2 .generator-drafts-bar__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__title{
+  font-size:13px;
+  font-weight:800;
+  color:#312e81;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__count{
+  font-size:11px;
+  font-weight:800;
+  color:#4338ca;
+  padding:3px 10px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #c7d2fe;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__section{
+  margin-top:6px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__toggle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-height:38px;
+  padding:8px 12px;
+  border:1px solid #c7d2fe;
+  border-radius:10px;
+  background:#fff;
+  color:#312e81;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  text-align:left;
+  transition:background .15s ease,border-color .15s ease;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__toggle:hover{
+  background:#eef2ff;
+  border-color:#a5b4fc;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__section.is-open .generator-drafts-bar__toggle{
+  background:#e0e7ff;
+  border-color:#818cf8;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__toggle span:first-child{
+  flex:1 1 auto;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__badge{
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  color:#312e81;
+  background:#eef2ff;
+  border:1px solid #c7d2fe;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__badge.is-muted{
+  color:#166534;
+  background:#dcfce7;
+  border-color:#86efac;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__chevron{
+  font-size:10px;
+  color:#64748b;
+  transition:transform .18s ease;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__section.is-open .generator-drafts-bar__chevron{
+  transform:rotate(180deg);
+}
+
+body.generator-saas-v2 .generator-drafts-bar__body{
+  margin-top:6px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__body[hidden]{
+  display:none !important;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__section-empty{
+  margin:0;
+  padding:8px 10px;
+  font-size:11px;
+  color:#64748b;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__item{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #e2e8f0;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__row-title{
+  font-size:13px;
+  font-weight:700;
+  color:#0f172a;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__row-meta{
+  font-size:11px;
+  font-weight:600;
+  color:#64748b;
+  flex:0 0 auto;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__actions{
+  display:flex;
+  gap:6px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__btn{
+  flex:1 1 auto;
+  min-height:32px;
+  padding:0 10px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:800;
+  text-align:center;
+  text-decoration:none;
+  cursor:pointer;
+  border:1px solid transparent;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__btn--open{
+  background:#eef2ff;
+  border-color:#c7d2fe;
+  color:#312e81;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__btn--open:hover{
+  background:#e0e7ff;
+  border-color:#a5b4fc;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__btn--delete{
+  background:#fef2f2;
+  border-color:#fecaca;
+  color:#b91c1c;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__btn--delete:hover{
+  background:#fee2e2;
+}
+
 body.generator-saas-v2 .generator-hero__copy{
   flex:1 1 280px;
   min-width:0;
@@ -919,6 +1116,18 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     color:#0f172a;
     border:1px solid #cbd5e1;
     box-shadow:0 2px 6px rgba(15,23,42,.07);
+  }
+
+  body.generator-saas-v2.generator-page .btn-tool--draft{
+    background:linear-gradient(135deg,#f8fafc,#eef2ff);
+    color:#312e81;
+    border:1px solid #c7d2fe;
+    box-shadow:0 2px 8px rgba(79,70,229,.12);
+  }
+
+  body.generator-saas-v2.generator-page .btn-tool--draft:hover:not(:disabled){
+    background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+    border-color:#a5b4fc;
   }
 
   body.generator-saas-v2.generator-page .btn-tool--ai{

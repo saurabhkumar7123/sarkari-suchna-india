@@ -100,6 +100,9 @@
     if (typeof window.AdminShellRebind === "function") {
       window.AdminShellRebind();
     }
+    if (typeof window.refreshGeneratorDraftsSidebar === "function") {
+      window.refreshGeneratorDraftsSidebar();
+    }
   }
 
   const mode = document.body.getAttribute("data-admin-layout") || "";

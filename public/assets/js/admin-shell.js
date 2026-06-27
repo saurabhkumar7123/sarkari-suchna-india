@@ -321,6 +321,9 @@
     syncCollapsedNavTooltips();
     syncDarkModeToggleButton();
     syncMobileToggleButton();
+    if (typeof window.refreshGeneratorDraftsSidebar === "function") {
+      window.refreshGeneratorDraftsSidebar();
+    }
     if (typeof window.AdminShellRebind === "function" && bindShellEvents._rebindPending) {
       bindShellEvents._rebindPending = false;
     }
@@ -374,4 +377,19 @@
   window.AdminShellRebind = bindShellEvents;
   window.showGlobalErrorBanner = showGlobalErrorBanner;
   window.hideGlobalErrorBanner = hideGlobalErrorBanner;
+
+  (function loadGeneratorDraftsSidebar() {
+    if (!document.getElementById("sidebar")) return;
+    if (document.getElementById("adminGeneratorDraftsScript")) return;
+    const s = document.createElement("script");
+    s.id = "adminGeneratorDraftsScript";
+    s.src = "/js/admin-generator-drafts.js?v=4";
+    s.defer = true;
+    s.onload = () => {
+      if (typeof window.refreshGeneratorDraftsSidebar === "function") {
+        window.refreshGeneratorDraftsSidebar();
+      }
+    };
+    document.body.appendChild(s);
+  })();
 })();

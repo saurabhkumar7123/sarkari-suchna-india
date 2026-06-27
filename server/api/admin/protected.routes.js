@@ -102,6 +102,7 @@ router.use(require("./page.routes"));
 router.use(require("./file.routes"));
 router.use(require("./upload.routes"));
 router.use(require("./contentImport.routes"));
+router.use(require("./generatorDraft.routes"));
 router.use(require("./updates.routes"));
 
 module.exports = router;

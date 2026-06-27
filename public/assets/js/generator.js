@@ -473,6 +473,228 @@ function clearDraftStorage() {
   }
 }
 
+function getGeneratorDraftId() {
+  const raw = String(document.getElementById("generatorDraftId")?.value || "").trim();
+  const id = parseInt(raw, 10);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function setGeneratorDraftId(id) {
+  const el = document.getElementById("generatorDraftId");
+  if (!el) return;
+  el.value = id != null && id !== "" ? String(id) : "";
+  syncSaveDraftButtonState();
+}
+
+function isEditingLivePage() {
+  return Boolean(normalizeSlugKey(document.getElementById("oldSlug")?.value || ""));
+}
+
+function collectGeneratorDraftPayload() {
+  flushSectionEditorBeforeRead();
+  return {
+    title: inputValueById("title"),
+    post_name: inputValueById("post_name"),
+    total_posts: inputValueById("total_posts"),
+    advertisement_no: inputValueById("advertisement_no"),
+    status: document.getElementById("status")?.value || "",
+    customStatus: document.getElementById("customStatus")?.value || "",
+    category: inputValueById("category"),
+    structuredQualification: document.getElementById("structuredQualification")?.value || "",
+    structuredState: document.getElementById("structuredState")?.value || "",
+    structuredDepartment: document.getElementById("structuredDepartment")?.value || "",
+    pageUrl: inputValueById("pageUrl"),
+    data: document.getElementById("data")?.value || "",
+    breaking: Boolean(document.getElementById("breaking")?.checked),
+    breakingOrder: document.getElementById("breakingOrder")?.value || "",
+    eventTime: document.getElementById("eventTime")?.value || "",
+    lastDate: document.getElementById("lastDate")?.value || "",
+    smallBoxSlot: document.getElementById("smallBoxSlot")?.value || "",
+    badges: collectBadgesFromForm()
+  };
+}
+
+function applyGeneratorDraftPayload(payload) {
+  const d = payload && typeof payload === "object" ? payload : {};
+  if (document.getElementById("title")) document.getElementById("title").value = d.title || "";
+  if (document.getElementById("post_name")) document.getElementById("post_name").value = d.post_name || "";
+  if (document.getElementById("total_posts")) document.getElementById("total_posts").value = d.total_posts || "";
+  if (document.getElementById("advertisement_no")) {
+    document.getElementById("advertisement_no").value = d.advertisement_no || "";
+  }
+  if (document.getElementById("data")) {
+    const raw = d.data || d.content || d.text || "";
+    document.getElementById("data").value =
+      window.SectionEditorModel && typeof window.SectionEditorModel.normalizeEditorText === "function"
+        ? window.SectionEditorModel.normalizeEditorText(raw)
+        : raw;
+  }
+  syncSectionEditorFromData();
+  if (typeof window.sectionEditor?.preferVisualIfSafe === "function") {
+    window.sectionEditor.preferVisualIfSafe();
+  }
+  if (document.getElementById("category")) {
+    document.getElementById("category").value = d.category || "";
+    setCategoryTagsFromString(d.category || "");
+  }
+  setNormalizedSelectValue("structuredQualification", d.structuredQualification);
+  setNormalizedSelectValue("structuredState", d.structuredState);
+  setNormalizedSelectValue("structuredDepartment", d.structuredDepartment);
+  if (document.getElementById("pageUrl")) document.getElementById("pageUrl").value = d.pageUrl || "";
+  if (document.getElementById("customStatus")) {
+    document.getElementById("customStatus").value = d.customStatus || "";
+  }
+  if (document.getElementById("status")) {
+    document.getElementById("status").value = d.status || "";
+  }
+  applyStatusToForm(d.customStatus || d.status || "");
+  if (document.getElementById("breaking")) document.getElementById("breaking").checked = Boolean(d.breaking);
+  if (document.getElementById("breakingOrder")) {
+    document.getElementById("breakingOrder").value = d.breakingOrder != null ? String(d.breakingOrder) : "";
+  }
+  setEventTimeInputValue(d.eventTime || "");
+  if (document.getElementById("lastDate") && d.lastDate) {
+    document.getElementById("lastDate").value = d.lastDate;
+  }
+  setSmallBoxSlotFormValue(d.smallBoxSlot != null ? d.smallBoxSlot : "");
+  applyBadgesToForm(Array.isArray(d.badges) ? d.badges : []);
+  document.getElementById("oldSlug").value = "";
+  document.getElementById("pageId").value = "";
+  setDeleteButtonVisible(false);
+  setPageUrlLocked(false);
+  updateSlugPreview();
+  syncAiConvertButton();
+  updateBreakingOrderVisibility();
+  updateEditorStats();
+  scheduleContentAnalysis();
+}
+
+function syncSaveDraftButtonState() {
+  const btn = document.getElementById("saveDraftBtn");
+  if (!btn) return;
+  const live = isEditingLivePage();
+  btn.disabled = live;
+  btn.title = live
+    ? "Draft save is only for new unpublished pages. This page is already live — use Save / Update."
+    : getGeneratorDraftId()
+      ? "Update parked draft and start a fresh page"
+      : "Park this page on the server and clear the form (max 20 drafts)";
+}
+
+async function saveGeneratorDraftToServer() {
+  if (isEditingLivePage()) {
+    setGeneratorFeedback("error", "Cannot save draft", {
+      detailsHtml: "This page is already live. Use <strong>Save / Update</strong>, or open Page Generator for a new page."
+    });
+    return;
+  }
+
+  const payload = collectGeneratorDraftPayload();
+  const titleLen = String(payload.title || "").trim().length;
+  const dataLen = String(payload.data || "").trim().length;
+  if (titleLen < 3 && dataLen < 20) {
+    setGeneratorFeedback("error", "Draft too empty", {
+      detailsHtml: "Add a title (3+ characters) or content (20+ characters) before saving a draft."
+    });
+    return;
+  }
+
+  const draftId = getGeneratorDraftId();
+  const btn = document.getElementById("saveDraftBtn");
+  if (btn) {
+    btn.disabled = true;
+    setActionBtnLabel(btn, "Saving…");
+  }
+
+  try {
+    const fetchRes = await safeFetch("/api/admin/generator-drafts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: draftId, payload })
+    });
+
+    if (!fetchRes.ok) {
+      const msg =
+        (fetchRes.body && (fetchRes.body.message || fetchRes.body.error)) ||
+        fetchRes.networkError ||
+        `Request failed (${fetchRes.status})`;
+      setGeneratorFeedback("error", "Draft save failed", { detailsHtml: String(msg) });
+      return;
+    }
+
+    const saved = fetchRes.body && fetchRes.body.data ? fetchRes.body.data : {};
+    clearDraftStorage();
+    resetGeneratorForm();
+    setGeneratorDraftId("");
+    setGeneratorFeedback(
+      "success",
+      `Draft saved${saved.title ? `: ${saved.title}` : ""}`,
+      { detailsHtml: "Form cleared. Open this draft anytime from the sidebar under <strong>Parked drafts</strong>." }
+    );
+    if (typeof window.refreshGeneratorDraftsSidebar === "function") {
+      window.refreshGeneratorDraftsSidebar();
+    }
+  } catch (err) {
+    console.error("Draft save error:", err);
+    setGeneratorFeedback("error", "Draft save failed", {
+      detailsHtml: "Network error while saving draft."
+    });
+  } finally {
+    syncSaveDraftButtonState();
+    if (btn) restoreActionBtnLabels(btn);
+  }
+}
+
+async function loadGeneratorDraftFromURL() {
+  const draftId =
+    new URLSearchParams(window.location.search).get("draftId") ||
+    new URLSearchParams(window.location.search).get("generatorDraftId");
+  if (!draftId) return false;
+
+  try {
+    const data = await safeFetch("/api/admin/generator-drafts/" + encodeURIComponent(draftId));
+    if (!data.ok || !data.body || !data.body.success || !data.body.data) {
+      setGeneratorFeedback("error", "Could not load draft", {
+        detailsHtml: (data.body && data.body.message) || "Draft not found."
+      });
+      return false;
+    }
+
+    const row = data.body.data;
+    clearDraftStorage();
+    resetGeneratorForm();
+    applyGeneratorDraftPayload(row.payload || {});
+    setGeneratorDraftId(row.id);
+    setGeneratorFeedback("info", `Draft #${row.id} loaded`, {
+      detailsHtml: `${escapeAttr(row.title || "Untitled")} — edit and publish, or save draft again to park updates.`
+    });
+    return true;
+  } catch (err) {
+    console.error("Generator draft load error:", err);
+    setGeneratorFeedback("error", "Failed to load draft");
+    return false;
+  }
+}
+
+async function markGeneratorDraftPublishedOnServer(draftId, publishedSlug, publishedPageId) {
+  if (!draftId) return;
+  try {
+    await safeFetch(`/api/admin/generator-drafts/${encodeURIComponent(draftId)}/mark-published`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        publishedSlug: publishedSlug || "",
+        publishedPageId: publishedPageId != null ? publishedPageId : null
+      })
+    });
+    if (typeof window.refreshGeneratorDraftsSidebar === "function") {
+      window.refreshGeneratorDraftsSidebar();
+    }
+  } catch (err) {
+    console.warn("mark draft published failed", err);
+  }
+}
+
 function resetGeneratorForm() {
   if (aiConvertInProgress) return;
   const setVal = (id, val = "") => {
@@ -493,6 +715,7 @@ function resetGeneratorForm() {
   setVal("pageUrl", "");
   setVal("pageId", "");
   setVal("oldSlug", "");
+  setVal("generatorDraftId", "");
   setVal("breakingOrder", "");
   setEventTimeInputValue("");
   setVal("lastDate", "");
@@ -510,6 +733,7 @@ function resetGeneratorForm() {
   updateEditorStats();
   updateBreakingOrderVisibility();
   syncSectionEditorFromData();
+  syncSaveDraftButtonState();
 }
 
 function createSlugFromTitle(title) {
@@ -686,6 +910,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     await loadPageFromURL();
   } else if (initPdfDraftFromUrl()) {
     /* pdf draft loaded */
+  } else if (await loadGeneratorDraftFromURL()) {
+    /* server draft loaded */
   } else if (await loadContentImportFromURL()) {
     /* import loaded */
   } else {
@@ -702,6 +928,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.sectionEditor.preferVisualIfSafe();
   }
   scheduleContentAnalysis();
+  syncSaveDraftButtonState();
+  document.getElementById("saveDraftBtn")?.addEventListener("click", () => {
+    saveGeneratorDraftToServer();
+  });
 });
 
 function updateEditorStats() {
@@ -716,7 +946,7 @@ function updateEditorStats() {
 }
 
 function setEditorActionsBusy(busy) {
-  const ids = ["savePageBtn", "aiConvertBtn", "previewBtn"];
+  const ids = ["savePageBtn", "aiConvertBtn", "previewBtn", "saveDraftBtn"];
   ids.forEach((id) => {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -1323,6 +1553,7 @@ async function selectPage(p){
     applyBadgesToForm(page.badges);
     setDeleteButtonVisible(true);
     setPageUrlLocked(true);
+    setGeneratorDraftId("");
     syncAiConvertButton();
     updateBreakingOrderVisibility();
     await loadSmallBoxSlotOccupancy();
@@ -1516,7 +1747,14 @@ async function generatePage(){
     }
 
     const isCreate = !payload.oldSlug;
+    const openDraftId = getGeneratorDraftId();
     clearDraftStorage();
+
+    if (openDraftId) {
+      const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
+      await markGeneratorDraftPublishedOnServer(openDraftId, newSlug, resolvedId);
+      setGeneratorDraftId("");
+    }
 
     if (isCreate) {
       bumpAdminMetric("publishesSuccess");
