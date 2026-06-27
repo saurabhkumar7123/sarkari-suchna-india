@@ -309,23 +309,64 @@
     if (addChecks) wireBadgeCheckboxLimit(addChecks);
   }
 
-  function renderSmallBoxesAssignForm() {
-    const host = document.getElementById("smallBoxesAssignForm");
+  function renderSmallBoxesList(items) {
+    const host = document.getElementById("smallBoxesList");
     if (!host) return;
+
     const slots = smallBoxSlotNumbers();
-    host.innerHTML = `
-      <p class="homepage-mgmt-form__title">Assign pages to slots</p>
-      <div class="homepage-mgmt-assign-grid">
-        ${slots
-          .map(
-            (slot) => `<div class="homepage-mgmt-assign-row">
-            <span class="homepage-mgmt-assign-label">Slot ${slot}${isDesktopOnlySmallBoxSlot(slot) ? " (desktop only)" : ""}</span>
-            ${pageSearchFieldHtml(`smallboxSlot${slot}`)}
-            <button type="button" class="header-action-btn header-action-btn--primary smallbox-assign" data-slot="${slot}">Assign</button>
-          </div>`
-          )
-          .join("")}
-      </div>`;
+    const bySlot = {};
+    (items || []).forEach((row) => {
+      if (row && row.slot != null) bySlot[String(row.slot)] = row;
+    });
+
+    host.innerHTML = `<div class="hp-slot-grid">${slots
+      .map((slot) => {
+        const row = bySlot[String(slot)];
+        const slug = row ? row.slug : "";
+        const title = row ? row.title || row.slug : "";
+        const filled = Boolean(slug);
+        const chip = filled ? statusChip("filled", "Filled") : statusChip("empty", "Empty");
+        const slotLabel = `Slot ${slot}`;
+        const desktopNote = desktopOnlySmallBoxNote(slot);
+        const currentBody = filled
+          ? `<div class="hp-slot-card__current">
+              <p class="hp-slot-card__current-label">Current page</p>
+              <p class="hp-slot-card__title">${escapeHtml(title)}</p>
+              <p class="hp-slot-card__slug">${escapeHtml(slug)}</p>
+            </div>`
+          : `<p class="hp-slot-card__empty-text">No page assigned to this slot.</p>`;
+        const replaceLabel = filled ? "Replace with another page" : "Assign a page";
+        const actionLabel = filled ? "Replace" : "Assign";
+        const secondaryActions = filled
+          ? `<button type="button" class="header-action-btn header-action-btn--danger smallbox-clear" data-slug="${escapeHtml(slug)}">Clear slot</button>
+             <a href="${generatorEditLink(slug)}">Edit in Generator</a>
+             <a href="/${escapeHtml(slug)}" target="_blank" rel="noopener">View</a>`
+          : "";
+
+        return `<article class="hp-slot-card hp-slot-card--${filled ? "filled" : "empty"}" data-slot="${slot}"${
+          filled ? ` data-current-slug="${escapeHtml(slug)}"` : ""
+        }>
+          <div class="hp-slot-card__head">
+            <div>
+              <span class="hp-slot-card__label">${slotLabel}</span>
+              ${desktopNote}
+            </div>
+            ${chip}
+          </div>
+          ${currentBody}
+          <div class="hp-slot-card__replace">
+            <p class="hp-slot-card__replace-label">${replaceLabel}</p>
+            <div class="hp-slot-card__picker">${pageSearchFieldHtml(`smallboxSlot${slot}`)}</div>
+          </div>
+          <div class="hp-slot-card__actions">
+            <button type="button" class="header-action-btn header-action-btn--primary smallbox-assign" data-slot="${slot}">${actionLabel}</button>
+            ${secondaryActions}
+          </div>
+        </article>`;
+      })
+      .join("")}</div>`;
+
+    wireSmallBoxesActions();
   }
 
   function wireBreakingActions() {
@@ -454,33 +495,44 @@
   }
 
   function wireSmallBoxesActions() {
-    const slotPickers = {
-      1: wirePageSearchPicker("smallboxSlot1"),
-      2: wirePageSearchPicker("smallboxSlot2"),
-      3: wirePageSearchPicker("smallboxSlot3"),
-      4: wirePageSearchPicker("smallboxSlot4")
-    };
+    document.querySelectorAll(".hp-slot-card[data-slot]").forEach((card) => {
+      const slot = card.getAttribute("data-slot");
+      if (!slot) return;
+      const picker = wirePageSearchPicker(`smallboxSlot${slot}`);
+      const assignBtn = card.querySelector(".smallbox-assign");
+      const filled = card.classList.contains("hp-slot-card--filled");
+      const currentSlug = card.getAttribute("data-current-slug") || "";
 
-    document.querySelectorAll(".smallbox-assign").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const slot = btn.getAttribute("data-slot");
-        const picker = slotPickers[slot];
-        const slug = picker ? picker.getSelectedSlug() : "";
+      assignBtn?.addEventListener("click", async () => {
+        const slug = picker.getSelectedSlug();
         if (!slug) {
           notifyError("Search by title and select a page from the list");
           return;
         }
-        await withSaveLoading(btn, async () => {
+        if (filled && slug === currentSlug) {
+          notifyError("This page is already in this slot");
+          return;
+        }
+        if (
+          filled &&
+          !window.confirm(
+            `Replace slot ${slot} with "${slug}"? The current page will be removed from this slot.`
+          )
+        ) {
+          return;
+        }
+        const successMessage = filled ? `Slot ${slot} replaced` : `Slot ${slot} assigned`;
+        await withSaveLoading(assignBtn, async () => {
           const ok = await patchPlacement(
             `/api/admin/homepage-management/small-box/${encodeURIComponent(slug)}`,
             { smallBoxSlot: Number(slot) },
-            "Slot assigned"
+            successMessage
           );
           if (ok) {
             picker.clear();
             loadOverview();
           }
-        }, "Assigning...");
+        }, filled ? "Replacing..." : "Assigning...");
       });
     });
 
@@ -570,54 +622,6 @@
     }
 
     wireBadgesActions();
-  }
-
-  function renderSmallBoxesList(items) {
-    renderSmallBoxesAssignForm();
-
-    const host = document.getElementById("smallBoxesList");
-    if (!host) return;
-
-    const slots = smallBoxSlotNumbers();
-    const bySlot = {};
-    (items || []).forEach((row) => {
-      if (row && row.slot != null) bySlot[String(row.slot)] = row;
-    });
-
-    host.innerHTML = `<div class="hp-slot-grid">${slots
-      .map((slot) => {
-        const row = bySlot[String(slot)];
-        const slug = row ? row.slug : "";
-        const title = row ? row.title || row.slug : "";
-        const filled = Boolean(slug);
-        const chip = filled ? statusChip("filled", "Filled") : statusChip("empty", "Empty");
-        const slotLabel = `Slot ${slot}`;
-        const desktopNote = desktopOnlySmallBoxNote(slot);
-        const body = filled
-          ? `<p class="hp-slot-card__title">${escapeHtml(title)}</p>
-             <p class="hp-slot-card__slug">${escapeHtml(slug)}</p>`
-          : `<p class="hp-slot-card__empty-text">No page assigned to this slot.</p>`;
-        const actions = filled
-          ? `<button type="button" class="header-action-btn header-action-btn--danger smallbox-clear" data-slug="${escapeHtml(slug)}">Clear slot</button>
-             <a href="${generatorEditLink(slug)}">Edit in Generator</a>
-             <a href="/${escapeHtml(slug)}" target="_blank" rel="noopener">View</a>`
-          : "";
-
-        return `<article class="hp-slot-card hp-slot-card--${filled ? "filled" : "empty"}">
-          <div class="hp-slot-card__head">
-            <div>
-              <span class="hp-slot-card__label">${slotLabel}</span>
-              ${desktopNote}
-            </div>
-            ${chip}
-          </div>
-          ${body}
-          ${actions ? `<div class="hp-slot-card__actions">${actions}</div>` : ""}
-        </article>`;
-      })
-      .join("")}</div>`;
-
-    wireSmallBoxesActions();
   }
 
   function setText(id, text) {
