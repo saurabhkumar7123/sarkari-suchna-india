@@ -89,7 +89,7 @@ const BOARD_HUBS = {
   }
 };
 
-const { LEGACY_DEPARTMENT_ALIASES } = require("./structuredFields");
+const { LEGACY_DEPARTMENT_ALIASES } = require("./legacyAliases");
 
 const BOARD_SLUG_SET = new Set(Object.keys(BOARD_HUBS));
 

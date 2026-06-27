@@ -840,7 +840,7 @@ async function selectExpirySummary(executor = db) {
       SUM(CASE WHEN last_date IS NOT NULL AND last_date >= CURDATE()
         AND last_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY) AND ${jobStatusSql} THEN 1 ELSE 0 END) AS closingSoon,
       SUM(CASE WHEN last_date IS NOT NULL AND last_date < CURDATE() AND ${jobStatusSql} THEN 1 ELSE 0 END) AS expiredLive,
-      SUM(CASE WHEN (last_date IS NULL OR last_date = '0000-00-00')
+      SUM(CASE WHEN last_date IS NULL
         AND ${jobStatusSql} THEN 1 ELSE 0 END) AS missingLastDate
      FROM pages WHERE deleted = 0`
   );

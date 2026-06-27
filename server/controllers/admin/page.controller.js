@@ -85,7 +85,7 @@ const getAllPages = async (req, res) => {
     } else if (expiry === "expired") {
       where += ` AND last_date IS NOT NULL AND last_date < CURDATE() AND ${jobStatusSql}`;
     } else if (expiry === "no_last_date") {
-      where += ` AND (last_date IS NULL OR last_date = '0000-00-00') AND ${jobStatusSql}`;
+      where += ` AND last_date IS NULL AND ${jobStatusSql}`;
     }
 
     const total = await pageRepository.countAdminPages(where, params);
