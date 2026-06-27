@@ -1039,6 +1039,8 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     white-space:nowrap;
     margin-left:0;
     vertical-align:baseline;
+    font-size:inherit;
+    line-height:inherit;
   }
 
   body.page-home #dynamicSections .home-card-badge-sep{
@@ -1046,6 +1048,8 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     margin:0;
     padding:0;
     font-weight:400;
+    font-size:inherit;
+    line-height:inherit;
     text-decoration:none;
   }
 
@@ -1055,51 +1059,39 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
   }
 
   body.page-home #dynamicSections .home-badge{
-    display:inline-flex;
-    align-items:center;
+    display:inline;
     vertical-align:baseline;
-    font-size:10px;
-    font-weight:600;
-    line-height:1.2;
-    letter-spacing:0.02em;
+    font-size:inherit;
+    font-weight:inherit;
+    line-height:inherit;
+    letter-spacing:inherit;
     text-transform:uppercase;
-    padding:2px 7px;
-    border-radius:999px;
-    border:1px solid transparent;
+    padding:0;
+    border:none;
+    border-radius:0;
+    background:transparent;
     white-space:nowrap;
     margin-left:0;
     box-shadow:none;
+    color:var(--site-link);
   }
 
   body.page-home #dynamicSections .home-card-badge-group .home-badge + .home-badge{
     margin-left:3px;
   }
 
-  body.page-home #dynamicSections .home-badge--new{
-    color:#1d4ed8;
-    background:#eff6ff;
-    border-color:#bfdbfe;
-  }
-
-  body.page-home #dynamicSections .home-badge--out{
-    color:#1e3c72;
-    background:#f0f4fa;
-    border-color:#c5d4eb;
-  }
-
-  body.page-home #dynamicSections .home-badge--start{
-    color:#166534;
-    background:#f0fdf4;
-    border-color:#bbf7d0;
-  }
-
+  body.page-home #dynamicSections .home-badge--new,
+  body.page-home #dynamicSections .home-badge--out,
+  body.page-home #dynamicSections .home-badge--start,
   body.page-home #dynamicSections .home-badge--soon{
-    color:#9a3412;
-    background:#fff7ed;
-    border-color:#fed7aa;
+    color:var(--site-link);
+    background:transparent;
+    border:none;
   }
 
   body.page-home #dynamicSections .job-list a:hover .home-badge{
+    color:var(--hover-text);
+    background:transparent;
     text-decoration:none;
   }
 
@@ -1371,11 +1363,6 @@ body.page-home .site-updated-indicator--home-start .site-updated-indicator__tool
     body.page-home #dynamicSections .home-card-badge-sep{
       margin:0;
       padding:0;
-    }
-
-    body.page-home #dynamicSections .home-badge{
-      font-size:8px;
-      padding:1px 4px;
     }
 
     body.page-home #dynamicSections .home-card-badge-group .home-badge + .home-badge{
