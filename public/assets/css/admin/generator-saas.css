@@ -2015,6 +2015,50 @@ body.generator-saas-v2 .sec-rich-field .sec-textarea{
   margin-top:0;
 }
 
+body.generator-saas-v2 .sec-rich-field--compact{
+  gap:4px;
+}
+
+body.generator-saas-v2 .sec-rich-field--compact .sec-rich-toolbar{
+  padding:4px 6px;
+  gap:4px;
+  border-radius:8px;
+}
+
+body.generator-saas-v2 .sec-rich-field--compact .sec-rich-toolbar__label{
+  display:none;
+}
+
+body.generator-saas-v2 .sec-rich-field--compact .sec-rich-btn{
+  min-width:28px;
+  height:26px;
+  padding:0 6px;
+  font-size:11px;
+}
+
+body.generator-saas-v2 .sec-rich-field--compact .sec-rich-select{
+  height:26px;
+  min-width:72px;
+  max-width:96px;
+  font-size:10px;
+}
+
+body.generator-saas-v2 .sec-row--stack{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  width:100%;
+}
+
+body.generator-saas-v2 .sec-table-cell .sec-rich-field--compact{
+  margin-top:4px;
+}
+
+body.generator-saas-v2 .sec-rich-btn--bullet{
+  font-size:14px;
+  line-height:1;
+}
+
 body.generator-saas-v2 .sec-rich-link-modal{
   position:fixed;
   inset:0;

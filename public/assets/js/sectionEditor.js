@@ -82,8 +82,9 @@
     return analysis;
   }
 
-  function wrapRichField(innerHtml, fieldKey) {
-    return `<div class="sec-rich-field" data-rich-field="${escapeHtml(fieldKey)}">
+  function wrapRichField(innerHtml, fieldKey, options = {}) {
+    const compact = options.compact ? " sec-rich-field--compact" : "";
+    return `<div class="sec-rich-field${compact}" data-rich-field="${escapeHtml(fieldKey)}">
       <div class="sec-rich-toolbar" role="toolbar" aria-label="Rich formatting">
         <span class="sec-rich-toolbar__label">Format</span>
         <button type="button" class="sec-rich-btn sec-rich-btn--bold" data-rich-action="bold" title="Bold [b]" aria-label="Bold">B</button>
@@ -93,9 +94,59 @@
           ${(M().ALLOWED_RICH_COLORS || []).map((c) => `<option value="${c}">${c}</option>`).join("")}
         </select>
         <button type="button" class="sec-rich-btn sec-rich-btn--link" data-rich-action="link" title="Markdown link" aria-label="Insert link">Link</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--bullet" data-rich-action="bullet" title="Bullet (- )" aria-label="Bullet list">•</button>
       </div>
       ${innerHtml}
     </div>`;
+  }
+
+  function getRichEditable(wrap) {
+    if (!wrap) return null;
+    return wrap.querySelector("textarea, input[data-rich-input]");
+  }
+
+  function applyBulletFormat(editable) {
+    if (!editable) return;
+    const val = String(editable.value || "");
+    const start = editable.selectionStart ?? 0;
+    const end = editable.selectionEnd ?? 0;
+    const isMultiline = editable.tagName === "TEXTAREA";
+
+    if (start !== end && isMultiline) {
+      const selected = val.slice(start, end);
+      const replaced = selected
+        .split("\n")
+        .map((line) => {
+          if (!String(line).trim()) return line;
+          if (/^(\s*)[-*•]\s/.test(line)) return line;
+          return line.replace(/^(\s*)/, "$1- ");
+        })
+        .join("\n");
+      editable.value = val.slice(0, start) + replaced + val.slice(end);
+      editable.setSelectionRange(start, start + replaced.length);
+    } else if (isMultiline) {
+      const lineStart = val.lastIndexOf("\n", start - 1) + 1;
+      const lineEndRaw = val.indexOf("\n", start);
+      const lineEnd = lineEndRaw === -1 ? val.length : lineEndRaw;
+      const line = val.slice(lineStart, lineEnd);
+      if (!/^(\s*)[-*•]\s/.test(line)) {
+        const prefix = "- ";
+        editable.value = val.slice(0, lineStart) + prefix + val.slice(lineStart);
+        const newPos = start + prefix.length;
+        editable.setSelectionRange(newPos, newPos);
+      } else {
+        const insert = "\n- ";
+        editable.value = val.slice(0, end) + insert + val.slice(end);
+        editable.setSelectionRange(end + insert.length, end + insert.length);
+      }
+    } else if (!/^[-*•]\s/.test(val.trim())) {
+      const prefix = "- ";
+      editable.value = prefix + val;
+      editable.setSelectionRange(start + prefix.length, start + prefix.length);
+    }
+
+    editable.dispatchEvent(new Event("input", { bubbles: true }));
+    editable.focus();
   }
 
   let richLinkContext = null;
@@ -227,11 +278,15 @@
     });
   }
 
-  function applyRichAction(textarea, action, colorValue) {
-    if (!textarea) return;
-    const start = textarea.selectionStart ?? 0;
-    const end = textarea.selectionEnd ?? 0;
-    const val = String(textarea.value || "");
+  function applyRichAction(editable, action, colorValue) {
+    if (!editable) return;
+    if (action === "bullet") {
+      applyBulletFormat(editable);
+      return;
+    }
+    const start = editable.selectionStart ?? 0;
+    const end = editable.selectionEnd ?? 0;
+    const val = String(editable.value || "");
     const hasSelection = start !== end;
     const selected = hasSelection ? val.slice(start, end) : "";
 
@@ -265,14 +320,14 @@
         cursorPos = start + open.length;
       }
     } else if (action === "link") {
-      openRichLinkModal(textarea);
+      openRichLinkModal(editable);
       return;
     } else return;
 
-    textarea.value = val.slice(0, start) + insert + val.slice(end);
-    textarea.setSelectionRange(cursorPos, cursorPos);
-    textarea.dispatchEvent(new Event("input", { bubbles: true }));
-    textarea.focus();
+    editable.value = val.slice(0, start) + insert + val.slice(end);
+    editable.setSelectionRange(cursorPos, cursorPos);
+    editable.dispatchEvent(new Event("input", { bubbles: true }));
+    editable.focus();
   }
 
   function setMode(next, options = {}) {
@@ -444,7 +499,7 @@
   function renderParagraphBody(sec) {
     const text = escapeHtml(sec.payload?.text || "");
     const inner = `<label class="sec-field-label">Paragraph text</label>
-      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="4" placeholder="Supports [highlight], [color=red], [b], and [label](url)">${text}</textarea>`;
+      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="4" placeholder="Supports [b], [highlight], [color], [label](url), bullet (-)">${text}</textarea>`;
     return wrapRichField(inner, "paragraph");
   }
 
@@ -485,23 +540,35 @@
       return wrapRichField(inner, "dates-para");
     }
     if (block.type === "list") {
-      return `
+      const inner = `
       <div class="sec-dates-block sec-dates-block--list" data-block-index="${index}" data-block-type="list">
-        <div class="sec-row">
-          <input type="text" class="sec-input" data-field="dates-list-text" placeholder="List item" value="${escapeHtml(block.text)}">
+        <div class="sec-row sec-row--stack">
+          <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="dates-list-text" rows="2" placeholder="List item — [b], [color], [highlight], [label](url)">${escapeHtml(block.text)}</textarea>
           <label class="sec-check"><input type="checkbox" data-field="dates-list-ordered" ${block.ordered ? "checked" : ""}> Numbered</label>
           <div class="sec-row-actions">${renderRowActions()}</div>
         </div>
       </div>`;
+      return wrapRichField(inner, `dates-list-${index}`, { compact: true });
     }
-    return `
+    const dateInner = `
       <div class="sec-dates-block sec-dates-block--date" data-block-index="${index}" data-block-type="date">
-        <div class="sec-row">
-          <input type="text" class="sec-input" data-field="date-label" placeholder="Label" value="${escapeHtml(block.label)}">
-          <input type="text" class="sec-input" data-field="date-value" placeholder="Value" value="${escapeHtml(block.value)}">
+        <div class="sec-row sec-row--stack">
+          ${wrapRichField(
+            `<label class="sec-field-label">Label</label>
+            <input type="text" class="sec-input" data-rich-input data-field="date-label" placeholder="Label" value="${escapeHtml(block.label)}">`,
+            `dates-label-${index}`,
+            { compact: true }
+          )}
+          ${wrapRichField(
+            `<label class="sec-field-label">Value</label>
+            <input type="text" class="sec-input" data-rich-input data-field="date-value" placeholder="Value — [b], [color], [highlight]" value="${escapeHtml(block.value)}">`,
+            `dates-value-${index}`,
+            { compact: true }
+          )}
           <div class="sec-row-actions">${renderRowActions()}</div>
         </div>
       </div>`;
+    return dateInner;
   }
 
   function renderDatesBody(sec) {
@@ -528,12 +595,13 @@
   }
 
   function renderLinkActionRow(action, linkIndex, actionIndex) {
-    return `
+    const inner = `
       <div class="sec-link-action" data-link-index="${linkIndex}" data-action-index="${actionIndex}">
-        <input type="text" class="sec-input" data-field="link-action-text" placeholder="Hindi / English" value="${escapeHtml(action.buttonText)}">
+        <input type="text" class="sec-input" data-rich-input data-field="link-action-text" placeholder="Button text — rich tags OK" value="${escapeHtml(action.buttonText)}">
         <input type="url" class="sec-input sec-input--url" data-field="link-action-url" placeholder="https://..." value="${escapeHtml(action.url)}">
         <div class="sec-row-actions">${renderRowActions("sec-row-btn--link-action")}</div>
       </div>`;
+    return wrapRichField(inner, `link-action-${linkIndex}-${actionIndex}`, { compact: true });
   }
 
   function renderLinkEntry(row, index) {
@@ -551,15 +619,23 @@
 
     return `
       <div class="sec-link-entry" data-row-index="${index}">
-        <label class="sec-field-label">Link label (left text)</label>
-        <input type="text" class="sec-input sec-input--title" data-field="link-label" placeholder="Download PDF" value="${escapeHtml(link.label)}">
+        ${wrapRichField(
+          `<label class="sec-field-label">Link label (left text)</label>
+        <input type="text" class="sec-input sec-input--title" data-rich-input data-field="link-label" placeholder="Download PDF — [b], [color], [highlight]" value="${escapeHtml(link.label)}">`,
+          `link-label-${index}`,
+          { compact: true }
+        )}
         <label class="sec-check sec-check--block">
           <input type="checkbox" data-field="link-multi" ${isMulti ? "checked" : ""}>
           Hindi / English — multiple clickable buttons
         </label>
         <div class="sec-link-single${isMulti ? " is-hidden" : ""}">
-          <label class="sec-field-label">Button text <span class="sec-field-label-muted">(blank = Click Here)</span></label>
-          <input type="text" class="sec-input" data-field="link-button-text" placeholder="Click Here" value="${escapeHtml(link.buttonText)}">
+          ${wrapRichField(
+            `<label class="sec-field-label">Button text <span class="sec-field-label-muted">(blank = Click Here)</span></label>
+          <input type="text" class="sec-input" data-rich-input data-field="link-button-text" placeholder="Click Here" value="${escapeHtml(link.buttonText)}">`,
+            `link-button-${index}`,
+            { compact: true }
+          )}
           <label class="sec-field-label">URL</label>
           <input type="url" class="sec-input sec-input--url" data-field="link-url" placeholder="https://..." value="${escapeHtml(link.url)}">
         </div>
@@ -602,14 +678,15 @@
   function renderListBody(sec) {
     const items = sec.payload?.items?.length ? sec.payload.items : [{ text: "", ordered: false }];
     const rowsHtml = items
-      .map(
-        (item, i) => `
-      <div class="sec-row" data-row-index="${i}">
-        <input type="text" class="sec-input" data-field="list-text" placeholder="List item" value="${escapeHtml(item.text)}">
+      .map((item, i) => {
+        const inner = `
+      <div class="sec-row sec-row--stack" data-row-index="${i}">
+        <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="list-text" rows="2" placeholder="List item — [b], [color], [highlight], [label](url)">${escapeHtml(item.text)}</textarea>
         <label class="sec-check"><input type="checkbox" data-field="list-ordered" ${item.ordered ? "checked" : ""}> Numbered</label>
         <div class="sec-row-actions">${renderRowActions()}</div>
-      </div>`
-      )
+      </div>`;
+        return wrapRichField(inner, `list-item-${i}`, { compact: true });
+      })
       .join("");
     return `<div class="sec-rows" data-sec-id="${sec.id}" data-rows-kind="list">${rowsHtml}</div>
       <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="list">+ Add item</button>`;
@@ -628,13 +705,14 @@
       )
       .join("");
     const listHtml = items
-      .map(
-        (item, i) => `
-      <div class="sec-row" data-row-index="${i}">
-        <input type="text" class="sec-input" data-field="list-text" placeholder="List item" value="${escapeHtml(item.text)}">
+      .map((item, i) => {
+        const inner = `
+      <div class="sec-row sec-row--stack" data-row-index="${i}">
+        <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="list-text" rows="2" placeholder="List item">${escapeHtml(item.text)}</textarea>
         <div class="sec-row-actions">${renderRowActions()}</div>
-      </div>`
-      )
+      </div>`;
+        return wrapRichField(inner, `pl-list-${i}`, { compact: true });
+      })
       .join("");
     return `
       <p class="sec-field-hint">Paragraphs</p>
@@ -668,6 +746,16 @@
   function renderTableBodyCell(cell, blockIndex, rowIndex, colIdx) {
     const parsed = M().parseTableCellForEditor(cell);
     const isLink = parsed.mode === "link";
+    const textField = wrapRichField(
+      `<textarea class="sec-textarea sec-textarea--compact sec-table-cell-input" data-rich-input data-field="table-cell-text" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" rows="3" placeholder="Text — [b] [color] [highlight]; multiline [list] OK">${escapeHtml(parsed.text)}</textarea>`,
+      `table-cell-${blockIndex}-${rowIndex}-${colIdx}`,
+      { compact: true }
+    );
+    const linkLabelField = wrapRichField(
+      `<input type="text" class="sec-input sec-table-cell-input" data-rich-input data-field="table-cell-link-label" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.label)}" placeholder="Button text">`,
+      `table-cell-link-${blockIndex}-${rowIndex}-${colIdx}`,
+      { compact: true }
+    );
     return `
           <td class="sec-table-cell sec-table-cell--body" data-row-index="${rowIndex}" data-col-index="${colIdx}">
             <label class="sec-table-cell-link-toggle">
@@ -675,10 +763,10 @@
               Link
             </label>
             <div class="sec-table-cell-text-wrap${isLink ? " is-hidden" : ""}">
-              <input type="text" class="sec-input sec-table-cell-input" data-field="table-cell-text" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.text)}" placeholder="Text, -, =, *">
+              ${textField}
             </div>
             <div class="sec-table-cell-link-wrap${isLink ? "" : " is-hidden"}">
-              <input type="text" class="sec-input sec-table-cell-input" data-field="table-cell-link-label" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.label)}" placeholder="Button text">
+              ${linkLabelField}
               <input type="url" class="sec-input sec-table-cell-input sec-input--url" data-field="table-cell-link-url" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.url)}" placeholder="https://...">
             </div>
           </td>`;
@@ -690,7 +778,11 @@
       .map(
         (cell, colIdx) => `
         <th class="sec-table-cell sec-table-cell--head" data-row-index="0" data-col-index="${colIdx}">
-          <input type="text" class="sec-input sec-table-cell-input" data-field="table-cell" data-block-index="${blockIndex}" data-row-index="0" data-col-index="${colIdx}" value="${escapeHtml(cell)}" placeholder="Header ${colIdx + 1}">
+          ${wrapRichField(
+            `<input type="text" class="sec-input sec-table-cell-input" data-rich-input data-field="table-cell" data-block-index="${blockIndex}" data-row-index="0" data-col-index="${colIdx}" value="${escapeHtml(cell)}" placeholder="Header ${colIdx + 1}">`,
+            `table-head-${blockIndex}-${colIdx}`,
+            { compact: true }
+          )}
           ${
             colCount > 1
               ? `<button type="button" class="sec-table-mini-btn" data-action="table-remove-col" data-block-index="${blockIndex}" data-col-index="${colIdx}" title="Remove column">×</button>`
@@ -1249,8 +1341,8 @@
   function handleRootClick(ev) {
     if (ev.target.matches(".sec-rich-btn")) {
       const wrap = ev.target.closest(".sec-rich-field");
-      const textarea = wrap?.querySelector("textarea");
-      applyRichAction(textarea, ev.target.getAttribute("data-rich-action"), "");
+      const editable = getRichEditable(wrap);
+      applyRichAction(editable, ev.target.getAttribute("data-rich-action"), "");
       syncSectionsFromDom();
       scheduleCompile();
       return;
@@ -1259,8 +1351,8 @@
       const color = ev.target.value;
       if (!color) return;
       const wrap = ev.target.closest(".sec-rich-field");
-      const textarea = wrap?.querySelector("textarea");
-      applyRichAction(textarea, "color", color);
+      const editable = getRichEditable(wrap);
+      applyRichAction(editable, "color", color);
       ev.target.value = "";
       syncSectionsFromDom();
       scheduleCompile();
