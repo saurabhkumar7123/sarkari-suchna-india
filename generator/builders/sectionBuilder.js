@@ -8,6 +8,7 @@ const {
 } = require("../parse/sectionParse");
 const { shouldUseMixedSectionBlocks } = require("../parse/sectionBlocks");
 const { isImportantLinksSection } = require("./lineRenderer");
+const { resolveSectionHeaderTone } = require("../lib/sectionHeaderTone");
 
 function resolveCardLayoutClass(sectionContent) {
   const html = String(sectionContent || "");
@@ -67,10 +68,11 @@ function buildDynamicSectionsWithWarnings(text) {
     }
 
     const cardLayoutClass = resolveCardLayoutClass(sectionContent);
+    const headerToneClass = resolveSectionHeaderTone(sec);
 
     const cardHtml = `
       <div class="card ${cardLayoutClass}">
-        <div class="card-header">
+        <div class="card-header ${headerToneClass}">
           <h2 class="section-title">
             ${title} <span class="section-icon">➜</span>
           </h2>
@@ -117,6 +119,7 @@ module.exports = {
   parseSectionsFromText,
   resolveSectionRenderMode,
   resolveCardLayoutClass,
+  resolveSectionHeaderTone,
   isSafeCsvTable: require("../parse/sectionParse").isSafeCsvTable,
   isNumberedRowsTable: require("../parse/sectionParse").isNumberedRowsTable
 };

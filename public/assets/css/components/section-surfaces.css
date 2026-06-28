@@ -2,17 +2,18 @@
  * Section surface / on-surface component layer.
  * Tokens defined in tokens.css (--section-header-*).
  * Parent sets color; titles inherit for theme-safe readability.
+ * Tone modifiers (card-header--*) are styled in vacancy-details.css.
  */
 
-.card-header,
+.card-header:not(.card-header--facts):not(.card-header--dates):not(.card-header--table):not(.card-header--action),
 .section-header-surface {
   background: var(--section-header-bg, var(--site-surface-2));
   color: var(--section-header-text, var(--site-text));
   border-bottom-color: var(--section-header-border, var(--site-border));
 }
 
-.card-header h2,
-.card-header .section-title,
+.card-header:not(.card-header--facts):not(.card-header--dates):not(.card-header--table):not(.card-header--action) h2,
+.card-header:not(.card-header--facts):not(.card-header--dates):not(.card-header--table):not(.card-header--action) .section-title,
 .section-header-surface h2,
 .section-header-surface .section-title {
   color: inherit;
