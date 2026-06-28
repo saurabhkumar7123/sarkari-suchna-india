@@ -713,11 +713,17 @@
     }
 
     .table-responsive{
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
+    overflow-x:hidden;
     max-width:100%;
     box-sizing:border-box;
     padding-inline:2px;
+    }
+
+    @media (min-width: 769px) {
+    .table-responsive{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    }
     }
 
     /* Default: mobile-first fit — wrap text, no forced min-width */
@@ -759,6 +765,11 @@
     background:var(--table-row-odd);
     }
 
+    .table th:last-child,
+    .table td:last-child{
+    text-align:center;
+    }
+
     .table a.table-cell-link{
     color:var(--primary);
     text-decoration:underline;
@@ -778,7 +789,8 @@
     outline-offset:2px;
     }
 
-    /* Wide matrices (5+ columns): allow horizontal scroll when truly needed */
+    /* Wide matrices (5+ columns): horizontal scroll on desktop only */
+    @media (min-width: 769px) {
     .table-responsive--wide{
     overflow-x:auto;
     position:relative;
@@ -789,29 +801,6 @@
     width:max-content;
     max-width:none;
     min-width:min(100%, 36rem);
-    }
-
-    .table th:last-child,
-    .table td:last-child{
-    text-align:center;
-    }
-
-    .table-responsive--wide::after{
-    content:"Swipe →";
-    position:absolute;
-    right:8px;
-    bottom:6px;
-    font-size:11px;
-    font-weight:600;
-    color:#64748b;
-    pointer-events:none;
-    opacity:0.85;
-    }
-
-    @media (min-width: 769px) {
-    .table-responsive--wide::after{
-    display:none;
-    }
     }
 
     .table-responsive--wide .table th:first-child,
@@ -834,6 +823,7 @@
 
     .table-responsive--wide .table tr:nth-child(odd) td:first-child{
     background:var(--table-row-odd);
+    }
     }
     
     /* ================= RELATED (secondary / discovery — distinct from job sections) ================= */
@@ -1404,8 +1394,43 @@
     font-size:13px;
     }
 
+    .table-responsive--wide{
+    overflow-x:hidden;
+    }
+
+    .table-responsive--wide::after{
+    display:none;
+    }
+
     .table.table--wide{
-    min-width:min(100%, 32rem);
+    width:100%;
+    max-width:100%;
+    min-width:0;
+    table-layout:fixed;
+    }
+
+    .table-responsive--wide .table th:first-child,
+    .table-responsive--wide .table td:first-child{
+    position:static;
+    left:auto;
+    z-index:auto;
+    box-shadow:none;
+    }
+
+    .table.table--wide th:first-child,
+    .table.table--wide td:first-child{
+    width:28%;
+    }
+
+    .table.table--wide th,
+    .table.table--wide td{
+    padding-inline:4px;
+    font-size:11px;
+    line-height:1.25;
+    }
+
+    .table.table--wide th{
+    font-size:10px;
     }
 
     .social-share-actions{
@@ -1451,6 +1476,16 @@
 
     .table td{
     font-size:13px;
+    }
+
+    .table.table--wide th,
+    .table.table--wide td{
+    padding-inline:3px;
+    font-size:10px;
+    }
+
+    .table.table--wide th{
+    font-size:9px;
     }
     
     }
