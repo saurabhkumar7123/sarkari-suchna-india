@@ -262,23 +262,10 @@
 }
 
 @media (min-width: 769px){
-  .site-updated-indicator--title{
-    display:inline-flex;
-  }
-
-  body.page-home .site-updated-indicator--title{
+  /* Stay Updated lives only on homepage gap band (home.css), not in shared header */
+  .main-header .site-updated-indicator--title,
+  .main-header .site-updated-indicator--below-social{
     display:none !important;
-  }
-
-  .site-updated-indicator--below-social{
-    display:none !important;
-  }
-
-  .site-updated-indicator--title:hover .site-updated-indicator__tooltip,
-  .site-updated-indicator--title:focus-visible .site-updated-indicator__tooltip{
-    opacity:1;
-    visibility:visible;
-    transform:translateX(-50%) translateY(0);
   }
 }
 
@@ -697,16 +684,10 @@
   display:none !important;
 }
 
-/* Homepage: Stay Updated chip lives between breaking + small boxes (see home.css) */
-body.page-home .main-header .site-updated-indicator--title{
+/* Stay Updated: homepage gap band only — never in shared header */
+.main-header .site-updated-indicator--title,
+.main-header .site-updated-indicator--below-social{
   display:none !important;
-}
-
-/* Mobile: hide header chip on non-home pages too */
-@media (max-width: 768px) {
-  .main-header .site-updated-indicator--title{
-    display:none !important;
-  }
 }
 
 /* HIDE DESKTOP NAV */

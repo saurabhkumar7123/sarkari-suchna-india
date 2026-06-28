@@ -1860,4 +1860,10 @@
   }
 }
 
+/* Stay Updated chip: homepage gap band only — hide in shared header on job/detail pages */
+.main-header .site-updated-indicator--title,
+.main-header .site-updated-indicator--below-social{
+  display:none !important;
+}
+
   

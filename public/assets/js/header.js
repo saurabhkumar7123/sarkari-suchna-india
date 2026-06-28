@@ -18,11 +18,7 @@
 /* Page type: home vs section listing (card grid differs in index.css) */
 (function initPageTypeClass() {
   if (!document.body) return;
-  const raw = location.pathname.replace(/\/+$/, "") || "/";
-  const isHome =
-    raw === "/" ||
-    /^\/index(\.html)?$/i.test(raw) ||
-    /^\/static\/index(\.html)?$/i.test(raw);
+  const isHome = isHomePagePath();
   if (isHome) {
     document.body.classList.add("page-home");
     document.body.classList.remove("page-section");
@@ -54,7 +50,29 @@ document.addEventListener("DOMContentLoaded", () => {
   ensureSearchScriptLoaded();
 });
 
+function isHomePagePath() {
+  const raw = location.pathname.replace(/\/+$/, "") || "/";
+  return (
+    raw === "/" ||
+    /^\/index(\.html)?$/i.test(raw) ||
+    /^\/static\/index(\.html)?$/i.test(raw)
+  );
+}
+
+/** Stay Updated chip: only on homepage gap band, never in shared header on inner pages */
+function applyStayUpdatedHeaderVisibility() {
+  const hideInHeader = !isHomePagePath();
+  document.querySelectorAll(".main-header [data-updated-indicator]").forEach((el) => {
+    el.hidden = hideInHeader;
+    el.style.display = hideInHeader ? "none" : "";
+    if (hideInHeader) el.setAttribute("aria-hidden", "true");
+    else el.removeAttribute("aria-hidden");
+  });
+}
+
 function initUpdatedIndicator() {
+  applyStayUpdatedHeaderVisibility();
+
   const indicators = document.querySelectorAll("[data-updated-indicator]");
   if (!indicators.length) return;
 
