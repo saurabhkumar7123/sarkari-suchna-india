@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Automation Control Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=2">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=1">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Control Center">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Automation Control Center</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main acc-main">
+  <div class="admin-header acc-header">
+    <div class="acc-header__copy">
+      <div class="admin-title">Automation Control Center</div>
+      <p class="acc-header__sub">Enterprise admin UI for live automation operations, review workflows, source governance, and runtime health.</p>
+    </div>
+    <div class="admin-header-actions acc-header__actions">
+      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
+      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
+      <button type="button" class="header-action-btn" id="accOpenPaletteBtn">Command Menu</button>
+      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <section class="acc-hero" aria-label="Control center overview">
+    <div>
+      <p class="acc-kicker">AMP-4B / ACC</p>
+      <h1>Primary interface for the automation ecosystem</h1>
+      <p class="acc-hero__sub">
+        Monitor official sources, review automation output, inspect recruitments, manage runtime settings,
+        and observe live worker, pipeline, repository, and Telegram health. Publishing remains manual-only.
+      </p>
+      <div class="acc-hero__meta">
+        <span id="accLastScanHero">Last scan: Manual refresh only</span>
+        <span id="accNextScanHero">Next planned scan: Not scheduled</span>
+        <span id="accPipelineFlagLabel">RECRUITMENT_PIPELINE_ENABLED = OFF</span>
+      </div>
+    </div>
+    <div class="acc-hero__side">
+      <label class="acc-search" for="accGlobalSearch">
+        <span>Search modules, records, and logs</span>
+        <input id="accGlobalSearch" type="search" placeholder="Search sources, recruitments, queue, audit...">
+      </label>
+      <div class="acc-status-strip">
+        <div class="acc-status-pill is-safe" id="accWorkerStatusPill">Worker: Off</div>
+        <div class="acc-status-pill is-safe" id="accPipelineStatusPill">Pipeline: Off</div>
+        <div class="acc-status-pill is-safe" id="accPublishStatusPill">Publishing: Manual only</div>
+        <div class="acc-status-pill is-safe" id="accTelegramStatusPill">Telegram: Off</div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="acc-section-nav" aria-label="Section navigation">
+    <a href="#accDashboard">Dashboard</a>
+    <a href="#accSources">Source Manager</a>
+    <a href="#accRecruitments">Recruitment Explorer</a>
+    <a href="#accReview">Review Center</a>
+    <a href="#accDrafts">Draft Viewer</a>
+    <a href="#accWorkflow">Workflow Queue</a>
+    <a href="#accInsights">AI Insights</a>
+    <a href="#accMonitoring">Monitoring</a>
+    <a href="#accAudit">Audit Center</a>
+    <a href="#accSettings">Settings</a>
+  </nav>
+
+  <section class="acc-section" id="accDashboard" data-acc-searchable="dashboard cards charts health">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Overview</p>
+        <h2>Automation Dashboard</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/recruitments" class="header-action-btn" style="text-decoration:none;">Open recruitments</a>
+        <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open review queue</a>
+      </div>
+    </div>
+    <div class="acc-stats-grid" id="accStatsGrid">
+      <article class="acc-stat-card"><span>Official Sources</span><strong id="accTotalSources">0</strong><small>Registry coverage</small></article>
+      <article class="acc-stat-card"><span>Sources Online</span><strong id="accSourcesOnline">0</strong><small>Healthy responses</small></article>
+      <article class="acc-stat-card"><span>Sources Offline</span><strong id="accSourcesOffline">0</strong><small>Needs attention</small></article>
+      <article class="acc-stat-card"><span>Recruitments Processing</span><strong id="accRecruitmentsProcessing">0</strong><small>Live workflow queue</small></article>
+      <article class="acc-stat-card"><span>Draft Queue</span><strong id="accDraftQueue">0</strong><small>Generator and review drafts</small></article>
+      <article class="acc-stat-card"><span>Review Queue</span><strong id="accReviewQueue">0</strong><small>Human review only</small></article>
+      <article class="acc-stat-card"><span>Today's Updates</span><strong id="accTodayUpdates">0</strong><small>Combined system activity</small></article>
+      <article class="acc-stat-card"><span>Pending Reviews</span><strong id="accPendingReviews">0</strong><small>Review center workload</small></article>
+      <article class="acc-stat-card"><span>Published Today</span><strong id="accPublishedToday">0</strong><small>Manual publish only</small></article>
+      <article class="acc-stat-card"><span>Average Confidence</span><strong id="accAverageConfidence">0%</strong><small>AI signal health</small></article>
+      <article class="acc-stat-card"><span>System Health</span><strong id="accSystemHealth">Unknown</strong><small>API, DB, queue posture</small></article>
+      <article class="acc-stat-card"><span>Automation Health</span><strong id="accAutomationHealth">Dormant</strong><small id="accAutomationHealthSub">Live runtime status</small></article>
+    </div>
+    <div class="acc-panels-grid acc-panels-grid--dashboard">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Daily Detection</h3><span>Last 7 days</span></div>
+        <div class="acc-chart-wrap"><canvas id="accDailyDetectionChart" height="140"></canvas></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Department Distribution</h3><span>Source + recruitment mix</span></div>
+        <div class="acc-chart-wrap"><canvas id="accDepartmentDistributionChart" height="140"></canvas></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Confidence Trend</h3><span>Model quality signal</span></div>
+        <div class="acc-chart-wrap"><canvas id="accConfidenceTrendChart" height="140"></canvas></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Workflow Trend</h3><span>Stage movement</span></div>
+        <div class="acc-chart-wrap"><canvas id="accWorkflowTrendChart" height="140"></canvas></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accSources" data-acc-searchable="official source manager domains crawl priority retry health validation">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Governance</p>
+        <h2>Official Source Manager</h2>
+      </div>
+      <div class="acc-section__actions">
+        <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Source</button>
+      </div>
+    </div>
+    <div class="acc-toolbar">
+      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Department, domain, status"></label>
+      <label><span>Department</span><select id="accSourceDepartmentFilter"><option value="">All</option></select></label>
+      <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option><option value="slow">Slow</option></select></label>
+      <label><span>Grouping</span><select id="accSourceGrouping"><option value="none">No grouping</option><option value="department">Department</option><option value="health">Health</option></select></label>
+    </div>
+    <div class="acc-data-table">
+      <table aria-label="Official source registry">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Department</th>
+            <th>Priority</th>
+            <th>Domain</th>
+            <th>Crawl Interval</th>
+            <th>Retry Policy</th>
+            <th>Health</th>
+            <th>Last Visit</th>
+            <th>Response</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="accSourceRows"></tbody>
+      </table>
+    </div>
+    <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
+  </section>
+
+  <section class="acc-section" id="accRecruitments" data-acc-searchable="recruitment explorer stages confidence history timeline prediction">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Operations</p>
+        <h2>Recruitment Explorer</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/recruitments" class="header-action-btn" style="text-decoration:none;">Open full operations page</a>
+      </div>
+    </div>
+    <div class="acc-two-column">
+      <section class="acc-panel">
+        <div class="acc-toolbar">
+          <label><span>Search</span><input id="accRecruitmentSearch" type="search" placeholder="Title, organization, advert"></label>
+          <label><span>Department</span><select id="accRecruitmentDepartmentFilter"><option value="">All</option></select></label>
+          <label><span>Stage</span><select id="accRecruitmentStageFilter"><option value="">All</option></select></label>
+          <label><span>Status</span><select id="accRecruitmentStatusFilter"><option value="">All</option><option value="stable">Stable</option><option value="review">Needs review</option><option value="missing">Missing fields</option></select></label>
+        </div>
+        <div class="acc-data-table">
+          <table aria-label="Recruitment explorer">
+            <thead>
+              <tr>
+                <th>Recruitment</th>
+                <th>Organization</th>
+                <th>Stage</th>
+                <th>Confidence</th>
+                <th>Status</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody id="accRecruitmentRows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="acc-panel" id="accRecruitmentDetailPanel">
+        <div class="acc-panel__head"><h3>Recruitment Detail</h3><span id="accRecruitmentDetailMeta">Select a recruitment</span></div>
+        <div id="accRecruitmentDetailEmpty" class="acc-empty">Choose a recruitment to inspect history, current version, missing information, and stage prediction.</div>
+        <div id="accRecruitmentDetail" hidden>
+          <div class="acc-detail-grid">
+            <div><span>Current Stage</span><strong id="accRecruitmentCurrentStage">-</strong></div>
+            <div><span>Confidence</span><strong id="accRecruitmentConfidence">-</strong></div>
+            <div><span>Status</span><strong id="accRecruitmentStatus">-</strong></div>
+            <div><span>Stage Prediction</span><strong id="accRecruitmentPrediction">-</strong></div>
+          </div>
+          <div class="acc-chip-row" id="accRecruitmentMissingInfo"></div>
+          <div class="acc-stack">
+            <section>
+              <h4>Timeline</h4>
+              <ol class="acc-timeline" id="accRecruitmentTimeline"></ol>
+            </section>
+            <section>
+              <h4>Review Notes</h4>
+              <div class="acc-note-box" id="accRecruitmentReviewNotes"></div>
+            </section>
+            <section>
+              <h4>Version History</h4>
+              <div class="acc-history-list" id="accRecruitmentHistory"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accReview" data-acc-searchable="review center comparison diff validation risk approve reject request changes">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Human-in-the-loop</p>
+        <h2>Review Center</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open queue workspace</a>
+      </div>
+    </div>
+    <div class="acc-three-column">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Draft List</h3><span id="accReviewCountMeta">0 items</span></div>
+        <div class="acc-review-list" id="accReviewList"></div>
+      </section>
+      <section class="acc-panel acc-panel--span-2">
+        <div class="acc-panel__head"><h3>Side-by-side Comparison</h3><span id="accReviewDetailMeta">Select a draft</span></div>
+        <div id="accReviewEmpty" class="acc-empty">Pick a draft from the left to compare previous and new versions.</div>
+        <div id="accReviewDetail" hidden>
+          <div class="acc-detail-grid">
+            <div><span>Confidence</span><strong id="accReviewConfidence">-</strong></div>
+            <div><span>Risk Level</span><strong id="accReviewRisk">-</strong></div>
+            <div><span>AI Recommendation</span><strong id="accReviewRecommendation">-</strong></div>
+            <div><span>History Recovery</span><strong id="accReviewHistoryRecovery">-</strong></div>
+          </div>
+          <div class="acc-validation-grid">
+            <section><h4>Validation Report</h4><ul id="accValidationReport"></ul></section>
+            <section><h4>Warnings</h4><ul id="accReviewWarnings"></ul></section>
+            <section><h4>Missing Information</h4><ul id="accReviewMissing"></ul></section>
+          </div>
+          <div class="acc-diff-grid">
+            <section>
+              <h4>Previous Version</h4>
+              <div class="acc-code-card" id="accPreviousVersion"></div>
+            </section>
+            <section>
+              <h4>New Version</h4>
+              <div class="acc-code-card" id="accNewVersion"></div>
+            </section>
+          </div>
+          <div class="acc-actions-bar">
+            <button type="button" class="header-action-btn" data-acc-advisory-action="approve">Approve Placeholder</button>
+            <button type="button" class="header-action-btn" data-acc-advisory-action="reject">Reject Placeholder</button>
+            <button type="button" class="header-action-btn" data-acc-advisory-action="request-changes">Request Changes Placeholder</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accDrafts" data-acc-searchable="draft viewer preview structured output print section navigation">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Preview</p>
+        <h2>Draft Viewer</h2>
+      </div>
+      <div class="acc-section__actions">
+        <button type="button" class="header-action-btn" id="accPrintDraftBtn">Print Ready</button>
+      </div>
+    </div>
+    <div class="acc-two-column">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Draft Navigator</h3><span>Expand / collapse</span></div>
+        <div class="acc-stack">
+          <label class="acc-search"><span>Search draft</span><input id="accDraftSearch" type="search" placeholder="Search section names or fields"></label>
+          <div class="acc-draft-nav" id="accDraftNav"></div>
+        </div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Beautiful Preview</h3><span>Generator output and structured object</span></div>
+        <div class="acc-draft-preview" id="accDraftPreview"></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accWorkflow" data-acc-searchable="workflow queue detected recovering matching validating draft ready review pending approved rejected failed retry">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Flow Control</p>
+        <h2>Workflow Queue</h2>
+      </div>
+      <div class="acc-section__actions">
+        <button type="button" class="header-action-btn" id="accBulkRetryBtn">Retry Placeholder</button>
+      </div>
+    </div>
+    <div class="acc-toolbar">
+      <label><span>Queue Search</span><input id="accWorkflowSearch" type="search" placeholder="Workflow item, source, department"></label>
+      <label><span>Status</span><select id="accWorkflowStatusFilter"><option value="">All</option></select></label>
+      <label><span>Priority</span><select id="accWorkflowPriorityFilter"><option value="">All</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option></select></label>
+    </div>
+    <div class="acc-data-table">
+      <table aria-label="Workflow queue">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="accWorkflowSelectAll" aria-label="Select all queue items"></th>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th>Department</th>
+            <th>Source</th>
+            <th>Updated</th>
+            <th>Retry</th>
+          </tr>
+        </thead>
+        <tbody id="accWorkflowRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accInsights" data-acc-searchable="ai insights confidence analytics failure categories duplicate recovery validation recommendation">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Intelligence</p>
+        <h2>AI Insights</h2>
+      </div>
+    </div>
+    <div class="acc-panels-grid">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Confidence Analytics</h3><span>Median 7 day quality</span></div>
+        <div class="acc-chart-wrap"><canvas id="accInsightsConfidenceChart" height="130"></canvas></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Department Accuracy</h3><span>Review outcome aligned</span></div>
+        <div class="acc-bars" id="accDepartmentAccuracyBars"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Failure Categories</h3><span>Top advisory reasons</span></div>
+        <div class="acc-bars" id="accFailureCategoryBars"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Recovery Analytics</h3><span>History recovery summary</span></div>
+        <div class="acc-metric-list" id="accRecoveryAnalytics"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Validation Analytics</h3><span>Most common rule flags</span></div>
+        <div class="acc-metric-list" id="accValidationAnalytics"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Recommendation Analytics</h3><span>Human review posture</span></div>
+        <div class="acc-metric-list" id="accRecommendationAnalytics"></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accMonitoring" data-acc-searchable="monitoring dashboard online offline slow healthy warnings response time health score">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Observability</p>
+        <h2>Monitoring Dashboard</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open legacy monitoring</a>
+      </div>
+    </div>
+    <div class="acc-monitor-grid" id="accMonitorGrid"></div>
+  </section>
+
+  <section class="acc-section" id="accAudit" data-acc-searchable="audit center detection logs workflow logs recovery logs validation logs approval logs system events export">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Traceability</p>
+        <h2>Audit Center</h2>
+      </div>
+      <div class="acc-section__actions">
+        <button type="button" class="header-action-btn" id="accExportAuditBtn">Export Ready</button>
+      </div>
+    </div>
+    <div class="acc-toolbar">
+      <label><span>Search logs</span><input id="accAuditSearch" type="search" placeholder="Search event, source, entity"></label>
+      <label><span>Category</span><select id="accAuditCategoryFilter"><option value="">All</option></select></label>
+    </div>
+    <div class="acc-data-table">
+      <table aria-label="Audit center">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Category</th>
+            <th>Event</th>
+            <th>Entity</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody id="accAuditRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="acc-section" id="accSettings" data-acc-searchable="settings automation settings confidence threshold review rules risk threshold draft rules feature flags pipeline flags off">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Controls</p>
+        <h2>Settings</h2>
+      </div>
+    </div>
+    <div class="acc-two-column">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Automation Settings</h3><span>Live feature flags</span></div>
+        <form id="accSettingsForm" class="acc-settings-form">
+          <label><span>Confidence Threshold</span><input id="accSettingConfidenceThreshold" type="number" min="0" max="100"></label>
+          <label><span>Risk Threshold</span><input id="accSettingRiskThreshold" type="number" min="0" max="100"></label>
+          <label><span>Review Rules</span><textarea id="accSettingReviewRules" rows="4"></textarea></label>
+          <label><span>Draft Rules</span><textarea id="accSettingDraftRules" rows="4"></textarea></label>
+          <label><span>History Recovery Rules</span><textarea id="accSettingRecoveryRules" rows="4"></textarea></label>
+          <label><span>Department Settings</span><textarea id="accSettingDepartmentRules" rows="4"></textarea></label>
+          <div class="acc-settings-actions">
+            <button type="submit" class="header-action-btn">Save settings</button>
+            <button type="button" class="header-action-btn" id="accResetSettingsBtn">Reset defaults</button>
+          </div>
+        </form>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Feature Flags</h3><span>Must remain OFF</span></div>
+        <div class="acc-flag-list" id="accFlagList"></div>
+      </section>
+    </div>
+  </section>
+</div>
+
+<dialog id="accSourceDialog" class="acc-dialog">
+  <form method="dialog" class="acc-dialog__surface" id="accSourceForm">
+    <div class="acc-dialog__head">
+      <h3 id="accSourceDialogTitle">Add Source</h3>
+      <button type="button" class="acc-dialog__close" id="accCloseSourceDialog" aria-label="Close">×</button>
+    </div>
+    <input id="accSourceId" type="hidden">
+    <div class="acc-dialog__grid">
+      <label><span>Source Name</span><input id="accFormSourceName" required maxlength="160"></label>
+      <label><span>Department</span><input id="accFormSourceDepartment" required maxlength="120"></label>
+      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select></label>
+      <label><span>Official Domain</span><input id="accFormSourceDomain" required maxlength="240"></label>
+      <label><span>Notification URL</span><input id="accFormNotificationUrl" maxlength="500"></label>
+      <label><span>PDF URL</span><input id="accFormPdfUrl" maxlength="500"></label>
+      <label><span>Archive URL</span><input id="accFormArchiveUrl" maxlength="500"></label>
+      <label><span>Allowed Domains</span><input id="accFormAllowedDomains" maxlength="500"></label>
+      <label><span>Crawl Interval</span><input id="accFormCrawlInterval" required maxlength="80"></label>
+      <label><span>Retry Policy</span><input id="accFormRetryPolicy" required maxlength="120"></label>
+      <label><span>Health Status</span><select id="accFormHealthStatus"><option>healthy</option><option>warning</option><option>slow</option><option>offline</option></select></label>
+      <label><span>Response Time (ms)</span><input id="accFormResponseTime" type="number" min="0" max="99999"></label>
+    </div>
+    <div class="acc-dialog__checks">
+      <label><input id="accFormEnabled" type="checkbox" checked> Enabled</label>
+      <label><input id="accFormDomainVerified" type="checkbox" checked> Domain Verified</label>
+      <label><input id="accFormSourceValidated" type="checkbox" checked> Source Validation Passed</label>
+    </div>
+    <div class="acc-dialog__actions">
+      <button type="submit" class="header-action-btn">Save Source</button>
+      <button type="button" class="header-action-btn" id="accDeleteSourceBtn">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=14"></script>
+<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=4"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-automation-control-center.js?v=1"></script>
+</body>
+</html>

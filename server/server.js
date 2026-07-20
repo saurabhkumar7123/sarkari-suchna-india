@@ -21,6 +21,11 @@ const {
   getCurrentSchedulerLockOwner
 } = require("./services/updates/schedulerLeadership");
 const { sendTelegramMessage } = require("./services/updates/telegramNotifier");
+const {
+  canStartMonitoringScheduler,
+  canDeliverTelegram,
+  getAutomationFlags
+} = require("./config/automationFlags");
 const SCHEDULER_LOCK_TTL_SECONDS = Math.max(60, parseInt(process.env.SCHEDULER_LOCK_TTL_SECONDS || "600", 10));
 let schedulerLockRefreshTimer = null;
 let schedulerController = null;
@@ -230,6 +235,8 @@ async function gracefulShutdown(signal, { exitCode = 0 } = {}) {
 }
 
 (async () => {
+  const automationFlags = getAutomationFlags();
+  logger.info("automation: startup flags evaluated", automationFlags);
   assertCriticalAuthSecrets();
   await ensureRedis();
   if (isProd) {
@@ -267,7 +274,7 @@ async function gracefulShutdown(signal, { exitCode = 0 } = {}) {
     logger.error("HTTP server error", { message: err.message });
   });
 
-  if (String(process.env.TELEGRAM_STARTUP_TEST || "").trim() === "1") {
+  if (canDeliverTelegram() && String(process.env.TELEGRAM_STARTUP_TEST || "").trim() === "1") {
     await sendTelegramMessage("TEST MESSAGE FROM BOT").catch((err) => {
       logger.warn("Telegram startup test failed", {
         message: err && err.message ? err.message : String(err)
@@ -275,18 +282,22 @@ async function gracefulShutdown(signal, { exitCode = 0 } = {}) {
     });
   }
 
-  tryStartSchedulerWithLock().catch((err) => {
-    if (err && err.code === "REDIS_CRITICAL_UNAVAILABLE") {
-      logger.error("updates: scheduler startup aborted due to Redis dependency", {
-        message: err.message
+  if (canStartMonitoringScheduler()) {
+    tryStartSchedulerWithLock().catch((err) => {
+      if (err && err.code === "REDIS_CRITICAL_UNAVAILABLE") {
+        logger.error("updates: scheduler startup aborted due to Redis dependency", {
+          message: err.message
+        });
+        gracefulShutdown("redis_unavailable", { exitCode: 1 });
+        return;
+      }
+      logger.error("updates: scheduler startup failed", {
+        message: err && err.message ? err.message : String(err)
       });
-      gracefulShutdown("redis_unavailable", { exitCode: 1 });
-      return;
-    }
-    logger.error("updates: scheduler startup failed", {
-      message: err && err.message ? err.message : String(err)
     });
-  });
+  } else {
+    logger.warn("updates: scheduler remains dormant by automation flags");
+  }
 })().catch((e) => {
   logger.error("Fatal startup error", { stack: e.stack });
   process.exit(1);

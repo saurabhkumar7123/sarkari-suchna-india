@@ -1,5 +1,6 @@
 const axios = require("axios");
 const logger = require("../../utils/logger");
+const { canDeliverTelegram } = require("../../config/automationFlags");
 
 function maskSecret(value, visible = 4) {
   const v = String(value || "");
@@ -17,11 +18,15 @@ function getTelegramConfig() {
 
 function canSendTelegram() {
   const { token, chatId } = getTelegramConfig();
-  return Boolean(token && chatId);
+  return canDeliverTelegram() && Boolean(token && chatId);
 }
 
 async function sendTelegramMessage(text) {
   const { token, chatId } = getTelegramConfig();
+  if (!canDeliverTelegram()) {
+    logger.warn("updates: telegram disabled by automation flags");
+    return { sent: false, skipped: true, reason: "flag_disabled" };
+  }
   logger.warn("updates: telegram config check", {
     tokenPresent: Boolean(token),
     chatIdPresent: Boolean(chatId),

@@ -25,23 +25,15 @@ const {
   buildPreDisableWarningMessage
 } = require("../updates/telegramNotifier");
 const { isRecruitmentPipelineEnabled } = require("../../config/recruitmentPipeline");
-const { runRecruitmentPipeline } = require("../../lib/recruitment/runRecruitmentPipeline");
+const { getAutomationFlags } = require("../../config/automationFlags");
 const {
-  evaluateRecruitmentEligibility
-} = require("../../lib/recruitment/recruitmentEligibility");
+  runProductionDetectionPipeline,
+  isProductionRuntimeEnabled
+} = require("../../lib/recruitment/productionRuntime");
+const { canRunAutomationWorkers } = require("../../config/automationFlags");
 const {
   lookupRecruitmentCandidatesForRuntime
 } = require("../recruitmentCandidateLookup.service");
-const {
-  recordRuntimePreviewFromPipeline
-} = require("../recruitmentRuntimePreview.service");
-const {
-  buildPreviewLifecycleArchitecture
-} = require("../../lib/recruitment/previewRuntimeWiring");
-const { peekRecruitmentActionPlan } = require("../../lib/recruitment/recruitmentCompatibilityLayer");
-const {
-  observeRecruitmentActionPlan
-} = require("../../lib/recruitment/recruitmentWorkerObservation");
 
 const COOLDOWN_MINUTES = parseInt(process.env.UPDATE_ALERT_COOLDOWN_MINUTES || "10", 10);
 const FAIL_DISABLE_THRESHOLD = 5;
@@ -57,6 +49,12 @@ function isImportantUpdate(title) {
 }
 
 async function processSiteJob(job) {
+  if (!canRunAutomationWorkers()) {
+    logger.warn("updates-worker: job skipped by automation flags", {
+      jobId: job && job.id ? job.id : null
+    });
+    return { skipped: true, reason: "flag_disabled" };
+  }
   const jobData = job && job.data ? job.data : {};
   const siteId = Number(jobData.siteId);
   if (!Number.isFinite(siteId) || siteId <= 0) {
@@ -215,14 +213,12 @@ async function processSiteJob(job) {
       });
 
       if (recruitmentPipelineEnabled) {
-        // Monitoring items only expose title + link (no separate body text).
         const notice = {
           title: item.title || "New update",
           content: item.title || "New update",
           url: item.link || ""
         };
 
-        // Phase 31.C — read-only candidate lookup (SELECT). Never persists.
         let candidateRecruitments = [];
         let lookupSummary = {
           status: "skipped",
@@ -255,89 +251,38 @@ async function processSiteJob(job) {
           });
         }
 
-        const pipelineOutcome = runRecruitmentPipeline({
-          notice,
-          candidateRecruitments,
-          isEnabled: true,
-          updateId
-        });
-
-        // Phase 73 — action plan observation only. Never executes or persists.
-        try {
-          observeRecruitmentActionPlan(peekRecruitmentActionPlan(pipelineOutcome));
-        } catch (observationErr) {
-          logger.warn("updates-worker: recruitment action plan observation skipped", {
-            siteId,
-            message:
-              observationErr && observationErr.message
-                ? observationErr.message
-                : String(observationErr)
-          });
-        }
-
-        // Phase 32 — eligibility evaluation only (never persists / never enqueues).
-        let eligibility = null;
-        try {
-          const eligibilityInput = pipelineOutcome.failed
-            ? {
-                criticalFailure: true,
-                lookupSummary,
-                eventType: null,
-                status: null
+        if (isProductionRuntimeEnabled()) {
+          try {
+            const productionOutcome = await runProductionDetectionPipeline({
+              notice,
+              updateId,
+              candidateRecruitments,
+              lookupSummary,
+              monitoredSite: {
+                id: siteId,
+                name: site && site.name ? site.name : null,
+                url: site && site.url ? site.url : null
               }
-            : {
-                ...(pipelineOutcome.result || {}),
-                lookupSummary
-              };
-          eligibility = evaluateRecruitmentEligibility(eligibilityInput);
-        } catch (eligibilityErr) {
-          logger.warn("updates-worker: recruitment eligibility evaluation skipped", {
+            });
+            logger.info("updates-worker: production runtime completed", {
+              siteId,
+              updateId,
+              success: productionOutcome.success === true,
+              skipped: productionOutcome.skipped === true,
+              recruitmentId: productionOutcome.recruitmentId || null
+            });
+          } catch (runtimeErr) {
+            logger.error("updates-worker: production runtime failed", {
+              siteId,
+              updateId,
+              message: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
+            });
+          }
+        } else {
+          logger.info("updates-worker: recruitment pipeline skipped — production runtime flags off", {
             siteId,
-            message:
-              eligibilityErr && eligibilityErr.message
-                ? eligibilityErr.message
-                : String(eligibilityErr)
-          });
-        }
-
-        // Phase 41 — preview-first architecture wiring (observation only).
-        // Never persists, never enqueues, never starts transactions.
-        let lifecycleArchitecture = null;
-        try {
-          lifecycleArchitecture = buildPreviewLifecycleArchitecture({
-            eligibility,
-            pipelineOutcome,
-            lookupSummary,
             updateId,
-            notice
-          });
-        } catch (wiringErr) {
-          logger.warn("updates-worker: recruitment preview wiring skipped", {
-            siteId,
-            message:
-              wiringErr && wiringErr.message ? wiringErr.message : String(wiringErr)
-          });
-        }
-
-        // Phase 30/31.B/C/32/41 — preview only (in-memory). Never persists review items.
-        try {
-          recordRuntimePreviewFromPipeline({
-            pipelineOutcome,
-            monitoredSite: {
-              id: siteId,
-              name: site && site.name ? site.name : null,
-              url: site && site.url ? site.url : null
-            },
-            notice,
-            updateId,
-            lookupSummary,
-            eligibility,
-            lifecycleArchitecture
-          });
-        } catch (previewErr) {
-          logger.warn("updates-worker: recruitment runtime preview skipped", {
-            siteId,
-            message: previewErr && previewErr.message ? previewErr.message : String(previewErr)
+            flags: getAutomationFlags()
           });
         }
       }

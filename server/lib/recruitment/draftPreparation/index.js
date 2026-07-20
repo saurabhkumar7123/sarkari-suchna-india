@@ -15,7 +15,7 @@ const path = require("path");
 
 const frameworkPath = path.resolve(
   __dirname,
-  "../../../../../server/lib/project/program5/package5DDraftPreparationFramework.js"
+  "../../project/program5/package5DDraftPreparationFramework.js"
 );
 
 const framework = require(frameworkPath);

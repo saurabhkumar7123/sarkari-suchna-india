@@ -15,7 +15,7 @@ const path = require("path");
 // Load governance framework from monorepo root (Programs 1–5 advisory tree).
 const frameworkPath = path.resolve(
   __dirname,
-  "../../../../../server/lib/project/program5/package5APipelineHealthAndDiagnosticsFramework.js"
+  "../../project/program5/package5APipelineHealthAndDiagnosticsFramework.js"
 );
 
 const framework = require(frameworkPath);

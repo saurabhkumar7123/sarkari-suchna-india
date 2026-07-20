@@ -2,14 +2,14 @@
  * Shared admin sidebar navigation — single source for all admin pages.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "13";
+  const ADMIN_NAV_VERSION = "14";
 
   const SIDEBAR_TOP_HTML = `
-  <a href="/admin/dashboard" class="sidebar-brand" title="Admin dashboard">
+  <a href="/admin/dashboard" class="sidebar-brand" title="Automation control center">
     <span class="sidebar-brand__mark" aria-hidden="true">SS</span>
     <span class="sidebar-brand__copy">
-      <span class="sidebar-brand__name">Sarkari Admin</span>
-      <span class="sidebar-brand__sub">Control panel</span>
+      <span class="sidebar-brand__name">Automation ACC</span>
+      <span class="sidebar-brand__sub">SaaS control center</span>
     </span>
   </a>
   <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
@@ -17,7 +17,7 @@
 
   const NAV_BODY_HTML = `
   <div class="nav-group-title">Overview</div>
-  <a href="/admin/dashboard" data-nav-path="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+  <a href="/admin/dashboard" data-nav-path="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Automation Control Center</span></a>
   <a href="/admin/page-manager" data-nav-path="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
   <a href="/admin/monitoring" data-nav-path="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
   <a href="/admin/alerts" data-nav-path="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">PDF Alerts</span></a>

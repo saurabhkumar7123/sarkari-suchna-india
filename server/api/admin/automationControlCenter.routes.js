@@ -1,0 +1,64 @@
+"use strict";
+
+const express = require("express");
+const asyncHandler = require("../../utils/asyncHandler");
+const validateJoi = require("../../middleware/validateJoi.middleware");
+const { adminSensitiveLimiter } = require("../../config/rateLimits");
+const controller = require("../../controllers/admin/automationControlCenter.controller");
+const {
+  automationSourceListQuerySchema,
+  automationSourceUpsertSchema,
+  automationSettingsUpdateSchema,
+  automationWorkflowListQuerySchema,
+  automationAuditListQuerySchema
+} = require("../../validations/admin.validation");
+
+const router = express.Router();
+
+router.get("/automation-control-center", asyncHandler(controller.getAccSnapshotHandler));
+router.get(
+  "/automation-control-center/dashboard",
+  asyncHandler(controller.getDashboardHandler)
+);
+router.get(
+  "/automation-control-center/sources",
+  validateJoi(automationSourceListQuerySchema, "query"),
+  asyncHandler(controller.listSourcesHandler)
+);
+router.get("/automation-control-center/sources/:id", asyncHandler(controller.getSourceHandler));
+router.post(
+  "/automation-control-center/sources",
+  adminSensitiveLimiter,
+  validateJoi(automationSourceUpsertSchema, "body"),
+  asyncHandler(controller.createSourceHandler)
+);
+router.put(
+  "/automation-control-center/sources/:id",
+  adminSensitiveLimiter,
+  validateJoi(automationSourceUpsertSchema, "body"),
+  asyncHandler(controller.updateSourceHandler)
+);
+router.delete(
+  "/automation-control-center/sources/:id",
+  adminSensitiveLimiter,
+  asyncHandler(controller.deleteSourceHandler)
+);
+router.get("/automation-control-center/settings", asyncHandler(controller.getSettingsHandler));
+router.put(
+  "/automation-control-center/settings",
+  adminSensitiveLimiter,
+  validateJoi(automationSettingsUpdateSchema, "body"),
+  asyncHandler(controller.updateSettingsHandler)
+);
+router.get(
+  "/automation-control-center/workflow",
+  validateJoi(automationWorkflowListQuerySchema, "query"),
+  asyncHandler(controller.listWorkflowHandler)
+);
+router.get(
+  "/automation-control-center/audit",
+  validateJoi(automationAuditListQuerySchema, "query"),
+  asyncHandler(controller.listAuditHandler)
+);
+
+module.exports = router;

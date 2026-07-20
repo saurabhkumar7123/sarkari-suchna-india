@@ -11,6 +11,7 @@ const {
   buildHeartbeatMessage,
   buildDailySummaryMessage
 } = require("./telegramNotifier");
+const { canStartMonitoringScheduler } = require("../../config/automationFlags");
 
 const MIN_INTERVAL = 5;
 const MAX_INTERVAL = 10;
@@ -186,6 +187,13 @@ async function runOnce() {
 }
 
 async function startUpdateScheduler(options = {}) {
+  if (!canStartMonitoringScheduler()) {
+    logger.warn("updates: scheduler start skipped by automation flags");
+    return {
+      stop: () => {},
+      isActive: () => false
+    };
+  }
   const verifyOwnership =
     options && typeof options.verifyOwnership === "function" ? options.verifyOwnership : null;
   const onLockLost =
@@ -263,6 +271,10 @@ async function startUpdateScheduler(options = {}) {
 }
 
 async function triggerManualUpdateCheck() {
+  if (!canStartMonitoringScheduler()) {
+    logger.warn("updates: manual run skipped by automation flags");
+    return { success: true, skipped: true, reason: "flag_disabled" };
+  }
   logger.info("updates: manual run requested");
   await runOnce();
   return { success: true };

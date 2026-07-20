@@ -637,6 +637,63 @@ const pageBulkRegenerateSchema = Joi.object({
   .required()
   .unknown(false);
 
+const automationSourceListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(100), Joi.string().trim()).optional(),
+  search: Joi.string().trim().max(200).allow("").optional(),
+  q: Joi.string().trim().max(200).allow("").optional(),
+  department: Joi.string().trim().max(120).allow("").optional(),
+  health: Joi.string().trim().max(40).allow("").optional(),
+  enabled: Joi.alternatives().try(Joi.boolean(), Joi.string().trim().allow("")).optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const automationSourceUpsertSchema = Joi.object({
+  name: Joi.string().trim().min(1).max(160).required(),
+  department: Joi.string().trim().max(120).allow("", null).optional(),
+  notificationUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).required(),
+  selector: Joi.string().trim().max(255).allow("", null).optional(),
+  priority: Joi.string().trim().uppercase().valid("P0", "P1", "P2", "P3").optional(),
+  healthStatus: Joi.string().trim().lowercase().valid("healthy", "warning", "slow", "offline").optional(),
+  responseTime: Joi.alternatives().try(Joi.number().integer().min(0), Joi.string().trim().allow("")).optional(),
+  enabled: Joi.boolean().optional()
+})
+  .required()
+  .unknown(false);
+
+const automationSettingsUpdateSchema = Joi.object({
+  confidenceThreshold: Joi.number().integer().min(0).max(100).optional(),
+  riskThreshold: Joi.number().integer().min(0).max(100).optional(),
+  reviewRules: Joi.string().trim().max(5000).allow("").optional(),
+  draftRules: Joi.string().trim().max(5000).allow("").optional(),
+  recoveryRules: Joi.string().trim().max(5000).allow("").optional(),
+  departmentRules: Joi.string().trim().max(5000).allow("").optional()
+})
+  .min(1)
+  .required()
+  .unknown(false);
+
+const automationWorkflowListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(100), Joi.string().trim()).optional(),
+  status: Joi.string().trim().max(64).allow("").optional(),
+  search: Joi.string().trim().max(200).allow("").optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const automationAuditListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(100), Joi.string().trim()).optional(),
+  search: Joi.string().trim().max(200).allow("").optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
@@ -671,6 +728,11 @@ module.exports = {
   sharedPreviewRefreshSchema,
   recruitmentBulkSchema,
   pageBulkRegenerateSchema,
+  automationSourceListQuerySchema,
+  automationSourceUpsertSchema,
+  automationSettingsUpdateSchema,
+  automationWorkflowListQuerySchema,
+  automationAuditListQuerySchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

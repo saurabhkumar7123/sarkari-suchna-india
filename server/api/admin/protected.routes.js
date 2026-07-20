@@ -115,5 +115,7 @@ router.use(require("./seoPipeline.routes"));
 router.use(require("./recruitmentTesting.routes"));
 router.use(require("./recruitmentReviewQueue.routes"));
 router.use(require("./recruitmentRuntimePreview.routes"));
+router.use(require("./automationControlCenter.routes"));
+router.use("/enterprise-persistence", require("./enterprisePersistence.routes"));
 
 module.exports = router;

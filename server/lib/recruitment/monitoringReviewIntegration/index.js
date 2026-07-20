@@ -15,7 +15,7 @@ const path = require("path");
 
 const frameworkPath = path.resolve(
   __dirname,
-  "../../../../../server/lib/project/program5/package5BMonitoringReviewIntegrationFramework.js"
+  "../../project/program5/package5BMonitoringReviewIntegrationFramework.js"
 );
 
 const framework = require(frameworkPath);

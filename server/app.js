@@ -1513,9 +1513,21 @@ function sendPrivatePage(res, fileName) {
   res.type("html").send(html);
 }
 
-app.get(["/admin/dashboard", "/admin/dashboard/", "/admin/dashboard.html"], verifyToken, (req, res) => {
-  return sendPrivatePage(res, "admin-dashboard.html");
-});
+app.get(
+  [
+    "/admin",
+    "/admin/dashboard",
+    "/admin/dashboard/",
+    "/admin/dashboard.html",
+    "/admin/automation-control-center",
+    "/admin/automation-control-center/",
+    "/admin/automation-control-center.html"
+  ],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-automation-control-center.html");
+  }
+);
 app.get(["/admin/page-manager", "/admin/page-manager/", "/admin/page-manager.html"], verifyToken, (req, res) => {
   return sendPrivatePage(res, "admin-page-manager.html");
 });
@@ -1575,10 +1587,6 @@ app.get(
     return sendPrivatePage(res, "admin-seo-diagnostics.html");
   }
 );
-app.get("/admin", verifyToken, (req, res) => {
-  res.redirect(302, "/admin/dashboard");
-});
-
 ["dashboard", "generator", "upload", "trash"].forEach((route) => {
   app.get(`/${route}`, verifyToken, (req, res) => {
     if (route === "dashboard") return res.redirect(302, "/admin/dashboard");

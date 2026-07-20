@@ -5,7 +5,7 @@
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const ROUTES = [
-    { label: "Dashboard", href: "/admin/dashboard", group: "Go to", keywords: "home overview productivity" },
+    { label: "Automation Control Center", href: "/admin/dashboard", group: "Go to", keywords: "dashboard automation control center acc overview productivity" },
     { label: "Page Manager", href: "/admin/page-manager", group: "Go to", keywords: "pages edit list" },
     { label: "Monitoring", href: "/admin/monitoring", group: "Go to", keywords: "queue sites health" },
     { label: "PDF Alerts", href: "/admin/alerts", group: "Go to", keywords: "notifications pdf" },
@@ -20,6 +20,8 @@
     { label: "Open Shared Preview", href: "/admin/recruitment-runtime-preview", group: "Quick actions", keywords: "preview runtime" },
     { label: "Open Events", href: "/admin/recruitments#eventTimeline", group: "Quick actions", keywords: "timeline events" },
     { label: "Search Recruitments", href: "/admin/recruitments", group: "Quick actions", keywords: "find filter search" },
+    { label: "Open Source Manager", href: "/admin/automation-control-center#accSources", group: "Quick actions", keywords: "official sources domains crawl manager" },
+    { label: "Open AI Insights", href: "/admin/automation-control-center#accInsights", group: "Quick actions", keywords: "analytics confidence recommendation" },
     { label: "Recruitment Operations", href: "/admin/recruitments", group: "Go to", keywords: "recruitments events links" },
     { label: "Editorial Review", href: "/admin/editorial-review", group: "Go to", keywords: "draft binding review" },
     { label: "Shared Preview", href: "/admin/recruitment-runtime-preview", group: "Go to", keywords: "preview runtime" },
