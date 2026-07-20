@@ -1,4 +1,4 @@
-.env.example
+﻿.env.example
 db/migrations/2026-05-09-add-pages-badges.sql
 db/migrations/2026-05-16-content-imports.sql
 db/migrations/2026-06-06-add-pages-updated-at.sql
@@ -446,6 +446,7 @@ server/middleware/pdfExtractMulter.middleware.js
 server/middleware/rateLimit.middleware.js
 server/middleware/validate.middleware.js
 server/middleware/validateJoi.middleware.js
+server/repositories/automationSettings.repository.js
 server/repositories/contentImport.repository.js
 server/repositories/contentReviewMetadata.repository.js
 server/repositories/editorialReview.repository.js
