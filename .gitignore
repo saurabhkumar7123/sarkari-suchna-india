@@ -14,6 +14,11 @@ data/activity.json
 data/related-analytics.json
 !data/.gitkeep
 
+# Package 4C editorial review file store (local human workflow state)
+server/data/editorial-reviews.json
+server/data/editorial-reviews.json.tmp
+!server/data/.gitkeep
+
 # Generator PDF extract temp uploads (multerPdfExtract)
 storage/temp/
 
@@ -24,3 +29,9 @@ audit-screenshots/
 
 # Uploaded PDFs (runtime user content)
 storage/uploads/
+
+tmp-*.png
+scripts/tmp-*
+.rc-archive/
+docs/release-candidate/tmp-*
+coverage/

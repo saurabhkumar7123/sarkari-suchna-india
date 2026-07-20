@@ -104,5 +104,16 @@ router.use(require("./upload.routes"));
 router.use(require("./contentImport.routes"));
 router.use(require("./generatorDraft.routes"));
 router.use(require("./updates.routes"));
+router.use(require("./recruitment.routes"));
+router.use(require("./recruitmentEvent.routes"));
+router.use(require("./recruitmentPageLink.routes"));
+router.use(require("./recruitmentDraftBinding.routes"));
+router.use(require("./editorialReview.routes"));
+router.use(require("./sharedPreview.routes"));
+router.use(require("./adminProductivity.routes"));
+router.use(require("./seoPipeline.routes"));
+router.use(require("./recruitmentTesting.routes"));
+router.use(require("./recruitmentReviewQueue.routes"));
+router.use(require("./recruitmentRuntimePreview.routes"));
 
 module.exports = router;

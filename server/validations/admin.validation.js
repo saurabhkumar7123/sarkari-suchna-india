@@ -1,5 +1,11 @@
 const Joi = require("joi");
 const { sanitizeBadgeCodesForStorage, ALLOWED_BADGE_CODES, HOMEPAGE_BADGE_MAX } = require("../lib/homepageBadges");
+const { LIFECYCLE_STATES } = require("../services/recruitment.service");
+const { EVENT_TYPES, EVENT_STATUSES } = require("../services/recruitmentEvent.service");
+const {
+  REVIEW_STATUS_VALUES,
+  VALID_EVENT_TYPES
+} = require("../lib/recruitment/reviewQueue");
 
 /** Slug segment: non-empty only; empty is validated separately on pageUrl/oldSlug. */
 const SLUG_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -111,7 +117,16 @@ const adminPagePayloadSchema = Joi.object({
       Joi.valid(null)
     )
     .optional()
-    .custom((value) => sanitizeBadgeCodesForStorage(value), "badges")
+    .custom((value) => sanitizeBadgeCodesForStorage(value), "badges"),
+  generatorDraftId: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""))
+    .optional(),
+  recruitment_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""), Joi.valid(null))
+    .optional(),
+  recruitment_event_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""), Joi.valid(null))
+    .optional()
 })
   .required()
   .custom((value) => value)
@@ -189,6 +204,439 @@ const homepageSmallBoxSlotPatchSchema = Joi.object({
   .required()
   .unknown(false);
 
+const recruitmentCreateSchema = Joi.object({
+  title: Joi.string().trim().min(1).max(500).required(),
+  slug: Joi.string().trim().min(1).max(255).required(),
+  department: Joi.string().trim().max(128).allow("", null).optional(),
+  post_name: Joi.string().trim().max(512).allow("", null).optional(),
+  advertisement_no: Joi.string().trim().max(128).allow("", null).optional(),
+  cycle_year: Joi.alternatives()
+    .try(Joi.number().integer().min(1900).max(9999), Joi.string().trim().allow(""), Joi.valid(null))
+    .optional(),
+  lifecycle_state: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...LIFECYCLE_STATES)
+    .optional()
+})
+  .required()
+  .unknown(false);
+
+const recruitmentUpdateSchema = Joi.object({
+  title: Joi.string().trim().min(1).max(500).optional(),
+  slug: Joi.string().trim().min(1).max(255).optional(),
+  department: Joi.string().trim().max(128).allow("", null).optional(),
+  post_name: Joi.string().trim().max(512).allow("", null).optional(),
+  advertisement_no: Joi.string().trim().max(128).allow("", null).optional(),
+  cycle_year: Joi.alternatives()
+    .try(Joi.number().integer().min(1900).max(9999), Joi.string().trim().allow(""), Joi.valid(null))
+    .optional(),
+  lifecycle_state: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...LIFECYCLE_STATES)
+    .optional()
+})
+  .min(1)
+  .required()
+  .unknown(false);
+
+const recruitmentListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional(),
+  search: Joi.string().trim().max(200).allow("").optional(),
+  cycle_year: Joi.alternatives()
+    .try(Joi.number().integer().min(1900).max(9999), Joi.string().trim().allow(""))
+    .optional(),
+  lifecycle_state: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...LIFECYCLE_STATES)
+    .optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const recruitmentEventCreateSchema = Joi.object({
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...EVENT_TYPES)
+    .required(),
+  sequence_order: Joi.alternatives()
+    .try(Joi.number().integer().min(0).max(65535), Joi.string().trim())
+    .optional(),
+  status: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...EVENT_STATUSES)
+    .optional()
+})
+  .required()
+  .unknown(false);
+
+const recruitmentEventUpdateSchema = Joi.object({
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...EVENT_TYPES)
+    .optional(),
+  sequence_order: Joi.alternatives()
+    .try(Joi.number().integer().min(0).max(65535), Joi.string().trim())
+    .optional(),
+  status: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...EVENT_STATUSES)
+    .optional()
+})
+  .min(1)
+  .required()
+  .unknown(false);
+
+const recruitmentEventListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional(),
+  status: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...EVENT_STATUSES)
+    .optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const pageLinkagePageRefSchema = Joi.object({
+  page_id: Joi.alternatives().try(Joi.number().integer().positive(), Joi.string().trim()).optional(),
+  slug: Joi.string().trim().min(1).max(255).optional()
+})
+  .or("page_id", "slug")
+  .required()
+  .unknown(false);
+
+const pageLinkageLinkSchema = Joi.object({
+  page_id: Joi.alternatives().try(Joi.number().integer().positive(), Joi.string().trim()).optional(),
+  slug: Joi.string().trim().min(1).max(255).optional(),
+  recruitment_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim())
+    .required(),
+  recruitment_event_id: Joi.alternatives()
+    .try(
+      Joi.number().integer().positive(),
+      Joi.string().trim().allow(""),
+      Joi.valid(null)
+    )
+    .optional()
+})
+  .or("page_id", "slug")
+  .required()
+  .unknown(false);
+
+const pageLinkageListQuerySchema = Joi.object({
+  recruitment_id: Joi.alternatives().try(Joi.number().integer().positive(), Joi.string().trim()).optional(),
+  recruitment_event_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim())
+    .optional(),
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional()
+})
+  .xor("recruitment_id", "recruitment_event_id")
+  .required()
+  .unknown(false);
+
+const recruitmentTestingYearSchema = Joi.alternatives()
+  .try(
+    Joi.number().integer().min(1900).max(9999),
+    Joi.string().trim().pattern(/^(19|20)\d{2}$/)
+  )
+  .allow(null, "")
+  .optional();
+
+const recruitmentTestingCandidateSchema = Joi.object({
+  id: Joi.alternatives().try(Joi.number().integer().positive(), Joi.string().trim()).optional(),
+  department: Joi.string().trim().max(128).allow("", null).optional(),
+  board: Joi.string().trim().max(128).allow("", null).optional(),
+  organization: Joi.string().trim().max(128).allow("", null).optional(),
+  post_name: Joi.string().trim().max(512).allow("", null).optional(),
+  exam_name: Joi.string().trim().max(128).allow("", null).optional(),
+  advertisement_no: Joi.string().trim().max(128).allow("", null).optional(),
+  cycle_year: recruitmentTestingYearSchema,
+  recruitment_year: recruitmentTestingYearSchema,
+  title: Joi.string().trim().max(500).allow("", null).optional(),
+  slug: Joi.string().trim().max(255).allow("", null).optional()
+})
+  .unknown(true)
+  .messages({
+    "object.base": "Each candidate recruitment must be an object"
+  });
+
+const recruitmentTestingAnalyzeSchema = Joi.object({
+  title: Joi.string().trim().max(500).allow("", null).optional(),
+  content: Joi.string().trim().max(20000).allow("", null).optional(),
+  url: Joi.string().trim().max(2000).allow("", null).optional(),
+  candidateRecruitments: Joi.array()
+    .items(recruitmentTestingCandidateSchema)
+    .default([])
+    .custom((value, helpers) => {
+      for (let index = 0; index < value.length; index += 1) {
+        const item = value[index];
+        if (item === null || typeof item !== "object" || Array.isArray(item)) {
+          return helpers.message(`candidateRecruitments[${index}] must be an object`);
+        }
+      }
+      return value;
+    }),
+  createdAt: Joi.string().trim().isoDate().optional()
+})
+  .custom((value, helpers) => {
+    const title = String(value.title || "").trim();
+    const content = String(value.content || "").trim();
+    const url = String(value.url || "").trim();
+    if (!title && !content && !url) {
+      return helpers.message("At least one of title, content, or url is required");
+    }
+    return value;
+  })
+  .unknown(false);
+
+const recruitmentTestingLookupSchema = Joi.object({
+  title: Joi.string().trim().max(500).allow("", null).optional(),
+  content: Joi.string().trim().max(20000).allow("", null).optional(),
+  url: Joi.string().trim().max(2000).allow("", null).optional(),
+  notice: Joi.object({
+    title: Joi.string().trim().max(500).allow("", null).optional(),
+    content: Joi.string().trim().max(20000).allow("", null).optional(),
+    url: Joi.string().trim().max(2000).allow("", null).optional()
+  })
+    .unknown(false)
+    .optional()
+})
+  .custom((value, helpers) => {
+    const source = value.notice && typeof value.notice === "object" ? value.notice : value;
+    const title = String(source.title || "").trim();
+    const content = String(source.content || "").trim();
+    const url = String(source.url || "").trim();
+    if (!title && !content && !url) {
+      return helpers.message("At least one of title, content, or url is required");
+    }
+    return value;
+  })
+  .unknown(false);
+
+const recruitmentTestingSaveReviewSchema = Joi.object({
+  reviewItem: Joi.object({
+    recruitmentId: Joi.alternatives()
+      .try(Joi.number().integer().positive(), Joi.string().trim(), Joi.valid(null))
+      .optional(),
+    recruitment_id: Joi.alternatives()
+      .try(Joi.number().integer().positive(), Joi.string().trim(), Joi.valid(null))
+      .optional(),
+    eventType: Joi.string().trim().max(64).optional(),
+    event_type: Joi.string().trim().max(64).optional(),
+    matchResult: Joi.object().unknown(true).allow(null).optional(),
+    match_result: Joi.object().unknown(true).allow(null).optional(),
+    confidence: Joi.string().trim().max(16).allow("", null).optional(),
+    sourceUrl: Joi.string().trim().max(2000).allow("", null).optional(),
+    source_url: Joi.string().trim().max(2000).allow("", null).optional(),
+    title: Joi.string().trim().max(500).required(),
+    createdAt: Joi.string().trim().allow("", null).optional(),
+    created_at: Joi.string().trim().allow("", null).optional(),
+    notes: Joi.string().trim().max(5000).allow("", null).optional(),
+    status: Joi.string().trim().max(32).optional(),
+    decision: Joi.string().trim().max(32).optional(),
+    frozen: Joi.boolean().optional()
+  })
+    .required()
+    .unknown(true),
+  raw_notice: Joi.object().unknown(true).allow(null).optional(),
+  rawNotice: Joi.object().unknown(true).allow(null).optional(),
+  normalized_notice: Joi.alternatives()
+    .try(Joi.object().unknown(true), Joi.string().trim().max(20000))
+    .allow(null)
+    .optional(),
+  normalizedNotice: Joi.alternatives()
+    .try(Joi.object().unknown(true), Joi.string().trim().max(20000))
+    .allow(null)
+    .optional(),
+  processor_output: Joi.object().unknown(true).allow(null).optional(),
+  processorOutput: Joi.object().unknown(true).allow(null).optional(),
+  finalStatus: Joi.string().trim().max(64).allow("", null).optional(),
+  warnings: Joi.array().items(Joi.string().trim().max(128)).optional(),
+  update_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.valid(null))
+    .optional(),
+  recruitment_event_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.valid(null))
+    .optional()
+}).unknown(false);
+
+const recruitmentReviewQueueListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional(),
+  status: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...REVIEW_STATUS_VALUES)
+    .optional(),
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...VALID_EVENT_TYPES)
+    .optional(),
+  recruitment_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""))
+    .optional(),
+  search: Joi.string().trim().max(500).allow("").optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const recruitmentReviewQueueActionSchema = Joi.object({
+  notes: Joi.string().trim().max(5000).allow("", null).optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const recruitmentReviewQueueNotesSchema = Joi.object({
+  notes: Joi.string().trim().max(5000).allow("", null).required()
+})
+  .required()
+  .unknown(false);
+
+const recruitmentRuntimePreviewListQuerySchema = Joi.object({
+  page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
+  limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional(),
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...VALID_EVENT_TYPES)
+    .optional(),
+  site: Joi.string().trim().max(500).allow("").optional(),
+  site_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""))
+    .optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const positiveIdField = Joi.alternatives()
+  .try(Joi.number().integer().positive(), Joi.string().trim().pattern(/^[1-9]\d*$/))
+  .required();
+
+const optionalPositiveIdField = Joi.alternatives()
+  .try(
+    Joi.number().integer().positive(),
+    Joi.string().trim().pattern(/^[1-9]\d*$/),
+    Joi.valid(null, "")
+  )
+  .optional()
+  .allow(null, "");
+
+const recruitmentDraftAttachSchema = Joi.object({
+  draft_id: positiveIdField,
+  recruitment_event_id: optionalPositiveIdField
+})
+  .required()
+  .unknown(false);
+
+const recruitmentDraftDetachSchema = Joi.object({
+  draft_id: optionalPositiveIdField
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const recruitmentDraftReplaceSchema = Joi.object({
+  draft_id: positiveIdField,
+  previous_draft_id: optionalPositiveIdField,
+  recruitment_event_id: optionalPositiveIdField
+})
+  .required()
+  .unknown(false);
+
+const editorialReviewDecisionSchema = Joi.object({
+  decision: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(
+      "submit_for_review",
+      "start_review",
+      "approve",
+      "request_changes",
+      "reject",
+      "return_to_draft",
+      "reopen_review"
+    )
+    .required(),
+  comment: Joi.string().trim().max(5000).allow("", null).optional(),
+  notes: Joi.string().trim().max(5000).allow("", null).optional()
+})
+  .required()
+  .unknown(false);
+
+const editorialReviewNoteSchema = Joi.object({
+  text: Joi.string().trim().max(5000).allow("").optional(),
+  notes: Joi.string().trim().max(5000).allow("").optional(),
+  comment: Joi.string().trim().max(5000).allow("").optional()
+})
+  .or("text", "notes", "comment")
+  .required()
+  .unknown(false);
+
+const sharedPreviewRefreshSchema = Joi.object({
+  reason: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(
+      "manual",
+      "recruitment_update",
+      "draft_change",
+      "review_decision",
+      "page_link_change"
+    )
+    .allow("", null)
+    .optional()
+})
+  .optional()
+  .default({})
+  .unknown(false);
+
+const recruitmentBulkSchema = Joi.object({
+  action: Joi.string()
+    .trim()
+    .lowercase()
+    .valid("archive", "restore", "status_update", "category_update", "assignment", "delete")
+    .required(),
+  ids: Joi.array()
+    .items(Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()))
+    .min(1)
+    .max(50)
+    .required(),
+  confirm: Joi.boolean().valid(true).required(),
+  lifecycle_state: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...LIFECYCLE_STATES)
+    .optional(),
+  category: Joi.string().trim().max(128).allow("", null).optional(),
+  department: Joi.string().trim().max(128).allow("", null).optional(),
+  assignee: Joi.string().trim().max(128).allow("", null).optional()
+})
+  .required()
+  .unknown(false);
+
+const pageBulkRegenerateSchema = Joi.object({
+  slugs: Joi.array().items(Joi.string().trim().min(1).max(255)).min(1).max(40).required(),
+  confirm: Joi.boolean().valid(true).required()
+})
+  .required()
+  .unknown(false);
+
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
@@ -199,6 +647,30 @@ module.exports = {
   homepageBadgesPatchSchema,
   homepageSmallBoxPatchSchema,
   homepageSmallBoxSlotPatchSchema,
+  recruitmentCreateSchema,
+  recruitmentUpdateSchema,
+  recruitmentListQuerySchema,
+  recruitmentEventCreateSchema,
+  recruitmentEventUpdateSchema,
+  recruitmentEventListQuerySchema,
+  pageLinkageLinkSchema,
+  pageLinkagePageRefSchema,
+  pageLinkageListQuerySchema,
+  recruitmentTestingAnalyzeSchema,
+  recruitmentTestingLookupSchema,
+  recruitmentTestingSaveReviewSchema,
+  recruitmentReviewQueueListQuerySchema,
+  recruitmentReviewQueueActionSchema,
+  recruitmentReviewQueueNotesSchema,
+  recruitmentRuntimePreviewListQuerySchema,
+  recruitmentDraftAttachSchema,
+  recruitmentDraftDetachSchema,
+  recruitmentDraftReplaceSchema,
+  editorialReviewDecisionSchema,
+  editorialReviewNoteSchema,
+  sharedPreviewRefreshSchema,
+  recruitmentBulkSchema,
+  pageBulkRegenerateSchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

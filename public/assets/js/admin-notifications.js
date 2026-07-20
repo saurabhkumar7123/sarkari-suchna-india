@@ -17,6 +17,18 @@
 
   async function fetchAlerts() {
     const items = [];
+
+    if (window.AdminOpsNotifications) {
+      window.AdminOpsNotifications.list({ limit: 8 }).forEach((n) => {
+        items.push({
+          type: n.type || "ops",
+          text: n.text,
+          href: n.href || "/admin/dashboard",
+          local: true
+        });
+      });
+    }
+
     const [queueRes, sitesRes, activityRes] = await Promise.all([
       window.adminSafeFetch("/api/admin/queue/status"),
       window.adminSafeFetch("/api/admin/sites"),
@@ -99,7 +111,9 @@
 
     async function refresh() {
       const items = await fetchAlerts();
-      const count = items.filter((i) => i.type === "queue" || i.type === "site").length;
+      const localUnread = window.AdminOpsNotifications ? window.AdminOpsNotifications.unreadCount() : 0;
+      const count =
+        localUnread + items.filter((i) => i.type === "queue" || i.type === "site").length;
       lastUnread = count;
       updateBadge(badge, count);
       if (panel.classList.contains("is-open")) renderPanel(panel, items);
@@ -114,6 +128,7 @@
         panel.innerHTML = '<p class="admin-notify-empty">Loading…</p>';
         const items = await fetchAlerts();
         renderPanel(panel, items);
+        window.AdminOpsNotifications?.markAllRead();
         updateBadge(badge, 0);
       }
     });

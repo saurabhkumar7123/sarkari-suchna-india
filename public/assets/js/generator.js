@@ -514,6 +514,144 @@ function collectGeneratorDraftPayload() {
   };
 }
 
+let recruitmentContextEnabled = false;
+
+async function probeEditorialAttachmentFlag() {
+  try {
+    const res = await safeFetch("/api/admin/recruitments/1/events?limit=1");
+    if (res.status === 503) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function setRecruitmentContextSectionVisible(visible) {
+  const section = document.getElementById("generatorRecruitmentContext");
+  if (!section) return;
+  section.hidden = !visible;
+  section.classList.toggle("is-hidden", !visible);
+}
+
+function formatRecruitmentOptionLabel(row) {
+  const title = String(row.title || "Untitled").trim();
+  const dept = row.department ? ` · ${row.department}` : "";
+  const year = row.cycle_year ? ` (${row.cycle_year})` : "";
+  return `${title}${dept}${year}`;
+}
+
+function formatEventOptionLabel(row) {
+  const type = String(row.event_type || "event").replace(/_/g, " ");
+  const order = row.sequence_order != null ? ` #${row.sequence_order}` : "";
+  return `${type}${order}`;
+}
+
+async function loadRecruitmentOptions() {
+  const select = document.getElementById("draftRecruitmentId");
+  if (!select) return;
+  const res = await safeFetch("/api/admin/recruitments?limit=50");
+  if (!res.ok || !res.body || !res.body.success) return;
+  const rows = Array.isArray(res.body.data) ? res.body.data : [];
+  const current = select.value;
+  select.innerHTML = '<option value="">— None —</option>';
+  for (const row of rows) {
+    const opt = document.createElement("option");
+    opt.value = String(row.id);
+    opt.textContent = formatRecruitmentOptionLabel(row);
+    select.appendChild(opt);
+  }
+  if (current && [...select.options].some((opt) => opt.value === current)) {
+    select.value = current;
+  }
+}
+
+async function loadRecruitmentEventOptions(recruitmentId) {
+  const eventSelect = document.getElementById("draftRecruitmentEventId");
+  if (!eventSelect) return;
+  eventSelect.innerHTML = '<option value="">— None —</option>';
+  if (!recruitmentId) {
+    eventSelect.disabled = true;
+    return;
+  }
+  eventSelect.disabled = false;
+  const res = await safeFetch(
+    `/api/admin/recruitments/${encodeURIComponent(recruitmentId)}/events?limit=50`
+  );
+  if (!res.ok || !res.body || !res.body.success) return;
+  const rows = Array.isArray(res.body.data) ? res.body.data : [];
+  for (const row of rows) {
+    const opt = document.createElement("option");
+    opt.value = String(row.id);
+    opt.textContent = formatEventOptionLabel(row);
+    eventSelect.appendChild(opt);
+  }
+}
+
+function clearRecruitmentContextSelectors() {
+  const rec = document.getElementById("draftRecruitmentId");
+  const evt = document.getElementById("draftRecruitmentEventId");
+  if (rec) rec.value = "";
+  if (evt) {
+    evt.value = "";
+    evt.disabled = true;
+  }
+}
+
+async function applyRecruitmentContextFromDraft(row) {
+  if (!recruitmentContextEnabled || !row) return;
+  const recruitmentId = row.recruitmentId != null ? String(row.recruitmentId) : "";
+  const eventId = row.recruitmentEventId != null ? String(row.recruitmentEventId) : "";
+  const recSelect = document.getElementById("draftRecruitmentId");
+  if (!recSelect) return;
+  if (recruitmentId && ![...recSelect.options].some((opt) => opt.value === recruitmentId)) {
+    const opt = document.createElement("option");
+    opt.value = recruitmentId;
+    opt.textContent = `Recruitment #${recruitmentId}`;
+    recSelect.appendChild(opt);
+  }
+  recSelect.value = recruitmentId;
+  await loadRecruitmentEventOptions(recruitmentId || null);
+  const evtSelect = document.getElementById("draftRecruitmentEventId");
+  if (!evtSelect) return;
+  if (eventId && ![...evtSelect.options].some((opt) => opt.value === eventId)) {
+    const opt = document.createElement("option");
+    opt.value = eventId;
+    opt.textContent = `Event #${eventId}`;
+    evtSelect.appendChild(opt);
+  }
+  evtSelect.value = eventId;
+}
+
+function collectRecruitmentContextForDraftSave() {
+  if (!recruitmentContextEnabled) return {};
+  const recSelect = document.getElementById("draftRecruitmentId");
+  const evtSelect = document.getElementById("draftRecruitmentEventId");
+  const recruitment_id = recSelect && recSelect.value ? recSelect.value : null;
+  const recruitment_event_id =
+    recruitment_id && evtSelect && evtSelect.value ? evtSelect.value : null;
+  return { recruitment_id, recruitment_event_id };
+}
+
+async function initRecruitmentContextSelector() {
+  recruitmentContextEnabled = await probeEditorialAttachmentFlag();
+  setRecruitmentContextSectionVisible(recruitmentContextEnabled);
+  if (!recruitmentContextEnabled) return;
+
+  const recSelect = document.getElementById("draftRecruitmentId");
+  if (recSelect) {
+    recSelect.addEventListener("change", async () => {
+      const id = recSelect.value || "";
+      await loadRecruitmentEventOptions(id || null);
+      if (!id) {
+        const evtSelect = document.getElementById("draftRecruitmentEventId");
+        if (evtSelect) evtSelect.value = "";
+      }
+    });
+  }
+
+  await loadRecruitmentOptions();
+}
+
 function applyGeneratorDraftPayload(payload) {
   const d = payload && typeof payload === "object" ? payload : {};
   if (document.getElementById("title")) document.getElementById("title").value = d.title || "";
@@ -610,7 +748,11 @@ async function saveGeneratorDraftToServer() {
     const fetchRes = await safeFetch("/api/admin/generator-drafts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: draftId, payload })
+      body: JSON.stringify({
+        id: draftId,
+        payload,
+        ...collectRecruitmentContextForDraftSave()
+      })
     });
 
     if (!fetchRes.ok) {
@@ -664,6 +806,7 @@ async function loadGeneratorDraftFromURL() {
     clearDraftStorage();
     resetGeneratorForm();
     applyGeneratorDraftPayload(row.payload || {});
+    await applyRecruitmentContextFromDraft(row);
     setGeneratorDraftId(row.id);
     setGeneratorFeedback("info", `Draft #${row.id} loaded`, {
       detailsHtml: `${escapeAttr(row.title || "Untitled")} — edit and publish, or save draft again to park updates.`
@@ -730,6 +873,7 @@ function resetGeneratorForm() {
   syncAiConvertButton();
   setCategoryTagsFromString("");
   applyBadgesToForm([]);
+  clearRecruitmentContextSelectors();
   updateEditorStats();
   updateBreakingOrderVisibility();
   syncSectionEditorFromData();
@@ -905,6 +1049,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadSmallBoxSlotOccupancy();
   setupCategoryTagInput();
   setupBadgeCheckboxes();
+  await initRecruitmentContextSelector();
 
   if (slug) {
     await loadPageFromURL();
@@ -1638,7 +1783,9 @@ async function generatePage(){
     lastDate: lastDateInput || null,
     badges: collectBadgesFromForm(),
     id: document.getElementById("pageId").value.trim(),
-    oldSlug: document.getElementById("oldSlug").value.trim()
+    oldSlug: document.getElementById("oldSlug").value.trim(),
+    generatorDraftId: getGeneratorDraftId(),
+    ...collectRecruitmentContextForDraftSave()
   };
 
   // ✅ strong validation

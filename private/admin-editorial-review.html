@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Editorial Review Workspace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=10">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=2">
+<link rel="stylesheet" href="/css/admin/editorial-review.css?v=1">
+<link rel="stylesheet" href="/css/admin/shared-preview.css?v=1">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Editorial Review">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-title">Editorial Review Workspace</div>
+    <div class="admin-header-actions rom-header-links">
+      <a class="header-action-btn rom-secondary" href="/admin/dashboard" style="text-decoration:none;">Dashboard</a>
+      <a class="header-action-btn" href="/admin/recruitments" style="text-decoration:none;">Recruitment Operations</a>
+      <a class="header-action-btn rom-secondary" href="/admin/recruitment-runtime-preview" style="text-decoration:none;">Shared Preview</a>
+      <button type="button" class="header-action-btn" id="erRefreshBtn">↻ Refresh</button>
+    </div>
+  </div>
+
+  <p class="er-help">
+    Human review only — compare a recruitment with its linked generator draft, leave internal notes,
+    and apply manual decisions. No automatic routing or publishing.
+  </p>
+  <p id="erMessage" class="er-message" hidden role="status"></p>
+
+  <div class="er-layout">
+    <section class="er-card er-inbox">
+      <div class="er-card__head">
+        <div>
+          <h1>Review inbox</h1>
+          <p id="erInboxCount">0 items</p>
+        </div>
+      </div>
+      <label class="er-filter">Workflow
+        <select id="erWorkflowFilter">
+          <option value="">All</option>
+          <option value="review_pending">Review Pending</option>
+          <option value="in_review">In Review</option>
+          <option value="changes_requested">Changes Requested</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="draft_attached">Draft Attached</option>
+        </select>
+      </label>
+      <div class="er-inbox-list" id="erInboxList"></div>
+      <form id="erOpenForm" class="er-open-form">
+        <label>Open by recruitment id
+          <input id="erOpenId" type="number" min="1" placeholder="e.g. 12" required>
+        </label>
+        <button type="submit" class="header-action-btn">Open workspace</button>
+      </form>
+    </section>
+
+    <section class="er-workspace" id="erWorkspace">
+      <div id="erEmpty" class="er-card er-empty">
+        <h2>Select a review item</h2>
+        <p>Choose an inbox entry or open a recruitment by id.</p>
+      </div>
+
+      <div id="erDetail" hidden>
+        <section class="er-card">
+          <div class="er-card__head">
+            <div>
+              <h2 id="erRecruitmentTitle">Recruitment</h2>
+              <p id="erStatusLine">—</p>
+            </div>
+            <a id="erOpsLink" class="header-action-btn er-secondary" href="/admin/recruitments" style="text-decoration:none;">Open in Operations</a>
+          </div>
+          <dl class="er-meta" id="erRecruitmentMeta"></dl>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Linked draft</h2><p>Primary generator draft bound to this recruitment.</p></div>
+          </div>
+          <div id="erDraftPanel"></div>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Compare</h2><p>Recruitment vs draft side-by-side.</p></div>
+          </div>
+          <div class="er-compare" id="erCompare"></div>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Validation summary</h2><p>Manual checklist — advisory only.</p></div>
+          </div>
+          <ul class="er-validation" id="erValidation"></ul>
+        </section>
+
+        <section class="er-card" id="erContentPipelineCard">
+          <div class="er-card__head">
+            <div>
+              <h2>Editorial checklist &amp; freshness</h2>
+              <p>Package 4F advisory guidance — progress only, no automatic fixes.</p>
+            </div>
+            <a class="header-action-btn er-secondary" href="/admin/seo-diagnostics" style="text-decoration:none;">SEO Diagnostics</a>
+          </div>
+          <p id="erChecklistProgress" class="er-help">Open a recruitment with a linked page slug to load checklist progress.</p>
+          <ul class="er-validation" id="erEditorialChecklist"></ul>
+          <dl class="er-meta" id="erFreshnessMeta"></dl>
+          <div class="er-link-suggestions" id="erLinkSuggestions"></div>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Decision controls</h2><p>Validated transitions only. Invalid actions are blocked.</p></div>
+          </div>
+          <div class="er-decisions" id="erDecisions"></div>
+          <label class="er-comment">Decision comment
+            <textarea id="erDecisionComment" rows="3" maxlength="5000" placeholder="Optional internal comment for this decision"></textarea>
+          </label>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Internal notes</h2><p>Operator identity and timestamps are recorded.</p></div>
+          </div>
+          <form id="erNoteForm" class="er-note-form">
+            <textarea id="erNoteText" rows="3" maxlength="5000" required placeholder="Add an internal reviewer note"></textarea>
+            <button type="submit" class="header-action-btn">Add note</button>
+          </form>
+          <ol class="er-notes" id="erNotes"></ol>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Decision history</h2><p>Timestamped manual decisions.</p></div>
+          </div>
+          <ol class="er-history" id="erHistory"></ol>
+        </section>
+
+        <section class="er-card">
+          <div class="er-card__head">
+            <div><h2>Shared Runtime Preview</h2><p>Authoritative preview shared with Recruitment Operations. Manual refresh only.</p></div>
+          </div>
+          <div id="sharedPreviewPanel" class="spv-panel"></div>
+        </section>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=13"></script>
+<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-ops-notifications.js?v=1"></script>
+<script src="/js/admin-ops-search.js?v=1"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=3"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-shared-preview.js?v=1"></script>
+<script src="/js/admin-editorial-review.js?v=2"></script>
+</body>
+</html>

@@ -108,12 +108,21 @@ async function fetchSites() {
   return rows;
 }
 
+/**
+ * Insert a detected update row.
+ * Returns the new updates.id when available (traceability only; callers may ignore).
+ * Write query and columns are unchanged.
+ *
+ * @returns {Promise<number|null>}
+ */
 async function insertDetectedUpdate({ siteId, title, link }) {
-  await db.query("INSERT INTO updates (site_id, title, link) VALUES (?, ?, ?)", [
+  const [result] = await db.query("INSERT INTO updates (site_id, title, link) VALUES (?, ?, ?)", [
     siteId,
     title,
     link || null
   ]);
+  const insertId = result && result.insertId != null ? Number(result.insertId) : NaN;
+  return Number.isFinite(insertId) && insertId > 0 ? insertId : null;
 }
 
 async function saveSiteBaseline(siteId, latestContent) {
@@ -270,17 +279,101 @@ async function disableSite(siteId) {
   logger.warn("updates: site disabled", { siteId });
 }
 
-async function fetchRecentUpdates(limit = 50) {
+async function linkageColumnsExist() {
+  try {
+    const [rows] = await db.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = DATABASE() AND table_name = 'updates'
+         AND column_name IN ('recruitment_id', 'recruitment_event_id')`
+    );
+    const names = new Set(rows.map((row) => row.COLUMN_NAME || row.column_name));
+    return names.has("recruitment_id") && names.has("recruitment_event_id");
+  } catch {
+    return false;
+  }
+}
+
+function mapLegacyUpdateRow(row) {
+  return {
+    id: row.id,
+    siteId: row.siteId,
+    siteName: row.siteName,
+    title: row.title,
+    link: row.link,
+    createdAt: row.createdAt
+  };
+}
+
+function mapRecruitmentAwareUpdateRow(row) {
+  const base = mapLegacyUpdateRow(row);
+  const recruitmentId = row.recruitmentId != null ? Number(row.recruitmentId) : null;
+  const recruitmentEventId =
+    row.recruitmentEventId != null ? Number(row.recruitmentEventId) : null;
+
+  const aware = {
+    ...base,
+    recruitment_id: recruitmentId,
+    recruitment_event_id: recruitmentEventId
+  };
+
+  if (recruitmentId) {
+    aware.recruitment = {
+      id: recruitmentId,
+      title: row.recruitmentTitle || "",
+      slug: row.recruitmentSlug || "",
+      lifecycle_state: row.recruitmentLifecycleState || null
+    };
+  }
+
+  if (recruitmentEventId) {
+    aware.recruitment_event = {
+      id: recruitmentEventId,
+      event_type: row.recruitmentEventType || null,
+      sequence_order:
+        row.recruitmentEventSequenceOrder != null
+          ? Number(row.recruitmentEventSequenceOrder)
+          : null,
+      status: row.recruitmentEventStatus || null
+    };
+  }
+
+  return aware;
+}
+
+async function fetchRecentUpdates(limit = 50, options = {}) {
   const safeLimit = Math.min(500, Math.max(1, Number(limit) || 50));
+  const includeRecruitmentLinkage = Boolean(options.includeRecruitmentLinkage);
+  const canIncludeLinkage = includeRecruitmentLinkage && (await linkageColumnsExist());
+
+  if (!canIncludeLinkage) {
+    const [rows] = await db.query(
+      `SELECT u.id, u.site_id AS siteId, s.name AS siteName, u.title, u.link, u.created_at AS createdAt
+       FROM updates u
+       JOIN monitored_sites s ON s.id = u.site_id
+       ORDER BY u.created_at DESC
+       LIMIT ?`,
+      [safeLimit]
+    );
+    return rows.map(mapLegacyUpdateRow);
+  }
+
   const [rows] = await db.query(
-    `SELECT u.id, u.site_id AS siteId, s.name AS siteName, u.title, u.link, u.created_at AS createdAt
+    `SELECT u.id, u.site_id AS siteId, s.name AS siteName, u.title, u.link, u.created_at AS createdAt,
+            u.recruitment_id AS recruitmentId, u.recruitment_event_id AS recruitmentEventId,
+            r.title AS recruitmentTitle, r.slug AS recruitmentSlug,
+            r.lifecycle_state AS recruitmentLifecycleState,
+            re.event_type AS recruitmentEventType,
+            re.sequence_order AS recruitmentEventSequenceOrder,
+            re.status AS recruitmentEventStatus
      FROM updates u
      JOIN monitored_sites s ON s.id = u.site_id
+     LEFT JOIN recruitments r ON r.id = u.recruitment_id
+     LEFT JOIN recruitment_events re ON re.id = u.recruitment_event_id
      ORDER BY u.created_at DESC
      LIMIT ?`,
     [safeLimit]
   );
-  return rows;
+  return rows.map(mapRecruitmentAwareUpdateRow);
 }
 
 module.exports = {
@@ -301,6 +394,9 @@ module.exports = {
   updateSite,
   deleteSite,
   fetchRecentUpdates,
+  linkageColumnsExist,
+  mapLegacyUpdateRow,
+  mapRecruitmentAwareUpdateRow,
   restoreSite,
   disableSite,
   ensureLastCheckedAtColumn

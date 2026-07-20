@@ -1,7 +1,10 @@
 "use strict";
 
 const generatorDraftRepository = require("../repositories/generatorDraft.repository");
+const recruitmentRepository = require("../repositories/recruitment.repository");
+const recruitmentEventRepository = require("../repositories/recruitmentEvent.repository");
 const { MAX_GENERATOR_DRAFTS } = require("../config/generatorDrafts");
+const { isRecruitmentEditorialAttachmentEnabled } = require("../config/recruitmentLifecycle");
 
 function assertTable() {
   return generatorDraftRepository.tableExists().then((ok) => {
@@ -32,7 +35,104 @@ function hasMeaningfulContent(payload = {}) {
   return title.length >= 3 || data.length >= 20;
 }
 
-async function saveDraft({ id, payload }) {
+function parseOptionalPositiveId(value, fieldName) {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const id = parseInt(String(value), 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    const err = new Error(`Invalid ${fieldName}`);
+    err.statusCode = 400;
+    throw err;
+  }
+  return id;
+}
+
+async function assertLinkageColumnsReady() {
+  const ok = await generatorDraftRepository.linkageColumnsExist();
+  if (!ok) {
+    const err = new Error(
+      "generator_drafts recruitment linkage columns are missing. Run db/migrations/2026-07-13-add-generator-drafts-recruitment-linkage.sql"
+    );
+    err.statusCode = 503;
+    throw err;
+  }
+}
+
+async function assertRecruitmentExists(recruitmentId) {
+  const recruitment = await recruitmentRepository.getRecruitmentById(recruitmentId);
+  if (!recruitment) {
+    const err = new Error("Recruitment not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  return recruitment;
+}
+
+async function assertRecruitmentEventExists(recruitmentEventId, recruitmentId) {
+  const event = await recruitmentEventRepository.getRecruitmentEventById(recruitmentEventId);
+  if (!event) {
+    const err = new Error("Recruitment event not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  if (Number(event.recruitment_id) !== Number(recruitmentId)) {
+    const err = new Error("recruitment_event_id does not belong to recruitment_id");
+    err.statusCode = 400;
+    throw err;
+  }
+  return event;
+}
+
+async function resolveRecruitmentContext({ recruitmentId, recruitmentEventId, existing = null }) {
+  if (!isRecruitmentEditorialAttachmentEnabled()) {
+    return { withRecruitmentLinkage: false };
+  }
+
+  const hasRecruitmentInput = recruitmentId !== undefined;
+  const hasEventInput = recruitmentEventId !== undefined;
+  if (!hasRecruitmentInput && !hasEventInput) {
+    return { withRecruitmentLinkage: false };
+  }
+
+  await assertLinkageColumnsReady();
+
+  let resolvedRecruitmentId = hasRecruitmentInput
+    ? parseOptionalPositiveId(recruitmentId, "recruitment_id")
+    : existing?.recruitment_id != null
+      ? Number(existing.recruitment_id)
+      : null;
+  let resolvedEventId = hasEventInput
+    ? parseOptionalPositiveId(recruitmentEventId, "recruitment_event_id")
+    : existing?.recruitment_event_id != null
+      ? Number(existing.recruitment_event_id)
+      : null;
+
+  if (hasRecruitmentInput && resolvedRecruitmentId == null) {
+    resolvedEventId = null;
+  }
+
+  if (resolvedEventId != null && resolvedRecruitmentId == null) {
+    const err = new Error("recruitment_id is required when recruitment_event_id is set");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (resolvedRecruitmentId != null) {
+    await assertRecruitmentExists(resolvedRecruitmentId);
+  }
+
+  if (resolvedEventId != null) {
+    await assertRecruitmentEventExists(resolvedEventId, resolvedRecruitmentId);
+  }
+
+  return {
+    withRecruitmentLinkage: true,
+    recruitmentId: resolvedRecruitmentId,
+    recruitmentEventId: resolvedEventId
+  };
+}
+
+async function saveDraft({ id, payload, recruitmentId, recruitmentEventId }) {
   await assertTable();
   if (!payload || typeof payload !== "object") {
     const err = new Error("Invalid draft payload");
@@ -61,10 +161,20 @@ async function saveDraft({ id, payload }) {
       err.statusCode = 400;
       throw err;
     }
+
+    const linkage = await resolveRecruitmentContext({
+      recruitmentId,
+      recruitmentEventId,
+      existing
+    });
+
     const updated = await generatorDraftRepository.updateDraft(draftId, {
       title,
       slugHint,
-      payload
+      payload,
+      recruitmentId: linkage.recruitmentId,
+      recruitmentEventId: linkage.recruitmentEventId,
+      withRecruitmentLinkage: linkage.withRecruitmentLinkage
     });
     if (!updated) {
       const err = new Error("Draft could not be updated");
@@ -81,7 +191,20 @@ async function saveDraft({ id, payload }) {
     throw err;
   }
 
-  const insertId = await generatorDraftRepository.insertDraft({ title, slugHint, payload });
+  const linkage = await resolveRecruitmentContext({
+    recruitmentId,
+    recruitmentEventId,
+    existing: null
+  });
+
+  const insertId = await generatorDraftRepository.insertDraft({
+    title,
+    slugHint,
+    payload,
+    recruitmentId: linkage.recruitmentId,
+    recruitmentEventId: linkage.recruitmentEventId,
+    withRecruitmentLinkage: linkage.withRecruitmentLinkage
+  });
   return generatorDraftRepository.findById(insertId);
 }
 
@@ -102,6 +225,20 @@ async function listDrafts(query = {}) {
     draftCount,
     maxDrafts: MAX_GENERATOR_DRAFTS
   };
+}
+
+async function listDraftsByRecruitmentId(recruitmentId, query = {}) {
+  await assertTable();
+  const id = parseInt(String(recruitmentId), 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    const err = new Error("Invalid recruitment id");
+    err.statusCode = 400;
+    throw err;
+  }
+  return generatorDraftRepository.listDraftsByRecruitmentId({
+    recruitment_id: id,
+    limit: query.limit
+  });
 }
 
 async function getDraftById(id) {
@@ -140,6 +277,7 @@ async function deleteDraftById(id) {
 module.exports = {
   saveDraft,
   listDrafts,
+  listDraftsByRecruitmentId,
   getDraftById,
   markDraftPublished,
   deleteDraftById,

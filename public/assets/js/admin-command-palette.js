@@ -5,7 +5,7 @@
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const ROUTES = [
-    { label: "Dashboard", href: "/admin/dashboard", group: "Go to", keywords: "home overview" },
+    { label: "Dashboard", href: "/admin/dashboard", group: "Go to", keywords: "home overview productivity" },
     { label: "Page Manager", href: "/admin/page-manager", group: "Go to", keywords: "pages edit list" },
     { label: "Monitoring", href: "/admin/monitoring", group: "Go to", keywords: "queue sites health" },
     { label: "PDF Alerts", href: "/admin/alerts", group: "Go to", keywords: "notifications pdf" },
@@ -14,6 +14,17 @@
     { label: "Activity Log", href: "/admin/activity", group: "Go to", keywords: "audit history" },
     { label: "Homepage Management", href: "/admin/homepage-management", group: "Go to", keywords: "breaking badges" },
     { label: "Page Generator", href: "/generator", group: "Go to", keywords: "create new job" },
+    { label: "Create Draft", href: "/generator", group: "Quick actions", keywords: "draft park generator" },
+    { label: "Create Recruitment", href: "/admin/recruitments", group: "Quick actions", keywords: "new recruitment ops" },
+    { label: "Open Editorial Review", href: "/admin/editorial-review", group: "Quick actions", keywords: "review inbox approve" },
+    { label: "Open Shared Preview", href: "/admin/recruitment-runtime-preview", group: "Quick actions", keywords: "preview runtime" },
+    { label: "Open Events", href: "/admin/recruitments#eventTimeline", group: "Quick actions", keywords: "timeline events" },
+    { label: "Search Recruitments", href: "/admin/recruitments", group: "Quick actions", keywords: "find filter search" },
+    { label: "Recruitment Operations", href: "/admin/recruitments", group: "Go to", keywords: "recruitments events links" },
+    { label: "Editorial Review", href: "/admin/editorial-review", group: "Go to", keywords: "draft binding review" },
+    { label: "Shared Preview", href: "/admin/recruitment-runtime-preview", group: "Go to", keywords: "preview runtime" },
+    { label: "SEO Diagnostics", href: "/admin/seo-diagnostics", group: "Go to", keywords: "seo metadata schema freshness checklist" },
+    { label: "Feature Completion Report", href: "/admin/seo-diagnostics#featureCompletionReport", group: "Go to", keywords: "program 4 complete report" },
     { label: "Upload PDF", href: "/upload", group: "Go to", keywords: "files pdf" },
     { label: "Trash", href: "/trash", group: "Go to", keywords: "deleted restore" },
     { label: "Run site check now", href: "__action_run_check__", group: "Actions", keywords: "monitor queue" },
@@ -47,6 +58,37 @@
     }
   }
 
+  async function searchPagesRemote(query) {
+    const q = String(query || "").trim();
+    if (q.length < 2 || typeof window.adminSafeFetch !== "function") return [];
+    window.AdminOpsSearch?.rememberSearch(q, "global");
+    const [pagesRes, recrRes] = await Promise.all([
+      window.adminSafeFetch(`/api/admin/pages?page=1&limit=6&q=${encodeURIComponent(q)}`),
+      window.adminSafeFetch(`/api/admin/recruitments?page=1&limit=6&search=${encodeURIComponent(q)}`)
+    ]);
+    const pageItems =
+      pagesRes && pagesRes.success && Array.isArray(pagesRes.data)
+        ? pagesRes.data.map((p) => ({
+            label: p.title || p.slug,
+            href: `/admin/page-manager?q=${encodeURIComponent(p.slug || p.title || "")}`,
+            group: "Search pages",
+            score: 3,
+            kind: "search"
+          }))
+        : [];
+    const recrItems =
+      recrRes && recrRes.success && Array.isArray(recrRes.data)
+        ? recrRes.data.map((r) => ({
+            label: r.title || r.slug,
+            href: `/admin/recruitments?search=${encodeURIComponent(r.title || r.slug || "")}`,
+            group: "Search recruitments",
+            score: 3.2,
+            kind: "search"
+          }))
+        : [];
+    return [...recrItems, ...pageItems];
+  }
+
   function buildItems(query) {
     const items = [];
     ROUTES.forEach((r) => {
@@ -70,21 +112,18 @@
         });
       }
     });
+    if (window.AdminOpsSearch && !String(query || "").trim()) {
+      window.AdminOpsSearch.recentSearches(6).forEach((r) => {
+        items.push({
+          label: r.query,
+          href: `/admin/recruitments?search=${encodeURIComponent(r.query)}`,
+          group: "Recent searches",
+          score: 1.2,
+          kind: "recent"
+        });
+      });
+    }
     return items.sort((a, b) => b.score - a.score).slice(0, 14);
-  }
-
-  async function searchPagesRemote(query) {
-    const q = String(query || "").trim();
-    if (q.length < 2 || typeof window.adminSafeFetch !== "function") return [];
-    const res = await window.adminSafeFetch(`/api/admin/pages?page=1&limit=6&q=${encodeURIComponent(q)}`);
-    if (!res || !res.success || !Array.isArray(res.data)) return [];
-    return res.data.map((p) => ({
-      label: p.title || p.slug,
-      href: `/admin/page-manager?q=${encodeURIComponent(p.slug || p.title || "")}`,
-      group: "Search pages",
-      score: 3,
-      kind: "search"
-    }));
   }
 
   function renderResults(items) {

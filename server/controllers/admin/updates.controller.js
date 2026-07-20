@@ -19,6 +19,7 @@ const {
   getCurrentSchedulerLockOwner
 } = require("../../services/updates/schedulerLeadership");
 const { recordActivity } = require("../../services/adminActivity.service");
+const { isRecruitmentReadAwarenessEnabled } = require("../../config/recruitmentLifecycle");
 
 const QUEUE_WAITING_ALERT_THRESHOLD = parseInt(process.env.QUEUE_WAITING_ALERT_THRESHOLD || "50", 10);
 const QUEUE_ALERT_COOLDOWN_MINUTES = parseInt(process.env.QUEUE_ALERT_COOLDOWN_MINUTES || "15", 10);
@@ -83,7 +84,9 @@ const deleteSiteHandler = asyncHandler(async (req, res) => {
 
 const listRecentUpdates = asyncHandler(async (req, res) => {
   const limit = Number(req.query.limit || 50);
-  const rows = await fetchRecentUpdates(limit);
+  const rows = await fetchRecentUpdates(limit, {
+    includeRecruitmentLinkage: isRecruitmentReadAwarenessEnabled()
+  });
   res.json({ success: true, data: rows });
 });
 

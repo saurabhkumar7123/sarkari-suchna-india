@@ -563,6 +563,22 @@ const getSmallBoxSlots = async (req, res) => {
   }
 };
 
+/** Package 4E — Bulk regenerate selected pages (manual, confirmed). */
+const bulkRegeneratePages = async (req, res) => {
+  const pageBulkRegenerateService = require("../../services/pageBulkRegenerate.service");
+  const result = await pageBulkRegenerateService.regeneratePages(req.body || {});
+  await recordActivity({
+    admin: req.user && req.user.username ? req.user.username : "admin",
+    action: "page_bulk_regenerate",
+    target: `${result.summary.ok}/${result.summary.requested}`,
+    status: result.summary.failed > 0 ? "partial" : "success",
+    ip: req.ip,
+    userAgent: String(req.headers["user-agent"] || ""),
+    requestId: req.id || ""
+  }).catch(() => {});
+  return res.json({ success: true, data: result });
+};
+
 module.exports = {
   getAllPages,
   deletePage,
@@ -573,5 +589,6 @@ module.exports = {
   getDashboardStats,
   checkDuplicatePages,
   getAdminPageBySlug,
-  getSmallBoxSlots
+  getSmallBoxSlots,
+  bulkRegeneratePages
 };

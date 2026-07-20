@@ -10,7 +10,8 @@ const {
   homepageBreakingPatchSchema,
   homepageBadgesPatchSchema,
   homepageSmallBoxPatchSchema,
-  homepageSmallBoxSlotPatchSchema
+  homepageSmallBoxSlotPatchSchema,
+  pageBulkRegenerateSchema
 } = require("../../validations/admin.validation");
 const { adminSensitiveLimiter } = require("../../config/rateLimits");
 
@@ -24,6 +25,14 @@ router.get("/pages/duplicate-check", asyncHandler(controller.checkDuplicatePages
 
 // 📊 DASHBOARD
 router.get("/dashboard", asyncHandler(controller.getDashboardStats));
+
+// Package 4E — bulk regenerate (before /pages/:slug)
+router.post(
+  "/pages/bulk-regenerate",
+  adminSensitiveLimiter,
+  validateJoi(pageBulkRegenerateSchema, "body"),
+  asyncHandler(controller.bulkRegeneratePages)
+);
 
 // 🩺 System health (admin)
 const systemHealthController = require("../../controllers/admin/systemHealth.controller");

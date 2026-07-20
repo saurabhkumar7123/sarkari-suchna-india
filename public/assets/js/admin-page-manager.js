@@ -159,7 +159,7 @@ function renderBulkBar() {
     <strong>${count} selected</strong>
     <div class="bulk-action-bar__actions">
       <button type="button" class="bulk-action-btn" id="bulkExportBtn">Export slugs</button>
-      <button type="button" class="bulk-action-btn" id="bulkRegenerateBtn" disabled title="Coming soon">Regenerate (soon)</button>
+      <button type="button" class="bulk-action-btn" id="bulkRegenerateBtn">Regenerate</button>
       <button type="button" class="bulk-action-btn bulk-action-btn--danger" id="bulkDeleteBtn">Move to trash</button>
       <button type="button" class="bulk-action-btn" id="bulkClearBtn">Clear</button>
     </div>
@@ -177,6 +177,47 @@ function renderBulkBar() {
     a.click();
     URL.revokeObjectURL(a.href);
     window.AdminUI?.toastSuccess(`Exported ${slugs.length} slug(s)`);
+  });
+  document.getElementById("bulkRegenerateBtn")?.addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const slugs = Array.from(selectedSlugs);
+    if (!slugs.length) return;
+    const ok = await (window.AdminUI && window.AdminUI.simpleConfirm
+      ? window.AdminUI.simpleConfirm({
+          title: "Regenerate selected pages",
+          warnText: "HTML will be rebuilt from stored content.",
+          details: `${slugs.length} page(s) will be regenerated now.`,
+          confirmLabel: "Regenerate"
+        })
+      : Promise.resolve(window.confirm(`Regenerate ${slugs.length} page(s)?`)));
+    if (!ok) return;
+    await (window.AdminUI && window.AdminUI.withLoading
+      ? window.AdminUI.withLoading(btn, async () => {
+          const data = await window.adminSafeFetch("/api/admin/pages/bulk-regenerate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slugs, confirm: true })
+          });
+          if (!data || !data.success) {
+            window.AdminUI?.toastError((data && data.message) || "Regenerate failed");
+            return;
+          }
+          const summary = data.data && data.data.summary ? data.data.summary : {};
+          window.AdminUI?.toastSuccess(
+            `Regenerated ${summary.ok || 0}/${summary.requested || slugs.length}`
+          );
+          selectedSlugs.clear();
+          await loadPageManager();
+        }, "Regenerating...")
+      : (async () => {
+          await window.adminSafeFetch("/api/admin/pages/bulk-regenerate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slugs, confirm: true })
+          });
+          selectedSlugs.clear();
+          await loadPageManager();
+        })());
   });
   document.getElementById("bulkDeleteBtn")?.addEventListener("click", async (e) => {
     const btn = e.currentTarget;

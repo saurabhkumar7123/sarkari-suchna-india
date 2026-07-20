@@ -3,6 +3,7 @@
 const generatorDraftService = require("../../services/generatorDraft.service");
 const { recordActivity } = require("../../services/adminActivity.service");
 const { isGeneratorDraftsEnabled } = require("../../config/generatorDrafts");
+const { isRecruitmentEditorialAttachmentEnabled } = require("../../config/recruitmentLifecycle");
 
 function draftsDisabled(res) {
   return res.status(503).json({
@@ -11,11 +12,55 @@ function draftsDisabled(res) {
   });
 }
 
+function formatDraftSummary(row) {
+  const data = {
+    id: row.id,
+    title: row.title,
+    slugHint: row.slug_hint,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    publishedSlug: row.published_slug,
+    publishedPageId: row.published_page_id,
+    publishedAt: row.published_at
+  };
+  if (isRecruitmentEditorialAttachmentEnabled()) {
+    data.recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
+    data.recruitmentEventId =
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
+  }
+  return data;
+}
+
+function formatDraftDetail(row) {
+  const data = {
+    id: row.id,
+    title: row.title,
+    slugHint: row.slug_hint,
+    payload: row.payload || {},
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+  if (isRecruitmentEditorialAttachmentEnabled()) {
+    data.recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
+    data.recruitmentEventId =
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
+  }
+  return data;
+}
+
 async function listGeneratorDrafts(req, res) {
   if (!isGeneratorDraftsEnabled()) return draftsDisabled(res);
   try {
     const payload = await generatorDraftService.listDrafts({ limit: req.query.limit });
-    return res.json({ success: true, data: payload });
+    const data = {
+      drafts: (payload.drafts || []).map(formatDraftSummary),
+      published: (payload.published || []).map(formatDraftSummary),
+      draftCount: payload.draftCount,
+      maxDrafts: payload.maxDrafts
+    };
+    return res.json({ success: true, data });
   } catch (err) {
     const status = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;
     if (status >= 500) console.error("GENERATOR DRAFT LIST ERROR:", err);
@@ -42,15 +87,7 @@ async function getGeneratorDraft(req, res) {
     }
     return res.json({
       success: true,
-      data: {
-        id: row.id,
-        title: row.title,
-        slugHint: row.slug_hint,
-        payload: row.payload || {},
-        status: row.status,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }
+      data: formatDraftDetail(row)
     });
   } catch (err) {
     const status = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;
@@ -69,7 +106,9 @@ async function saveGeneratorDraft(req, res) {
     const id = body.id != null ? parseInt(String(body.id), 10) : 0;
     const row = await generatorDraftService.saveDraft({
       id: Number.isInteger(id) && id > 0 ? id : null,
-      payload: body.payload
+      payload: body.payload,
+      recruitmentId: body.recruitment_id,
+      recruitmentEventId: body.recruitment_event_id
     });
 
     await recordActivity({
@@ -84,14 +123,7 @@ async function saveGeneratorDraft(req, res) {
 
     return res.json({
       success: true,
-      data: {
-        id: row.id,
-        title: row.title,
-        slugHint: row.slug_hint,
-        status: row.status,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at
-      }
+      data: formatDraftDetail(row)
     });
   } catch (err) {
     await recordActivity({

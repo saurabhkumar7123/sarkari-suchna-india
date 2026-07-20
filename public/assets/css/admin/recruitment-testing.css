@@ -1,0 +1,212 @@
+.recruitment-testing-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.recruitment-testing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.recruitment-testing-help {
+  margin: 0 0 0.75rem;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.recruitment-testing-lookup-summary {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: rgba(59, 130, 246, 0.08);
+  color: #1e3a8a;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.recruitment-testing-save-message {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.recruitment-testing-save-message.is-success {
+  color: #166534;
+}
+
+.recruitment-testing-save-message.is-error {
+  color: #b91c1c;
+}
+
+.recruitment-testing-actions .header-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.recruitment-testing-json-editor {
+  min-height: 280px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.recruitment-testing-card {
+  background: var(--admin-surface, #fff);
+  border: 1px solid var(--admin-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.recruitment-testing-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.recruitment-testing-card label {
+  display: block;
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.recruitment-testing-card textarea,
+.recruitment-testing-card input[type="url"] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--admin-border, #d1d5db);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.recruitment-testing-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.recruitment-testing-actions .is-secondary {
+  background: transparent;
+  border: 1px solid var(--admin-border, #d1d5db);
+}
+
+.recruitment-testing-error {
+  margin-top: 0.75rem;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.recruitment-testing-flow {
+  margin: 0;
+  padding-left: 1.2rem;
+  line-height: 1.8;
+}
+
+.recruitment-testing-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.recruitment-testing-card--full {
+  grid-column: 1 / -1;
+}
+
+.recruitment-testing-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.recruitment-testing-stat {
+  border: 1px solid var(--admin-border, #e5e7eb);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.recruitment-testing-stat__label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.45rem;
+}
+
+.recruitment-testing-stat__value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.recruitment-testing-alert-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.recruitment-testing-alert {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.recruitment-testing-alert.is-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.recruitment-testing-alert.is-info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.recruitment-testing-card h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+}
+
+.recruitment-testing-json--compact {
+  max-height: 160px;
+}
+
+.recruitment-testing-json {
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: auto;
+  max-height: 360px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1200px) {
+  .recruitment-testing-grid {
+    grid-template-columns: 1fr;
+  }
+}

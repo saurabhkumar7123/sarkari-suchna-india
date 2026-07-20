@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
   <link rel="stylesheet" href="/css/admin/generator.css?v=21">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=25">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=26">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=9">
@@ -134,6 +134,25 @@
   <details class="form-accordion" open id="gen-step-advanced">
     <summary>Advanced (Optional)</summary>
     <div class="accordion-grid">
+
+  <section class="generator-card generator-recruitment-context is-hidden" id="generatorRecruitmentContext" data-quick-hide hidden>
+    <h3 class="card-title">Recruitment context (optional)</h3>
+    <p class="field-hint">Link this parked draft to a recruitment lifecycle. Skipping is fine — publish is unaffected.</p>
+    <div class="card-fields card-fields--recruitment-context">
+      <div class="field-group">
+        <label for="draftRecruitmentId">Recruitment</label>
+        <select id="draftRecruitmentId">
+          <option value="">— None —</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="draftRecruitmentEventId">Event (optional)</label>
+        <select id="draftRecruitmentEventId" disabled>
+          <option value="">— None —</option>
+        </select>
+      </div>
+    </div>
+  </section>
 
   <section class="generator-card" data-quick-keep>
     <h3 class="card-title">Visibility / Display Settings</h3>
@@ -452,6 +471,6 @@
 <script src="/js/jobSectionStructure.js"></script>
 <script src="/js/sectionEditorModel.js?v=8"></script>
 <script src="/js/sectionEditor.js?v=15"></script>
-<script src="/js/generator.js?v=12"></script>
+<script src="/js/generator.js?v=14"></script>
 </body>
 </html>

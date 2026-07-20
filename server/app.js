@@ -1537,6 +1537,44 @@ app.get(["/admin/activity", "/admin/activity/", "/admin/activity.html"], verifyT
 app.get(["/admin/homepage-management", "/admin/homepage-management/", "/admin/homepage-management.html"], verifyToken, (req, res) => {
   return sendPrivatePage(res, "admin-homepage-management.html");
 });
+app.get(["/admin/recruitments", "/admin/recruitments/", "/admin/recruitments.html"], verifyToken, (req, res) => {
+  return sendPrivatePage(res, "admin-recruitments.html");
+});
+app.get(
+  ["/admin/editorial-review", "/admin/editorial-review/", "/admin/editorial-review.html"],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-editorial-review.html");
+  }
+);
+app.get(["/admin/recruitment-testing", "/admin/recruitment-testing/", "/admin/recruitment-testing.html"], verifyToken, (req, res) => {
+  return sendPrivatePage(res, "admin-recruitment-testing.html");
+});
+app.get(
+  ["/admin/recruitment-review-queue", "/admin/recruitment-review-queue/", "/admin/recruitment-review-queue.html"],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-recruitment-review-queue.html");
+  }
+);
+app.get(
+  [
+    "/admin/recruitment-runtime-preview",
+    "/admin/recruitment-runtime-preview/",
+    "/admin/recruitment-runtime-preview.html"
+  ],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-recruitment-runtime-preview.html");
+  }
+);
+app.get(
+  ["/admin/seo-diagnostics", "/admin/seo-diagnostics/", "/admin/seo-diagnostics.html"],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-seo-diagnostics.html");
+  }
+);
 app.get("/admin", verifyToken, (req, res) => {
   res.redirect(302, "/admin/dashboard");
 });

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Recruitment Review Queue</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=9">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=1">
+<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=2">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Recruitment Review Queue">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+  <div class="nav-group-title">Admin</div>
+  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
+  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
+  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
+  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
+  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
+  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
+  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
+  <div class="nav-group-title">Content</div>
+  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
+  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
+  <div class="nav-group-title">Homepage</div>
+  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
+  <div class="nav-group-title">System</div>
+  <a href="/admin/recruitment-testing"><span class="nav-ico">🧪</span><span class="nav-text">Recruitment Testing</span></a>
+  <a href="/admin/recruitment-review-queue"><span class="nav-ico">📋</span><span class="nav-text">Review Queue</span></a>
+  <a href="/admin/recruitment-runtime-preview"><span class="nav-ico">👁</span><span class="nav-text">Runtime Preview</span></a>
+  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
+  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-title">📋 Recruitment Review Queue</div>
+    <div class="admin-header-actions">
+      <span class="rrq-badge">Internal · Admin only</span>
+    </div>
+  </div>
+
+  <section class="monitoring-section rrq">
+    <p class="rrq-help">
+      Browse and manage review items saved to <code>recruitment_review_queue</code>.
+      Items are created manually from Recruitment Testing (Save Review Item).
+      No automatic processing — all actions are manual.
+    </p>
+
+    <form id="rrqFilters" class="rrq-filters" autocomplete="off">
+      <label>
+        Search
+        <input type="search" id="filterSearch" name="search" placeholder="Title, URL, ID, recruitment ID">
+      </label>
+      <label>
+        Status
+        <select id="filterStatus" name="status">
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="under_review">Under Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="frozen">Frozen</option>
+        </select>
+      </label>
+      <label>
+        Event type
+        <select id="filterEventType" name="event_type">
+          <option value="">All</option>
+          <option value="notification">notification</option>
+          <option value="short_notification">short_notification</option>
+          <option value="correction">correction</option>
+          <option value="exam_date">exam_date</option>
+          <option value="city_intimation">city_intimation</option>
+          <option value="admit_card">admit_card</option>
+          <option value="answer_key">answer_key</option>
+          <option value="objection">objection</option>
+          <option value="result">result</option>
+          <option value="final_result">final_result</option>
+          <option value="dv">dv</option>
+          <option value="medical">medical</option>
+          <option value="joining">joining</option>
+          <option value="unknown">unknown</option>
+        </select>
+      </label>
+      <label>
+        Recruitment ID
+        <input type="number" id="filterRecruitmentId" name="recruitment_id" min="1" step="1" placeholder="e.g. 42">
+      </label>
+      <div class="rrq-filter-actions">
+        <button type="submit" class="header-action-btn" id="applyFiltersBtn">Apply</button>
+        <button type="button" class="header-action-btn header-action-btn--ghost" id="resetFiltersBtn">Reset</button>
+      </div>
+    </form>
+
+    <p id="rrqListMessage" class="rrq-message" hidden role="status"></p>
+
+    <div class="rrq-layout">
+      <section class="rrq-card rrq-card--list">
+        <div class="rrq-list-head">
+          <h2>Review items</h2>
+          <span id="rrqListMeta" class="rrq-list-meta"></span>
+        </div>
+        <div class="rrq-table-wrap">
+          <table class="rrq-table" aria-label="Recruitment review queue">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Event</th>
+                <th>Recruitment</th>
+                <th>Confidence</th>
+                <th>Created</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="rrqTableBody">
+              <tr><td colspan="8" class="rrq-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rrq-pagination">
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="rrqPrevPage" disabled>Previous</button>
+          <span id="rrqPageLabel" class="rrq-page-label">Page 1</span>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="rrqNextPage" disabled>Next</button>
+        </div>
+      </section>
+
+      <section class="rrq-card rrq-card--detail" id="rrqDetailPanel" hidden>
+        <div class="rrq-detail-head">
+          <h2>Detail</h2>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="rrqCloseDetail">Close</button>
+        </div>
+        <p id="rrqDetailMessage" class="rrq-message" hidden role="status"></p>
+
+        <div class="rrq-detail-meta" id="rrqDetailMeta"></div>
+
+        <section class="rrq-assist" id="rrqDecisionAssist" aria-label="Decision assistant">
+          <h3>Decision Assistant</h3>
+          <p class="rrq-assist-note">
+            Read-only recommendation from matcher output. No automatic approve or reject —
+            human decision is mandatory.
+          </p>
+          <p class="rrq-recommended">
+            Recommended Decision:
+            <strong id="rrqRecommendedDecision">—</strong>
+          </p>
+          <p class="rrq-rationale" id="rrqRecommendedRationale"></p>
+        </section>
+
+        <section class="rrq-comparison" id="rrqComparison" aria-label="Notice vs recruitment comparison">
+          <h3>Comparison</h3>
+          <div class="rrq-comparison-wrap">
+            <table class="rrq-comparison-table" aria-label="Incoming notice compared to selected recruitment">
+              <thead>
+                <tr>
+                  <th scope="col">Field</th>
+                  <th scope="col">Incoming Notice</th>
+                  <th scope="col">Selected Recruitment Candidate</th>
+                </tr>
+              </thead>
+              <tbody id="rrqComparisonBody">
+                <tr><td colspan="3" class="rrq-empty">Select a review item.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="rrq-history" id="rrqHistory" aria-label="Review history">
+          <h3>History</h3>
+          <dl class="rrq-history-grid" id="rrqHistoryGrid"></dl>
+        </section>
+
+        <div class="rrq-actions" id="rrqActions">
+          <button type="button" class="header-action-btn" data-action="approve">Approve</button>
+          <button type="button" class="header-action-btn" data-action="reject">Reject</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review">Mark Under Review</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze">Freeze</button>
+        </div>
+
+        <label class="rrq-notes-label">
+          Notes
+          <textarea id="rrqNotes" rows="4" maxlength="5000" placeholder="Reviewer notes"></textarea>
+        </label>
+        <button type="button" class="header-action-btn" id="rrqSaveNotes">Update Notes</button>
+
+        <div class="rrq-detail-grid">
+          <section>
+            <h3>Title</h3>
+            <pre class="rrq-json" data-field="title"></pre>
+          </section>
+          <section>
+            <h3>Event Type</h3>
+            <pre class="rrq-json" data-field="event_type"></pre>
+          </section>
+          <section>
+            <h3>Confidence</h3>
+            <pre class="rrq-json" data-field="confidence"></pre>
+          </section>
+          <section>
+            <h3>Matched Signals</h3>
+            <pre class="rrq-json" data-field="matchedSignals"></pre>
+          </section>
+          <section>
+            <h3>Conflicting Signals</h3>
+            <pre class="rrq-json" data-field="conflictingSignals"></pre>
+          </section>
+          <section class="rrq-detail-full">
+            <h3>Raw Notice</h3>
+            <pre class="rrq-json" data-field="raw_notice"></pre>
+          </section>
+          <section class="rrq-detail-full">
+            <h3>Normalized Notice</h3>
+            <pre class="rrq-json" data-field="normalized_notice"></pre>
+          </section>
+          <section class="rrq-detail-full">
+            <h3>Processor Output</h3>
+            <pre class="rrq-json" data-field="processor_output"></pre>
+          </section>
+          <section class="rrq-detail-full">
+            <h3>Match Result</h3>
+            <pre class="rrq-json" data-field="match_result"></pre>
+          </section>
+          <section class="rrq-detail-full">
+            <h3>Notes</h3>
+            <pre class="rrq-json" data-field="notes"></pre>
+          </section>
+        </div>
+      </section>
+    </div>
+  </section>
+</div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=9"></script>
+<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=2"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=2"></script>
+</body>
+</html>

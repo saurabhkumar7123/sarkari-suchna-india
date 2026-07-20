@@ -1,0 +1,30 @@
+# RC-1 Deterministic Migration Path
+# DO NOT execute from this file automatically.
+# Apply only with operator authorization after production backup.
+#
+# Order is dependency-aware (not filename lexicographic for same-day files).
+
+1. 2026-05-09-add-pages-badges.sql
+2. 2026-05-16-content-imports.sql
+3. 2026-06-06-add-pages-updated-at.sql
+4. 2026-06-08-add-pages-small-box-slot.sql
+5. 2026-06-14-add-pages-content-updated-at.sql
+6. 2026-06-21-small-box-slots-1-8.sql
+7. 2026-06-26-add-pages-advertisement-no.sql
+8. 2026-06-27-generator-drafts.sql
+9. 2026-07-13-recruitments.sql
+10. 2026-07-13-recruitment-events.sql
+11. 2026-07-13-recruitment-review-queue.sql
+12. 2026-07-13-add-pages-recruitment-linkage.sql
+13. 2026-07-13-add-updates-recruitment-linkage.sql
+14. 2026-07-13-add-generator-drafts-recruitment-linkage.sql
+15. 2026-07-14-recruitment-review-queue-persistence.sql
+
+# OPTIONAL (operator approval required):
+# 16. suggested_indexes.sql
+
+# Notes:
+# - Skip any migration already applied in production.
+# - Parent tables must exist before FK linkage alters.
+# - No duplicate migrations detected in RC-1.
+# - Filenames were NOT renamed to avoid breaking already-documented apply scripts.

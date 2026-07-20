@@ -2,7 +2,7 @@
  * Shared admin sidebar navigation — single source for all admin pages.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "6";
+  const ADMIN_NAV_VERSION = "13";
 
   const SIDEBAR_TOP_HTML = `
   <a href="/admin/dashboard" class="sidebar-brand" title="Admin dashboard">
@@ -25,6 +25,12 @@
   <a href="/admin/sessions" data-nav-path="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
   <a href="/admin/activity" data-nav-path="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
   <a href="/" class="sidebar-view-site" target="_blank" rel="noopener noreferrer"><span class="nav-ico">↗</span><span class="nav-text">View website</span></a>
+  <div class="nav-group-title">Recruitment</div>
+  <a href="/admin/recruitments" data-nav-path="/admin/recruitments"><span class="nav-ico">🗂</span><span class="nav-text">Recruitment Operations</span></a>
+  <a href="/admin/editorial-review" data-nav-path="/admin/editorial-review"><span class="nav-ico">✅</span><span class="nav-text">Editorial Review</span></a>
+  <a href="/admin/recruitments#eventTimeline" data-nav-path="/admin/recruitments" data-nav-alias="events"><span class="nav-ico">📅</span><span class="nav-text">Events</span></a>
+  <a href="/admin/recruitment-runtime-preview" data-nav-path="/admin/recruitment-runtime-preview"><span class="nav-ico">👁</span><span class="nav-text">Shared Preview</span></a>
+  <a href="/admin/seo-diagnostics" data-nav-path="/admin/seo-diagnostics"><span class="nav-ico">🔎</span><span class="nav-text">SEO Diagnostics</span></a>
   <div class="nav-group-title">Publish</div>
   <a href="/generator" data-nav-path="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
   <div class="sidebar-drafts" id="sidebarGeneratorDrafts" aria-label="Generator parked drafts">
@@ -62,6 +68,9 @@
   <a href="/admin/homepage-management" data-nav-path="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
   <div class="sidebar-footer">
     <div class="nav-group-title sidebar-footer__label">System</div>
+    <a href="/admin/recruitment-testing" data-nav-path="/admin/recruitment-testing"><span class="nav-ico">🧪</span><span class="nav-text">Recruitment Testing</span></a>
+    <a href="/admin/recruitment-review-queue" data-nav-path="/admin/recruitment-review-queue"><span class="nav-ico">📋</span><span class="nav-text">Review Queue</span></a>
+    <a href="/admin/recruitment-runtime-preview" data-nav-path="/admin/recruitment-runtime-preview"><span class="nav-ico">👁</span><span class="nav-text">Runtime Preview</span></a>
     <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
     <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
   </div>

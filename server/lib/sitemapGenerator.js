@@ -4,35 +4,25 @@ const fs = require("fs/promises");
 const path = require("path");
 const logger = require("../utils/logger");
 const { getBaseUrl } = require("../utils/baseUrl");
-const { allBoardHubs } = require("./boardHubs");
+const { buildStaticSitemapEntries } = require("./seo/sitemapCoverage");
+const { validateSitemapCoverage } = require("./seo/sitemapValidation");
 
 const OUT_DIR = path.join(process.cwd(), "generated", "sitemap");
 const OUT_FILE = path.join(OUT_DIR, "sitemap.xml");
 const CHUNK_SIZE = Math.max(5000, parseInt(process.env.SITEMAP_CHUNK_SIZE || "40000", 10));
 
-function staticPaths(baseUrl) {
-  const boardTagPaths = allBoardHubs().map((hub) => `/department/${hub.slug}`);
-  const paths = [
-    "/",
-    "/search",
-    "/latest-job",
-    "/result",
-    "/admit-card",
-    "/answer-key",
-    "/document",
-    "/syllabus",
-    "/admission",
-    "/tools/age-calculator",
-    "/tools/image-resizer",
-    "/privacy-policy",
-    "/terms-and-conditions",
-    "/disclaimer",
-    "/content-policy",
-    "/contact-us",
-    "/categories",
-    ...boardTagPaths
-  ];
-  return paths.map((p) => ({ loc: `${baseUrl.replace(/\/$/, "")}${p}`, changefreq: "weekly" }));
+/**
+ * Static + hub coverage (editorial, department, qualification, state, topic).
+ * @param {string} baseUrl
+ * @param {{ topicCategories?: Iterable<string> }} [options]
+ */
+function staticPaths(baseUrl, options = {}) {
+  return buildStaticSitemapEntries(baseUrl, options).map((entry) => ({
+    loc: entry.loc,
+    changefreq: entry.changefreq,
+    kind: entry.kind,
+    path: entry.path
+  }));
 }
 
 function escapeXml(str) {
@@ -93,8 +83,13 @@ async function writeSitemapFile(db) {
   }
 
   await fs.mkdir(OUT_DIR, { recursive: true });
-  const [rows] = await db.query("SELECT slug, created_at FROM pages WHERE deleted=0");
-  const staticRows = staticPaths(siteUrl).map((p) => buildUrlNode({ loc: p.loc, changefreq: p.changefreq }));
+  const [rows] = await db.query(
+    "SELECT slug, created_at, category FROM pages WHERE deleted=0"
+  );
+  const topicCategories = rows.map((row) => row.category).filter(Boolean);
+  const staticRows = staticPaths(siteUrl, { topicCategories }).map((p) =>
+    buildUrlNode({ loc: p.loc, changefreq: p.changefreq })
+  );
   const jobRows = [];
   let newestLastmod = "";
   for (const row of rows) {
@@ -141,7 +136,24 @@ async function writeSitemapFile(db) {
   }));
   await writeSitemapIndex(siteUrl, indexEntries);
 
-  return { path: OUT_FILE, urlCount: staticRows.length + jobRows.length };
+  const allLocs = [
+    ...staticPaths(siteUrl, { topicCategories }).map((p) => p.loc),
+    ...rows
+      .map((row) => String(row.slug || "").trim())
+      .filter(Boolean)
+      .map((slug) => `${siteUrl}/${slug}`)
+  ];
+  const validation = validateSitemapCoverage({
+    locs: allLocs,
+    topicCategories,
+    baseUrl: siteUrl
+  });
+
+  return {
+    path: OUT_FILE,
+    urlCount: staticRows.length + jobRows.length,
+    validation
+  };
 }
 
 /**
@@ -174,5 +186,6 @@ module.exports = {
   OUT_FILE,
   staticPaths,
   writeSitemapFile,
-  ensureSitemapExists
+  ensureSitemapExists,
+  validateSitemapCoverage
 };

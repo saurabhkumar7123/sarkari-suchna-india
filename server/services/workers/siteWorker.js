@@ -24,6 +24,24 @@ const {
   buildBatchUpdateMessage,
   buildPreDisableWarningMessage
 } = require("../updates/telegramNotifier");
+const { isRecruitmentPipelineEnabled } = require("../../config/recruitmentPipeline");
+const { runRecruitmentPipeline } = require("../../lib/recruitment/runRecruitmentPipeline");
+const {
+  evaluateRecruitmentEligibility
+} = require("../../lib/recruitment/recruitmentEligibility");
+const {
+  lookupRecruitmentCandidatesForRuntime
+} = require("../recruitmentCandidateLookup.service");
+const {
+  recordRuntimePreviewFromPipeline
+} = require("../recruitmentRuntimePreview.service");
+const {
+  buildPreviewLifecycleArchitecture
+} = require("../../lib/recruitment/previewRuntimeWiring");
+const { peekRecruitmentActionPlan } = require("../../lib/recruitment/recruitmentCompatibilityLayer");
+const {
+  observeRecruitmentActionPlan
+} = require("../../lib/recruitment/recruitmentWorkerObservation");
 
 const COOLDOWN_MINUTES = parseInt(process.env.UPDATE_ALERT_COOLDOWN_MINUTES || "10", 10);
 const FAIL_DISABLE_THRESHOLD = 5;
@@ -187,12 +205,142 @@ async function processSiteJob(job) {
       return { changed: true, savedCount, telegramFailed: true };
     }
 
+    const recruitmentPipelineEnabled = isRecruitmentPipelineEnabled();
+
     for (const item of pendingBatch) {
-      await insertDetectedUpdate({
+      const updateId = await insertDetectedUpdate({
         siteId,
         title: item.title || "New update",
         link: item.link || ""
       });
+
+      if (recruitmentPipelineEnabled) {
+        // Monitoring items only expose title + link (no separate body text).
+        const notice = {
+          title: item.title || "New update",
+          content: item.title || "New update",
+          url: item.link || ""
+        };
+
+        // Phase 31.C — read-only candidate lookup (SELECT). Never persists.
+        let candidateRecruitments = [];
+        let lookupSummary = {
+          status: "skipped",
+          strategy: "insufficient_criteria",
+          candidateCount: 0
+        };
+        try {
+          const lookup = await lookupRecruitmentCandidatesForRuntime({ notice });
+          candidateRecruitments = Array.isArray(lookup.candidates) ? lookup.candidates : [];
+          lookupSummary = lookup.lookupSummary || lookupSummary;
+          if (lookupSummary.status === "failed") {
+            logger.warn("updates-worker: recruitment candidate lookup failed", {
+              siteId,
+              strategy: lookupSummary.strategy,
+              message: lookupSummary.message
+            });
+          }
+        } catch (lookupErr) {
+          candidateRecruitments = [];
+          lookupSummary = {
+            status: "failed",
+            strategy: "lookup_error",
+            candidateCount: 0,
+            message:
+              lookupErr && lookupErr.message ? lookupErr.message : String(lookupErr)
+          };
+          logger.warn("updates-worker: recruitment candidate lookup failed", {
+            siteId,
+            message: lookupSummary.message
+          });
+        }
+
+        const pipelineOutcome = runRecruitmentPipeline({
+          notice,
+          candidateRecruitments,
+          isEnabled: true,
+          updateId
+        });
+
+        // Phase 73 — action plan observation only. Never executes or persists.
+        try {
+          observeRecruitmentActionPlan(peekRecruitmentActionPlan(pipelineOutcome));
+        } catch (observationErr) {
+          logger.warn("updates-worker: recruitment action plan observation skipped", {
+            siteId,
+            message:
+              observationErr && observationErr.message
+                ? observationErr.message
+                : String(observationErr)
+          });
+        }
+
+        // Phase 32 — eligibility evaluation only (never persists / never enqueues).
+        let eligibility = null;
+        try {
+          const eligibilityInput = pipelineOutcome.failed
+            ? {
+                criticalFailure: true,
+                lookupSummary,
+                eventType: null,
+                status: null
+              }
+            : {
+                ...(pipelineOutcome.result || {}),
+                lookupSummary
+              };
+          eligibility = evaluateRecruitmentEligibility(eligibilityInput);
+        } catch (eligibilityErr) {
+          logger.warn("updates-worker: recruitment eligibility evaluation skipped", {
+            siteId,
+            message:
+              eligibilityErr && eligibilityErr.message
+                ? eligibilityErr.message
+                : String(eligibilityErr)
+          });
+        }
+
+        // Phase 41 — preview-first architecture wiring (observation only).
+        // Never persists, never enqueues, never starts transactions.
+        let lifecycleArchitecture = null;
+        try {
+          lifecycleArchitecture = buildPreviewLifecycleArchitecture({
+            eligibility,
+            pipelineOutcome,
+            lookupSummary,
+            updateId,
+            notice
+          });
+        } catch (wiringErr) {
+          logger.warn("updates-worker: recruitment preview wiring skipped", {
+            siteId,
+            message:
+              wiringErr && wiringErr.message ? wiringErr.message : String(wiringErr)
+          });
+        }
+
+        // Phase 30/31.B/C/32/41 — preview only (in-memory). Never persists review items.
+        try {
+          recordRuntimePreviewFromPipeline({
+            pipelineOutcome,
+            monitoredSite: {
+              id: siteId,
+              name: site && site.name ? site.name : null,
+              url: site && site.url ? site.url : null
+            },
+            notice,
+            updateId,
+            lookupSummary,
+            eligibility,
+            lifecycleArchitecture
+          });
+        } catch (previewErr) {
+          logger.warn("updates-worker: recruitment runtime preview skipped", {
+            siteId,
+            message: previewErr && previewErr.message ? previewErr.message : String(previewErr)
+          });
+        }
+      }
     }
     if (result.baselineFingerprint) {
       await saveSiteBaseline(siteId, result.baselineFingerprint);

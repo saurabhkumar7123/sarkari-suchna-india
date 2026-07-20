@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Recruitment Operations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=10">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=2">
+<link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=1">
+<link rel="stylesheet" href="/css/admin/shared-preview.css?v=1">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Recruitment Operations">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Admin Panel</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-title">Recruitment Operations</div>
+    <div class="admin-header-actions rom-header-links">
+      <a class="header-action-btn rom-secondary" href="/admin/dashboard" style="text-decoration:none;">Dashboard</a>
+      <a class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review</a>
+      <a class="header-action-btn rom-secondary" href="/admin/recruitments#eventTimeline" style="text-decoration:none;">Events</a>
+      <button type="button" class="header-action-btn" id="newRecruitmentBtn">+ New recruitment</button>
+    </div>
+  </div>
+
+  <section class="rom-workflow" aria-label="Recruitment workflow">
+    <span class="rom-workflow__step is-current" data-workflow-step="recruitment">1. Recruitment</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="events">2. Events</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="links">3. Page Links</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="review">Ready for Review</span>
+  </section>
+
+  <p id="operationsMessage" class="rom-message" hidden role="status"></p>
+
+  <div class="rom-layout">
+    <section class="rom-card rom-list-panel">
+      <div class="rom-card__head">
+        <div>
+          <h1>Recruitment Manager</h1>
+          <p id="recruitmentCount">0 recruitments</p>
+        </div>
+      </div>
+      <form id="recruitmentFilters" class="rom-filters">
+        <label>Search
+          <input id="recruitmentSearch" type="search" maxlength="200" placeholder="Title, slug, department, post or advert" list="recruitmentRecentSearches">
+          <datalist id="recruitmentRecentSearches"></datalist>
+        </label>
+        <label>Status
+          <select id="recruitmentStateFilter">
+            <option value="">All statuses</option>
+            <option value="announced">Announced</option>
+            <option value="open">Open</option>
+            <option value="exam_scheduled">Exam scheduled</option>
+            <option value="post_exam">Post exam</option>
+            <option value="results">Results</option>
+            <option value="closed">Archived / closed</option>
+          </select>
+        </label>
+        <label>Cycle year
+          <input id="recruitmentYearFilter" type="number" min="1900" max="9999" placeholder="2026">
+        </label>
+        <div class="rom-filter-actions">
+          <button type="submit" class="header-action-btn">Apply</button>
+          <button type="button" class="header-action-btn rom-secondary" id="clearFiltersBtn">Clear</button>
+          <button type="button" class="header-action-btn rom-secondary" id="saveFilterBtn">Save filter</button>
+        </div>
+        <div class="rom-saved-filters" id="savedFiltersBar" hidden>
+          <span class="rom-saved-filters__label">Saved:</span>
+          <div id="savedFiltersList" class="rom-saved-filters__list"></div>
+        </div>
+      </form>
+      <div class="rom-bulk-bar" id="recruitmentBulkBar" hidden>
+        <label class="rom-bulk-select-all"><input type="checkbox" id="bulkSelectAll"> Select page</label>
+        <span id="bulkSelectedCount">0 selected</span>
+        <select id="bulkActionSelect" aria-label="Bulk action">
+          <option value="">Bulk action…</option>
+          <option value="archive">Bulk Archive</option>
+          <option value="restore">Bulk Restore</option>
+          <option value="status_update">Bulk Status Update</option>
+          <option value="category_update">Bulk Category Update</option>
+          <option value="assignment">Bulk Assignment</option>
+          <option value="delete">Bulk Delete</option>
+        </select>
+        <button type="button" class="header-action-btn" id="bulkApplyBtn">Apply</button>
+      </div>
+      <div class="rom-table-wrap">
+        <table class="rom-table">
+          <thead><tr><th class="rom-check-col"></th><th>Recruitment</th><th>Department</th><th>Year</th><th>Status</th></tr></thead>
+          <tbody id="recruitmentRows"></tbody>
+        </table>
+      </div>
+      <div class="rom-pagination">
+        <button type="button" class="header-action-btn rom-secondary" id="recruitmentPrev">Previous</button>
+        <span id="recruitmentPageLabel">Page 1</span>
+        <button type="button" class="header-action-btn rom-secondary" id="recruitmentNext">Next</button>
+      </div>
+    </section>
+
+    <section class="rom-detail-panel">
+      <div id="recruitmentEmpty" class="rom-card rom-empty">
+        <h2>Select a recruitment</h2>
+        <p>Choose a recruitment from the list or create a new one.</p>
+      </div>
+
+      <div id="recruitmentEditor" hidden>
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div><h2 id="recruitmentFormTitle">Recruitment</h2><p>Manage the recruitment record.</p></div>
+            <button type="button" class="header-action-btn rom-danger" id="archiveRecruitmentBtn">Archive</button>
+          </div>
+          <form id="recruitmentForm" class="rom-form">
+            <input id="recruitmentId" type="hidden">
+            <label class="rom-span-2">Title<input id="recruitmentTitle" required maxlength="500"></label>
+            <label>Slug<input id="recruitmentSlug" required maxlength="255"></label>
+            <label>Department<input id="recruitmentDepartment" maxlength="128"></label>
+            <label class="rom-span-2">Post name<input id="recruitmentPostName" maxlength="512"></label>
+            <label>Advertisement no.<input id="recruitmentAdvertisement" maxlength="128"></label>
+            <label>Cycle year<input id="recruitmentCycleYear" type="number" min="1900" max="9999"></label>
+            <label>Status
+              <select id="recruitmentLifecycle">
+                <option value="announced">Announced</option><option value="open">Open</option>
+                <option value="exam_scheduled">Exam scheduled</option><option value="post_exam">Post exam</option>
+                <option value="results">Results</option><option value="closed">Closed</option>
+              </select>
+            </label>
+            <div class="rom-form-actions rom-span-2">
+              <button type="submit" class="header-action-btn">Save recruitment</button>
+              <button type="button" class="header-action-btn rom-secondary" id="cancelRecruitmentBtn">Cancel</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div><h2>Recruitment Events</h2><p>Ordered lifecycle timeline with manual statuses.</p></div>
+            <button type="button" class="header-action-btn" id="addEventBtn">+ Add event</button>
+          </div>
+          <form id="eventForm" class="rom-inline-form" hidden>
+            <input id="eventId" type="hidden">
+            <label>Event type<select id="eventType" required></select></label>
+            <label>Order<input id="eventOrder" type="number" min="0" max="65535" value="0"></label>
+            <label>Status<select id="eventStatus"><option>pending</option><option>active</option><option>superseded</option><option>cancelled</option></select></label>
+            <div class="rom-form-actions"><button type="submit" class="header-action-btn">Save</button><button type="button" class="header-action-btn rom-secondary" id="cancelEventBtn">Cancel</button></div>
+          </form>
+          <ol id="eventTimeline" class="rom-timeline"></ol>
+        </section>
+
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div><h2>Recruitment Page Links</h2><p>Attach existing CMS pages. This does not publish anything.</p></div>
+          </div>
+          <form id="pageLinkForm" class="rom-link-form">
+            <label>Page slug<input id="pageLinkSlug" required maxlength="255" placeholder="ssc-cgl-2026"></label>
+            <label>Event (optional)<select id="pageLinkEvent"><option value="">Recruitment-level link</option></select></label>
+            <button type="button" class="header-action-btn rom-secondary" id="validatePageBtn">Validate</button>
+            <button type="submit" class="header-action-btn">Attach page</button>
+          </form>
+          <p id="pageValidationStatus" class="rom-validation" hidden></p>
+          <div class="rom-table-wrap">
+            <table class="rom-table">
+              <thead><tr><th>Page</th><th>Attached event</th><th>Link status</th><th></th></tr></thead>
+              <tbody id="pageLinkRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div>
+              <h2>Generator Draft Binding</h2>
+              <p>Attach, detach, or replace parked generator drafts. Binding status is display-only.</p>
+            </div>
+            <span id="draftBindingStatus" class="rom-status">No Draft</span>
+          </div>
+          <p id="draftWorkflowLine" class="rom-validation">Workflow: Draft Created</p>
+          <form id="draftBindForm" class="rom-link-form">
+            <label>Available draft
+              <select id="draftBindSelect" required>
+                <option value="">Select an unbound draft</option>
+              </select>
+            </label>
+            <button type="button" class="header-action-btn rom-secondary" id="refreshDraftsBtn">Refresh drafts</button>
+            <button type="submit" class="header-action-btn" id="attachDraftBtn">Attach draft</button>
+            <button type="button" class="header-action-btn" id="replaceDraftBtn">Replace linked</button>
+          </form>
+          <div class="rom-table-wrap">
+            <table class="rom-table">
+              <thead><tr><th>Draft</th><th>Updated</th><th>Role</th><th></th></tr></thead>
+              <tbody id="draftBindingRows"></tbody>
+            </table>
+          </div>
+          <div class="rom-form-actions" style="margin-top:.75rem;">
+            <a id="openEditorialReviewBtn" class="header-action-btn" href="/admin/editorial-review" style="text-decoration:none;">Open Review Workspace</a>
+          </div>
+        </section>
+
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div>
+              <h2>Shared Runtime Preview</h2>
+              <p>Authoritative preview shared with Editorial Review. Manual refresh only.</p>
+            </div>
+          </div>
+          <div id="sharedPreviewPanel" class="spv-panel"></div>
+        </section>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=12"></script>
+<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-ops-notifications.js?v=1"></script>
+<script src="/js/admin-ops-search.js?v=1"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=3"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-shared-preview.js?v=1"></script>
+<script src="/js/admin-recruitment-operations.js?v=3"></script>
+</body>
+</html>

@@ -9,6 +9,10 @@ const logger = require("../../utils/logger");
 const { auditInvalidBoardDepartment } = require("../../lib/structuredFields");
 const pipeline = require("../../../generator/pipeline/generatePage");
 const { analyzeJobContent } = require("../../../generator/analysis/contentAnalysis");
+const { isRecruitmentEditorialAttachmentEnabled } = require("../../config/recruitmentLifecycle");
+const generatorDraftService = require("../../services/generatorDraft.service");
+const recruitmentPageLinkService = require("../../services/recruitmentPageLink.service");
+const { runPostPublishRecruitmentLink } = require("../../lib/postPublishRecruitmentLink");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
@@ -474,6 +478,30 @@ const generatePage = async (req, res) => {
     if (oldSlug) cacheSlugs.push(String(oldSlug).trim().replace(/^\/+|\.html$/gi, ""));
     cacheSlugs.push(slug);
     await invalidatePageCaches(cacheSlugs);
+
+    const linkResult = await runPostPublishRecruitmentLink({
+      savedPageId,
+      body: req.body || {},
+      getDraftById: (id) => generatorDraftService.getDraftById(id),
+      linkPage: recruitmentPageLinkService.linkPage,
+      isEnabled: isRecruitmentEditorialAttachmentEnabled()
+    });
+    if (linkResult.linked === false && linkResult.error) {
+      logger.warn("generator: post-publish recruitment link failed", {
+        slug,
+        pageId: savedPageId,
+        message:
+          linkResult.error && linkResult.error.message
+            ? linkResult.error.message
+            : String(linkResult.error)
+      });
+    } else if (linkResult.linked) {
+      logger.info("generator: post-publish recruitment link applied", {
+        slug,
+        pageId: savedPageId,
+        recruitmentId: linkResult.recruitment_id
+      });
+    }
 
     const pageTarget = formatPageTarget(slug, title);
     if (!oldSlugNormalized) {

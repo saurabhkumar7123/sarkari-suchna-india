@@ -295,9 +295,33 @@ async function loadChartsData() {
   renderChartsFromPages(res.data);
 }
 
+async function loadProductivityWidgets() {
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+  const res = await window.adminSafeFetch("/api/admin/admin-productivity");
+  if (!res || !res.success || !res.data) {
+    set("opsPendingReviews", "—");
+    set("opsActiveRecruitments", "—");
+    set("opsDraftsWaiting", "—");
+    set("opsBrokenPageLinks", "—");
+    set("opsValidationWarnings", "—");
+    set("kpiActiveRecruitments", "—");
+    return;
+  }
+  const d = res.data;
+  set("opsPendingReviews", d.pendingReviews ?? 0);
+  set("opsActiveRecruitments", d.activeRecruitments ?? 0);
+  set("opsDraftsWaiting", d.draftsWaiting ?? 0);
+  set("opsBrokenPageLinks", d.brokenPageLinks ?? 0);
+  set("opsValidationWarnings", d.validationWarnings ?? 0);
+  set("kpiActiveRecruitments", d.activeRecruitments ?? 0);
+}
+
 async function initAdminDashboard() {
   loadPendingDraftMetric();
-  await loadStatsCards();
+  await Promise.all([loadStatsCards(), loadProductivityWidgets()]);
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
   updateLiveStripLabel();
   window.AdminPageToolbar?.markUpdated?.();

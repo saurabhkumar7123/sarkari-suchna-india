@@ -1,0 +1,120 @@
+/* Package 4F — SEO Diagnostics panel styles */
+.seo-help,
+.seo-message {
+  margin: 0 0 1rem;
+  color: var(--admin-muted, #52606d);
+  max-width: 52rem;
+}
+
+.seo-message.is-error {
+  color: #b42318;
+}
+
+.seo-card {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 1rem 1.15rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.seo-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.seo-card h1,
+.seo-card h2,
+.seo-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.seo-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.seo-kpi {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #f8fafc;
+}
+
+.seo-kpi__label {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.seo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.seo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.seo-list li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 0.88rem;
+}
+
+.seo-empty {
+  color: #64748b;
+}
+
+.seo-page-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.seo-page-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.seo-page-form input {
+  min-width: 16rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  border-radius: 8px;
+}
+
+.seo-page-results {
+  display: grid;
+  gap: 1rem;
+}
+
+.seo-page-block {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  padding-top: 0.75rem;
+}
+
+.seo-disclaimer {
+  color: #9a3412;
+  font-size: 0.9rem;
+}
+
+.seo-report ul {
+  margin: 0.35rem 0 0.85rem;
+  padding-left: 1.1rem;
+}
