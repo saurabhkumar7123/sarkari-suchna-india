@@ -464,12 +464,138 @@
     toastSuccess("ACC settings saved on the server.");
   }
 
+  const ACC_SECTION_IDS = [
+    "accDashboard",
+    "accSources",
+    "accRecruitments",
+    "accReview",
+    "accDrafts",
+    "accWorkflow",
+    "accInsights",
+    "accMonitoring",
+    "accAudit",
+    "accSettings"
+  ];
+
+  function getAccTabs() {
+    return [...document.querySelectorAll(".acc-tab[data-acc-tab]")];
+  }
+
+  function getAccSections() {
+    return ACC_SECTION_IDS.map((id) => qs(id)).filter(Boolean);
+  }
+
+  function activateAccTab(sectionId, options) {
+    const opts = options || {};
+    const targetId = ACC_SECTION_IDS.includes(sectionId) ? sectionId : "accDashboard";
+    const tabs = getAccTabs();
+    const sections = getAccSections();
+    const searching = Boolean((qs("accGlobalSearch")?.value || "").trim());
+
+    tabs.forEach((tab) => {
+      const isActive = tab.getAttribute("data-acc-tab") === targetId;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+
+    sections.forEach((section) => {
+      const isActive = section.id === targetId;
+      section.classList.toggle("is-acc-tab-active", isActive);
+      if (!searching) {
+        if (isActive) section.removeAttribute("hidden");
+        else section.setAttribute("hidden", "");
+      }
+    });
+
+    if (opts.focusTab) {
+      const activeTab = tabs.find((tab) => tab.getAttribute("data-acc-tab") === targetId);
+      activeTab?.focus();
+    }
+
+    if (opts.scrollIntoView) {
+      const panel = qs(targetId);
+      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    // Presentation-only: charts created while a panel was hidden need a resize pass.
+    if (typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".acc-section.is-acc-tab-active canvas").forEach((canvas) => {
+          Chart.getChart(canvas)?.resize();
+        });
+      });
+    }
+  }
+
+  function resolveInitialAccTab() {
+    const hashId = (window.location.hash || "").replace(/^#/, "");
+    if (ACC_SECTION_IDS.includes(hashId)) return hashId;
+    return "accDashboard";
+  }
+
+  function bindAccTabNavigation() {
+    const tablist = document.querySelector(".acc-section-nav[role='tablist']");
+    if (!tablist) return;
+
+    tablist.addEventListener("click", (event) => {
+      const tab = event.target.closest(".acc-tab[data-acc-tab]");
+      if (!tab || !tablist.contains(tab)) return;
+      activateAccTab(tab.getAttribute("data-acc-tab"));
+    });
+
+    tablist.addEventListener("keydown", (event) => {
+      const tabs = getAccTabs();
+      if (!tabs.length) return;
+      const current = event.target.closest(".acc-tab[data-acc-tab]");
+      if (!current || !tablist.contains(current)) return;
+
+      const index = tabs.indexOf(current);
+      if (index < 0) return;
+
+      let nextIndex = null;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+        nextIndex = (index + 1) % tabs.length;
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        nextIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (event.key === "Home") {
+        nextIndex = 0;
+      } else if (event.key === "End") {
+        nextIndex = tabs.length - 1;
+      } else if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        activateAccTab(current.getAttribute("data-acc-tab"));
+        return;
+      }
+
+      if (nextIndex === null) return;
+      event.preventDefault();
+      activateAccTab(tabs[nextIndex].getAttribute("data-acc-tab"), { focusTab: true });
+    });
+
+    window.addEventListener("hashchange", () => {
+      const hashId = (window.location.hash || "").replace(/^#/, "");
+      if (ACC_SECTION_IDS.includes(hashId)) {
+        activateAccTab(hashId, { scrollIntoView: true });
+      }
+    });
+  }
+
   function filterSections() {
     const query = (qs("accGlobalSearch")?.value || "").trim().toLowerCase();
-    document.querySelectorAll("[data-acc-searchable]").forEach((section) => {
+    const main = document.querySelector(".acc-main");
+    const sections = document.querySelectorAll("[data-acc-searchable]");
+    main?.classList.toggle("acc-is-searching", Boolean(query));
+
+    sections.forEach((section) => {
       const hay = `${section.getAttribute("data-acc-searchable") || ""} ${section.textContent || ""}`.toLowerCase();
       section.classList.toggle("acc-hidden-by-search", Boolean(query) && !hay.includes(query));
     });
+
+    if (!query) {
+      const activeTab = document.querySelector(".acc-tab.is-active[data-acc-tab]");
+      activateAccTab(activeTab?.getAttribute("data-acc-tab") || "accDashboard");
+    }
   }
 
   function renderAll() {
@@ -489,6 +615,7 @@
   }
 
   function bindEvents() {
+    bindAccTabNavigation();
     qs("accRefreshBtn")?.addEventListener("click", async () => {
       await loadSnapshot();
       renderAll();
@@ -541,6 +668,7 @@
 
   async function init() {
     bindEvents();
+    activateAccTab(resolveInitialAccTab());
     await loadSnapshot();
     renderAll();
   }
