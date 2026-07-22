@@ -1,18 +1,10 @@
-/* Package 4D — Shared Runtime Preview panel (used by Recruitment
-   Operations and Editorial Review). */
+/**
+ * Package 4D — Shared Runtime Preview panel
+ * (Recruitment Operations + Editorial Review)
+ */
 
 .spv-panel {
   display: block;
-}
-
-.spv-empty {
-  padding: 1rem 0;
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.spv-empty.is-error {
-  color: #b91c1c;
 }
 
 .spv-head {
@@ -20,13 +12,13 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.55rem;
 }
 
 .spv-version {
   display: block;
-  color: #64748b;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--admin-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.72rem;
   margin-top: 0.15rem;
 }
@@ -35,80 +27,59 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-
-.spv-badge {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #334155;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.spv-badge.is-ok,
-.spv-badge.is-approved {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.spv-badge.is-fail,
-.spv-badge.is-rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.spv-badge.is-warn,
-.spv-badge.is-review_pending,
-.spv-badge.is-in_review,
-.spv-badge.is-changes_requested {
-  background: #fef3c7;
-  color: #92400e;
+  margin-bottom: 0.85rem;
 }
 
 .spv-grid {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.3rem 0.9rem;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.35rem 0.9rem;
   margin: 0;
   font-size: 0.82rem;
 }
 
 .spv-grid dt {
-  color: #64748b;
-  font-weight: 600;
+  color: var(--admin-muted);
+  font-weight: 700;
 }
 
 .spv-grid dd {
   margin: 0;
-  color: #1e293b;
+  color: var(--admin-text);
   overflow-wrap: anywhere;
 }
 
 .spv-issues {
-  margin: 0.75rem 0 0;
-  padding-left: 1.1rem;
+  margin: 0.85rem 0 0;
+  padding-left: 1.15rem;
   font-size: 0.8rem;
+  color: var(--admin-text-secondary);
 }
 
 .spv-issues li.is-error {
-  color: #b91c1c;
+  color: var(--admin-danger);
 }
 
 .spv-issues li.is-warning {
-  color: #92400e;
+  color: var(--admin-warning);
 }
 
 .spv-missing {
-  margin: 0.6rem 0 0;
+  margin: 0.65rem 0 0;
   font-size: 0.78rem;
-  color: #92400e;
+  color: var(--admin-warning);
+  line-height: 1.4;
 }
 
 .spv-note {
-  margin: 0.75rem 0 0;
+  margin: 0.85rem 0 0;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--admin-muted);
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .spv-grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,51 +1,52 @@
-.recruitment-testing-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: rgba(245, 158, 11, 0.15);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+/**
+ * Recruitment Testing — page-specific presentation.
+ * Shared primitives live in recruitment-module.css.
+ */
+
+.recruitment-testing .manager-header {
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-5);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+.recruitment-testing .manager-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--admin-text);
+}
+
+.recruitment-testing .manager-hint {
+  margin: 0.4rem 0 0;
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 52rem;
 }
 
 .recruitment-testing-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.recruitment-testing-help {
-  margin: 0 0 0.75rem;
-  color: #64748b;
-  font-size: 0.88rem;
-  line-height: 1.5;
+  gap: var(--admin-space-4);
+  margin-bottom: var(--admin-space-4);
 }
 
 .recruitment-testing-lookup-summary {
   margin: 0 0 0.85rem;
-  padding: 0.7rem 0.85rem;
-  border-radius: 8px;
-  border: 1px solid rgba(59, 130, 246, 0.28);
-  background: rgba(59, 130, 246, 0.08);
-  color: #1e3a8a;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--admin-info) 28%, transparent);
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
   font-size: 0.86rem;
   line-height: 1.45;
 }
 
 .recruitment-testing-save-message {
   margin-top: 0.75rem;
-  font-size: 0.9rem;
-}
-
-.recruitment-testing-save-message.is-success {
-  color: #166534;
-}
-
-.recruitment-testing-save-message.is-error {
-  color: #b91c1c;
 }
 
 .recruitment-testing-actions .header-action-btn:disabled {
@@ -55,69 +56,55 @@
 
 .recruitment-testing-json-editor {
   min-height: 280px;
-  font-family: Consolas, "Courier New", monospace;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
   font-size: 0.85rem;
   line-height: 1.45;
-}
-
-.recruitment-testing-card {
-  background: var(--admin-surface, #fff);
-  border: 1px solid var(--admin-border, #e5e7eb);
-  border-radius: 12px;
-  padding: 1rem 1.1rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.recruitment-testing-card h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
 }
 
 .recruitment-testing-card label {
   display: block;
   margin: 0.75rem 0 0.35rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--admin-muted);
 }
 
 .recruitment-testing-card textarea,
 .recruitment-testing-card input[type="url"] {
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--admin-border, #d1d5db);
-  border-radius: 8px;
-  padding: 0.65rem 0.75rem;
-  font: inherit;
-  resize: vertical;
 }
 
 .recruitment-testing-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.recruitment-testing-actions .is-secondary {
-  background: transparent;
-  border: 1px solid var(--admin-border, #d1d5db);
+  margin-top: var(--admin-space-4);
 }
 
 .recruitment-testing-error {
   margin-top: 0.75rem;
-  color: #b91c1c;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--admin-radius-sm);
   font-size: 0.9rem;
 }
 
 .recruitment-testing-flow {
   margin: 0;
-  padding-left: 1.2rem;
-  line-height: 1.8;
+  padding-left: 1.25rem;
+  line-height: 1.85;
+  color: var(--admin-text-secondary);
+  font-size: 0.9rem;
+}
+
+.recruitment-testing-flow li::marker {
+  color: var(--admin-brand);
+  font-weight: 700;
 }
 
 .recruitment-testing-results {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: var(--admin-space-4);
 }
 
 .recruitment-testing-card--full {
@@ -128,85 +115,77 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.85rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--admin-space-4);
 }
 
 .recruitment-testing-stat {
-  border: 1px solid var(--admin-border, #e5e7eb);
-  border-radius: 10px;
-  padding: 0.75rem;
-  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 0.85rem;
+  background: var(--admin-surface-2);
 }
 
 .recruitment-testing-stat__label {
   display: block;
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #64748b;
+  color: var(--admin-muted);
   margin-bottom: 0.45rem;
 }
 
 .recruitment-testing-stat__value {
   font-size: 1.35rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: var(--admin-text);
+  letter-spacing: -0.02em;
 }
 
 .recruitment-testing-alert-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--admin-space-4);
 }
 
 .recruitment-testing-alert {
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--admin-radius-pill);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid transparent;
 }
 
 .recruitment-testing-alert.is-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+  border-color: color-mix(in srgb, var(--admin-warning) 35%, transparent);
 }
 
 .recruitment-testing-alert.is-info {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
-  border: 1px solid rgba(59, 130, 246, 0.28);
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
+  border-color: color-mix(in srgb, var(--admin-info) 28%, transparent);
 }
 
 .recruitment-testing-card h3 {
   margin: 0 0 0.65rem;
   font-size: 0.92rem;
-}
-
-.recruitment-testing-json--compact {
-  max-height: 160px;
-}
-
-.recruitment-testing-json {
-  margin: 0;
-  padding: 0.85rem;
-  border-radius: 8px;
-  background: #0f172a;
-  color: #e2e8f0;
-  overflow: auto;
-  max-height: 360px;
-  font-size: 0.82rem;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-weight: 800;
+  color: var(--admin-text);
 }
 
 @media (max-width: 1200px) {
   .recruitment-testing-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .recruitment-testing-actions .header-action-btn {
+    flex: 1 1 auto;
   }
 }

@@ -22,12 +22,8 @@
 }
 
 body.standalone-admin-page #adminConfirmModalHost{
-  left:250px;
+  left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
   width:auto;
-}
-
-body.standalone-admin-page.sidebar-collapsed #adminConfirmModalHost{
-  left:72px;
 }
 
 body.admin-confirm-open.standalone-admin-page .sidebar,

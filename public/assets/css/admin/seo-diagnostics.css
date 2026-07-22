@@ -11,8 +11,8 @@
 }
 
 .seo-card {
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--admin-surface, #fff);
+  border: 1px solid var(--admin-border, rgba(15, 23, 42, 0.08));
   border-radius: 12px;
   padding: 1rem 1.15rem 1.2rem;
   margin-bottom: 1rem;
@@ -40,10 +40,10 @@
 }
 
 .seo-kpi {
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--admin-border, rgba(15, 23, 42, 0.06));
   border-radius: 10px;
   padding: 0.75rem;
-  background: #f8fafc;
+  background: var(--admin-surface-2, #f8fafc);
 }
 
 .seo-kpi__label {

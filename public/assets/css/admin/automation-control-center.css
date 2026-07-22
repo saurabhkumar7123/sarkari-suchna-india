@@ -214,31 +214,107 @@ body.admin-saas-v2 .acc-main {
   top: 88px;
   z-index: 30;
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  overflow: auto;
-  padding: 10px;
+  padding: 12px;
   margin-bottom: 20px;
 }
 
-.acc-section-nav a {
-  flex: 0 0 auto;
-  padding: 10px 14px;
-  border-radius: 999px;
-  text-decoration: none;
+.acc-tab {
+  appearance: none;
+  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--admin-radius, 14px);
+  background: rgba(148, 163, 184, 0.12);
   color: var(--acc-muted);
+  font: inherit;
   font-size: 13px;
   font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
 
-.acc-section-nav a:hover,
-.acc-section-nav a:focus-visible {
+.acc-tab:hover {
   background: rgba(37, 99, 235, 0.1);
   color: var(--acc-brand);
+}
+
+.acc-tab:focus {
   outline: none;
+}
+
+.acc-tab:focus-visible {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+}
+
+.acc-tab.is-active,
+.acc-tab[aria-selected="true"] {
+  background: var(--acc-brand);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+  transform: translateY(-1px);
+}
+
+.acc-tab.is-active:hover,
+.acc-tab[aria-selected="true"]:hover {
+  background: var(--admin-brand-hover, #1d4ed8);
+  color: #fff;
 }
 
 .acc-section {
   margin-bottom: 20px;
+}
+
+.acc-section[hidden] {
+  display: none !important;
+}
+
+.acc-section.is-acc-tab-active:not([hidden]) {
+  animation: acc-tab-panel-in 200ms ease;
+}
+
+@keyframes acc-tab-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acc-tab {
+    transition: none;
+  }
+
+  .acc-section.is-acc-tab-active:not([hidden]) {
+    animation: none;
+  }
+}
+
+/* Global search temporarily reveals matching panels across tabs */
+.acc-main.acc-is-searching .acc-section:not(.acc-hidden-by-search) {
+  display: block !important;
+}
+
+.acc-main.acc-is-searching .acc-section[hidden]:not(.acc-hidden-by-search) {
+  display: block !important;
 }
 
 .acc-section__head,
@@ -699,6 +775,16 @@ body.admin-saas-v2 .acc-main {
 
   .acc-section-nav {
     top: 78px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .acc-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 
   .acc-stats-grid {
@@ -732,3 +818,37 @@ body.admin-saas-v2 .acc-main {
     padding: 16px;
   }
 }
+
+/* Dark mode — ACC surfaces follow admin design system */
+body.dark.admin-saas-v2 {
+  --acc-bg: var(--admin-bg, #0b1220);
+  --acc-surface: rgba(17, 24, 39, 0.92);
+  --acc-surface-strong: var(--admin-surface, #111827);
+  --acc-line: var(--admin-border, #334155);
+  --acc-text: var(--admin-text, #f1f5f9);
+  --acc-muted: var(--admin-muted, #94a3b8);
+  --acc-shadow: var(--admin-shadow, 0 16px 40px rgba(0, 0, 0, 0.35));
+}
+
+body.dark.admin-saas-v2 .acc-tab {
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--acc-muted);
+}
+
+body.dark.admin-saas-v2 .acc-tab:hover {
+  background: rgba(37, 99, 235, 0.22);
+  color: var(--acc-text);
+}
+
+body.dark.admin-saas-v2 .acc-tab.is-active,
+body.dark.admin-saas-v2 .acc-tab[aria-selected="true"] {
+  background: var(--acc-brand);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+body.dark.admin-saas-v2 .acc-tab:focus-visible {
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.28);
+}
+

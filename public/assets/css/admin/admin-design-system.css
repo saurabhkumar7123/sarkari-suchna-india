@@ -1,0 +1,779 @@
+/**
+ * Admin Design System v5 — shared presentation tokens & primitives.
+ * Presentation layer only. Linked from all admin pages under body.admin-saas-v2.
+ */
+
+body.admin-saas-v2 {
+  /* Color */
+  --admin-bg: #eef2f8;
+  --admin-surface: #ffffff;
+  --admin-surface-2: #f8fafc;
+  --admin-surface-3: #f1f5f9;
+  --admin-border: #e2e8f0;
+  --admin-border-strong: #cbd5e1;
+  --admin-text: #0f172a;
+  --admin-text-secondary: #334155;
+  --admin-muted: #64748b;
+  --admin-brand: #2563eb;
+  --admin-brand-hover: #1d4ed8;
+  --admin-brand-soft: #eff6ff;
+  --admin-brand-ring: rgba(37, 99, 235, 0.14);
+  --admin-success: #15803d;
+  --admin-success-soft: #f0fdf4;
+  --admin-warning: #b45309;
+  --admin-warning-soft: #fffbeb;
+  --admin-danger: #b91c1c;
+  --admin-danger-soft: #fef2f2;
+  --admin-info: #1d4ed8;
+  --admin-info-soft: #eff6ff;
+
+  /* Spacing */
+  --admin-space-1: 4px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-space-8: 32px;
+
+  /* Radius */
+  --admin-radius-xs: 8px;
+  --admin-radius-sm: 10px;
+  --admin-radius: 14px;
+  --admin-radius-lg: 16px;
+  --admin-radius-pill: 999px;
+
+  /* Shadow */
+  --admin-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --admin-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
+
+  /* Motion */
+  --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --admin-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --admin-duration: 0.16s;
+  --admin-duration-nav: 0.2s;
+
+  /* Layout */
+  --admin-content-max: 1240px;
+  --admin-control-h: 40px;
+  --admin-font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --admin-font-mono: "Cascadia Mono", "Segoe UI Mono", "SF Mono", Consolas, monospace;
+
+  /* Admin sidebar — light mode (enterprise neutral hierarchy) */
+  --admin-sidebar-rail: 68px;
+  --admin-sidebar-panel: 270px;
+  --admin-sidebar-width: calc(var(--admin-sidebar-rail) + var(--admin-sidebar-panel));
+  --admin-sidebar-collapsed: 72px;
+  /* Single source of truth for content offset (expanded by default) */
+  --admin-sidebar-current: var(--admin-sidebar-width);
+  --admin-sidebar-bg: #f7f8fa;
+  --admin-sidebar-surface: #ffffff;
+  --admin-sidebar-surface-hover: #eef0f3;
+  --admin-sidebar-surface-deep: #f1f2f4;
+  --admin-sidebar-open: #ffffff;
+  --admin-sidebar-open-border: #e5e7eb;
+  --admin-sidebar-open-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.05);
+  --admin-sidebar-rail-bg: #eceef2;
+  --admin-sidebar-border: #d9dee7;
+  --admin-sidebar-border-soft: #e8eaee;
+  --admin-sidebar-text: #4b5563;
+  --admin-sidebar-text-strong: #111827;
+  --admin-sidebar-text-muted: #6b7280;
+  --admin-sidebar-num: #6b7280;
+  --admin-sidebar-num-active: #ffffff;
+  --admin-sidebar-badge-bg: #e5e7eb;
+  --admin-sidebar-badge-active-bg: var(--admin-brand);
+  --admin-sidebar-active-bg: #1d4ed8;
+  --admin-sidebar-active-text: #ffffff;
+  --admin-sidebar-active-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(29, 78, 216, 0.18);
+  --admin-sidebar-indicator: var(--admin-brand);
+  --admin-sidebar-shadow: 1px 0 0 var(--admin-sidebar-border-soft);
+  --admin-sidebar-drawer-shadow: 8px 0 32px rgba(15, 23, 42, 0.12);
+  --admin-sidebar-overlay: rgba(15, 23, 42, 0.44);
+  --admin-sidebar-icon-bg: var(--admin-sidebar-surface-deep);
+  --admin-sidebar-icon-active-bg: color-mix(in srgb, #ffffff 20%, transparent);
+  --admin-sidebar-logo: #111827;
+  --admin-sidebar-scrollbar: #c4c9d2;
+
+  /* Bridge to existing saas tokens */
+  --saas-bg: var(--admin-bg);
+  --saas-surface: var(--admin-surface);
+  --saas-surface-soft: var(--admin-surface-2);
+  --saas-line: var(--admin-border);
+  --saas-line-strong: var(--admin-border-strong);
+  --saas-text: var(--admin-text);
+  --saas-muted: var(--admin-muted);
+  --saas-brand: var(--admin-brand);
+  --saas-brand-soft: var(--admin-brand-soft);
+  --saas-radius: var(--admin-radius-lg);
+  --saas-radius-sm: var(--admin-radius);
+  --saas-shadow: var(--admin-shadow);
+  --saas-shadow-lg: var(--admin-shadow-lg);
+
+  /* Legacy aliases used by page CSS */
+  --line: var(--admin-border);
+  --muted: var(--admin-muted);
+  --text: var(--admin-text);
+  --surface: var(--admin-surface);
+  --surface-soft: var(--admin-surface-2);
+  --surface-alt: var(--admin-surface-2);
+  --line-strong: var(--admin-border-strong);
+  --site-surface: var(--admin-surface);
+  --site-surface-2: var(--admin-surface-2);
+  --site-border: var(--admin-border);
+  --site-text: var(--admin-text);
+  --site-muted: var(--admin-muted);
+  --site-bg-page: var(--admin-bg);
+
+  color: var(--admin-text);
+  font-family: var(--admin-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Collapsed: one token drives sidebar + content together */
+body.admin-saas-v2.sidebar-collapsed {
+  --admin-sidebar-current: var(--admin-sidebar-collapsed);
+}
+
+body.dark.admin-saas-v2 {
+  --admin-bg: #0b1220;
+  --admin-surface: #111827;
+  --admin-surface-2: #1e293b;
+  --admin-surface-3: #243044;
+  --admin-border: #334155;
+  --admin-border-strong: #475569;
+  --admin-text: #f1f5f9;
+  --admin-text-secondary: #cbd5e1;
+  --admin-muted: #94a3b8;
+  --admin-brand: #3b82f6;
+  --admin-brand-hover: #60a5fa;
+  --admin-brand-soft: rgba(37, 99, 235, 0.18);
+  --admin-brand-ring: rgba(59, 130, 246, 0.28);
+  --admin-success: #4ade80;
+  --admin-success-soft: rgba(22, 163, 74, 0.16);
+  --admin-warning: #fbbf24;
+  --admin-warning-soft: rgba(245, 158, 11, 0.16);
+  --admin-danger: #f87171;
+  --admin-danger-soft: rgba(220, 38, 38, 0.16);
+  --admin-info: #60a5fa;
+  --admin-info-soft: rgba(37, 99, 235, 0.18);
+  --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --admin-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 10px 28px rgba(0, 0, 0, 0.35);
+  --admin-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+  /* Admin sidebar — dark mode (enterprise neutral hierarchy) */
+  --admin-sidebar-bg: #0f1419;
+  --admin-sidebar-surface: #161b22;
+  --admin-sidebar-surface-hover: #21262d;
+  --admin-sidebar-surface-deep: #0d1117;
+  --admin-sidebar-open: #1c2128;
+  --admin-sidebar-open-border: #30363d;
+  --admin-sidebar-open-shadow: 0 1px 2px rgba(0, 0, 0, 0.32), 0 8px 20px rgba(0, 0, 0, 0.28);
+  --admin-sidebar-rail-bg: #010409;
+  --admin-sidebar-border: #30363d;
+  --admin-sidebar-border-soft: #21262d;
+  --admin-sidebar-text: #c9d1d9;
+  --admin-sidebar-text-strong: #f0f3f6;
+  --admin-sidebar-text-muted: #8b949e;
+  --admin-sidebar-num: #8b949e;
+  --admin-sidebar-num-active: #ffffff;
+  --admin-sidebar-badge-bg: #21262d;
+  --admin-sidebar-badge-active-bg: var(--admin-brand);
+  --admin-sidebar-active-bg: #2563eb;
+  --admin-sidebar-active-text: #ffffff;
+  --admin-sidebar-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 14px rgba(37, 99, 235, 0.24);
+  --admin-sidebar-indicator: #58a6ff;
+  --admin-sidebar-shadow: 1px 0 0 var(--admin-sidebar-border-soft);
+  --admin-sidebar-drawer-shadow: 10px 0 36px rgba(0, 0, 0, 0.5);
+  --admin-sidebar-overlay: rgba(1, 4, 9, 0.64);
+  --admin-sidebar-icon-bg: var(--admin-sidebar-surface);
+  --admin-sidebar-icon-active-bg: color-mix(in srgb, #ffffff 16%, transparent);
+  --admin-sidebar-logo: #f0f3f6;
+  --admin-sidebar-scrollbar: #484f58;
+  color-scheme: dark;
+}
+
+/* ===== Shared admin layout sync (single source of truth) =====
+ * Neutralizes legacy dashboard.css flex + hardcoded 250px offsets.
+ * Sidebar width and content margin always share --admin-sidebar-current.
+ */
+body.admin-saas-v2 {
+  display: block;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body.admin-saas-v2 .sidebar,
+body.admin-saas-v2 #sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: var(--admin-sidebar-current);
+  min-width: var(--admin-sidebar-current);
+  max-width: var(--admin-sidebar-current);
+  z-index: calc(var(--z-modal, 1000) + 20);
+  box-sizing: border-box;
+}
+
+body.admin-saas-v2 .main,
+body.admin-saas-v2 #standaloneAdminShell,
+body.admin-saas-v2 .standalone-admin-content {
+  display: block;
+  flex: none;
+  float: none;
+  max-width: none;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  margin-left: var(--admin-sidebar-current);
+  width: calc(100% - var(--admin-sidebar-current));
+  min-width: 0;
+  box-sizing: border-box;
+  transition:
+    margin-left var(--admin-duration-nav, 0.2s) var(--admin-ease-out, cubic-bezier(0, 0, 0.2, 1)),
+    width var(--admin-duration-nav, 0.2s) var(--admin-ease-out, cubic-bezier(0, 0, 0.2, 1));
+}
+
+body.admin-saas-v2 .main {
+  padding: var(--admin-space-5) var(--admin-space-6) var(--admin-space-8);
+}
+
+/* Standalone shell padding only — offset comes from --admin-sidebar-current above */
+body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
+  padding-top: var(--admin-space-5);
+  padding-right: var(--admin-space-6);
+  padding-bottom: var(--admin-space-8);
+  padding-left: var(--admin-space-6);
+  box-sizing: border-box;
+}
+
+body.admin-saas-v2.standalone-admin-page #standaloneAdminShell .main-container {
+  max-width: var(--admin-content-max);
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Inner content measure (optional readability) — never shifts the shell */
+body.admin-saas-v2 .main > .main-container,
+body.admin-saas-v2 .main > .page-manager,
+body.admin-saas-v2 .main > .content-wrapper {
+  max-width: var(--admin-content-max);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1366px) {
+  body.admin-saas-v2 {
+    --admin-content-max: 1180px;
+  }
+}
+
+@media (min-width: 1440px) {
+  body.admin-saas-v2 {
+    --admin-content-max: 1240px;
+  }
+}
+
+@media (min-width: 1600px) {
+  body.admin-saas-v2 {
+    --admin-content-max: 1320px;
+  }
+}
+
+@media (min-width: 1920px) {
+  body.admin-saas-v2 {
+    --admin-content-max: 1400px;
+  }
+}
+
+/* Tablet: shrink panel token on body so sidebar + content stay synced */
+@media (max-width: 1100px) and (min-width: 769px) {
+  body.admin-saas-v2 {
+    --admin-sidebar-panel: 248px;
+  }
+}
+
+/* Mobile drawer: content is full-bleed; sidebar overlays */
+@media (max-width: 768px) {
+  body.admin-saas-v2,
+  body.admin-saas-v2.sidebar-collapsed {
+    --admin-sidebar-current: 0px;
+  }
+
+  body.admin-saas-v2 .sidebar,
+  body.admin-saas-v2 #sidebar {
+    width: min(92vw, 338px);
+    min-width: 0;
+    max-width: min(92vw, 338px);
+  }
+
+  body.admin-saas-v2 .main,
+  body.admin-saas-v2 #standaloneAdminShell,
+  body.admin-saas-v2 .standalone-admin-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* ===== Cards ===== */
+body.admin-saas-v2 .card,
+body.admin-saas-v2 .saas-card,
+body.admin-saas-v2 .upload-card,
+body.admin-saas-v2 .trash-panel,
+body.admin-saas-v2 .csv-upload-card,
+body.admin-saas-v2 .page-manager,
+body.admin-saas-v2 .monitoring-section,
+body.admin-saas-v2 .sessions-panel,
+body.admin-saas-v2 .activity-panel,
+body.admin-saas-v2 .homepage-mgmt,
+body.admin-saas-v2 .pdf-panel,
+body.admin-saas-v2 .alerts-wrap,
+body.admin-saas-v2 .alert-card,
+body.admin-saas-v2 .rom-panel,
+body.admin-saas-v2 .rom-card,
+body.admin-saas-v2 .seo-panel,
+body.admin-saas-v2 .rrq-panel,
+body.admin-saas-v2 .rrq-card,
+body.admin-saas-v2 .rtp-panel,
+body.admin-saas-v2 .rrp-card,
+body.admin-saas-v2 .rt-panel,
+body.admin-saas-v2 .rt-card,
+body.admin-saas-v2 .recruitment-testing-card,
+body.admin-saas-v2 .er-panel,
+body.admin-saas-v2 .er-card,
+body.admin-saas-v2 .acc-panel {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  box-shadow: var(--admin-shadow);
+}
+
+/* ===== Forms ===== */
+body.admin-saas-v2 label {
+  display: inline-block;
+  margin-bottom: var(--admin-space-1);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--admin-muted);
+}
+
+body.admin-saas-v2 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+body.admin-saas-v2 select,
+body.admin-saas-v2 textarea {
+  max-width: 100%;
+  min-height: var(--admin-control-h);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  font-size: 13px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  transition: border-color var(--admin-duration) var(--admin-ease),
+    box-shadow var(--admin-duration) var(--admin-ease),
+    background var(--admin-duration) var(--admin-ease);
+}
+
+body.admin-saas-v2 textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+body.admin-saas-v2 input:focus,
+body.admin-saas-v2 select:focus,
+body.admin-saas-v2 textarea:focus {
+  outline: none;
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 3px var(--admin-brand-ring);
+}
+
+body.admin-saas-v2 input:disabled,
+body.admin-saas-v2 select:disabled,
+body.admin-saas-v2 textarea:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+  background: var(--admin-surface-2);
+}
+
+body.admin-saas-v2 input[type="checkbox"],
+body.admin-saas-v2 input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-brand);
+}
+
+body.admin-saas-v2 .field-error,
+body.admin-saas-v2 .is-invalid,
+body.admin-saas-v2 input.is-invalid,
+body.admin-saas-v2 select.is-invalid,
+body.admin-saas-v2 textarea.is-invalid {
+  border-color: var(--admin-danger) !important;
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+/* ===== Buttons ===== */
+body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn),
+body.admin-saas-v2 #standaloneAdminShell button:not(.icon-only),
+body.admin-saas-v2 .btn,
+body.admin-saas-v2 .saas-btn,
+body.admin-saas-v2 .header-action-btn,
+body.admin-saas-v2 .btn-primary,
+body.admin-saas-v2 .btn-secondary,
+body.admin-saas-v2 .btn-tool,
+body.admin-saas-v2 .btn-save {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--admin-duration) var(--admin-ease),
+    border-color var(--admin-duration) var(--admin-ease),
+    box-shadow var(--admin-duration) var(--admin-ease),
+    transform var(--admin-duration) var(--admin-ease),
+    color var(--admin-duration) var(--admin-ease);
+}
+
+body.admin-saas-v2 button:focus-visible,
+body.admin-saas-v2 .saas-btn:focus-visible,
+body.admin-saas-v2 .header-action-btn:focus-visible,
+body.admin-saas-v2 a:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: 2px;
+}
+
+body.admin-saas-v2 .saas-btn,
+body.admin-saas-v2 .header-action-btn,
+body.admin-saas-v2 .btn-secondary,
+body.admin-saas-v2 .btn-tool {
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+body.admin-saas-v2 .saas-btn:hover,
+body.admin-saas-v2 .header-action-btn:hover,
+body.admin-saas-v2 .btn-secondary:hover,
+body.admin-saas-v2 .btn-tool:hover {
+  background: var(--admin-brand-soft);
+  border-color: #93c5fd;
+}
+
+body.admin-saas-v2 .saas-btn--primary,
+body.admin-saas-v2 .btn-primary,
+body.admin-saas-v2 .btn-save,
+body.admin-saas-v2 button.primary {
+  background: linear-gradient(135deg, var(--admin-brand), var(--admin-brand-hover));
+  border: 1px solid var(--admin-brand-hover);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+}
+
+body.admin-saas-v2 .saas-btn--primary:hover,
+body.admin-saas-v2 .btn-primary:hover,
+body.admin-saas-v2 .btn-save:hover {
+  filter: brightness(1.05);
+}
+
+body.admin-saas-v2 button:disabled,
+body.admin-saas-v2 .saas-btn:disabled,
+body.admin-saas-v2 .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ===== Tables ===== */
+body.admin-saas-v2 table,
+body.admin-saas-v2 .data-table,
+body.admin-saas-v2 .monitor-table,
+body.admin-saas-v2 .page-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  overflow: hidden;
+}
+
+body.admin-saas-v2 thead th,
+body.admin-saas-v2 .monitor-head,
+body.admin-saas-v2 .table-head {
+  background: var(--admin-surface-2);
+  color: var(--admin-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+body.admin-saas-v2 .page-table-wrap thead th,
+body.admin-saas-v2 .table-wrap thead th,
+body.admin-saas-v2 .table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+body.admin-saas-v2 tbody tr,
+body.admin-saas-v2 .monitor-row {
+  transition: background var(--admin-duration) var(--admin-ease);
+}
+
+body.admin-saas-v2 tbody tr:hover,
+body.admin-saas-v2 .monitor-row:hover {
+  background: var(--admin-brand-soft);
+}
+
+body.admin-saas-v2 .page-table-wrap,
+body.admin-saas-v2 .table-wrap,
+body.admin-saas-v2 .table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+}
+
+/* ===== Badges ===== */
+body.admin-saas-v2 .badge,
+body.admin-saas-v2 .admin-badge,
+body.admin-saas-v2 .status-pill,
+body.admin-saas-v2 .saas-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 10px;
+  border-radius: var(--admin-radius-pill);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+body.admin-saas-v2 .badge--success,
+body.admin-saas-v2 .saas-stat--success {
+  background: var(--admin-success-soft);
+  border-color: #bbf7d0;
+  color: var(--admin-success);
+}
+
+body.admin-saas-v2 .badge--warn,
+body.admin-saas-v2 .saas-stat--warn {
+  background: var(--admin-warning-soft);
+  border-color: #fde68a;
+  color: var(--admin-warning);
+}
+
+body.admin-saas-v2 .badge--danger {
+  background: var(--admin-danger-soft);
+  border-color: #fecaca;
+  color: var(--admin-danger);
+}
+
+body.admin-saas-v2 .badge--info,
+body.admin-saas-v2 .saas-stat--accent {
+  background: var(--admin-info-soft);
+  border-color: #c7d2fe;
+  color: var(--admin-info);
+}
+
+/* ===== Alerts ===== */
+body.admin-saas-v2 .alert,
+body.admin-saas-v2 .admin-global-error-banner,
+body.admin-saas-v2 .notice-banner {
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* ===== Scrollbars ===== */
+body.admin-saas-v2 * {
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+body.admin-saas-v2 *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.admin-saas-v2 *::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+body.dark.admin-saas-v2 * {
+  scrollbar-color: #475569 transparent;
+}
+
+body.dark.admin-saas-v2 *::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* ===== Soft surface overrides (kill hardcoded whites where scoped) ===== */
+body.admin-saas-v2 .saas-stat,
+body.admin-saas-v2 .upload-stat,
+body.admin-saas-v2 .saas-search input,
+body.admin-saas-v2 .saas-btn,
+body.admin-saas-v2 .saas-empty-state,
+body.admin-saas-v2 .empty-state-panel,
+body.admin-saas-v2 .monitor-table,
+body.admin-saas-v2 .filters-toolbar input,
+body.admin-saas-v2 .filters-toolbar select,
+body.admin-saas-v2 .search-box input {
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+body.admin-saas-v2 .saas-filter-pills {
+  background: var(--admin-surface-3);
+  border-color: var(--admin-border);
+}
+
+body.admin-saas-v2 .saas-filter-pill {
+  color: var(--admin-muted);
+}
+
+body.admin-saas-v2 .saas-filter-pill.is-active {
+  background: var(--admin-surface);
+  color: var(--admin-brand);
+}
+
+body.admin-saas-v2 .monitor-head {
+  background: var(--admin-surface-2);
+  color: var(--admin-muted);
+}
+
+body.admin-saas-v2 .monitor-row:hover {
+  background: var(--admin-brand-soft);
+}
+
+/* ===== Dark mode panel coverage ===== */
+body.dark.admin-saas-v2 .main > .admin-header,
+body.dark.admin-saas-v2.standalone-admin-page .admin-header,
+body.dark.admin-saas-v2 .card,
+body.dark.admin-saas-v2 .page-manager,
+body.dark.admin-saas-v2 .monitoring-section,
+body.dark.admin-saas-v2 .sessions-panel,
+body.dark.admin-saas-v2 .activity-panel,
+body.dark.admin-saas-v2 .homepage-mgmt,
+body.dark.admin-saas-v2 .csv-upload-wrap,
+body.dark.admin-saas-v2 .upload-card,
+body.dark.admin-saas-v2 .trash-panel,
+body.dark.admin-saas-v2 .dashboard-hero,
+body.dark.admin-saas-v2 .charts-section,
+body.dark.admin-saas-v2 .chart-card,
+body.dark.admin-saas-v2 .dashboard-action-inbox,
+body.dark.admin-saas-v2 .dashboard-expiry-panel,
+body.dark.admin-saas-v2 .dashboard-traffic-panel,
+body.dark.admin-saas-v2 .filters-toolbar,
+body.dark.admin-saas-v2 .saas-toolbar,
+body.dark.admin-saas-v2 .rom-panel,
+body.dark.admin-saas-v2 .rom-card,
+body.dark.admin-saas-v2 .seo-card,
+body.dark.admin-saas-v2 .rrq-card,
+body.dark.admin-saas-v2 .rrp-card,
+body.dark.admin-saas-v2 .rtp-card,
+body.dark.admin-saas-v2 .rt-card,
+body.dark.admin-saas-v2 .recruitment-testing-card,
+body.dark.admin-saas-v2 .er-card,
+body.dark.admin-saas-v2 .rom-filters,
+body.dark.admin-saas-v2 .rrq-filters,
+body.dark.admin-saas-v2 .rrp-filters,
+body.dark.admin-saas-v2 .rom-workflow,
+body.dark.admin-saas-v2 .rrq-assist,
+body.dark.admin-saas-v2 .rrq-comparison,
+body.dark.admin-saas-v2 .rrq-history,
+body.dark.admin-saas-v2 .er-compare__col,
+body.dark.admin-saas-v2 .recruitment-testing-stat {
+  background: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text);
+}
+
+body.dark.admin-saas-v2 .rom-filters,
+body.dark.admin-saas-v2 .rrq-assist,
+body.dark.admin-saas-v2 .rrq-comparison,
+body.dark.admin-saas-v2 .rrq-history,
+body.dark.admin-saas-v2 .er-compare__col,
+body.dark.admin-saas-v2 .recruitment-testing-stat,
+body.dark.admin-saas-v2 .rom-inline-form,
+body.dark.admin-saas-v2 .rrp-detail-meta {
+  background: var(--admin-surface-2) !important;
+}
+
+body.dark.admin-saas-v2 input:not([type="checkbox"]):not([type="radio"]),
+body.dark.admin-saas-v2 select,
+body.dark.admin-saas-v2 textarea,
+body.dark.admin-saas-v2 .saas-search input {
+  background: var(--admin-surface-2) !important;
+  border-color: var(--admin-border-strong) !important;
+  color: var(--admin-text) !important;
+}
+
+body.dark.admin-saas-v2 .dashboard-expiry-item:hover,
+body.dark.admin-saas-v2 .dashboard-traffic-item:hover,
+body.dark.admin-saas-v2 .dashboard-action-item:hover {
+  background: var(--admin-brand-soft) !important;
+}
+
+body.dark.admin-saas-v2.standalone-admin-page.upload-page,
+body.dark.admin-saas-v2.standalone-admin-page.trash-page,
+body.dark.admin-saas-v2.standalone-admin-page.generator-page {
+  background:
+    radial-gradient(ellipse 80% 50% at 0% -10%, rgba(37, 99, 235, 0.12), transparent 55%),
+    var(--admin-bg) !important;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 992px) {
+  body.admin-saas-v2 .main,
+  body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
+    padding-right: var(--admin-space-4);
+    padding-left: var(--admin-space-4);
+    padding-bottom: var(--admin-space-6);
+  }
+}
+
+@media (max-width: 768px) {
+  body.admin-saas-v2 .main,
+  body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
+    padding: 16px 12px 28px;
+    padding-top: 62px;
+  }
+
+  body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn),
+  body.admin-saas-v2 .saas-btn,
+  body.admin-saas-v2 .header-action-btn {
+    min-height: 42px;
+  }
+
+  body.admin-saas-v2 .page-table-wrap,
+  body.admin-saas-v2 .table-wrap,
+  body.admin-saas-v2 .table-scroll {
+    margin-inline: -4px;
+    border-radius: var(--admin-radius-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  body.admin-saas-v2 .admin-header-actions .header-action-btn,
+  body.admin-saas-v2 .admin-header-actions .saas-btn {
+    flex: 1 1 100%;
+  }
+}

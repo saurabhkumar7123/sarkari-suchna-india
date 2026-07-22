@@ -1,207 +1,46 @@
-.rrp-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
-  border: 1px solid rgba(37, 99, 235, 0.28);
-}
-
-.rrp-help {
-  margin: 0 0 1rem;
-  color: #64748b;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.rrp-filters {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-  gap: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  padding: 0.9rem 1rem;
-  background: var(--admin-surface, #fff);
-  border: 1px solid var(--admin-border, #e5e7eb);
-  border-radius: 12px;
-}
-
-.rrp-filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.rrp-filters input,
-.rrp-filters select {
-  font-weight: 400;
-  min-height: 2.25rem;
-  padding: 0.4rem 0.6rem;
-  border: 1px solid var(--admin-border, #d1d5db);
-  border-radius: 8px;
-  background: #fff;
-}
-
-.rrp-filter-actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.header-action-btn--ghost {
-  background: transparent;
-  border: 1px solid var(--admin-border, #d1d5db);
-  color: #334155;
-}
-
-.header-action-btn--danger {
-  background: #b91c1c;
-  border-color: #b91c1c;
-  color: #fff;
-}
-
-.rrp-message {
-  margin: 0 0 0.85rem;
-  font-size: 0.9rem;
-}
-
-.rrp-message.is-success {
-  color: #166534;
-}
-
-.rrp-message.is-error {
-  color: #b91c1c;
-}
-
-.rrp-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.rrp-card {
-  background: var(--admin-surface, #fff);
-  border: 1px solid var(--admin-border, #e5e7eb);
-  border-radius: 12px;
-  padding: 1rem;
-}
-
-.rrp-list-head,
-.rrp-detail-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.rrp-list-head h2,
-.rrp-detail-head h2,
-.rrp-card h3 {
-  margin: 0;
-  font-size: 1rem;
-}
+/**
+ * Recruitment Runtime Preview — page-specific presentation.
+ * Shared primitives live in recruitment-module.css.
+ */
 
 .rrp-card h3 {
-  margin: 1rem 0 0.4rem;
-  color: #334155;
-}
-
-.rrp-list-meta,
-.rrp-page-label {
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.rrp-table-wrap {
-  overflow-x: auto;
-}
-
-.rrp-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-}
-
-.rrp-table th,
-.rrp-table td {
-  padding: 0.55rem 0.45rem;
-  border-bottom: 1px solid var(--admin-border, #e5e7eb);
-  text-align: left;
-  vertical-align: top;
-}
-
-.rrp-table th {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #64748b;
-}
-
-.rrp-table tbody tr {
-  cursor: pointer;
-}
-
-.rrp-table tbody tr:hover {
-  background: rgba(37, 99, 235, 0.04);
-}
-
-.rrp-table tbody tr.is-selected {
-  background: rgba(37, 99, 235, 0.1);
-}
-
-.rrp-empty {
-  color: #94a3b8;
-  text-align: center;
-}
-
-.rrp-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  margin-top: 0.85rem;
+  margin: var(--admin-space-4) 0 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--admin-text-secondary);
 }
 
 .rrp-detail-meta {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.35rem;
+  gap: 0.45rem;
   font-size: 0.88rem;
-  color: #334155;
-}
-
-.rrp-pre {
-  margin: 0;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-size: 0.8rem;
+  color: var(--admin-text-secondary);
   line-height: 1.45;
-  overflow: auto;
-  max-height: 180px;
-  white-space: pre-wrap;
-  word-break: break-word;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+  margin-bottom: var(--admin-space-3);
 }
 
-.rrp-pre--tall {
-  max-height: 420px;
+.rrp-detail-meta strong {
+  color: var(--admin-text);
+  font-weight: 700;
 }
 
-@media (max-width: 960px) {
-  .rrp-filters {
-    grid-template-columns: 1fr;
-  }
+.rrp-filters input,
+.rrp-filters select {
+  width: 100%;
+  box-sizing: border-box;
+}
 
-  .rrp-layout {
-    grid-template-columns: 1fr;
+.rrp-filter-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .rrp-filter-actions .header-action-btn {
+    flex: 1 1 auto;
   }
 }

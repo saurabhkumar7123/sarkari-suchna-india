@@ -1060,6 +1060,8 @@ body.dark .pagination button{
 }
 
 /* ===== Premium SaaS Overrides ===== */
+/* Legacy widths kept for non-saas pages (dashboard.html).
+ * body.admin-saas-v2 layout is owned by admin-design-system.css. */
 .sidebar{
   width:250px;
   position:fixed;
@@ -1252,6 +1254,23 @@ body.dark .pagination button{
 body.sidebar-collapsed .main{
   margin-left:72px;
   width:calc(100% - 72px);
+}
+
+/* admin-saas-v2: neutralize legacy flex + 250px offsets (tokens in design-system) */
+body.admin-saas-v2{
+  display:block;
+}
+
+body.admin-saas-v2 .main{
+  flex:none;
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,338px)));
+  max-width:none;
+}
+
+body.admin-saas-v2.sidebar-collapsed .main{
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-collapsed,72px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-collapsed,72px)));
 }
 
 .admin-header{

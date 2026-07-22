@@ -28,7 +28,7 @@ body.admin-saas-v2:not(.standalone-admin-page){
 }
 
 body.admin-saas-v2 .main{
-  max-width:1240px;
+  /* Shell width/offset owned by admin-design-system.css */
   padding:20px 24px 32px;
 }
 
@@ -238,7 +238,7 @@ body.admin-saas-v2 .saas-search input,
 body.admin-saas-v2 .search-box input{
   border-radius:10px;
   border-color:var(--saas-line-strong);
-  background:#fff;
+  background:var(--saas-surface);
   min-height:40px;
 }
 
@@ -539,7 +539,7 @@ body.dark.admin-saas-v2 .saas-btn{
 
 .dashboard-expiry-item:hover{
   border-color:#93c5fd;
-  background:#fff;
+  background:var(--saas-brand-soft);
 }
 
 .dashboard-expiry-item__title{
@@ -580,7 +580,7 @@ body.dark.admin-saas-v2 .saas-btn{
 
 .dashboard-traffic-item:hover{
   border-color:#93c5fd;
-  background:#fff;
+  background:var(--saas-brand-soft);
 }
 
 .dashboard-traffic-item__rank{

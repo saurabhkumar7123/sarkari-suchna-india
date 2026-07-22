@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <title>Automation Control Center</title>
@@ -9,12 +9,13 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=6">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
-<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=2">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=13">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=2">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=1">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=3">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=20">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=7">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=3">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Control Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -66,20 +67,20 @@
     </div>
   </section>
 
-  <nav class="acc-section-nav" aria-label="Section navigation">
-    <a href="#accDashboard">Dashboard</a>
-    <a href="#accSources">Source Manager</a>
-    <a href="#accRecruitments">Recruitment Explorer</a>
-    <a href="#accReview">Review Center</a>
-    <a href="#accDrafts">Draft Viewer</a>
-    <a href="#accWorkflow">Workflow Queue</a>
-    <a href="#accInsights">AI Insights</a>
-    <a href="#accMonitoring">Monitoring</a>
-    <a href="#accAudit">Audit Center</a>
-    <a href="#accSettings">Settings</a>
-  </nav>
+  <div class="acc-section-nav" role="tablist" aria-label="Dashboard sections">
+    <button type="button" class="acc-tab is-active" role="tab" id="accTab-accDashboard" data-acc-tab="accDashboard" aria-controls="accDashboard" aria-selected="true" tabindex="0">Dashboard</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accSources" data-acc-tab="accSources" aria-controls="accSources" aria-selected="false" tabindex="-1">Source Manager</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accRecruitments" data-acc-tab="accRecruitments" aria-controls="accRecruitments" aria-selected="false" tabindex="-1">Recruitment Explorer</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accReview" data-acc-tab="accReview" aria-controls="accReview" aria-selected="false" tabindex="-1">Review Center</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accDrafts" data-acc-tab="accDrafts" aria-controls="accDrafts" aria-selected="false" tabindex="-1">Draft Viewer</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accWorkflow" data-acc-tab="accWorkflow" aria-controls="accWorkflow" aria-selected="false" tabindex="-1">Workflow Queue</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accInsights" data-acc-tab="accInsights" aria-controls="accInsights" aria-selected="false" tabindex="-1">AI Insights</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accMonitoring" data-acc-tab="accMonitoring" aria-controls="accMonitoring" aria-selected="false" tabindex="-1">Monitoring</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accAudit" data-acc-tab="accAudit" aria-controls="accAudit" aria-selected="false" tabindex="-1">Audit Center</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accSettings" data-acc-tab="accSettings" aria-controls="accSettings" aria-selected="false" tabindex="-1">Settings</button>
+  </div>
 
-  <section class="acc-section" id="accDashboard" data-acc-searchable="dashboard cards charts health">
+  <section class="acc-section is-acc-tab-active" id="accDashboard" role="tabpanel" aria-labelledby="accTab-accDashboard" data-acc-searchable="dashboard cards charts health">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Overview</p>
@@ -124,7 +125,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accSources" data-acc-searchable="official source manager domains crawl priority retry health validation">
+  <section class="acc-section" id="accSources" role="tabpanel" aria-labelledby="accTab-accSources" hidden data-acc-searchable="official source manager domains crawl priority retry health validation">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Governance</p>
@@ -162,7 +163,7 @@
     <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
   </section>
 
-  <section class="acc-section" id="accRecruitments" data-acc-searchable="recruitment explorer stages confidence history timeline prediction">
+  <section class="acc-section" id="accRecruitments" role="tabpanel" aria-labelledby="accTab-accRecruitments" hidden data-acc-searchable="recruitment explorer stages confidence history timeline prediction">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Operations</p>
@@ -226,7 +227,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accReview" data-acc-searchable="review center comparison diff validation risk approve reject request changes">
+  <section class="acc-section" id="accReview" role="tabpanel" aria-labelledby="accTab-accReview" hidden data-acc-searchable="review center comparison diff validation risk approve reject request changes">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Human-in-the-loop</p>
@@ -276,7 +277,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accDrafts" data-acc-searchable="draft viewer preview structured output print section navigation">
+  <section class="acc-section" id="accDrafts" role="tabpanel" aria-labelledby="accTab-accDrafts" hidden data-acc-searchable="draft viewer preview structured output print section navigation">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Preview</p>
@@ -301,7 +302,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accWorkflow" data-acc-searchable="workflow queue detected recovering matching validating draft ready review pending approved rejected failed retry">
+  <section class="acc-section" id="accWorkflow" role="tabpanel" aria-labelledby="accTab-accWorkflow" hidden data-acc-searchable="workflow queue detected recovering matching validating draft ready review pending approved rejected failed retry">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Flow Control</p>
@@ -335,7 +336,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accInsights" data-acc-searchable="ai insights confidence analytics failure categories duplicate recovery validation recommendation">
+  <section class="acc-section" id="accInsights" role="tabpanel" aria-labelledby="accTab-accInsights" hidden data-acc-searchable="ai insights confidence analytics failure categories duplicate recovery validation recommendation">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Intelligence</p>
@@ -370,7 +371,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accMonitoring" data-acc-searchable="monitoring dashboard online offline slow healthy warnings response time health score">
+  <section class="acc-section" id="accMonitoring" role="tabpanel" aria-labelledby="accTab-accMonitoring" hidden data-acc-searchable="monitoring dashboard online offline slow healthy warnings response time health score">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Observability</p>
@@ -383,7 +384,7 @@
     <div class="acc-monitor-grid" id="accMonitorGrid"></div>
   </section>
 
-  <section class="acc-section" id="accAudit" data-acc-searchable="audit center detection logs workflow logs recovery logs validation logs approval logs system events export">
+  <section class="acc-section" id="accAudit" role="tabpanel" aria-labelledby="accTab-accAudit" hidden data-acc-searchable="audit center detection logs workflow logs recovery logs validation logs approval logs system events export">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Traceability</p>
@@ -413,7 +414,7 @@
     </div>
   </section>
 
-  <section class="acc-section" id="accSettings" data-acc-searchable="settings automation settings confidence threshold review rules risk threshold draft rules feature flags pipeline flags off">
+  <section class="acc-section" id="accSettings" role="tabpanel" aria-labelledby="accTab-accSettings" hidden data-acc-searchable="settings automation settings confidence threshold review rules risk threshold draft rules feature flags pipeline flags off">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Controls</p>
@@ -478,14 +479,14 @@
 </dialog>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=14"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=18"></script>
+<script src="/js/admin-shell.js?v=6"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=4"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=1"></script>
+<script src="/js/admin-automation-control-center.js?v=2"></script>
 </body>
 </html>

@@ -1,0 +1,701 @@
+/**
+ * Recruitment Module — shared presentation layer.
+ * Loaded after admin-design-system.css on all recruitment admin pages.
+ * Presentation only: tokens, cards, filters, tables, badges, alerts, timeline chrome.
+ */
+
+/* ===== Module shell: avoid double-card nesting on workflow pages ===== */
+body.admin-saas-v2 .monitoring-section.rrq,
+body.admin-saas-v2 .monitoring-section.rrp,
+body.admin-saas-v2 .monitoring-section.recruitment-testing {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ===== Module page rhythm ===== */
+body.admin-saas-v2 .main:has(.rom-layout),
+body.admin-saas-v2 .main:has(.rrq-layout),
+body.admin-saas-v2 .main:has(.er-layout),
+body.admin-saas-v2 .main:has(.rrp-layout),
+body.admin-saas-v2 .main:has(.recruitment-testing-grid) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+body.admin-saas-v2 .main > .admin-header {
+  margin-bottom: var(--admin-space-4);
+}
+
+body.admin-saas-v2 .main > .admin-header .admin-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--admin-text);
+  line-height: 1.25;
+}
+
+/* ===== Shared module badge (Internal · Admin only) ===== */
+.rom-badge,
+.rrq-badge,
+.rrp-badge,
+.er-badge-chip,
+.recruitment-testing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--admin-radius-pill);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.rrp-badge {
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
+  border-color: color-mix(in srgb, var(--admin-info) 28%, transparent);
+}
+
+.recruitment-testing-badge {
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+  border-color: color-mix(in srgb, var(--admin-warning) 35%, transparent);
+}
+
+/* ===== Help / intro copy ===== */
+.rom-help,
+.rrq-help,
+.rrp-help,
+.er-help,
+.recruitment-testing-help {
+  margin: 0 0 var(--admin-space-4);
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  max-width: 60rem;
+}
+
+.rom-help code,
+.rrq-help code,
+.rrp-help code,
+.er-help code {
+  font-size: 0.82em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--admin-surface-3);
+  color: var(--admin-text-secondary);
+}
+
+/* ===== Status / alert messages ===== */
+.rom-message,
+.er-message,
+.rrq-message,
+.rrp-message,
+.recruitment-testing-save-message {
+  margin: 0 0 var(--admin-space-4);
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.rom-message,
+.er-message {
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
+  border-color: color-mix(in srgb, var(--admin-info) 22%, transparent);
+}
+
+.rom-message.is-error,
+.er-message.is-error,
+.rrq-message.is-error,
+.rrp-message.is-error,
+.recruitment-testing-save-message.is-error,
+.recruitment-testing-error {
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+  border-color: color-mix(in srgb, var(--admin-danger) 25%, transparent);
+}
+
+.rrq-message.is-success,
+.rrp-message.is-success,
+.recruitment-testing-save-message.is-success {
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+  border-color: color-mix(in srgb, var(--admin-success) 25%, transparent);
+}
+
+.rrq-message:not(.is-success):not(.is-error),
+.rrp-message:not(.is-success):not(.is-error) {
+  color: var(--admin-text-secondary);
+}
+
+/* ===== Cards ===== */
+.rom-card,
+.rrq-card,
+.rrp-card,
+.er-card,
+.recruitment-testing-card {
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-5);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  box-sizing: border-box;
+}
+
+.rom-card__head,
+.rrq-list-head,
+.rrq-detail-head,
+.rrp-list-head,
+.rrp-detail-head,
+.er-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--admin-space-4);
+  margin-bottom: var(--admin-space-4);
+}
+
+.rom-card h1,
+.rom-card h2,
+.rrq-list-head h2,
+.rrq-detail-head h2,
+.rrp-list-head h2,
+.rrp-detail-head h2,
+.rrp-card h3,
+.er-card h1,
+.er-card h2,
+.recruitment-testing-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--admin-text);
+  line-height: 1.3;
+}
+
+.rom-card__head p,
+.er-card__head p,
+.rom-list-panel h1 + p,
+.er-inbox h1 + p,
+.rrq-list-meta,
+.rrq-page-label,
+.rrp-list-meta,
+.rrp-page-label {
+  margin: 0.25rem 0 0;
+  color: var(--admin-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+/* ===== Two-column workspaces ===== */
+.rom-layout,
+.rrq-layout,
+.er-layout,
+.rrp-layout {
+  display: grid;
+  gap: var(--admin-space-4);
+  align-items: start;
+}
+
+.rom-layout,
+.er-layout {
+  grid-template-columns: minmax(300px, 0.85fr) minmax(480px, 1.35fr);
+}
+
+.rrq-layout,
+.rrp-layout {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+
+/* ===== Filter bars ===== */
+.rom-filters,
+.rrq-filters,
+.rrp-filters {
+  display: grid;
+  gap: var(--admin-space-3) var(--admin-space-4);
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-4);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.rom-filters {
+  grid-template-columns: 1fr 1fr;
+  background: var(--admin-surface-2);
+  box-shadow: none;
+}
+
+.rrq-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
+.rrp-filters {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+}
+
+.rom-filters label,
+.rrq-filters label,
+.rrp-filters label,
+.er-filter,
+.er-open-form label,
+.er-comment,
+.er-note-form,
+.rom-form label,
+.rom-inline-form label,
+.rom-link-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--admin-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.rom-filters label:first-child,
+.rom-filter-actions {
+  grid-column: 1 / -1;
+}
+
+.rom-filter-actions,
+.rom-form-actions,
+.rrq-filter-actions,
+.rrp-filter-actions,
+.rrq-actions,
+.er-decisions,
+.recruitment-testing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.rrq-filter-actions,
+.rrp-filter-actions {
+  align-items: flex-end;
+}
+
+/* ===== Secondary / ghost / danger buttons ===== */
+.rom-secondary,
+.er-secondary,
+.header-action-btn--ghost,
+.recruitment-testing-actions .is-secondary {
+  color: var(--admin-text-secondary) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border-strong) !important;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.rom-secondary:hover,
+.er-secondary:hover,
+.header-action-btn--ghost:hover,
+.recruitment-testing-actions .is-secondary:hover {
+  background: var(--admin-brand-soft) !important;
+  border-color: color-mix(in srgb, var(--admin-brand) 40%, var(--admin-border)) !important;
+  color: var(--admin-brand) !important;
+}
+
+.rom-danger {
+  color: var(--admin-danger) !important;
+  background: var(--admin-surface) !important;
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 45%, var(--admin-border)) !important;
+}
+
+.rom-danger:hover {
+  background: var(--admin-danger-soft) !important;
+}
+
+.header-action-btn--danger {
+  color: #fff !important;
+  background: var(--admin-danger) !important;
+  border: 1px solid var(--admin-danger) !important;
+}
+
+.header-action-btn--danger:hover {
+  filter: brightness(1.06);
+}
+
+/* ===== Tables ===== */
+.rom-table-wrap,
+.rrq-table-wrap,
+.rrp-table-wrap,
+.rrq-comparison-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+}
+
+.rom-table,
+.rrq-table,
+.rrp-table,
+.rrq-comparison-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.86rem;
+}
+
+.rom-table th,
+.rom-table td,
+.rrq-table th,
+.rrq-table td,
+.rrp-table th,
+.rrp-table td {
+  padding: 0.7rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.rom-table th,
+.rrq-table th,
+.rrp-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--admin-surface-2);
+  color: var(--admin-muted);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.rom-table tbody tr,
+.rrq-table tbody tr,
+.rrp-table tbody tr {
+  transition: background var(--admin-duration) var(--admin-ease);
+}
+
+.rom-table tbody tr:hover,
+.rrq-table tbody tr:hover,
+.rrp-table tbody tr:hover,
+#recruitmentRows tr:hover,
+#recruitmentRows tr.is-selected,
+.rrq-table tbody tr.is-selected,
+.rrp-table tbody tr.is-selected {
+  background: var(--admin-brand-soft);
+}
+
+.rom-table tbody tr:last-child td,
+.rrq-table tbody tr:last-child td,
+.rrp-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+#recruitmentRows tr,
+.rrq-table tbody tr,
+.rrp-table tbody tr {
+  cursor: pointer;
+}
+
+/* ===== Status pills ===== */
+.rom-status,
+.rrq-status,
+.er-badge,
+.spv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  border-radius: var(--admin-radius-pill);
+  border: 1px solid transparent;
+  background: var(--admin-surface-3);
+  color: var(--admin-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.rom-status.is-active,
+.rom-status.is-open,
+.rom-status.is-linked,
+.rom-status.is-approved,
+.rrq-status.is-approved,
+.er-badge.is-approved,
+.er-badge.is-ok,
+.spv-badge.is-ok,
+.spv-badge.is-approved {
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+  border-color: color-mix(in srgb, var(--admin-success) 28%, transparent);
+}
+
+.rom-status.is-pending,
+.rom-status.is-announced,
+.rom-status.is-review_required,
+.rrq-status.is-pending,
+.er-badge.is-review_required,
+.er-badge.is-in_review,
+.er-badge.is-review_pending,
+.spv-badge.is-warn,
+.spv-badge.is-review_pending,
+.spv-badge.is-in_review,
+.spv-badge.is-changes_requested {
+  background: var(--admin-warning-soft);
+  color: var(--admin-warning);
+  border-color: color-mix(in srgb, var(--admin-warning) 28%, transparent);
+}
+
+.rom-status.is-cancelled,
+.rom-status.is-closed,
+.rrq-status.is-rejected,
+.er-badge.is-rejected,
+.er-badge.is-fail,
+.spv-badge.is-fail,
+.spv-badge.is-rejected {
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+  border-color: color-mix(in srgb, var(--admin-danger) 28%, transparent);
+}
+
+.rom-status.is-primary,
+.rom-status.is-draft_ready,
+.rom-status.is-draft_attached,
+.rrq-status.is-under_review {
+  background: var(--admin-info-soft);
+  color: var(--admin-info);
+  border-color: color-mix(in srgb, var(--admin-info) 28%, transparent);
+}
+
+.rom-status.is-no_draft,
+.rrq-status.is-frozen {
+  background: var(--admin-surface-3);
+  color: var(--admin-muted);
+  border-color: var(--admin-border);
+}
+
+/* ===== Empty states ===== */
+.rom-empty,
+.rrq-empty,
+.rrp-empty,
+.er-empty,
+.spv-empty {
+  padding: 2.5rem 1.25rem !important;
+  text-align: center;
+  color: var(--admin-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.spv-empty.is-error {
+  color: var(--admin-danger);
+}
+
+/* ===== Pagination ===== */
+.rom-pagination,
+.rrq-pagination,
+.rrp-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: var(--admin-space-4);
+}
+
+/* ===== Code / JSON preview blocks ===== */
+.rrq-json,
+.rrp-pre,
+.recruitment-testing-json {
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: var(--admin-radius-sm);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 360px;
+}
+
+.rrp-pre,
+.recruitment-testing-json {
+  background: #0f172a;
+  color: #e2e8f0;
+  border-color: #1e293b;
+}
+
+body.dark.admin-saas-v2 .rrp-pre,
+body.dark.admin-saas-v2 .recruitment-testing-json {
+  background: #020617;
+  color: #e2e8f0;
+  border-color: var(--admin-border);
+}
+
+.rrp-pre--tall {
+  max-height: 420px;
+}
+
+.recruitment-testing-json--compact {
+  max-height: 160px;
+}
+
+.rrq-json {
+  max-height: 220px;
+}
+
+/* ===== Module cross-links / workflow strip ===== */
+.rom-header-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.rom-nav-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 var(--admin-space-4);
+}
+
+.rom-nav-strip a {
+  text-decoration: none;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--admin-radius-xs);
+  border: 1px solid var(--admin-border-strong);
+  color: var(--admin-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--admin-surface);
+  transition: background var(--admin-duration) var(--admin-ease),
+    border-color var(--admin-duration) var(--admin-ease),
+    color var(--admin-duration) var(--admin-ease);
+}
+
+.rom-nav-strip a:hover,
+.rom-nav-strip a.is-current {
+  border-color: color-mix(in srgb, var(--admin-brand) 45%, var(--admin-border));
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand);
+}
+
+.rom-workflow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin: 0 0 var(--admin-space-4);
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+.rom-workflow > [aria-hidden="true"] {
+  color: var(--admin-muted);
+  font-size: 0.85rem;
+}
+
+.rom-workflow__step {
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--admin-radius-pill);
+  color: var(--admin-muted);
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: var(--admin-surface-2);
+  border: 1px solid transparent;
+}
+
+.rom-workflow__step.is-complete {
+  color: var(--admin-success);
+  background: var(--admin-success-soft);
+  border-color: color-mix(in srgb, var(--admin-success) 25%, transparent);
+}
+
+.rom-workflow__step.is-current {
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+  border-color: color-mix(in srgb, var(--admin-brand) 30%, transparent);
+}
+
+/* ===== Focus / a11y helpers for module controls ===== */
+.rom-row-btn:focus-visible,
+.rom-saved-chip:focus-visible,
+.er-inbox-item:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: 2px;
+}
+
+/* ===== Responsive shared ===== */
+@media (max-width: 1100px) {
+  .rom-layout,
+  .er-layout,
+  .rrq-layout,
+  .rrp-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rrq-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rrq-filter-actions,
+  .rrp-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 960px) {
+  .rrp-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .rom-filters,
+  .rrq-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .rom-span-2,
+  .rom-filters label:first-child,
+  .rom-filter-actions {
+    grid-column: auto;
+  }
+
+  .rom-card,
+  .rrq-card,
+  .rrp-card,
+  .er-card,
+  .recruitment-testing-card {
+    padding: var(--admin-space-4);
+  }
+
+  .rom-table-wrap,
+  .rrq-table-wrap,
+  .rrp-table-wrap {
+    margin-inline: -2px;
+  }
+
+  .rom-workflow {
+    gap: 0.35rem;
+  }
+
+  .rom-workflow > [aria-hidden="true"] {
+    display: none;
+  }
+}

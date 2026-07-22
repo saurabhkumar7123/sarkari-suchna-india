@@ -24,7 +24,7 @@
   gap:4px;
   padding:6px 12px;
   border-radius:999px;
-  background:#fff;
+  background:var(--admin-surface,#fff);
   border:1px solid var(--line,#e2e8f0);
   font-size:12px;
   color:var(--muted,#64748b);
@@ -118,11 +118,12 @@ body.dark .upload-stat strong{color:#e2e8f0}
   min-width:180px;
   width:220px;
   max-width:100%;
-  border:1px solid #cbd5e1;
+  border:1px solid var(--admin-border-strong,#cbd5e1);
   border-radius:10px;
   padding:0 34px 0 36px;
   font-size:13px;
-  background:#fff;
+  background:var(--admin-surface,#fff);
+  color:var(--admin-text,#0f172a);
 }
 
 .saas-search input:focus{
@@ -161,17 +162,17 @@ body.dark .upload-stat strong{color:#e2e8f0}
   justify-content:center;
   min-height:38px;
   padding:0 12px;
-  border:1px solid #cbd5e1;
+  border:1px solid var(--admin-border-strong,#cbd5e1);
   border-radius:10px;
-  background:#fff;
+  background:var(--admin-surface,#fff);
   font-size:12px;
   font-weight:700;
-  color:#334155;
+  color:var(--admin-text-secondary,#334155);
   cursor:pointer;
   text-decoration:none;
 }
 
-.saas-btn:hover{background:#f8fafc}
+.saas-btn:hover{background:var(--admin-surface-2,#f8fafc)}
 
 .saas-btn.is-loading{
   opacity:.6;
@@ -215,10 +216,10 @@ body.dark .upload-stat strong{color:#e2e8f0}
 .saas-empty-state,
 .empty-state-panel{
   text-align:center;
-  border:1px dashed #cbd5e1;
+  border:1px dashed var(--admin-border-strong,#cbd5e1);
   border-radius:12px;
   padding:28px 16px;
-  background:#fff;
+  background:var(--admin-surface,#fff);
 }
 
 .saas-empty-state .icon{font-size:28px}
@@ -259,7 +260,7 @@ body.dark .upload-stat strong{color:#e2e8f0}
   border:1px solid var(--line,#e2e8f0);
   border-radius:12px;
   overflow:hidden;
-  background:#fff;
+  background:var(--admin-surface,#fff);
 }
 
 .monitor-head{

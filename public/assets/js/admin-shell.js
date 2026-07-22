@@ -179,13 +179,205 @@
   function syncCollapsedNavTooltips() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
-    const collapsed = sidebar.classList.contains("collapsed");
+    const collapsed = sidebar.classList.contains("collapsed") && !isMobileSidebarMode();
     sidebar.querySelectorAll("a[href], .sidebar-nav-btn").forEach((el) => {
       const label = el.querySelector(".nav-text")?.textContent?.trim();
       if (collapsed && label) {
         el.setAttribute("title", label);
+        el.setAttribute("aria-label", label);
       } else {
         el.removeAttribute("title");
+        if (el.id !== "darkModeToggle" && el.id !== "logoutLink" && el.id !== "sidebarCollapseBtn") {
+          el.removeAttribute("aria-label");
+        }
+      }
+    });
+  }
+
+  function syncRailActiveState() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    const openGroup = sidebar.querySelector(".nav-group:not(.is-collapsed)[data-nav-group]");
+    const openKey = (openGroup && openGroup.getAttribute("data-nav-group")) || "";
+    const activeLink = sidebar.querySelector("a.active");
+    const activeLinkKey =
+      (activeLink && activeLink.closest(".nav-group") && activeLink.closest(".nav-group").getAttribute("data-nav-group")) ||
+      "";
+    const railKey = openKey || activeLinkKey;
+    sidebar.querySelectorAll(".sidebar-rail__item[data-rail-group]").forEach((btn) => {
+      const key = btn.getAttribute("data-rail-group");
+      const isActive = Boolean(key && key === railKey);
+      btn.classList.toggle("is-active", isActive);
+      btn.setAttribute("aria-selected", isActive ? "true" : "false");
+      btn.setAttribute("tabindex", isActive ? "0" : "-1");
+    });
+    sidebar.querySelectorAll(".nav-group[data-nav-group]").forEach((group) => {
+      const key = group.getAttribute("data-nav-group");
+      group.classList.toggle("is-open", Boolean(key && key === openKey));
+    });
+  }
+
+  function expandSidebarFromRailIfNeeded() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar || isMobileSidebarMode()) return;
+    if (!sidebar.classList.contains("collapsed")) return;
+    setSidebarCollapsed(false);
+  }
+
+  function ensureActiveVisibleInCollapsed() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    const active = sidebar.querySelector("a.active");
+    if (!active) return;
+    const group = active.closest(".nav-group");
+    if (group) setNavGroupOpen(group, true);
+    if (typeof active.scrollIntoView === "function") {
+      try {
+        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+      } catch (_) {
+        /* ignore */
+      }
+    }
+  }
+
+  /** Lightweight swipe-left to close mobile drawer. */
+  function bindSidebarSwipeClose() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar || sidebar.dataset.swipeBound === "1") return;
+    sidebar.dataset.swipeBound = "1";
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    sidebar.addEventListener(
+      "touchstart",
+      (e) => {
+        if (!isMobileSidebarMode() || !sidebar.classList.contains("active")) return;
+        const t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        startX = t.clientX;
+        startY = t.clientY;
+        tracking = true;
+      },
+      { passive: true }
+    );
+
+    sidebar.addEventListener(
+      "touchend",
+      (e) => {
+        if (!tracking) return;
+        tracking = false;
+        if (!isMobileSidebarMode() || !sidebar.classList.contains("active")) return;
+        const t = e.changedTouches && e.changedTouches[0];
+        if (!t) return;
+        const dx = t.clientX - startX;
+        const dy = t.clientY - startY;
+        if (dx < -56 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          setSidebarOpen(false);
+        }
+      },
+      { passive: true }
+    );
+  }
+
+  function setNavGroupOpen(group, open, options) {
+    if (!group) return;
+    const isOpen = Boolean(open);
+    const exclusive = !options || options.exclusive !== false;
+    const persist = !options || options.persist !== false;
+    const sidebar = group.closest("#sidebar") || document.getElementById("sidebar");
+
+    if (isOpen && exclusive && sidebar) {
+      sidebar.querySelectorAll(".nav-group[data-nav-group]").forEach((other) => {
+        if (other === group) return;
+        other.classList.add("is-collapsed");
+        other.classList.remove("is-open");
+        const otherToggle = other.querySelector("[data-nav-group-toggle]");
+        if (otherToggle) otherToggle.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    group.classList.toggle("is-collapsed", !isOpen);
+    group.classList.toggle("is-open", isOpen);
+    const toggle = group.querySelector("[data-nav-group-toggle]");
+    if (toggle) toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    const key = group.getAttribute("data-nav-group");
+    if (key && persist) {
+      try {
+        if (isOpen) {
+          localStorage.setItem("adminNavOpenGroup", key);
+        } else {
+          const current = localStorage.getItem("adminNavOpenGroup");
+          if (current === key) localStorage.removeItem("adminNavOpenGroup");
+        }
+        localStorage.setItem("adminNavGroup:" + key, isOpen ? "1" : "0");
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    syncRailActiveState();
+  }
+
+  function applyNavGroupStateFromStorage() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    let preferred = null;
+    try {
+      preferred = localStorage.getItem("adminNavOpenGroup");
+    } catch (_) {
+      preferred = null;
+    }
+    const groups = Array.from(sidebar.querySelectorAll(".nav-group[data-nav-group]"));
+    let openKey = preferred;
+    if (!openKey || !groups.some((g) => g.getAttribute("data-nav-group") === openKey)) {
+      const defaultGroup = groups.find((g) => g.getAttribute("data-default-open") === "1");
+      openKey = defaultGroup ? defaultGroup.getAttribute("data-nav-group") : "dashboard";
+    }
+    groups.forEach((group) => {
+      const key = group.getAttribute("data-nav-group");
+      setNavGroupOpen(group, key === openKey, { exclusive: false, persist: false });
+    });
+    try {
+      if (openKey) localStorage.setItem("adminNavOpenGroup", openKey);
+    } catch (_) {
+      /* ignore */
+    }
+    syncRailActiveState();
+  }
+
+  function expandNavGroupForActiveLink() {
+    const active = document.querySelector("#sidebar a.active");
+    if (!active) return;
+    const group = active.closest(".nav-group");
+    if (group) setNavGroupOpen(group, true);
+  }
+
+  function bindNavGroupToggles() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    if (sidebar.dataset.navGroupsBound === "1") return;
+    sidebar.dataset.navGroupsBound = "1";
+    sidebar.addEventListener("click", (e) => {
+      const railBtn = e.target.closest(".sidebar-rail__item[data-rail-group]");
+      if (railBtn && sidebar.contains(railBtn)) {
+        e.preventDefault();
+        const key = railBtn.getAttribute("data-rail-group");
+        const group = sidebar.querySelector('.nav-group[data-nav-group="' + key + '"]');
+        if (!group) return;
+        expandSidebarFromRailIfNeeded();
+        setNavGroupOpen(group, true);
+        return;
+      }
+      const toggle = e.target.closest("[data-nav-group-toggle]");
+      if (!toggle || !sidebar.contains(toggle)) return;
+      e.preventDefault();
+      const group = toggle.closest(".nav-group");
+      if (!group) return;
+      const isOpen = toggle.getAttribute("aria-expanded") !== "false";
+      if (isOpen) {
+        setNavGroupOpen(group, false);
+      } else {
+        setNavGroupOpen(group, true);
       }
     });
   }
@@ -195,28 +387,51 @@
     const btn = document.getElementById("sidebarCollapseBtn");
     if (!sidebar || !btn) return;
     const collapsed = sidebar.classList.contains("collapsed");
-    btn.textContent = collapsed ? "☰" : "⟨⟩";
+    btn.classList.toggle("is-collapsed", collapsed);
+    btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
     const label = collapsed ? "Expand sidebar" : "Collapse sidebar";
     btn.setAttribute("aria-label", label);
     btn.setAttribute("title", label);
   }
 
+  function setSidebarCollapsed(collapsed) {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+    if (isMobileSidebarMode()) return;
+    const next = Boolean(collapsed);
+    sidebar.classList.toggle("collapsed", next);
+    document.body.classList.toggle("sidebar-collapsed", next);
+    try {
+      localStorage.setItem("dashboardSidebarCollapsed", next ? "1" : "0");
+    } catch (_) {
+      /* ignore */
+    }
+    syncSidebarCollapseButton();
+    syncCollapsedNavTooltips();
+    if (next) ensureActiveVisibleInCollapsed();
+  }
+
   function toggleSidebarCollapsed() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
-    sidebar.classList.toggle("collapsed");
-    document.body.classList.toggle("sidebar-collapsed", sidebar.classList.contains("collapsed"));
-    localStorage.setItem("dashboardSidebarCollapsed", sidebar.classList.contains("collapsed") ? "1" : "0");
-    syncSidebarCollapseButton();
-    syncCollapsedNavTooltips();
+    setSidebarCollapsed(!sidebar.classList.contains("collapsed"));
   }
 
   function applySidebarStateFromStorage() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
-    if (localStorage.getItem("dashboardSidebarCollapsed") === "1") {
+    let stored = "0";
+    try {
+      stored = localStorage.getItem("dashboardSidebarCollapsed") || "0";
+    } catch (_) {
+      stored = "0";
+    }
+    if (!isMobileSidebarMode() && stored === "1") {
       sidebar.classList.add("collapsed");
       document.body.classList.add("sidebar-collapsed");
+    } else {
+      sidebar.classList.remove("collapsed");
+      document.body.classList.remove("sidebar-collapsed");
     }
     syncSidebarCollapseButton();
     syncCollapsedNavTooltips();
@@ -318,7 +533,14 @@
       });
     }
     markActiveSidebarLink();
+    applyNavGroupStateFromStorage();
+    expandNavGroupForActiveLink();
+    bindNavGroupToggles();
+    bindSidebarSwipeClose();
+    syncSidebarCollapseButton();
     syncCollapsedNavTooltips();
+    ensureActiveVisibleInCollapsed();
+    syncRailActiveState();
     syncDarkModeToggleButton();
     syncMobileToggleButton();
     if (typeof window.refreshGeneratorDraftsSidebar === "function") {
@@ -356,7 +578,18 @@
   });
 
   dashboardMobileMq.addEventListener("change", () => {
-    if (!isMobileSidebarMode()) setSidebarOpen(false);
+    if (!isMobileSidebarMode()) {
+      setSidebarOpen(false);
+      applySidebarStateFromStorage();
+    } else {
+      const sidebar = document.getElementById("sidebar");
+      if (sidebar) {
+        sidebar.classList.remove("collapsed");
+        document.body.classList.remove("sidebar-collapsed");
+      }
+      syncSidebarCollapseButton();
+      syncCollapsedNavTooltips();
+    }
     syncMobileToggleButton();
   });
 
