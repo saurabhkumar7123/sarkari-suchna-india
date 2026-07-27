@@ -14,7 +14,7 @@
       </svg>
     </span>
     <span class="sidebar-brand__copy">
-      <span class="sidebar-brand__name">Sarkari Suchna</span>
+      <span class="sidebar-brand__name">Sarkari Suchna india</span>
       <span class="sidebar-brand__sub">Admin Control Center</span>
     </span>
   </a>

@@ -17,7 +17,31 @@ const IMPLICIT_HEADER_LINES = {
   faq: "Important Questions",
   eligibility: "Eligibility",
   vacancy: "Vacancy",
-  "selection process": "Selection Process"
+  "vacancy details": "Vacancy Details",
+  "selection process": "Selection Process",
+  "age limit": "Age Limit",
+  "how to apply": "How To Apply",
+  salary: "Salary",
+  "pay scale": "Salary",
+  helpline: "Helpline",
+  "help line": "Helpline",
+  "help desk": "Helpline",
+  "notification details": "Notification Details",
+  "important instructions": "Important Instructions",
+  "general instructions": "Important Instructions",
+  "exam pattern": "Exam Pattern",
+  syllabus: "Syllabus",
+  "महत्वपूर्ण तिथियाँ": "Important Dates",
+  "महत्वपूर्ण तिथियां": "Important Dates",
+  "आवेदन शुल्क": "Application Fee",
+  "पद विवरण": "Vacancy Details",
+  "आयु सीमा": "Age Limit",
+  "चयन प्रक्रिया": "Selection Process",
+  "आवेदन कैसे करें": "How To Apply",
+  "महत्वपूर्ण लिंक": "Important Links",
+  "महत्वपूर्ण निर्देश": "Important Instructions",
+  वेतन: "Salary",
+  हेल्पलाइन: "Helpline"
 };
 
 const SECTION_ALIAS_MAP = {
@@ -34,12 +58,32 @@ const SECTION_ALIAS_MAP = {
   selectionprocess: "Selection Process",
   "selection process": "Selection Process",
   vacancy: "Vacancy",
+  "vacancy details": "Vacancy Details",
+  "age limit": "Age Limit",
+  agelimit: "Age Limit",
+  "how to apply": "How To Apply",
+  howtoapply: "How To Apply",
+  salary: "Salary",
+  "pay scale": "Salary",
+  helpline: "Helpline",
+  "help line": "Helpline",
+  "notification details": "Notification Details",
+  "important instructions": "Important Instructions",
+  "exam pattern": "Exam Pattern",
+  syllabus: "Syllabus",
   importantlinks: "Important Links",
   "important links": "Important Links",
   importantquestions: "Important Questions",
   "important questions": "Important Questions",
   faq: "Important Questions",
-  "अक्सर पूछे जाने वाले प्रश्न": "Important Questions"
+  "अक्सर पूछे जाने वाले प्रश्न": "Important Questions",
+  "आयु सीमा": "Age Limit",
+  "चयन प्रक्रिया": "Selection Process",
+  "आवेदन कैसे करें": "How To Apply",
+  "महत्वपूर्ण लिंक": "Important Links",
+  "महत्वपूर्ण निर्देश": "Important Instructions",
+  वेतन: "Salary",
+  हेल्पलाइन: "Helpline"
 };
 
 /**
@@ -147,19 +191,19 @@ function rebuildPublisherDocument(sections) {
 }
 
 /**
- * When content already has [Section: …] blocks, normalize and preserve — do not re-extract.
+ * When content already has explicit [Section: …] blocks, normalize and preserve — do not re-extract.
+ * Plain headings without brackets are handled by Phase AI-1 section detection / structuring instead.
  * @param {string} text
  * @returns {string | null}
  */
 function tryPreserveStructuredInput(text) {
-  const prepared = prepareInputForStructuring(text);
-  if (!hasExplicitSectionMarkers(prepared) && !hasExplicitSectionMarkers(text)) {
-    const implicitOnly = parseSectionsFromText(prepared);
-    if (!implicitOnly.length) return null;
-  } else if (!/\[\s*section\s*:/i.test(prepared)) {
+  const original = String(text || "");
+  // Only preserve user/AI documents that already use explicit [Section:] markers.
+  if (!hasExplicitSectionMarkers(original)) {
     return null;
   }
 
+  const prepared = prepareInputForStructuring(original);
   const sections = parseSectionsFromText(prepared);
   if (!sections.length) return null;
 

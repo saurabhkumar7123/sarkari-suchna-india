@@ -1,0 +1,134 @@
+/*
+ * FPO-1 — Shared workspace primitives for PI-1 (.gw-*) and PI-2 (.ew-*).
+ * Class names stay product-specific. Shared layer owns tokens, focus rings,
+ * empty/state helpers, reduced-motion, and mobile tap floors only.
+ * Severity badge / pill look remains in each workspace stylesheet so
+ * Generator and Editorial appearance stay unchanged.
+ */
+
+#generatorWorkspace,
+#editorialWorkspacePro {
+  --ws-high: #16a34a;
+  --ws-high-soft: #dcfce7;
+  --ws-medium: #b45309;
+  --ws-medium-soft: #fef3c7;
+  --ws-low: #b91c1c;
+  --ws-low-soft: #fee2e2;
+}
+
+#generatorWorkspace {
+  --gw-high: var(--ws-high);
+  --gw-high-soft: var(--ws-high-soft);
+  --gw-medium: var(--ws-medium);
+  --gw-medium-soft: var(--ws-medium-soft);
+  --gw-low: var(--ws-low);
+  --gw-low-soft: var(--ws-low-soft);
+}
+
+#editorialWorkspacePro {
+  --ew-high: var(--ws-high);
+  --ew-high-soft: var(--ws-high-soft);
+  --ew-medium: var(--ws-medium);
+  --ew-medium-soft: var(--ws-medium-soft);
+  --ew-low: var(--ws-low);
+  --ew-low-soft: var(--ws-low-soft);
+}
+
+/* ---- Focus rings (keyboard / a11y) -------------------------------------- */
+
+.gw-btn:focus-visible,
+.gw-nav__item:focus-visible,
+.gw-tab:focus-visible,
+.gw-jump:focus-visible,
+.gw-error__close:focus-visible,
+.gw-modal__close:focus-visible,
+.ew-btn:focus-visible,
+.ew-nav-item:focus-visible,
+.ew-check__btn:focus-visible,
+.ew-issue__btn:focus-visible,
+.ew-suggestion__actions button:focus-visible {
+  outline: 2px solid var(--gw-brand, var(--ew-brand, #2563eb));
+  outline-offset: 2px;
+}
+
+/* ---- Completion dots (complete only — attention colors differ per product) */
+
+.gw-dot--complete,
+.ew-dot.is-complete {
+  background: var(--ws-high);
+}
+
+/* ---- Shared loading / unavailable / empty surfaces ---------------------- */
+
+.ws-state {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px dashed var(--gw-line, var(--ew-line, #e2e8f0));
+  background: var(--gw-surface-soft, var(--ew-soft, #f8fafc));
+  color: var(--gw-muted, var(--ew-muted, #64748b));
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.ws-state--loading {
+  border-style: solid;
+}
+
+.ws-state--unavailable {
+  border-color: #fcd34d;
+  background: var(--ws-medium-soft);
+  color: #78350f;
+}
+
+.ws-state--timeout {
+  border-color: #fca5a5;
+  background: var(--ws-low-soft);
+  color: #7f1d1d;
+}
+
+.ws-state--ok {
+  border-style: solid;
+  border-color: #86efac;
+  background: var(--ws-high-soft);
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* ---- Reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-stage.is-active .gw-stage__dot,
+  .sec-card.gw-flash {
+    animation: none !important;
+  }
+
+  #editorialWorkspacePro .ew-issue.is-highlighted .ew-issue__btn,
+  #editorialWorkspacePro .ew-draft-section.is-highlighted {
+    transition: none !important;
+  }
+}
+
+/* ---- Dark mode soft tokens ---------------------------------------------- */
+
+body.dark #generatorWorkspace,
+body.dark #editorialWorkspacePro {
+  --ws-high-soft: rgba(22, 163, 74, 0.18);
+  --ws-medium-soft: rgba(245, 158, 11, 0.18);
+  --ws-low-soft: rgba(220, 38, 38, 0.18);
+}
+
+/* ---- Mobile tap targets (shared floor) ---------------------------------- */
+
+@media (max-width: 720px) {
+  .gw-nav__item,
+  .gw-btn,
+  .gw-tab,
+  .ew-btn,
+  .ew-nav-item,
+  .ew-check__btn,
+  .ew-issue__btn,
+  .ew-suggestion__actions button {
+    min-height: 44px;
+  }
+}

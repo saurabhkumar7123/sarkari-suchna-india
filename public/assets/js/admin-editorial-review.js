@@ -144,6 +144,12 @@
           <small>${escapeHtml(item.operator || "admin")} · ${escapeHtml(item.createdAt || "")}${item.comment ? ` · ${escapeHtml(item.comment)}` : ""}</small>
         </li>`).join("")
       : "<li>No decisions yet.</li>";
+
+    // Phase PI-2 — present AI-4 / PI-1 analysis already on the workspace payload.
+    // No extra network calls; Pro UI is read-only over this data.
+    if (window.EditorialWorkspacePro && typeof window.EditorialWorkspacePro.render === "function") {
+      window.EditorialWorkspacePro.render(data);
+    }
   }
 
   async function loadContentPipelineGuidance(slugHint) {

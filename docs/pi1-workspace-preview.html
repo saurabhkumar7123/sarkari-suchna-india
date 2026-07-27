@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PI-1 Smart Workspace — offline preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Phase PI-1 offline preview harness.
+
+  Loads the real generator-workspace CSS + JS with sample data so the workspace
+  can be reviewed and screenshotted without a running server or admin login.
+  It is documentation only and is never served by the app.
+-->
+<link rel="stylesheet" href="../public/assets/css/admin/generator-workspace.css">
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #eef2f8;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #0f172a;
+  }
+  .harness-head {
+    max-width: 1240px;
+    margin: 0 auto 16px;
+  }
+  .harness-head h1 { margin: 0 0 4px; font-size: 19px; }
+  .harness-head p { margin: 0; font-size: 13px; color: #64748b; }
+  .harness-stage { max-width: 1240px; margin: 0 auto; }
+  .harness-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: 1240px;
+    margin: 0 auto 14px;
+  }
+  .harness-controls button {
+    min-height: 32px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .harness-offscreen { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<div class="harness-head">
+  <h1>PI-1 — Smart Generator Experience</h1>
+  <p>Offline preview of the workspace panel. Buttons below replay the real generator lifecycle events.</p>
+</div>
+
+<div class="harness-controls">
+  <button type="button" data-demo="reset">1 · Reset</button>
+  <button type="button" data-demo="upload">2 · Select PDF</button>
+  <button type="button" data-demo="extract">3 · Extract text</button>
+  <button type="button" data-demo="ai">4 · Convert with AI</button>
+  <button type="button" data-demo="error">Show extraction error</button>
+</div>
+
+<div class="harness-stage">
+
+<section id="generatorWorkspace" class="generator-workspace" aria-label="Smart generator workspace">
+  <div class="gw-head">
+    <div class="gw-head__title">
+      <h3>Smart workspace</h3>
+      <span class="gw-head__sub">Advisory review — never changes your content automatically</span>
+    </div>
+    <div class="gw-head__actions">
+      <span id="gwQualityChip" class="gw-quality-chip" hidden></span>
+      <span id="gwValidationChip" class="gw-quality-chip" hidden></span>
+      <button type="button" class="gw-btn" data-gw-action="refresh">Re-check</button>
+      <button type="button" class="gw-btn" data-gw-action="shortcuts">Shortcuts</button>
+      <button type="button" id="gwToggle" class="gw-btn" data-gw-action="toggle" aria-expanded="true" aria-controls="gwBody">Hide workspace</button>
+    </div>
+  </div>
+
+  <ol id="gwTimeline" class="gw-timeline" aria-label="Generator processing timeline"></ol>
+
+  <div id="gwError" class="gw-error" role="alert" hidden></div>
+
+  <div id="gwBody" class="gw-body">
+    <aside class="gw-nav" aria-label="Section navigator">
+      <div class="gw-nav__head">
+        <h4>Sections</h4>
+        <span id="gwNavCount" class="gw-count">0</span>
+      </div>
+      <p id="gwNavEmpty" class="gw-empty gw-empty--padded">Detected sections appear here after AI conversion. Click one to jump to it in the editor.</p>
+      <ul id="gwNavList" class="gw-nav__list"></ul>
+    </aside>
+
+    <div class="gw-split">
+      <section class="gw-pane gw-pane--source" aria-label="Original PDF source">
+        <div class="gw-pane__head">
+          <h4>Source</h4>
+          <div class="gw-tabs" role="tablist" aria-label="Source view">
+            <button type="button" id="gwSourceTabText" class="gw-tab is-active" role="tab" aria-selected="true" data-gw-action="source-text">Extracted text</button>
+            <button type="button" id="gwSourceTabPdf" class="gw-tab" role="tab" aria-selected="false" data-gw-action="source-pdf">Original PDF</button>
+          </div>
+        </div>
+        <p id="gwSourceHint" class="gw-pane__hint" hidden></p>
+        <div id="gwSourceText" class="gw-pane__scroll"></div>
+        <div id="gwSourcePdf" class="gw-pane__scroll" hidden></div>
+      </section>
+
+      <section class="gw-pane gw-pane--structured" aria-label="Structured preview">
+        <div class="gw-pane__head"><h4>Structured preview</h4></div>
+        <div id="gwStructured" class="gw-pane__scroll"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="gw-panels">
+    <section class="gw-panel gw-panel--summary" aria-label="Generator summary">
+      <div class="gw-pane__head"><h4>Summary</h4></div>
+      <div id="gwSummary" class="gw-panel__body"></div>
+    </section>
+    <section class="gw-panel gw-panel--validation" aria-label="Validation">
+      <div class="gw-pane__head"><h4>Validation</h4></div>
+      <div id="gwValidation" class="gw-panel__body"></div>
+    </section>
+    <section class="gw-panel gw-panel--suggestions" aria-label="AI suggestions">
+      <div class="gw-pane__head"><h4>AI suggestions</h4></div>
+      <p class="gw-advisory-note">Advisory only — nothing here is applied automatically.</p>
+      <div id="gwSuggestions" class="gw-panel__body"></div>
+    </section>
+  </div>
+</section>
+
+<div id="gwShortcuts" class="gw-modal" role="dialog" aria-modal="true" aria-labelledby="gwShortcutsTitle" hidden>
+  <div class="gw-modal__panel">
+    <div class="gw-modal__head">
+      <h4 id="gwShortcutsTitle">Keyboard shortcuts</h4>
+      <button type="button" class="gw-modal__close" data-gw-action="close-shortcuts" aria-label="Close">×</button>
+    </div>
+    <table><tbody id="gwShortcutTable"></tbody></table>
+  </div>
+</div>
+
+</div>
+
+<!-- Stand-ins for the real Generator controls the workspace reads from. -->
+<div class="harness-offscreen" aria-hidden="true">
+  <textarea id="data"></textarea>
+  <div id="sectionEditorWrap"><div id="sectionEditorRoot"></div></div>
+  <button type="button" id="savePageBtn">Save</button>
+  <button type="button" id="saveDraftBtn">Draft</button>
+  <button type="button" id="previewBtn">Preview</button>
+  <button type="button" id="aiConvertBtn">AI</button>
+</div>
+
+<script src="../public/assets/js/generator-workspace-core.js"></script>
+<script src="../public/assets/js/generator-workspace.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  const SOURCE_TEXT = [
+    "UTTAR PRADESH POLICE RECRUITMENT AND PROMOTION BOARD, LUCKNOW",
+    "Advertisement No. 14/2026",
+    "",
+    "UP Police Constable Recruitment 2026 notification for 35260 constable posts.",
+    "Online applications are invited from eligible candidates.",
+    "UP Police Constable Recruitment 2026 notification for 35260 constable posts.",
+    "",
+    "IMPORTANT DATES",
+    "Application Start Date: 04 September 2026",
+    "Last Date for Apply Online: 30 September 2026",
+    "Last Date for Fee Payment: 30 September 2026",
+    "Exam Date: Notify Soon",
+    "",
+    "VACANCY DETAILS",
+    "Post,Category,Total",
+    "Constable,UR,17000",
+    "Constable,OBC,9500",
+    "Constable,SC,7400",
+    "",
+    "APPLICATION FEE",
+    "General / OBC: Rs. 400/-",
+    "SC / ST: Rs. 400/-",
+    "",
+    "IMPORTANT LINKS",
+    "Apply Online: https://uppbpb.gov.in/apply",
+    "Download Notification: htp:/broken-link",
+    "Official Website: https://uppbpb.gov.in"
+  ].join("\n");
+
+  const STRUCTURED_TEXT = [
+    "[Section: ShortInfo]",
+    "UP Police Constable Recruitment 2026 notification for 35260 constable posts.",
+    "Online applications are invited from eligible candidates.",
+    "UP Police Constable Recruitment 2026 notification for 35260 constable posts.",
+    "",
+    "[Section: ImportantDates]",
+    "Application Start Date: 04 September 2026",
+    "Last Date for Apply Online: 30 September 2026",
+    "Exam Date: Notify Soon",
+    "",
+    "[Section: Vacancy]",
+    "Post,Category,Total",
+    "Constable,UR,17000",
+    "Constable,OBC,9500",
+    "Constable,SC,7400",
+    "",
+    "[Section: ApplicationFee]",
+    "General / OBC: Rs. 400/-",
+    "SC / ST: Rs. 400/-",
+    "",
+    "[Section: ImportantLinks]",
+    "Apply Online=https://uppbpb.gov.in/apply",
+    "Download Notification=htp:/broken-link",
+    "Official Website=https://uppbpb.gov.in",
+    "",
+    "[Section: Eligibility]",
+    "—"
+  ].join("\n");
+
+  // Mirrors the shape POST /api/ai-parse returns (Phase AI-1 fields).
+  const AI_PAYLOAD = {
+    result: STRUCTURED_TEXT,
+    validation: {
+      ok: false,
+      overallConfidence: 0.71,
+      sections: [
+        { title: "ShortInfo", confidence: 0.88, issues: ["duplicate_lines:1"] },
+        { title: "ImportantDates", confidence: 0.92, issues: [] },
+        { title: "Vacancy", confidence: 0.79, issues: [] },
+        { title: "ApplicationFee", confidence: 0.68, issues: [] },
+        { title: "ImportantLinks", confidence: 0.41, issues: ["broken_url:htp:/broken-link"] },
+        { title: "Eligibility", confidence: 0.12, issues: ["empty_section"] }
+      ]
+    },
+    meta: { overallConfidence: 0.71, engineVersion: "ai1.1.0", sectionCount: 6 }
+  };
+
+  const fire = (name, detail) => document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+  const editor = document.getElementById("data");
+
+  const actions = {
+    reset() {
+      editor.value = "";
+      location.reload();
+    },
+    upload() {
+      const file = new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], "up-police-constable-2026.pdf", {
+        type: "application/pdf"
+      });
+      fire("generator:pdf-selected", { file });
+    },
+    extract() {
+      fire("generator:extract-start", { fileName: "up-police-constable-2026.pdf", fileSizeBytes: 2411724 });
+      window.setTimeout(() => {
+        editor.value = SOURCE_TEXT;
+        fire("generator:extract-success", {
+          text: SOURCE_TEXT,
+          extractionNote: "OCR eng+hin (pehli 15 pages); text layer short ya quality low.",
+          fileName: "up-police-constable-2026.pdf"
+        });
+      }, 700);
+    },
+    ai() {
+      fire("generator:ai-start", { inputLength: SOURCE_TEXT.length });
+      window.setTimeout(() => {
+        editor.value = STRUCTURED_TEXT;
+        fire("generator:ai-success", { payload: AI_PAYLOAD });
+        fire("generator:content-change", { source: "demo" });
+      }, 800);
+    },
+    error() {
+      fire("generator:extract-error", {
+        status: 500,
+        message: "PDF extraction failed: Scanned ya image PDF ho sakti hai — OCR abhi pura text nahi nikal paya.",
+        contentType: "application/json",
+        fileName: "scanned-notice.pdf",
+        fileSizeBytes: 8123456
+      });
+    }
+  };
+
+  document.querySelectorAll("[data-demo]").forEach((btn) => {
+    btn.addEventListener("click", () => actions[btn.getAttribute("data-demo")]());
+  });
+})();
+</script>
+</body>
+</html>

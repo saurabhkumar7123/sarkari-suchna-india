@@ -184,6 +184,9 @@ const cspDirectivesBase = {
   ],
   fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
   objectSrc: ["'none'"],
+  // blob: lets the Generator preview a locally chosen PDF before upload.
+  // Blobs are same-origin only; embedding this app elsewhere stays blocked below.
+  frameSrc: ["'self'", "blob:"],
   frameAncestors: ["'none'"],
   baseUri: ["'self'"],
   formAction: ["'self'"],

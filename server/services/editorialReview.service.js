@@ -24,6 +24,36 @@ const {
   normalizeDecision
 } = require("../lib/recruitment/editorialWorkflow");
 const { isGeneratorDraftsEnabled } = require("../config/generatorDrafts");
+const { analyzeEditorialDraft } = require("../lib/editorialIntelligence");
+
+/**
+ * Phase PI-2 — attach AI-4 advisory report for presentation only.
+ * Never mutates draft, workflow, or decisions. Failures degrade to null.
+ * @param {object|null} draft
+ * @returns {object|null}
+ */
+function buildEditorialIntelligenceForDraft(draft) {
+  if (!draft) return null;
+  try {
+    const payload = draft.payload && typeof draft.payload === "object" ? draft.payload : {};
+    const input =
+      typeof payload.result === "string"
+        ? payload.result
+        : typeof payload.content === "string"
+          ? payload.content
+          : typeof payload.draftText === "string"
+            ? payload.draftText
+            : typeof payload.publisherText === "string"
+              ? payload.publisherText
+              : payload.structured || payload;
+    const analysis = analyzeEditorialDraft(input, {
+      title: draft.title || payload.title || null
+    });
+    return analysis.editorialIntelligence || null;
+  } catch {
+    return null;
+  }
+}
 
 function parsePositiveId(value, fieldName) {
   const id = parseInt(String(value), 10);
@@ -140,6 +170,8 @@ async function getReviewWorkspace(recruitmentId) {
   });
   const validation = buildValidationSummary({ recruitment, draft });
   const allowedDecisions = listAllowedDecisions(workflowState);
+  // PI-2: reuse AI-4 inside the existing workspace payload (no new endpoint).
+  const editorialIntelligence = buildEditorialIntelligenceForDraft(draft);
 
   return {
     recruitment,
@@ -168,6 +200,7 @@ async function getReviewWorkspace(recruitmentId) {
       draftStatus: draft ? draft.status : null
     },
     validation,
+    editorialIntelligence,
     workflowState,
     workflowStateLabel: workflowStateLabel(workflowState),
     bindingStatus,

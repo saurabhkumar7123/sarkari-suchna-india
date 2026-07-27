@@ -144,8 +144,17 @@ const aiParse = asyncHandler(async (req, res) => {
   }
   const parsed = await processJobParse(normalized);
   const result = String(parsed?.result ?? "").trim() || "No usable data found";
-  logger.info("ai-parse response", { resultLen: result.length });
-  res.json({ result });
+  logger.info("ai-parse response", {
+    resultLen: result.length,
+    hasStructured: Boolean(parsed?.structured),
+    overallConfidence: parsed?.meta?.overallConfidence
+  });
+  const payload = { result };
+  // Optional Phase AI-1 quality fields — Generator UI uses `result` only.
+  if (parsed?.structured) payload.structured = parsed.structured;
+  if (parsed?.validation) payload.validation = parsed.validation;
+  if (parsed?.meta) payload.meta = parsed.meta;
+  res.json(payload);
 });
 
 const getSections = asyncHandler(async (req, res) => {

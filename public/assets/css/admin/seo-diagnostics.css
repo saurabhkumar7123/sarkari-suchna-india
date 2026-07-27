@@ -94,9 +94,11 @@
 
 .seo-page-form input {
   min-width: 16rem;
+  max-width: 100%;
   padding: 0.45rem 0.6rem;
   border: 1px solid rgba(15, 23, 42, 0.15);
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
 .seo-page-results {
@@ -117,4 +119,20 @@
 .seo-report ul {
   margin: 0.35rem 0 0.85rem;
   padding-left: 1.1rem;
+}
+
+@media (max-width: 720px) {
+  .seo-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .seo-page-form input {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .seo-page-form label {
+    width: 100%;
+  }
 }

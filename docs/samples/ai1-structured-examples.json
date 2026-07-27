@@ -1,0 +1,816 @@
+{
+  "UPPSC": {
+    "publisherText": "[Section: Short Information]\nUttar Pradesh Public Service Commission\nUPPSC Combined State / Upper Subordinate Services Examination 2026\nAdvertisement No. A-1/E-1/2026\n[Section: Important Dates]\nOnline Apply Start Date : 04 September 2025\nLast Date for Apply Online : 30 September 2025\nFee Payment Last Date : 30 September 2025\nExam Date : Notify Soon\n[Section: Application Fee]\nFor General / OBC / EWS : Rs 125/-\nFor SC / ST : Rs 65/-\nFor PH : Rs 25/-\n[Section: Vacancy | table]\nPost Name, Category, Vacancy\nNaib Tehsildar, General, 120\nBlock Development Officer, OBC, 80\nAssistant Conservator, SC, 40\n[Section: Eligibility]\nBachelor Degree in Any Stream from Recognized University\nAge Limit: Minimum Age : 21 Years\nMaximum Age : 40 Years As on 01 July 2025\n[Section: Selection Process]\nPreliminary Examination\nMain Examination\nInterview\n[Section: How To Apply]\nCandidates must apply online through the official website only.\n[Section: Salary]\nPay Scale Level-10 as per 7th CPC\n[Section: Important Links]\nApply Online=https://uppsc.up.nic.in\nNotification PDF=https://uppsc.up.nic.in/notifications/a1e12026.pdf\n[Section: Helpline]\nHelpline Number : 0522-2238100\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "Uttar Pradesh Public Service Commission",
+        "sourceName": "UPPSC",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.145Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Age Limit",
+          "type": "age_limit",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Eligibility",
+          "type": "eligibility",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "How To Apply",
+          "type": "how_to_apply",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Salary",
+          "type": "salary",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        },
+        {
+          "title": "Helpline",
+          "type": "helpline",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://uppsc.up.nic.in",
+          "category": "apply_online"
+        },
+        {
+          "label": "Notification PDF",
+          "url": "https://uppsc.up.nic.in/notifications/a1e12026.pdf",
+          "category": "notification_pdf"
+        }
+      ],
+      "validation": {
+        "sectionCount": 11,
+        "okSections": 11,
+        "knownSections": 11,
+        "unknownSections": 0,
+        "avgConfidence": 0.873
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Uttar Pradesh Public Service Commission\nUPPSC Combined State / Upper Subordinate Services Examination 2026\nAdvertisement No. A-1/E-1/2026"
+        }
+      ],
+      "originalContent": "Uttar Pradesh Public Service Commission\nUPPSC Combined State / Upper Subordinate Services Examination 2026\nAdvertisement No. A-1/E-1/2026",
+      "forceTable": false
+    }
+  },
+  "SSC": {
+    "publisherText": "[Section: Short Information]\nStaff Selection Commission\nSSC GD Constable Recruitment 2026\n[Section: Important Dates]\nApplication Begin : 05 December 2025\nLast Date for Apply Online : 31 December 2025\nExam Date : February 2026\n[Section: Application Fee]\nGeneral / OBC / EWS : Rs 100/-\nSC / ST / Female : Rs 0/-\n[Section: Vacancy | table]\nPost, Force, Vacancy\nConstable GD, BSF, 13093\nConstable GD, CISF, 5000\nConstable GD, CRPF, 8000\n[Section: Age Limit]\n18-23 Years\n[Section: Selection Process]\nComputer Based Test\nPhysical Efficiency Test\nDocument Verification\n[Section: Important Links]\nApply Online=https://ssc.nic.in\nLogin=https://ssc.nic.in/login\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "Staff Selection Commission",
+        "sourceName": "SSC",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.155Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Age Limit",
+          "type": "age_limit",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://ssc.nic.in",
+          "category": "apply_online"
+        },
+        {
+          "label": "Login",
+          "url": "https://ssc.nic.in/login",
+          "category": "login"
+        }
+      ],
+      "validation": {
+        "sectionCount": 7,
+        "okSections": 7,
+        "knownSections": 7,
+        "unknownSections": 0,
+        "avgConfidence": 0.839
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Staff Selection Commission\nSSC GD Constable Recruitment 2026"
+        }
+      ],
+      "originalContent": "Staff Selection Commission\nSSC GD Constable Recruitment 2026",
+      "forceTable": false
+    }
+  },
+  "RAILWAY": {
+    "publisherText": "[Section: Short Information]\nRailway Recruitment Board\nRRB NTPC Graduate Level Recruitment 2025\n[Section: Important Dates]\nOnline Application Start Date : 14 September 2025\nLast Date : 13 October 2025\nFee Payment Last Date : 15 October 2025\n[Section: Application Fee]\nUR / OBC : Rs 500/-\nSC / ST / Female / ExSM / PwBD : Rs 250/-\n[Section: Vacancy | table]\nPost Name, Total Posts\nStation Master, 1000\nGoods Guard, 2000\nSenior Clerk Cum Typist, 1500\n[Section: Qualification]\nGraduate Degree from Recognized University\n[Section: Selection Process]\nCBT Stage I\nCBT Stage II\nTyping Skill Test / CBAT\nDocument Verification\n[Section: Important Links]\nApply Online=https://www.rrbcdg.gov.in\nNotification PDF=https://www.rrbcdg.gov.in/ntpc2025.pdf\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "Railway Recruitment Board",
+        "sourceName": "RAILWAY",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.160Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Qualification",
+          "type": "qualification",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://www.rrbcdg.gov.in",
+          "category": "apply_online"
+        },
+        {
+          "label": "Notification PDF",
+          "url": "https://www.rrbcdg.gov.in/ntpc2025.pdf",
+          "category": "notification_pdf"
+        }
+      ],
+      "validation": {
+        "sectionCount": 7,
+        "okSections": 7,
+        "knownSections": 7,
+        "unknownSections": 0,
+        "avgConfidence": 0.846
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Railway Recruitment Board\nRRB NTPC Graduate Level Recruitment 2025"
+        }
+      ],
+      "originalContent": "Railway Recruitment Board\nRRB NTPC Graduate Level Recruitment 2025",
+      "forceTable": false
+    }
+  },
+  "UP_POLICE": {
+    "publisherText": "[Section: Short Information]\nUttar Pradesh Police Recruitment and Promotion Board\nUP Police Constable Recruitment 2026\n[Section: Important Dates]\nApplication Start Date : 01 August 2025\nLast Date : 31 August 2025\n[Section: Application Fee]\nGeneral / OBC / EWS : Rs 400/-\nSC / ST : Rs 300/-\n[Section: Vacancy | table]\nPost, Category, Posts\nConstable, UR, 20000\nConstable, OBC, 12000\nConstable, SC, 8000\nConstable, ST, 1000\n[Section: Age Limit]\n18-25 Years\n[Section: Selection Process]\nWritten Exam\nPhysical Standard Test\nPhysical Efficiency Test\nDocument Verification\n[Section: Salary]\nPay Matrix Level-3\n[Section: Important Links]\nApply Online=https://uppbpb.gov.in\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "Uttar Pradesh Police Recruitment and Promotion Board",
+        "sourceName": "UP_POLICE",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.161Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Age Limit",
+          "type": "age_limit",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Salary",
+          "type": "salary",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://uppbpb.gov.in",
+          "category": "apply_online"
+        }
+      ],
+      "validation": {
+        "sectionCount": 8,
+        "okSections": 8,
+        "knownSections": 8,
+        "unknownSections": 0,
+        "avgConfidence": 0.855
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Uttar Pradesh Police Recruitment and Promotion Board\nUP Police Constable Recruitment 2026"
+        }
+      ],
+      "originalContent": "Uttar Pradesh Police Recruitment and Promotion Board\nUP Police Constable Recruitment 2026",
+      "forceTable": false
+    }
+  },
+  "BPSC": {
+    "publisherText": "[Section: Short Information]\nBihar Public Service Commission\nBPSC 71st Combined Competitive Examination 2026\n[Section: Important Dates]\nOnline Apply Start Date : 10 January 2026\nLast Date for Apply Online : 05 February 2026\nExam Date : To Be Announced\n[Section: Application Fee]\nGeneral : Rs 600/-\nSC / ST / Female (Bihar) : Rs 150/-\n[Section: Vacancy | table]\nPost Name, Vacancy\nDeputy Collector, 50\nDSP, 30\nBlock Development Officer, 40\n[Section: Eligibility]\nGraduation in Any Discipline\n[Section: Selection Process]\nPreliminary Exam\nMains Exam\nInterview\n[Section: Important Links]\nApply Online=https://bpsc.bih.nic.in\nOfficial Website=https://www.bpsc.bih.nic.in\nNotification PDF=https://bpsc.bih.nic.in/advt/71cce.pdf\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "Bihar Public Service Commission",
+        "sourceName": "BPSC",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.162Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Eligibility",
+          "type": "eligibility",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://bpsc.bih.nic.in",
+          "category": "apply_online"
+        },
+        {
+          "label": "Official Website",
+          "url": "https://www.bpsc.bih.nic.in",
+          "category": "official_website"
+        },
+        {
+          "label": "Notification PDF",
+          "url": "https://bpsc.bih.nic.in/advt/71cce.pdf",
+          "category": "notification_pdf"
+        }
+      ],
+      "validation": {
+        "sectionCount": 7,
+        "okSections": 7,
+        "knownSections": 7,
+        "unknownSections": 0,
+        "avgConfidence": 0.846
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Bihar Public Service Commission\nBPSC 71st Combined Competitive Examination 2026"
+        }
+      ],
+      "originalContent": "Bihar Public Service Commission\nBPSC 71st Combined Competitive Examination 2026",
+      "forceTable": false
+    }
+  },
+  "NTA": {
+    "publisherText": "[Section: Short Information]\nNational Testing Agency\nNTA CUET UG 2026 Notification\n[Section: Important Dates]\nOnline Registration Start : 01 March 2026\nLast Date to Apply : 25 March 2026\nCorrection Window : 26 March 2026 to 28 March 2026\nExam Date : May 2026\n[Section: Application Fee]\nGeneral : Rs 1000/-\nOBC-NCL / EWS : Rs 900/-\nSC / ST / PwBD / Third Gender : Rs 800/-\n[Section: Important Links]\nRegistration=https://cuet.nta.nic.in\nLogin=https://cuet.nta.nic.in/login\nCorrection=https://cuet.nta.nic.in/correction\nOfficial Website=https://nta.ac.in\nSyllabus=https://nta.ac.in/cuet-syllabus.pdf\n[Section: Helpline]\nEmail : cuet-ug@nta.ac.in\nHelpline : 011-40759000\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "National Testing Agency",
+        "sourceName": "NTA",
+        "languageHint": "en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.163Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        },
+        {
+          "title": "Helpline",
+          "type": "helpline",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Registration",
+          "url": "https://cuet.nta.nic.in",
+          "category": "registration"
+        },
+        {
+          "label": "Login",
+          "url": "https://cuet.nta.nic.in/login",
+          "category": "login"
+        },
+        {
+          "label": "Correction",
+          "url": "https://cuet.nta.nic.in/correction",
+          "category": "correction"
+        },
+        {
+          "label": "Official Website",
+          "url": "https://nta.ac.in",
+          "category": "official_website"
+        },
+        {
+          "label": "Syllabus",
+          "url": "https://nta.ac.in/cuet-syllabus.pdf",
+          "category": "syllabus"
+        }
+      ],
+      "validation": {
+        "sectionCount": 5,
+        "okSections": 5,
+        "knownSections": 5,
+        "unknownSections": 0,
+        "avgConfidence": 0.806
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "National Testing Agency\nNTA CUET UG 2026 Notification"
+        }
+      ],
+      "originalContent": "National Testing Agency\nNTA CUET UG 2026 Notification",
+      "forceTable": false
+    }
+  },
+  "HINDI_HEAVY": {
+    "publisherText": "[Section: Short Information]\nउत्तर प्रदेश लोक सेवा आयोग\nसहायक समीक्षा अधिकारी एवं समीक्षा अधिकारी भर्ती 2026\n[Section: Important Dates]\nआवेदन प्रारंभ तिथि : 15 जुलाई 2025\nआवेदन अंतिम तिथि : 14 अगस्त 2025\nपरीक्षा तिथि : अभी घोषित नहीं\n[Section: Application Fee]\nसामान्य / ओबीसी / ईडब्ल्यूएस : 125 रुपये\nएससी / एसटी : 65 रुपये\n[Section: Age Limit]\nन्यूनतम आयु : 21 वर्ष\nअधिकतम आयु : 40 वर्ष\n[Section: Vacancy | table]\nपद का नाम, रिक्ति\nसहायक समीक्षा अधिकारी, 300\nसमीक्षा अधिकारी, 50\n[Section: Selection Process]\nलिखित परीक्षा\nकंप्यूटर टाइपिंग टेस्ट\nदस्तावेज़ सत्यापन\n[Section: How To Apply]\nअभ्यर्थी केवल आधिकारिक वेबसाइट के माध्यम से ऑनलाइन आवेदन करें।\n[Section: Important Links]\nApply Online=https://uppsc.up.nic.in\n[Section: Helpline]\nहेल्पलाइन नंबर : 0522-2238100\n[Section: Important Questions]\nQ: आयु सीमा क्या है?\nA: 21-40 वर्ष\nQ: आवेदन कैसे करें?\nA: आधिकारिक वेबसाइट से ऑनलाइन\n",
+    "structuredSummary": {
+      "formatId": "generator_intelligence_structured_v1",
+      "engineVersion": "ai1.1.0",
+      "metadata": {
+        "title": "उत्तर प्रदेश लोक सेवा आयोग",
+        "sourceName": "HINDI_HEAVY",
+        "languageHint": "hi-en",
+        "pageCount": null,
+        "extractedAt": "2026-07-26T11:53:45.167Z",
+        "detectionMode": "heading"
+      },
+      "sectionTitles": [
+        {
+          "title": "Short Information",
+          "type": "short_information",
+          "confidence": 0.4,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Dates",
+          "type": "important_dates",
+          "confidence": 0.92,
+          "blocks": [
+            "date_list"
+          ]
+        },
+        {
+          "title": "Application Fee",
+          "type": "application_fee",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Age Limit",
+          "type": "age_limit",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Vacancy Details",
+          "type": "vacancy_details",
+          "confidence": 0.92,
+          "blocks": [
+            "table"
+          ]
+        },
+        {
+          "title": "Selection Process",
+          "type": "selection_process",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "How To Apply",
+          "type": "how_to_apply",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Links",
+          "type": "important_links",
+          "confidence": 0.92,
+          "blocks": [
+            "link_list"
+          ]
+        },
+        {
+          "title": "Helpline",
+          "type": "helpline",
+          "confidence": 0.92,
+          "blocks": [
+            "paragraph"
+          ]
+        },
+        {
+          "title": "Important Questions",
+          "type": "faq",
+          "confidence": 0.85,
+          "blocks": [
+            "faq"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "label": "Apply Online",
+          "url": "https://uppsc.up.nic.in",
+          "category": "apply_online"
+        }
+      ],
+      "validation": {
+        "sectionCount": 10,
+        "okSections": 10,
+        "knownSections": 10,
+        "unknownSections": 0,
+        "avgConfidence": 0.846
+      }
+    },
+    "sampleSection": {
+      "order": 0,
+      "sectionType": "short_information",
+      "title": "Short Information",
+      "generatorTitle": "Short Information",
+      "isKnownSection": true,
+      "confidence": 0.4,
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "उत्तर प्रदेश लोक सेवा आयोग\nसहायक समीक्षा अधिकारी एवं समीक्षा अधिकारी भर्ती 2026"
+        }
+      ],
+      "originalContent": "उत्तर प्रदेश लोक सेवा आयोग\nसहायक समीक्षा अधिकारी एवं समीक्षा अधिकारी भर्ती 2026",
+      "forceTable": false
+    }
+  }
+}

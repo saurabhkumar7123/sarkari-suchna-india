@@ -6,7 +6,9 @@ const {
   resolveVacancySectionHeader
 } = require("./tableDetect");
 
-const GARBAGE = /\b(rti|annexure|syllabus|how\s+to\s+apply|exam\s*pattern|marks\s*distribution|click\s+here\s+to\s+apply|negative\s*marking)\b/i;
+// Phase AI-1: do not treat how-to-apply / syllabus / exam pattern as garbage —
+// those are valid preserved sections. Only strip clear legal/annexure noise.
+const GARBAGE = /\b(rti|annexure|click\s+here\s+to\s+apply)\b/i;
 
 const SECTION_BLOCK_RE = /(\[Section:\s*[^\]]+\]\s*)([\s\S]*?)(?=\n\[Section:|$)/gi;
 

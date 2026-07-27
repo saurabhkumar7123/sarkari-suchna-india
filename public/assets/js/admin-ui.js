@@ -25,7 +25,12 @@
   function getStandaloneSidebarLeft() {
     if (!document.body.classList.contains("standalone-admin-page")) return 0;
     if (window.matchMedia("(max-width: 768px)").matches) return 0;
-    return document.body.classList.contains("sidebar-collapsed") ? 72 : 250;
+    const sidebar = document.getElementById("sidebar");
+    if (sidebar) {
+      const width = sidebar.getBoundingClientRect().width;
+      if (width > 0) return Math.round(width);
+    }
+    return document.body.classList.contains("sidebar-collapsed") ? 72 : 338;
   }
 
   function layoutModalHost(host) {
@@ -266,6 +271,7 @@ body.admin-confirm-open.standalone-admin-page .toggle-btn{z-index:1 !important}
   }
 
   window.AdminUI = {
+    escapeHtml,
     toastSuccess: (message) => toast(message || "Action completed successfully", "success"),
     toastError: (message) => toast(message || "Something went wrong", "error"),
     toastInfo: (message) => toast(message || "", "info"),

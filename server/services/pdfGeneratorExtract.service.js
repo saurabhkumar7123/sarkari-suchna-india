@@ -2,13 +2,18 @@
  * Generator-only PDF text extraction (buffer in → text out).
  * NOT used by dashboard upload.
  *
- * Pipeline: pdf-parse (primary) + pdfjs-dist (secondary, merged) → smart clean →
- * OCR (eng+hin, first pages) only when text is short or quality looks poor.
+ * Pipeline: pdf-parse (primary) + pdfjs-dist (secondary, multi-column aware, merged) →
+ * Phase AI-1 advanced normalize → OCR (eng+hin, first pages) when text is short/poor.
+ * Quality improvement only — does not change publishing / monitoring / workflow.
  */
 "use strict";
 
 const { pathToFileURL } = require("url");
 const logger = require("../utils/logger");
+const {
+  advancedNormalize,
+  fixSpacedWordsLine
+} = require("../lib/generatorIntelligence/textNormalization");
 
 const pdfParse = require("pdf-parse");
 
@@ -37,28 +42,7 @@ const ERR_READ_FAIL = "PDF ka text properly read nahi ho paya";
 
 function normalizePdfText(text) {
   if (!text || typeof text !== "string") return "";
-  return text
-    .replace(/\r\n/g, "\n")
-    .replace(/[\t\f\v\u00a0]+/g, " ")
-    .replace(/([A-Za-z\u0900-\u0D7F])-\s*\n+\s*([A-Za-z\u0900-\u0D7F])/g, "$1$2")
-    .replace(/([a-zA-Z0-9\u0900-\u0D7F])\n([a-zA-Z0-9\u0900-\u0D7F])/g, "$1 $2")
-    .replace(/[^\S\n]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .trim();
-}
-
-/**
- * Browser / bad PDFs often emit "Q u a l i f i c a t i o n" — collapse when the line is mostly single Latin letters.
- */
-function fixSpacedWordsLine(line) {
-  const s = line.trim();
-  if (s.length < 6) return line;
-  const parts = s.split(/\s+/);
-  if (parts.length < 4) return line;
-  const latinSingles = parts.filter((p) => p.length === 1 && /[A-Za-z]/.test(p)).length;
-  if (latinSingles / parts.length >= 0.45) return parts.join("");
-  return line;
+  return advancedNormalize(text);
 }
 
 function fixSpacedLetterLines(text) {
@@ -143,6 +127,63 @@ async function extractWithPdfParse(buffer) {
   return { text, numpages };
 }
 
+/**
+ * Cluster X positions into reading columns (multi-column government PDFs).
+ * @param {Array<{ str: string, x: number, y: number }>} items
+ * @returns {number[]} column centers ascending
+ */
+function detectColumnCenters(items) {
+  if (!items.length) return [0];
+  const xs = items.map((i) => i.x).sort((a, b) => a - b);
+  const min = xs[0];
+  const max = xs[xs.length - 1];
+  const span = max - min;
+  if (span < 180) return [min];
+
+  // 1D gap clustering: large X gaps suggest column boundaries
+  const gaps = [];
+  for (let i = 1; i < xs.length; i++) {
+    const g = xs[i] - xs[i - 1];
+    if (g > Math.max(40, span * 0.12)) gaps.push({ idx: i, gap: g, x: (xs[i] + xs[i - 1]) / 2 });
+  }
+  if (!gaps.length) return [min];
+
+  gaps.sort((a, b) => b.gap - a.gap);
+  const splitX = gaps[0].x;
+  const left = items.filter((i) => i.x < splitX);
+  const right = items.filter((i) => i.x >= splitX);
+  if (left.length < 8 || right.length < 8) return [min];
+
+  // Prefer two columns when both sides have meaningful content
+  const leftCenter = left.reduce((s, i) => s + i.x, 0) / left.length;
+  const rightCenter = right.reduce((s, i) => s + i.x, 0) / right.length;
+  if (rightCenter - leftCenter < 100) return [min];
+  return [leftCenter, rightCenter].sort((a, b) => a - b);
+}
+
+/**
+ * @param {Array<{ str: string, x: number, y: number }>} items
+ * @param {number[]} centers
+ * @returns {number} column index
+ */
+function assignColumn(item, centers) {
+  if (centers.length <= 1) return 0;
+  let best = 0;
+  let bestDist = Math.abs(item.x - centers[0]);
+  for (let i = 1; i < centers.length; i++) {
+    const d = Math.abs(item.x - centers[i]);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/**
+ * Build reading-order text: top→bottom within each column, left→right across columns.
+ * Also drops obvious running headers/footers near page edges when repeated y-bands are sparse.
+ */
 function textFromPdfJsContent(textContent) {
   const items = (textContent && textContent.items) || [];
   const filtered = items.filter((item) => item && typeof item.str === "string" && item.str.length);
@@ -155,28 +196,46 @@ function textFromPdfJsContent(textContent) {
     y: item.transform[5]
   }));
 
-  enriched.sort((a, b) => {
-    if (Math.abs(a.y - b.y) > tol) return b.y - a.y;
-    return a.x - b.x;
+  const ys = enriched.map((i) => i.y);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+  const ySpan = Math.max(1, yMax - yMin);
+
+  // Soft-drop watermark-like ultra-short repeated glyphs near center (common in scanned notices)
+  const centers = detectColumnCenters(enriched);
+
+  const byCol = centers.map(() => []);
+  for (const it of enriched) {
+    // Skip likely footer/header page-number crumbs
+    const nearEdge = (it.y - yMin) / ySpan < 0.03 || (yMax - it.y) / ySpan < 0.03;
+    const t = it.str.trim();
+    if (nearEdge && /^(\d{1,3}|page\s*\d+)$/i.test(t)) continue;
+    byCol[assignColumn(it, centers)].push(it);
+  }
+
+  const colTexts = byCol.map((colItems) => {
+    colItems.sort((a, b) => {
+      if (Math.abs(a.y - b.y) > tol) return b.y - a.y;
+      return a.x - b.x;
+    });
+    const lines = [];
+    let line = "";
+    let lineY = null;
+    for (const it of colItems) {
+      if (lineY === null || Math.abs(it.y - lineY) > tol) {
+        if (line.trim()) lines.push(line.trim());
+        line = it.str;
+        lineY = it.y;
+      } else {
+        const gap = line && !/[\s-]$/.test(line) && it.str && !/^\s/.test(it.str);
+        line += (gap ? " " : "") + it.str;
+      }
+    }
+    if (line.trim()) lines.push(line.trim());
+    return lines.join("\n");
   });
 
-  const lines = [];
-  let line = "";
-  let lineY = null;
-
-  for (const it of enriched) {
-    if (lineY === null || Math.abs(it.y - lineY) > tol) {
-      if (line.trim()) lines.push(line.trim());
-      line = it.str;
-      lineY = it.y;
-    } else {
-      const gap = line && !/[\s-]$/.test(line) && it.str && !/^\s/.test(it.str);
-      line += (gap ? " " : "") + it.str;
-    }
-  }
-  if (line.trim()) lines.push(line.trim());
-
-  return lines.join("\n");
+  return colTexts.filter(Boolean).join("\n\n");
 }
 
 async function extractWithPdfJs(buffer) {

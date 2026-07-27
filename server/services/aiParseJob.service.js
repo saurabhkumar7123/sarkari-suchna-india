@@ -1,5 +1,10 @@
 /**
- * POST /api/ai-parse — hybrid: smart clean → rule buckets → AI refine → validate → finalize.
+ * POST /api/ai-parse — hybrid quality pipeline (Phase AI-1):
+ * soft clean → Generator Intelligence (sections/tables/links/validate) →
+ * optional OpenAI refine → validate → finalize publisher [Section:] text.
+ *
+ * Returns { result } for Generator compatibility; also structured + validation
+ * for quality inspection (UI may ignore them).
  */
 "use strict";
 
@@ -12,6 +17,10 @@ const {
 } = require("../utils/sectionDetector");
 const { finalizeStructuredJobOutput } = require("../utils/jobSectionStructure");
 const { tryPreserveStructuredInput, prepareInputForStructuring } = require("../utils/publisherSections");
+const {
+  runGeneratorIntelligencePipeline
+} = require("../lib/generatorIntelligence/pipeline");
+const { softCleanForStructuring } = require("../lib/generatorIntelligence/textNormalization");
 
 const MIN_CHARS_REJECT = 20;
 const MIN_CHARS_FORCE_OUTPUT = 50;
@@ -29,17 +38,16 @@ FORMATTING (strict):
 - Short Information = 1–3 short paragraph lines (organization, post name, total posts)
 - Important Dates = one date per line as "Label : value" (e.g. Online Apply Start Date : 04 September 2025)
 - Application Fee = fee rows like "For General / OBC / EWS : ₹ 125/-"
-- Important Links = Label=https://… one per line
+- Important Links = Label=https://… one per line (prefer labels: Apply Online, Official Website, Notification PDF, Login, Registration, Correction, Admit Card, Result, Answer Key, Syllabus)
 - Vacancy = if comma-grid (header + data rows), keep as CSV lines under [Section: Vacancy | table]
+- Preserve How To Apply / Salary / Helpline / Important Instructions when present
+- Unknown section titles from input should be kept, not discarded
 
-SECTIONS (use these exact titles):
+SECTIONS (use these exact titles when applicable):
 
 [Section: Short Information]
 
 [Section: Eligibility]
-Qualification: …
-Age Limit: …
-State: …
 
 [Section: Important Dates]
 
@@ -50,7 +58,13 @@ State: …
 [Section: Vacancy]
 (or [Section: Vacancy | table] when body is comma-separated grid)
 
+[Section: How To Apply]
+
+[Section: Salary]
+
 [Section: Important Links]
+
+[Section: Helpline]
 
 [Section: Important Questions]
 Only when input has Q:/A: lines — copy exact wording and language from input. Do not translate. Do not invent questions.
@@ -66,12 +80,7 @@ const JOB_LINE_HINT =
 
 function cleanText(inputText) {
   if (!inputText || typeof inputText !== "string") return "";
-  return inputText
-    .replace(/\r\n/g, "\n")
-    .replace(/[\t\f\v\u00a0]+/g, " ")
-    .replace(/[^\S\n]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return softCleanForStructuring(inputText);
 }
 
 function cleanedImportantLines(text) {
@@ -127,8 +136,26 @@ function isStrongAiOutput(s) {
   const t = s.trim();
   if (t.length < 100) return false;
   if (!/\[Section:\s*(Short\s*Information|ShortInfo)\]/i.test(t)) return false;
-  if (!/\[Section:\s*(Eligibility|Important\s*Dates|ImportantDates)\]/i.test(t)) return false;
+  if (
+    !/\[Section:\s*(Eligibility|Important\s*Dates|ImportantDates|Application\s*Fee|Vacancy|Important\s*Links)\]/i.test(
+      t
+    )
+  ) {
+    return false;
+  }
   return true;
+}
+
+/**
+ * Prefer quality-pipeline document when AI output is weak or empties key sections.
+ * @param {string} aiText
+ * @param {string} qualityText
+ */
+function pickBestPublisherDoc(aiText, qualityText) {
+  if (isStrongAiOutput(aiText)) return String(aiText).trim();
+  if (qualityText && String(qualityText).trim().length >= 40) return String(qualityText).trim();
+  if (aiText && String(aiText).trim()) return String(aiText).trim();
+  return String(qualityText || "").trim();
 }
 
 /**
@@ -182,7 +209,7 @@ async function callOpenAiChat(classifiedOrFallback) {
 
 /**
  * @param {string} rawText
- * @returns {Promise<{ result: string }>}
+ * @returns {Promise<{ result: string, structured?: object, validation?: object, meta?: object }>}
  */
 async function processJobParse(rawText) {
   let inputText = typeof rawText === "string" ? rawText : "";
@@ -203,18 +230,35 @@ async function processJobParse(rawText) {
     return { result: "No usable data found" };
   }
 
-  let cleanedText = smartCleanJobText(preparedInput || inputText);
+  // Phase AI-1 quality pipeline — use raw notification text (not prepareInputForStructuring),
+  // because expanding plain headings into [Section:] and normalizing drops preamble short-info lines.
+  let quality = null;
+  try {
+    quality = runGeneratorIntelligencePipeline(inputText);
+  } catch (e) {
+    logger.warn("aiParseJob: generatorIntelligence pipeline failed", { message: e.message });
+  }
+
+  // Soft-clean RAW text only — never feed expanded [Section:] markers into finalize preserve.
+  let cleanedText = softCleanForStructuring(inputText);
+  if (cleanedText.length < 40) {
+    cleanedText = smartCleanJobText(inputText);
+  }
   if (cleanedText.length < 40) {
     cleanedText = cleanText(inputText);
   }
 
-  const buckets = detectSections(cleanedText);
+  // Legacy bucket path still benefits from implicit heading expansion for classification.
+  const forBuckets = softCleanForStructuring(preparedInput || inputText);
+  const buckets = detectSections(forBuckets.length >= 40 ? forBuckets : cleanedText);
   const classifiedBlock = formatBucketsForPrompt(buckets);
   const classifiedLen = classifiedBlock.length;
 
   logger.info("ai-parse payloadText (classified) length", {
     smartCleanLen: cleanedText.length,
     classifiedLen,
+    qualitySections: quality?.meta?.sectionCount || 0,
+    qualityConfidence: quality?.meta?.overallConfidence || 0,
     bucketCounts: {
       dates: buckets.dates.length,
       qualification: buckets.qualification.length,
@@ -228,11 +272,16 @@ async function processJobParse(rawText) {
     }
   });
 
-  const nonWs = classifiedBlock.replace(/\s/g, "").length;
+  const nonWs = classifiedBlock.replace(/\s+/g, "").length;
   const forAi =
     nonWs >= 24 ? classifiedBlock : cleanedText.slice(0, Math.min(OPENAI_MAX_INPUT, cleanedText.length));
 
-  const ruleDoc = bucketsToPublisherDocument(buckets);
+  const legacyRuleDoc = bucketsToPublisherDocument(buckets);
+  const qualityDoc = quality?.result || "";
+  const ruleDoc =
+    qualityDoc && qualityDoc.length >= Math.min(60, legacyRuleDoc.length || 60)
+      ? qualityDoc
+      : legacyRuleDoc || qualityDoc;
 
   let aiRaw = null;
   if (process.env.OPENAI_API_KEY) {
@@ -248,7 +297,7 @@ async function processJobParse(rawText) {
     openaiConfigured: !!process.env.OPENAI_API_KEY
   });
 
-  let result = isStrongAiOutput(aiRaw) ? String(aiRaw).trim() : ruleDoc;
+  let result = pickBestPublisherDoc(aiRaw, ruleDoc);
 
   if (!result) {
     const fb = fallbackExtractJobLike(cleanedText.length ? cleanedText : inputText);
@@ -277,9 +326,17 @@ async function processJobParse(rawText) {
 
   result = finalizeStructuredJobOutput(result, cleanedText.length ? cleanedText : inputText);
 
-  logger.info("ai-parse FINAL RESULT LENGTH", { length: result?.length });
+  logger.info("ai-parse FINAL RESULT LENGTH", {
+    length: result?.length,
+    qualityUsed: Boolean(qualityDoc),
+    overallConfidence: quality?.meta?.overallConfidence
+  });
 
-  return { result };
+  const out = { result };
+  if (quality?.structured) out.structured = quality.structured;
+  if (quality?.validation) out.validation = quality.validation;
+  if (quality?.meta) out.meta = quality.meta;
+  return out;
 }
 
 module.exports = {

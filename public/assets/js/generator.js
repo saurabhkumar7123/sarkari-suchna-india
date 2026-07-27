@@ -10,6 +10,18 @@ function escapeAttr(s) {
     .replace(/>/g, "&gt;");
 }
 
+/**
+ * Phase PI-1: broadcast generator lifecycle so the advisory workspace panel can
+ * follow along. Listeners are read-only — dispatching must never change flow.
+ */
+function emitGeneratorEvent(name, detail) {
+  try {
+    document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+  } catch {
+    /* CustomEvent unsupported — the workspace panel simply stays idle */
+  }
+}
+
 function getActionBtnLabel(btn) {
   if (!btn) return "";
   const mobile = btn.querySelector(".action-btn__label--mobile");
@@ -361,6 +373,7 @@ function syncSectionEditorFromData() {
   if (typeof window.sectionEditor?.syncFromTextarea === "function") {
     window.sectionEditor.syncFromTextarea();
   }
+  emitGeneratorEvent("generator:content-change", { source: "sync" });
 }
 
 /** Compile visual sections into #data before save/preview. */
@@ -368,6 +381,7 @@ function flushSectionEditorBeforeRead() {
   if (typeof window.sectionEditor?.flushToTextarea === "function") {
     window.sectionEditor.flushToTextarea();
   }
+  emitGeneratorEvent("generator:content-change", { source: "flush" });
 }
 
 let aiConvertInProgress = false;
@@ -2414,6 +2428,7 @@ ${payloadText}
   aiConvertInProgress = true;
   setEditorActionsBusy(true);
   if (aiBtn) setActionBtnLabel(aiBtn, "Converting...");
+  emitGeneratorEvent("generator:ai-start", { inputLength: payloadText.length });
   try {
     const body = JSON.stringify({
       text: payloadText,
@@ -2431,6 +2446,7 @@ ${payloadText}
     if (!res.ok) {
       const errBody = await res.text();
       console.error("[AI] HTTP error:", res.status, errBody);
+      emitGeneratorEvent("generator:ai-error", { status: res.status, message: `AI conversion failed (${res.status})` });
       setGeneratorFeedback("error", "AI conversion failed");
       return;
     }
@@ -2458,10 +2474,12 @@ ${payloadText}
       console.warn("[AI] Weak or empty API text — structured sections merged from input");
     }
     console.log("[AI] FINAL length:", String(ta.value || "").trim().length);
+    emitGeneratorEvent("generator:ai-success", { payload: data });
     syncAiConvertButton();
     updateEditorStats();
   } catch (err) {
     console.error("[AI] error:", err);
+    emitGeneratorEvent("generator:ai-error", { networkError: true, message: err && err.message ? err.message : "" });
     setGeneratorFeedback("error", "AI conversion failed");
   } finally {
     aiConvertInProgress = false;
@@ -2524,8 +2542,10 @@ function setupPdfUploadUi() {
   };
 
   input.addEventListener("change", () => {
-    updatePdfSelectedFileName(input.files && input.files[0] ? input.files[0] : null);
+    const picked = input.files && input.files[0] ? input.files[0] : null;
+    updatePdfSelectedFileName(picked);
     setPdfUploadStatus("");
+    emitGeneratorEvent("generator:pdf-selected", { file: picked });
   });
 
   const bindDrag = (el) => {
@@ -2553,6 +2573,7 @@ function setupPdfUploadUi() {
       input.files = dt.files;
       updatePdfSelectedFileName(file);
       setPdfUploadStatus("Ready to extract");
+      emitGeneratorEvent("generator:pdf-selected", { file });
     });
   };
 
@@ -2576,6 +2597,7 @@ async function extractPDF() {
   console.info("Uploading PDF, size:", file.size);
   setPdfUploadStatus("Extracting…");
   if (uploadBtn) uploadBtn.disabled = true;
+  emitGeneratorEvent("generator:extract-start", { fileName: file.name, fileSizeBytes: file.size });
 
   try {
     const hdrs = {};
@@ -2603,8 +2625,16 @@ async function extractPDF() {
     }
 
     const backendMsg = [data.error, data.message].find((s) => typeof s === "string" && s.trim());
+    const failureDetail = {
+      status: res.status,
+      message: backendMsg || "",
+      contentType,
+      fileName: file.name,
+      fileSizeBytes: file.size
+    };
 
     if (res.status === 413) {
+      emitGeneratorEvent("generator:extract-error", failureDetail);
       setGeneratorFeedback("error", "PDF upload blocked", {
         detailsHtml: backendMsg || "Upload blocked by server/proxy size limit"
       });
@@ -2613,6 +2643,7 @@ async function extractPDF() {
     }
 
     if (res.status === 401) {
+      emitGeneratorEvent("generator:extract-error", failureDetail);
       setGeneratorFeedback("error", "Login required", {
         detailsHtml: "Please login at /login and reopen the generator (session/cookie missing)."
       });
@@ -2630,6 +2661,7 @@ async function extractPDF() {
             : "";
     const text = String(rawExtract || "").trim();
     if (!res.ok || !text) {
+      emitGeneratorEvent("generator:extract-error", failureDetail);
       if (backendMsg) {
         setGeneratorFeedback("error", "PDF extract failed", { detailsHtml: backendMsg });
         setPdfUploadStatus(backendMsg, true);
@@ -2663,10 +2695,22 @@ async function extractPDF() {
     if (data.extractionNote) {
       console.info("[PDF extract]", data.extractionNote);
     }
+    emitGeneratorEvent("generator:extract-success", {
+      text,
+      extractionNote: data.extractionNote || "",
+      fileName: file.name,
+      fileSizeBytes: file.size
+    });
     document.getElementById("data")?.scrollIntoView({ behavior: "smooth", block: "center" });
     window.AdminUI?.toastSuccess?.("PDF text added to editor");
   } catch (e) {
     console.error(e);
+    emitGeneratorEvent("generator:extract-error", {
+      networkError: true,
+      message: e && e.message ? e.message : "",
+      fileName: file.name,
+      fileSizeBytes: file.size
+    });
     setGeneratorFeedback("error", "Network error", {
       detailsHtml: "Network error. Please try again."
     });

@@ -14,6 +14,8 @@
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=7">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
 <link rel="stylesheet" href="/css/admin/editorial-review.css?v=3">
+<link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
+<link rel="stylesheet" href="/css/admin/editorial-workspace.css?v=2">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Editorial Review">
@@ -85,6 +87,86 @@
             <a id="erOpsLink" class="header-action-btn er-secondary" href="/admin/recruitments" style="text-decoration:none;">Open in Operations</a>
           </div>
           <dl class="er-meta" id="erRecruitmentMeta"></dl>
+        </section>
+
+        <!-- Phase PI-2 — Editorial Workspace Pro (presentation only) -->
+        <section id="editorialWorkspacePro" class="ew-card" aria-label="Editorial Workspace Pro">
+          <div class="ew-head">
+            <div>
+              <h2>Editorial Workspace Pro</h2>
+              <p class="ew-head__sub">Smart review over existing AI outputs — advisory only, never auto-applies changes.</p>
+            </div>
+            <div class="ew-head__actions">
+              <button type="button" class="ew-btn" id="ewNavToggle" aria-expanded="true" aria-controls="ewShell">Sections</button>
+              <button type="button" class="ew-btn" id="ewShortcutsBtn" aria-haspopup="dialog">Shortcuts</button>
+              <button type="button" class="ew-btn ew-btn--primary" id="ewSaveProgress">Save progress</button>
+              <button type="button" class="ew-btn" id="ewToggle" aria-expanded="true" aria-controls="editorialWorkspacePro">Collapse</button>
+            </div>
+          </div>
+          <p class="ew-status" id="ewStatus" role="status">Open a review item to load the Pro workspace.</p>
+          <div class="ew-body">
+            <p class="ew-source" id="ewSource"></p>
+            <p class="ew-help" id="ewBriefing"></p>
+            <div class="ew-shell" id="ewShell">
+              <aside class="ew-nav" aria-label="Section navigator">
+                <div class="ew-nav__head"><h3>Sections</h3></div>
+                <div id="ewNavList"></div>
+              </aside>
+              <div class="ew-main">
+                <div class="ew-grid">
+                  <section class="ew-panel ew-panel--wide">
+                    <h3>Smart Review Dashboard</h3>
+                    <div class="ew-dashboard" id="ewDashboard"></div>
+                  </section>
+                  <div class="ew-panels">
+                    <section class="ew-panel">
+                      <h3>Editorial Checklist</h3>
+                      <ul class="ew-checklist" id="ewChecklist"></ul>
+                    </section>
+                    <section class="ew-panel">
+                      <h3>Draft Health</h3>
+                      <div class="ew-health" id="ewHealth"></div>
+                    </section>
+                    <section class="ew-panel ew-panel--wide">
+                      <h3>Issue Panel</h3>
+                      <div class="ew-issues" id="ewIssues"></div>
+                    </section>
+                    <section class="ew-panel">
+                      <h3>Suggestion Panel</h3>
+                      <div class="ew-suggestions" id="ewSuggestions"></div>
+                    </section>
+                    <section class="ew-panel">
+                      <h3>Change Summary</h3>
+                      <div class="ew-changes" id="ewChanges"></div>
+                    </section>
+                    <section class="ew-panel">
+                      <h3>Link Inspector</h3>
+                      <div class="ew-links" id="ewLinks"></div>
+                    </section>
+                    <section class="ew-panel">
+                      <h3>Duplicate Detector</h3>
+                      <div class="ew-duplicates" id="ewDuplicates"></div>
+                    </section>
+                    <section class="ew-panel ew-panel--wide">
+                      <h3>Draft sections</h3>
+                      <div class="ew-draft-view" id="ewDraftView"></div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <dialog class="ew-shortcuts" id="ewShortcuts">
+            <h3>Keyboard productivity</h3>
+            <dl>
+              <dt>Alt + ↓</dt><dd>Next issue</dd>
+              <dt>Alt + ↑</dt><dd>Previous issue</dd>
+              <dt>Alt + ]</dt><dd>Next section</dd>
+              <dt>Alt + [</dt><dd>Previous section</dd>
+              <dt>Ctrl/⌘ + S</dt><dd>Save review progress (never publish)</dd>
+            </dl>
+            <form method="dialog" style="margin-top:0.75rem;"><button type="submit" class="ew-btn">Close</button></form>
+          </dialog>
         </section>
 
         <section class="er-card">
@@ -171,7 +253,11 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=3"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
-<script src="/js/admin-editorial-review.js?v=2"></script>
+<script src="/js/generator-workspace-core.js?v=1"></script>
+<script src="/js/editorial-workspace-core.js?v=1"></script>
+<script src="/js/editorial-workspace.js?v=2"></script>
+<script src="/js/admin-editorial-review.js?v=3"></script>
 </body>
 </html>

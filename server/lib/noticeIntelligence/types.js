@@ -1,0 +1,357 @@
+"use strict";
+
+/**
+ * Phase AI-2 — Government Notice Intelligence taxonomy.
+ *
+ * Advisory-only vocabulary for classifying official government website updates
+ * before they enter the existing Production Workflow. Nothing here changes
+ * monitoring, publishing, or workflow behaviour.
+ */
+
+const FORMAT_ID = "notice_intelligence_event_v1";
+const ENGINE_VERSION = "ai2.1.0";
+const FINGERPRINT_ALGORITHM = "AI2FP-SHA256";
+
+/** Every event type the intelligence layer is allowed to emit. */
+const EVENT_TYPES = Object.freeze({
+  NEW_RECRUITMENT: "new_recruitment",
+  RECRUITMENT_UPDATE: "recruitment_update",
+  NOTIFICATION: "notification",
+  DETAILED_ADVERTISEMENT: "detailed_advertisement",
+  SHORT_NOTICE: "short_notice",
+  APPLY_ONLINE: "apply_online",
+  REGISTRATION_OPEN: "registration_open",
+  REGISTRATION_CLOSE: "registration_close",
+  CORRECTION: "correction",
+  CORRIGENDUM: "corrigendum",
+  EXTENSION_NOTICE: "extension_notice",
+  EXAM_DATE: "exam_date",
+  EXAM_CITY: "exam_city",
+  ADMIT_CARD: "admit_card",
+  ANSWER_KEY: "answer_key",
+  OBJECTION_WINDOW: "objection_window",
+  RESULT: "result",
+  FINAL_RESULT: "final_result",
+  DV_SCHEDULE: "dv_schedule",
+  JOINING: "joining",
+  CANCELLATION: "cancellation",
+  PRESS_RELEASE: "press_release",
+  TENDER: "tender",
+  SCHOLARSHIP: "scholarship",
+  ADMISSION: "admission",
+  APPRENTICE: "apprentice",
+  WALK_IN: "walk_in",
+  CONTRACT_RECRUITMENT: "contract_recruitment",
+  UNKNOWN: "unknown"
+});
+
+const EVENT_TYPE_LABELS = Object.freeze({
+  [EVENT_TYPES.NEW_RECRUITMENT]: "New Recruitment",
+  [EVENT_TYPES.RECRUITMENT_UPDATE]: "Recruitment Update",
+  [EVENT_TYPES.NOTIFICATION]: "Notification",
+  [EVENT_TYPES.DETAILED_ADVERTISEMENT]: "Detailed Advertisement",
+  [EVENT_TYPES.SHORT_NOTICE]: "Short Notice",
+  [EVENT_TYPES.APPLY_ONLINE]: "Apply Online",
+  [EVENT_TYPES.REGISTRATION_OPEN]: "Registration Open",
+  [EVENT_TYPES.REGISTRATION_CLOSE]: "Registration Close",
+  [EVENT_TYPES.CORRECTION]: "Correction",
+  [EVENT_TYPES.CORRIGENDUM]: "Corrigendum",
+  [EVENT_TYPES.EXTENSION_NOTICE]: "Extension Notice",
+  [EVENT_TYPES.EXAM_DATE]: "Exam Date",
+  [EVENT_TYPES.EXAM_CITY]: "Exam City",
+  [EVENT_TYPES.ADMIT_CARD]: "Admit Card",
+  [EVENT_TYPES.ANSWER_KEY]: "Answer Key",
+  [EVENT_TYPES.OBJECTION_WINDOW]: "Objection Window",
+  [EVENT_TYPES.RESULT]: "Result",
+  [EVENT_TYPES.FINAL_RESULT]: "Final Result",
+  [EVENT_TYPES.DV_SCHEDULE]: "DV Schedule",
+  [EVENT_TYPES.JOINING]: "Joining",
+  [EVENT_TYPES.CANCELLATION]: "Cancellation",
+  [EVENT_TYPES.PRESS_RELEASE]: "Press Release",
+  [EVENT_TYPES.TENDER]: "Tender",
+  [EVENT_TYPES.SCHOLARSHIP]: "Scholarship",
+  [EVENT_TYPES.ADMISSION]: "Admission",
+  [EVENT_TYPES.APPRENTICE]: "Apprentice",
+  [EVENT_TYPES.WALK_IN]: "Walk-in",
+  [EVENT_TYPES.CONTRACT_RECRUITMENT]: "Contract Recruitment",
+  [EVENT_TYPES.UNKNOWN]: "Unknown"
+});
+
+/**
+ * Lifecycle stage each event type belongs to. Used by the priority engine and
+ * by future duplicate/lifecycle matching phases.
+ */
+const EVENT_LIFECYCLE_STAGES = Object.freeze({
+  ANNOUNCEMENT: "announcement",
+  APPLICATION: "application",
+  AMENDMENT: "amendment",
+  EXAM: "exam",
+  OUTCOME: "outcome",
+  POST_SELECTION: "post_selection",
+  TERMINAL: "terminal",
+  INFORMATIONAL: "informational",
+  UNKNOWN: "unknown"
+});
+
+const EVENT_TYPE_TO_STAGE = Object.freeze({
+  [EVENT_TYPES.NEW_RECRUITMENT]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.DETAILED_ADVERTISEMENT]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.SHORT_NOTICE]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.NOTIFICATION]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.APPRENTICE]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.WALK_IN]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.CONTRACT_RECRUITMENT]: EVENT_LIFECYCLE_STAGES.ANNOUNCEMENT,
+  [EVENT_TYPES.APPLY_ONLINE]: EVENT_LIFECYCLE_STAGES.APPLICATION,
+  [EVENT_TYPES.REGISTRATION_OPEN]: EVENT_LIFECYCLE_STAGES.APPLICATION,
+  [EVENT_TYPES.REGISTRATION_CLOSE]: EVENT_LIFECYCLE_STAGES.APPLICATION,
+  [EVENT_TYPES.RECRUITMENT_UPDATE]: EVENT_LIFECYCLE_STAGES.AMENDMENT,
+  [EVENT_TYPES.CORRECTION]: EVENT_LIFECYCLE_STAGES.AMENDMENT,
+  [EVENT_TYPES.CORRIGENDUM]: EVENT_LIFECYCLE_STAGES.AMENDMENT,
+  [EVENT_TYPES.EXTENSION_NOTICE]: EVENT_LIFECYCLE_STAGES.AMENDMENT,
+  [EVENT_TYPES.EXAM_DATE]: EVENT_LIFECYCLE_STAGES.EXAM,
+  [EVENT_TYPES.EXAM_CITY]: EVENT_LIFECYCLE_STAGES.EXAM,
+  [EVENT_TYPES.ADMIT_CARD]: EVENT_LIFECYCLE_STAGES.EXAM,
+  [EVENT_TYPES.ANSWER_KEY]: EVENT_LIFECYCLE_STAGES.OUTCOME,
+  [EVENT_TYPES.OBJECTION_WINDOW]: EVENT_LIFECYCLE_STAGES.OUTCOME,
+  [EVENT_TYPES.RESULT]: EVENT_LIFECYCLE_STAGES.OUTCOME,
+  [EVENT_TYPES.FINAL_RESULT]: EVENT_LIFECYCLE_STAGES.OUTCOME,
+  [EVENT_TYPES.DV_SCHEDULE]: EVENT_LIFECYCLE_STAGES.POST_SELECTION,
+  [EVENT_TYPES.JOINING]: EVENT_LIFECYCLE_STAGES.POST_SELECTION,
+  [EVENT_TYPES.CANCELLATION]: EVENT_LIFECYCLE_STAGES.TERMINAL,
+  [EVENT_TYPES.PRESS_RELEASE]: EVENT_LIFECYCLE_STAGES.INFORMATIONAL,
+  [EVENT_TYPES.TENDER]: EVENT_LIFECYCLE_STAGES.INFORMATIONAL,
+  [EVENT_TYPES.SCHOLARSHIP]: EVENT_LIFECYCLE_STAGES.INFORMATIONAL,
+  [EVENT_TYPES.ADMISSION]: EVENT_LIFECYCLE_STAGES.INFORMATIONAL,
+  [EVENT_TYPES.UNKNOWN]: EVENT_LIFECYCLE_STAGES.UNKNOWN
+});
+
+/**
+ * Event types that describe a recruitment lifecycle. Tender / scholarship /
+ * admission / press release are still classified and preserved, but they are
+ * not recruitment candidates.
+ */
+const RECRUITMENT_EVENT_TYPES = Object.freeze([
+  EVENT_TYPES.NEW_RECRUITMENT,
+  EVENT_TYPES.RECRUITMENT_UPDATE,
+  EVENT_TYPES.DETAILED_ADVERTISEMENT,
+  EVENT_TYPES.SHORT_NOTICE,
+  EVENT_TYPES.APPLY_ONLINE,
+  EVENT_TYPES.REGISTRATION_OPEN,
+  EVENT_TYPES.REGISTRATION_CLOSE,
+  EVENT_TYPES.CORRECTION,
+  EVENT_TYPES.CORRIGENDUM,
+  EVENT_TYPES.EXTENSION_NOTICE,
+  EVENT_TYPES.EXAM_DATE,
+  EVENT_TYPES.EXAM_CITY,
+  EVENT_TYPES.ADMIT_CARD,
+  EVENT_TYPES.ANSWER_KEY,
+  EVENT_TYPES.OBJECTION_WINDOW,
+  EVENT_TYPES.RESULT,
+  EVENT_TYPES.FINAL_RESULT,
+  EVENT_TYPES.DV_SCHEDULE,
+  EVENT_TYPES.JOINING,
+  EVENT_TYPES.APPRENTICE,
+  EVENT_TYPES.WALK_IN,
+  EVENT_TYPES.CONTRACT_RECRUITMENT
+]);
+
+/** Qualifiers layered on top of the primary event type. */
+const EVENT_SUB_TYPES = Object.freeze({
+  PRELIMS: "prelims",
+  MAINS: "mains",
+  TIER_1: "tier_1",
+  TIER_2: "tier_2",
+  TIER_3: "tier_3",
+  PHASE_1: "phase_1",
+  PHASE_2: "phase_2",
+  INTERVIEW: "interview",
+  PHYSICAL_TEST: "physical_test",
+  MEDICAL: "medical",
+  TYPING_TEST: "typing_test",
+  SKILL_TEST: "skill_test",
+  DOCUMENT_VERIFICATION: "document_verification",
+  COUNSELLING: "counselling",
+  PROVISIONAL: "provisional",
+  REVISED: "revised",
+  FINAL: "final",
+  RE_EXAM: "re_exam",
+  DATE_EXTENSION: "date_extension",
+  FEE_DATE_EXTENSION: "fee_date_extension",
+  FORM_CORRECTION: "form_correction",
+  CITY_INTIMATION: "city_intimation",
+  DUPLICATE: "duplicate",
+  WITHDRAWN: "withdrawn",
+  POSTPONED: "postponed",
+  GENERAL: "general"
+});
+
+const PRIORITY_LEVELS = Object.freeze({
+  CRITICAL: "CRITICAL",
+  HIGH: "HIGH",
+  MEDIUM: "MEDIUM",
+  LOW: "LOW"
+});
+
+const PRIORITY_RANK = Object.freeze({
+  [PRIORITY_LEVELS.CRITICAL]: 4,
+  [PRIORITY_LEVELS.HIGH]: 3,
+  [PRIORITY_LEVELS.MEDIUM]: 2,
+  [PRIORITY_LEVELS.LOW]: 1
+});
+
+const CONFIDENCE_LEVELS = Object.freeze({
+  HIGH: "HIGH",
+  MEDIUM: "MEDIUM",
+  LOW: "LOW",
+  VERY_LOW: "VERY_LOW"
+});
+
+const CONFIDENCE_THRESHOLDS = Object.freeze({
+  HIGH: 0.8,
+  MEDIUM: 0.6,
+  LOW: 0.35
+});
+
+const LANGUAGES = Object.freeze({
+  ENGLISH: "en",
+  HINDI: "hi",
+  MIXED: "hi-en",
+  UNKNOWN: "unknown"
+});
+
+const SOURCE_FORMATS = Object.freeze({
+  HTML: "html",
+  PDF: "pdf",
+  TEXT: "text",
+  EMPTY: "empty"
+});
+
+/** Canonical section names produced by heading normalization. */
+const CANONICAL_SECTIONS = Object.freeze({
+  NOTICE_HEADER: "notice_header",
+  SHORT_INFORMATION: "short_information",
+  IMPORTANT_DATES: "important_dates",
+  APPLICATION_FEE: "application_fee",
+  AGE_LIMIT: "age_limit",
+  VACANCY_DETAILS: "vacancy_details",
+  RESERVATION: "reservation",
+  ELIGIBILITY: "eligibility",
+  QUALIFICATION: "qualification",
+  SELECTION_PROCESS: "selection_process",
+  EXAM_PATTERN: "exam_pattern",
+  EXAM_CENTRE: "exam_centre",
+  SYLLABUS: "syllabus",
+  HOW_TO_APPLY: "how_to_apply",
+  SALARY: "salary",
+  IMPORTANT_LINKS: "important_links",
+  DOWNLOADS: "downloads",
+  INSTRUCTIONS: "instructions",
+  GENERAL_CONDITIONS: "general_conditions",
+  CONTACT: "contact",
+  FAQ: "faq",
+  ANNEXURE: "annexure",
+  CORRIGENDUM_DETAILS: "corrigendum_details",
+  RESULT_DETAILS: "result_details",
+  ADMIT_CARD_DETAILS: "admit_card_details",
+  ANSWER_KEY_DETAILS: "answer_key_details",
+  COUNSELLING: "counselling",
+  UNKNOWN: "unknown"
+});
+
+const CANONICAL_SECTION_LABELS = Object.freeze({
+  [CANONICAL_SECTIONS.NOTICE_HEADER]: "Notice Header",
+  [CANONICAL_SECTIONS.SHORT_INFORMATION]: "Short Information",
+  [CANONICAL_SECTIONS.IMPORTANT_DATES]: "Important Dates",
+  [CANONICAL_SECTIONS.APPLICATION_FEE]: "Application Fee",
+  [CANONICAL_SECTIONS.AGE_LIMIT]: "Age Limit",
+  [CANONICAL_SECTIONS.VACANCY_DETAILS]: "Vacancy Details",
+  [CANONICAL_SECTIONS.RESERVATION]: "Reservation",
+  [CANONICAL_SECTIONS.ELIGIBILITY]: "Eligibility",
+  [CANONICAL_SECTIONS.QUALIFICATION]: "Qualification",
+  [CANONICAL_SECTIONS.SELECTION_PROCESS]: "Selection Process",
+  [CANONICAL_SECTIONS.EXAM_PATTERN]: "Exam Pattern",
+  [CANONICAL_SECTIONS.EXAM_CENTRE]: "Exam Centre",
+  [CANONICAL_SECTIONS.SYLLABUS]: "Syllabus",
+  [CANONICAL_SECTIONS.HOW_TO_APPLY]: "How To Apply",
+  [CANONICAL_SECTIONS.SALARY]: "Salary",
+  [CANONICAL_SECTIONS.IMPORTANT_LINKS]: "Important Links",
+  [CANONICAL_SECTIONS.DOWNLOADS]: "Downloads",
+  [CANONICAL_SECTIONS.INSTRUCTIONS]: "Instructions",
+  [CANONICAL_SECTIONS.GENERAL_CONDITIONS]: "General Conditions",
+  [CANONICAL_SECTIONS.CONTACT]: "Contact",
+  [CANONICAL_SECTIONS.FAQ]: "Important Questions",
+  [CANONICAL_SECTIONS.ANNEXURE]: "Annexure",
+  [CANONICAL_SECTIONS.CORRIGENDUM_DETAILS]: "Corrigendum Details",
+  [CANONICAL_SECTIONS.RESULT_DETAILS]: "Result Details",
+  [CANONICAL_SECTIONS.ADMIT_CARD_DETAILS]: "Admit Card Details",
+  [CANONICAL_SECTIONS.ANSWER_KEY_DETAILS]: "Answer Key Details",
+  [CANONICAL_SECTIONS.COUNSELLING]: "Counselling",
+  [CANONICAL_SECTIONS.UNKNOWN]: null
+});
+
+/** Bridge from the Phase AI-1 generator section taxonomy to AI-2 sections. */
+const AI1_SECTION_TYPE_TO_CANONICAL = Object.freeze({
+  short_information: CANONICAL_SECTIONS.SHORT_INFORMATION,
+  important_dates: CANONICAL_SECTIONS.IMPORTANT_DATES,
+  application_fee: CANONICAL_SECTIONS.APPLICATION_FEE,
+  age_limit: CANONICAL_SECTIONS.AGE_LIMIT,
+  vacancy_details: CANONICAL_SECTIONS.VACANCY_DETAILS,
+  eligibility: CANONICAL_SECTIONS.ELIGIBILITY,
+  qualification: CANONICAL_SECTIONS.QUALIFICATION,
+  selection_process: CANONICAL_SECTIONS.SELECTION_PROCESS,
+  salary: CANONICAL_SECTIONS.SALARY,
+  how_to_apply: CANONICAL_SECTIONS.HOW_TO_APPLY,
+  important_links: CANONICAL_SECTIONS.IMPORTANT_LINKS,
+  faq: CANONICAL_SECTIONS.FAQ,
+  helpline: CANONICAL_SECTIONS.CONTACT,
+  notification_details: CANONICAL_SECTIONS.SHORT_INFORMATION,
+  important_instructions: CANONICAL_SECTIONS.INSTRUCTIONS,
+  exam_pattern: CANONICAL_SECTIONS.EXAM_PATTERN,
+  syllabus: CANONICAL_SECTIONS.SYLLABUS,
+  unknown: CANONICAL_SECTIONS.UNKNOWN
+});
+
+const VALIDATION_SEVERITY = Object.freeze({
+  ERROR: "ERROR",
+  WARNING: "WARNING",
+  INFO: "INFO"
+});
+
+const VALIDATION_CODES = Object.freeze({
+  MISSING_TITLE: "MISSING_TITLE",
+  WEAK_TITLE: "WEAK_TITLE",
+  MISSING_DEPARTMENT: "MISSING_DEPARTMENT",
+  UNVERIFIED_DEPARTMENT: "UNVERIFIED_DEPARTMENT",
+  MISSING_DATES: "MISSING_DATES",
+  MISSING_PUBLICATION_DATE: "MISSING_PUBLICATION_DATE",
+  BROKEN_REFERENCE: "BROKEN_REFERENCE",
+  MISSING_REFERENCE: "MISSING_REFERENCE",
+  UNKNOWN_CLASSIFICATION: "UNKNOWN_CLASSIFICATION",
+  AMBIGUOUS_CLASSIFICATION: "AMBIGUOUS_CLASSIFICATION",
+  LOW_CONFIDENCE: "LOW_CONFIDENCE",
+  EMPTY_CONTENT: "EMPTY_CONTENT",
+  NO_HEADINGS_DETECTED: "NO_HEADINGS_DETECTED"
+});
+
+module.exports = {
+  FORMAT_ID,
+  ENGINE_VERSION,
+  FINGERPRINT_ALGORITHM,
+  EVENT_TYPES,
+  EVENT_TYPE_LABELS,
+  EVENT_LIFECYCLE_STAGES,
+  EVENT_TYPE_TO_STAGE,
+  RECRUITMENT_EVENT_TYPES,
+  EVENT_SUB_TYPES,
+  PRIORITY_LEVELS,
+  PRIORITY_RANK,
+  CONFIDENCE_LEVELS,
+  CONFIDENCE_THRESHOLDS,
+  LANGUAGES,
+  SOURCE_FORMATS,
+  CANONICAL_SECTIONS,
+  CANONICAL_SECTION_LABELS,
+  AI1_SECTION_TYPE_TO_CANONICAL,
+  VALIDATION_SEVERITY,
+  VALIDATION_CODES
+};
