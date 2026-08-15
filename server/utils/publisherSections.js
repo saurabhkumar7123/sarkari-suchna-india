@@ -44,60 +44,10 @@ const IMPLICIT_HEADER_LINES = {
   हेल्पलाइन: "Helpline"
 };
 
-const SECTION_ALIAS_MAP = {
-  shortinfo: "Short Information",
-  "short info": "Short Information",
-  "short information": "Short Information",
-  eligibility: "Eligibility",
-  importantdates: "Important Dates",
-  "important dates": "Important Dates",
-  "important date": "Important Dates",
-  applicationfee: "Application Fee",
-  "application fee": "Application Fee",
-  "application fees": "Application Fee",
-  selectionprocess: "Selection Process",
-  "selection process": "Selection Process",
-  vacancy: "Vacancy",
-  "vacancy details": "Vacancy Details",
-  "age limit": "Age Limit",
-  agelimit: "Age Limit",
-  "how to apply": "How To Apply",
-  howtoapply: "How To Apply",
-  salary: "Salary",
-  "pay scale": "Salary",
-  helpline: "Helpline",
-  "help line": "Helpline",
-  "notification details": "Notification Details",
-  "important instructions": "Important Instructions",
-  "exam pattern": "Exam Pattern",
-  syllabus: "Syllabus",
-  importantlinks: "Important Links",
-  "important links": "Important Links",
-  importantquestions: "Important Questions",
-  "important questions": "Important Questions",
-  faq: "Important Questions",
-  "अक्सर पूछे जाने वाले प्रश्न": "Important Questions",
-  "आयु सीमा": "Age Limit",
-  "चयन प्रक्रिया": "Selection Process",
-  "आवेदन कैसे करें": "How To Apply",
-  "महत्वपूर्ण लिंक": "Important Links",
-  "महत्वपूर्ण निर्देश": "Important Instructions",
-  वेतन: "Salary",
-  हेल्पलाइन: "Helpline"
-};
-
-/**
- * @param {string} raw
- * @returns {string}
- */
-function canonicalSectionTitle(raw) {
-  let t = String(raw || "").trim();
-  const forceTable = /\|\s*table\s*$/i.test(t);
-  t = t.replace(/\|\s*table\s*$/i, "").trim();
-  const key = t.toLowerCase().replace(/\s+/g, " ");
-  const canonical = SECTION_ALIAS_MAP[key] || t;
-  return forceTable ? `${canonical} | table` : canonical;
-}
+const {
+  canonicalSectionTitle,
+  SECTION_ALIAS_MAP
+} = require("./canonicalPublisherFormat");
 
 /**
  * @param {string} text

@@ -344,7 +344,10 @@ server/lib/recruitment/pipelineHealth/pipelineHealthObservations.js
 server/lib/recruitment/previewIntegrationContract.js
 server/lib/recruitment/previewRuntimeWiring.js
 server/lib/recruitment/productionRuntime/activationReadiness.js
+server/lib/recruitment/productionRuntime/applyGeneratorAiConvert.js
+server/lib/recruitment/productionRuntime/downloadOfficialPdfForGeneratorExtraction.js
 server/lib/recruitment/productionRuntime/index.js
+server/lib/recruitment/productionRuntime/mapEventStageToLifecycleState.js
 server/lib/recruitment/publishReadinessAuthorization/index.js
 server/lib/recruitment/recruitmentActionPlanner.js
 server/lib/recruitment/recruitmentAggregateResolver.js
@@ -518,12 +521,14 @@ server/utils/escapeHtml.js
 server/utils/extractAdvertisementNo.js
 server/utils/extractDateValue.js
 server/utils/extractTotalPosts.js
+server/utils/canonicalPublisherFormat.js
 server/utils/helpers.js
 server/utils/jobPosterTheme.js
 server/utils/jobSectionStructure.js
 server/utils/logger.js
 server/utils/normalizeSectionFormatting.js
 server/utils/publisherSections.js
+server/utils/reconstructDelimiterLessVacancy.js
 server/utils/sectionDetector.js
 server/utils/sectionEditorModel.js
 server/utils/smartClean.js

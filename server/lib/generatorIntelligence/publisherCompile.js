@@ -10,6 +10,7 @@ const { formatLinksForPublisher } = require("./linkClassification");
 const { pushPublisherSection, joinPublisherParts } = require("../../utils/publisherSections");
 const { resolveVacancySectionHeader } = require("../../utils/tableDetect");
 const { normalizeSectionFormatting } = require("../../utils/normalizeSectionFormatting");
+const { applyCanonicalPublisherFormat } = require("../../utils/canonicalPublisherFormat");
 const { detectSmartTables } = require("./smartTableDetection");
 
 /**
@@ -60,14 +61,22 @@ function sectionBodyText(section) {
     return blocks.map(blockToText).filter(Boolean).join("\n");
   }
   const raw = String(section?.originalContent || "").trim();
-  // Convert pipe/tab grids to CSV so Generator table auto-detect + | table header work.
+  // Convert a full-section pipe/tab grid to CSV. Do not replace mixed/ambiguous
+  // vacancy bodies with a partial table — that drops source grid lines.
   if (
     section?.sectionType === SECTION_TYPES.VACANCY_DETAILS ||
     /^vacancy/i.test(String(section?.title || ""))
   ) {
     const lines = raw.split("\n").map((l) => l.trim()).filter(Boolean);
     const tables = detectSmartTables(lines);
-    if (tables.length === 1 && tables[0].csvBody) return tables[0].csvBody;
+    if (
+      tables.length === 1 &&
+      tables[0].csvBody &&
+      tables[0].startIndex === 0 &&
+      tables[0].endIndex >= lines.length
+    ) {
+      return tables[0].csvBody;
+    }
   }
   return raw;
 }
@@ -128,7 +137,7 @@ function compileToPublisherText(structured) {
     pushPublisherSection(parts, title, body);
   }
 
-  return normalizeSectionFormatting(joinPublisherParts(parts));
+  return applyCanonicalPublisherFormat(normalizeSectionFormatting(joinPublisherParts(parts)));
 }
 
 module.exports = {

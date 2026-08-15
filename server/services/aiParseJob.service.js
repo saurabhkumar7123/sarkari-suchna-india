@@ -340,5 +340,7 @@ async function processJobParse(rawText) {
 }
 
 module.exports = {
-  processJobParse
+  processJobParse,
+  isStrongAiOutput,
+  pickBestPublisherDoc
 };

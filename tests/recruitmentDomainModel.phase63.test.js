@@ -38,6 +38,7 @@ const {
   isPublicationState,
   getLifecycleEventDescriptor,
   getLifecycleEventDescriptorByType,
+  getTypicalRecruitmentLifecycleState,
   listLifecycleEventsInOrder,
   summarizeRecruitmentDomainModel
 } = require("../server/lib/recruitment/recruitmentDomainModel");
@@ -426,6 +427,20 @@ describe("Phase 63 — recruitmentDomainModel", () => {
       }
       expect(isPublicationState("live")).toBe(false);
       expect(isPublicationState(null)).toBe(false);
+    });
+
+    test("typical recruitment lifecycle mapping uses first catalog state and rejects unknown stages", () => {
+      expect(getTypicalRecruitmentLifecycleState("exam_date")).toBe("exam_scheduled");
+      expect(getTypicalRecruitmentLifecycleState("city_intimation")).toBe("exam_scheduled");
+      expect(getTypicalRecruitmentLifecycleState("admit_card")).toBe("exam_scheduled");
+      expect(getTypicalRecruitmentLifecycleState("answer_key")).toBe("post_exam");
+      expect(getTypicalRecruitmentLifecycleState("result")).toBe("results");
+      expect(getTypicalRecruitmentLifecycleState("joining")).toBe("closed");
+      expect(getTypicalRecruitmentLifecycleState("notification")).toBe("announced");
+      expect(getTypicalRecruitmentLifecycleState("open")).toBe("open");
+      expect(getTypicalRecruitmentLifecycleState(null)).toBe("announced");
+      expect(getTypicalRecruitmentLifecycleState("detected")).toBeNull();
+      expect(getTypicalRecruitmentLifecycleState("not_a_stage")).toBeNull();
     });
 
     test("lifecycle descriptors expose stage groups and typical recruitment states", () => {

@@ -254,6 +254,35 @@ async function updateReviewNotes(id, input = {}) {
   });
 }
 
+async function bindReviewItemRecruitment(id, recruitmentId) {
+  await assertTable();
+  const reviewId = parseInt(String(id), 10);
+  const rid = parseInt(String(recruitmentId), 10);
+  if (!Number.isInteger(reviewId) || reviewId <= 0) {
+    const err = new Error("Invalid review id");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (!Number.isInteger(rid) || rid <= 0) {
+    const err = new Error("Invalid recruitment id");
+    err.statusCode = 400;
+    throw err;
+  }
+  const existing = await recruitmentReviewRepository.findById(reviewId);
+  if (!existing) {
+    const err = new Error("Review item not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  const updated = await recruitmentReviewRepository.bindRecruitmentId(reviewId, rid);
+  if (!updated) {
+    const err = new Error("Review item could not be bound");
+    err.statusCode = 409;
+    throw err;
+  }
+  return updated;
+}
+
 module.exports = {
   saveReviewItem,
   getReviewItemById,
@@ -261,5 +290,6 @@ module.exports = {
   listReviewItems,
   updateReviewDecision,
   freezeReviewItem,
-  updateReviewNotes
+  updateReviewNotes,
+  bindReviewItemRecruitment
 };

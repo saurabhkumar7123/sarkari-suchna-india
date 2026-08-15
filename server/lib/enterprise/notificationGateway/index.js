@@ -59,7 +59,8 @@ function getChannelStatus() {
 }
 
 async function deliverTelegram(payload = {}) {
-  const message = String(payload.message || payload.text || "").trim();
+  const raw = payload.message || payload.text;
+  const message = typeof raw === "string" ? raw.trim() : "";
   if (!message) {
     return {
       delivered: false,

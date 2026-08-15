@@ -488,6 +488,19 @@ async function updateDecision(id, patch = {}) {
   return findById(id);
 }
 
+async function bindRecruitmentId(id, recruitmentId) {
+  const rid = parseInt(String(recruitmentId), 10);
+  if (!Number.isInteger(rid) || rid <= 0) {
+    return null;
+  }
+  const [result] = await db.query(
+    `UPDATE recruitment_review_queue SET recruitment_id = ? WHERE id = ?`,
+    [rid, id]
+  );
+  if (result.affectedRows === 0) return null;
+  return findById(id);
+}
+
 module.exports = {
   tableExists,
   detectSchema,
@@ -496,5 +509,6 @@ module.exports = {
   findById,
   findPending,
   list,
-  updateDecision
+  updateDecision,
+  bindRecruitmentId
 };

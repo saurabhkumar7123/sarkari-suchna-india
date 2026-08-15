@@ -185,6 +185,68 @@ function extractEmbeddedFaqSections(sections) {
 }
 
 /**
+ * Flattened pay-level vacancy cell (delimiter-less PDF extraction).
+ * Example: Level-71100020000YES
+ * @param {string} line
+ */
+function isFlattenedVacancyGridCell(line) {
+  const t = String(line || "").trim();
+  if (!t || t.length > 80) return false;
+  if (!/^Level-/i.test(t)) return false;
+  if (/\s/.test(t)) return false;
+  return /(YES|NO)$/i.test(t) || /^Level-\d{5,}\S*$/i.test(t);
+}
+
+/**
+ * Vacancy-grid source line that cannot be safely structured — keep verbatim.
+ * Does not reconstruct columns or invent values.
+ * @param {string} line
+ */
+function isVacancyGridRetainLine(line) {
+  const t = String(line || "").trim();
+  if (!t || t.length > 160) return false;
+  if (/https?:\/\/|www\./i.test(t)) return false;
+  if (isFeeLine(t)) return false;
+  if (/^(post\s*name|postname|name of post|पद)$/i.test(t)) return true;
+  if (/URSCST|SCSTOBC/i.test(t)) return true;
+  const catHits = t.match(/\b(UR|GEN|OBC|SC|ST|EWS|Total|OH|HH|VH|PWD)\b/gi) || [];
+  if (catHits.length >= 4 && !/[|,]/.test(t)) return true;
+  return isFlattenedVacancyGridCell(t);
+}
+
+/**
+ * Short post-title immediately above a flattened vacancy cell.
+ * @param {string} line
+ */
+function isAdjacentVacancyPostTitle(line) {
+  const t = String(line || "").trim();
+  if (t.length < 4 || t.length > 70) return false;
+  if (/\d/.test(t)) return false;
+  if (/\b(ministry|department|office|whether|candidate|colour|blind|s\.?\s*no)\b/i.test(t)) {
+    return false;
+  }
+  return /\btranslator\b/i.test(t) || /^translator\(/i.test(t);
+}
+
+/**
+ * Line indexes that belong to an ambiguous vacancy grid and must not be dropped.
+ * @param {string[]} lines
+ * @returns {Set<number>}
+ */
+function vacancyGridRetainIndexes(lines) {
+  const retain = new Set();
+  (lines || []).forEach((line, idx) => {
+    if (isVacancyGridRetainLine(line)) retain.add(idx);
+  });
+  (lines || []).forEach((line, idx) => {
+    if (retain.has(idx + 1) && isFlattenedVacancyGridCell(lines[idx + 1]) && isAdjacentVacancyPostTitle(line)) {
+      retain.add(idx);
+    }
+  });
+  return retain;
+}
+
+/**
  * Fallback line-bucket detection when headings are weak / missing.
  * @param {string} text
  */
@@ -215,6 +277,8 @@ function detectByLineClassification(text) {
     other: []
   };
 
+  const gridRetain = vacancyGridRetainIndexes(lines);
+
   lines.forEach((line, idx) => {
     if (covered.has(idx)) return;
     const l = line.toLowerCase();
@@ -228,6 +292,10 @@ function detectByLineClassification(text) {
     }
     if (isFeeLine(line)) {
       buckets.fee.push(line);
+      return;
+    }
+    if (gridRetain.has(idx) || isVacancyGridRetainLine(line)) {
+      buckets.vacancy.push(line);
       return;
     }
     if (/\b(helpline|help\s*desk|toll[\s-]*free|contact\s*(no|number|us)|phone|email\s*:)\b/i.test(l)) {
@@ -405,7 +473,7 @@ function detectDocumentSections(rawText) {
     });
   };
 
-  if (buckets.other.length) push(SECTION_TYPES.SHORT_INFORMATION, buckets.other.slice(0, 6), 0.55);
+  if (buckets.other.length) push(SECTION_TYPES.SHORT_INFORMATION, buckets.other, 0.55);
   const elig = [];
   if (buckets.qualification.length) elig.push(...buckets.qualification.map((x) => `Qualification: ${x}`));
   if (buckets.age.length) elig.push(...buckets.age.map((x) => `Age Limit: ${x}`));
@@ -451,5 +519,7 @@ module.exports = {
   splitByHeadings,
   detectByLineClassification,
   buildBlocks,
-  detectDocumentSections
+  detectDocumentSections,
+  isVacancyGridRetainLine,
+  isFlattenedVacancyGridCell
 };

@@ -17,9 +17,21 @@ const { runProductionAutomationWorkflow } = require("../automationWorkflow");
 const { defaultService } = require("../../../services/enterprise/enterprisePersistence.service");
 const recruitmentReviewService = require("../../../services/recruitmentReview.service");
 const generatorDraftService = require("../../../services/generatorDraft.service");
+const generatorDraftRepository = require("../../../repositories/generatorDraft.repository");
 const recruitmentService = require("../../../services/recruitment.service");
 const notificationGateway = require("../../enterprise/notificationGateway");
 const { METRIC_TYPES } = require("../../../repositories/enterprise/metricsEnterprise.repository");
+const { isLifecycleEventType } = require("../recruitmentDomainModel");
+const {
+  mapEventStageToRecruitmentLifecycleState
+} = require("./mapEventStageToLifecycleState");
+const {
+  downloadOfficialPdfForGeneratorExtraction
+} = require("./downloadOfficialPdfForGeneratorExtraction");
+const {
+  convertAmpExtractedTextToPublisher,
+  withConvertedPublisherData
+} = require("./applyGeneratorAiConvert");
 
 function collapseWhitespace(value) {
   return String(value ?? "")
@@ -39,6 +51,20 @@ function uniqueSlug(base, suffix) {
   const root = slugify(base) || "recruitment";
   const tail = suffix != null ? `-${String(suffix)}` : "";
   return `${root}${tail}`.slice(0, 160);
+}
+
+function resolveEventStageForPersistence(detection, recruitmentObject) {
+  const candidates = [
+    detection && detection.eventType,
+    recruitmentObject && recruitmentObject.currentStage,
+    detection && detection.reviewItem && detection.reviewItem.eventType
+  ];
+  const classifiedEvent = candidates.find((value) => isLifecycleEventType(value));
+  if (classifiedEvent) {
+    return classifiedEvent;
+  }
+  const first = candidates.find((value) => value != null && String(value).trim() !== "");
+  return first || null;
 }
 
 function isProductionRuntimeEnabled() {
@@ -81,6 +107,8 @@ async function resolveRecruitmentRecord({
     collapseWhitespace(notice?.title) ||
     "Detected recruitment";
   const slug = uniqueSlug(title, pipelineOutcome.updateId || Date.now());
+  const eventStage = resolveEventStageForPersistence(detection, recruitmentObject);
+  const lifecycleState = mapEventStageToRecruitmentLifecycleState(eventStage);
   const created = await recruitmentService.createRecruitment({
     title,
     slug,
@@ -88,7 +116,7 @@ async function resolveRecruitmentRecord({
     post_name: recruitmentObject.postName || null,
     advertisement_no: recruitmentObject.advertisementNo || null,
     cycle_year: recruitmentObject.cycleYear || null,
-    lifecycle_state: recruitmentObject.currentStage || "detected"
+    lifecycle_state: lifecycleState
   });
 
   await defaultService.recruitment.upsertExtended(created.id, {
@@ -97,7 +125,7 @@ async function resolveRecruitmentRecord({
     validation: workflowResult?.validation || {},
     missing_information: workflowResult?.intelligenceResult?.missingResult?.missingInformation || { items: [] },
     history_recovery: workflowResult?.historyRecovery || {},
-    current_stage: recruitmentObject.currentStage || "detected",
+    current_stage: eventStage,
     metadata: {
       updateId: pipelineOutcome.updateId,
       sourceUrl: notice?.url || null
@@ -107,7 +135,14 @@ async function resolveRecruitmentRecord({
   return { recruitmentId: created.id, created: true, row: created };
 }
 
-async function persistDraft({ flags, workflowResult, recruitmentId, recruitmentEventId }) {
+async function persistDraft({
+  flags,
+  workflowResult,
+  recruitmentId,
+  recruitmentEventId,
+  notice = null,
+  monitoredSite = null
+}) {
   if (flags.AUTO_DRAFT_ENABLED !== true) {
     return { skipped: true, reason: "auto_draft_disabled" };
   }
@@ -122,14 +157,114 @@ async function persistDraft({ flags, workflowResult, recruitmentId, recruitmentE
     return { skipped: true, reason: "no_draft_payload" };
   }
 
-  const draft = await generatorDraftService.saveDraft({
-    payload,
+  let pdfExtraction = { ok: false, reason: "not_attempted" };
+  try {
+    const extracted = await downloadOfficialPdfForGeneratorExtraction({
+      notice,
+      payload,
+      monitoredSite
+    });
+    pdfExtraction = {
+      ok: true,
+      text: extracted.text,
+      extractionNote: extracted.extractionNote || undefined,
+      sourceUrl: extracted.sourceUrl
+    };
+    logger.info("production-runtime: official PDF extracted (draft payload unchanged)", {
+      textLen: String(extracted.text || "").length,
+      sourceUrl: extracted.sourceUrl
+    });
+  } catch (err) {
+    pdfExtraction = {
+      ok: false,
+      reason: err && err.code ? err.code : "EXTRACT_FAILED",
+      message: err && err.message ? err.message : String(err)
+    };
+    logger.warn("production-runtime: official PDF extraction skipped; retaining sparse draft", {
+      reason: pdfExtraction.reason,
+      message: pdfExtraction.message
+    });
+  }
+
+  let payloadForSave = payload;
+  let aiConvert = { ok: false, reason: "not_attempted" };
+  if (pdfExtraction.ok && pdfExtraction.text) {
+    try {
+      const converted = await convertAmpExtractedTextToPublisher({
+        extractedText: pdfExtraction.text,
+        title: payload.title,
+        officialUrl: payload.pageUrl || (notice && notice.url) || pdfExtraction.sourceUrl || null
+      });
+      aiConvert = {
+        ok: converted.accepted === true,
+        reason: converted.reason,
+        message: converted.message
+      };
+      if (converted.accepted && converted.result) {
+        payloadForSave = withConvertedPublisherData(payload, converted.result);
+        logger.info("production-runtime: AI Convert accepted; sparse data replaced", {
+          dataLen: converted.result.length
+        });
+      } else {
+        logger.warn("production-runtime: AI Convert rejected; retaining sparse draft", {
+          reason: converted.reason
+        });
+      }
+    } catch (err) {
+      aiConvert = {
+        ok: false,
+        reason: "convert_failed",
+        message: err && err.message ? err.message : String(err)
+      };
+      logger.warn("production-runtime: AI Convert threw; retaining sparse draft", {
+        message: aiConvert.message
+      });
+    }
+  }
+
+  let existingDraftId;
+  if (recruitmentId && typeof generatorDraftService.listDraftsByRecruitmentId === "function") {
+    try {
+      const rows = await generatorDraftService.listDraftsByRecruitmentId(recruitmentId, { limit: 10 });
+      const existing = Array.isArray(rows)
+        ? rows.find((row) => row && String(row.status) === "draft" && row.id)
+        : null;
+      if (existing) existingDraftId = existing.id;
+    } catch (err) {
+      logger.warn("production-runtime: existing draft lookup failed; inserting new draft", {
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
+
+  let draft = await generatorDraftService.saveDraft({
+    id: existingDraftId,
+    payload: payloadForSave,
     recruitmentId,
     recruitmentEventId
   });
 
+  if (
+    recruitmentId &&
+    (draft.recruitment_id == null || Number(draft.recruitment_id) !== Number(recruitmentId))
+  ) {
+    try {
+      await generatorDraftRepository.updateDraftLinkage(draft.id, {
+        recruitmentId,
+        recruitmentEventId
+      });
+      const rebound = await generatorDraftService.getDraftById(draft.id);
+      if (rebound) draft = rebound;
+    } catch (err) {
+      logger.warn("production-runtime: draft recruitment binding failed", {
+        draftId: draft.id,
+        message: err.message
+      });
+    }
+  }
+
   await defaultService.draft.upsertExtended(draft.id, {
-    generator_payload: payload,
+    generator_payload: payloadForSave,
     structured_output: workflowResult?.draftPreview || {},
     difference_report: workflowResult?.difference || { changes: [] },
     confidence: workflowResult?.intelligenceResult?.confidence || {},
@@ -137,7 +272,7 @@ async function persistDraft({ flags, workflowResult, recruitmentId, recruitmentE
     warnings: workflowResult?.intelligenceResult?.reviewFlags || []
   });
 
-  return { skipped: false, draftId: draft.id, draft };
+  return { skipped: false, draftId: draft.id, draft, pdfExtraction, aiConvert, reused: Boolean(existingDraftId) };
 }
 
 async function persistWorkflow({ workflowResult, recruitmentId, updateId }) {
@@ -194,21 +329,82 @@ async function persistWorkflow({ workflowResult, recruitmentId, updateId }) {
   );
 }
 
-async function persistReviewQueue({ pipelineOutcome, workflowResult, recruitmentId, notice, updateId }) {
-  const detection = pipelineOutcome.skipped || pipelineOutcome.failed ? null : pipelineOutcome.result;
-  const reviewItem = detection?.reviewItem || {
-    recruitmentId,
-    eventType: detection?.eventType || "detected",
-    matchResult: detection?.selectedRecruitment ? "matched" : "new",
-    confidence: workflowResult?.intelligenceResult?.confidence?.level || "medium",
-    sourceUrl: notice?.url || null,
-    title: notice?.title || "Recruitment review"
+function buildBoundReviewItem({ detection, workflowResult, recruitmentId, notice }) {
+  const detectedItem =
+    detection && detection.reviewItem && typeof detection.reviewItem === "object"
+      ? detection.reviewItem
+      : {};
+  return {
+    ...detectedItem,
+    recruitmentId:
+      detectedItem.recruitmentId ||
+      detectedItem.recruitment_id ||
+      recruitmentId ||
+      null,
+    eventType: detectedItem.eventType || detection?.eventType || "notification",
+    matchResult:
+      detectedItem.matchResult &&
+      typeof detectedItem.matchResult === "object" &&
+      !Array.isArray(detectedItem.matchResult)
+        ? detectedItem.matchResult
+        : null,
+    confidence:
+      detectedItem.confidence ||
+      workflowResult?.intelligenceResult?.confidence?.level ||
+      "medium",
+    sourceUrl: detectedItem.sourceUrl || detectedItem.source_url || notice?.url || null,
+    title: detectedItem.title || notice?.title || "Recruitment review"
   };
+}
+
+async function persistReviewQueue({
+  pipelineOutcome,
+  workflowResult,
+  recruitmentId,
+  notice,
+  updateId,
+  draftId = null
+}) {
+  const detection = pipelineOutcome.skipped || pipelineOutcome.failed ? null : pipelineOutcome.result;
+  const reviewItem = buildBoundReviewItem({
+    detection,
+    workflowResult,
+    recruitmentId,
+    notice
+  });
+
+  if (typeof recruitmentReviewService.listReviewItems === "function" && (recruitmentId || updateId)) {
+    try {
+      const listed = await recruitmentReviewService.listReviewItems({
+        recruitment_id: recruitmentId,
+        status: "pending",
+        page: 1,
+        limit: 50
+      });
+      const rows = listed && Array.isArray(listed.data) ? listed.data : [];
+      const existing = rows.find((row) => {
+        if (!row) return false;
+        const rowUpdate = row.update_id != null ? row.update_id : row.updateId;
+        if (updateId != null && rowUpdate != null) {
+          return Number(rowUpdate) === Number(updateId);
+        }
+        return false;
+      });
+      if (existing && existing.id) {
+        return { ...existing, reused: true };
+      }
+    } catch (err) {
+      logger.warn("production-runtime: existing review lookup failed; inserting new review", {
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
 
   const saved = await recruitmentReviewService.saveReviewItem({
     reviewItem,
     updateId,
-    rawNotice: notice
+    rawNotice: notice,
+    processorOutput: draftId ? { draftId } : null
   });
 
   await defaultService.reviewQueue.upsertExtended(saved.id, {
@@ -226,7 +422,7 @@ async function persistReviewQueue({ pipelineOutcome, workflowResult, recruitment
     }
   });
 
-  return saved;
+  return { ...saved, reused: false };
 }
 
 async function persistAuditAndMetrics({ workflowResult, recruitmentId, draftId, reviewId, workflowKey }) {
@@ -268,25 +464,62 @@ async function persistAuditAndMetrics({ workflowResult, recruitmentId, draftId, 
   });
 }
 
-async function deliverTelegramReview({ flags, workflowResult }) {
+function asPlainTelegramText(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function formatTelegramReviewMessage({
+  workflowResult,
+  notice,
+  recruitmentId,
+  draftId,
+  reviewId
+} = {}) {
+  const review = workflowResult?.telegramReview || {};
+  const base =
+    asPlainTelegramText(review.text) ||
+    asPlainTelegramText(review.message) ||
+    [
+      "Recruitment automation review required",
+      `Recruitment: ${workflowResult?.recruitmentObject?.recruitmentName || notice?.title || "Unknown"}`,
+      `State: ${workflowResult?.workflowState || "detected"}`,
+      "Manual review required — publishing remains disabled."
+    ].join("\n");
+
+  const extras = [
+    notice?.title ? `Update: ${notice.title}` : "",
+    recruitmentId ? `Recruitment id: ${recruitmentId}` : "",
+    draftId ? `Draft id: ${draftId}` : "",
+    reviewId ? `Review item id: ${reviewId}` : "",
+    "AUTO_PUBLISH remains disabled."
+  ].filter(Boolean);
+
+  return `${base}\n${extras.join("\n")}`.trim();
+}
+
+async function deliverTelegramReview({
+  flags,
+  workflowResult,
+  notice,
+  recruitmentId,
+  draftId,
+  reviewId
+}) {
   if (flags.NOTIFICATION_GATEWAY_ENABLED !== true || flags.TELEGRAM_DELIVERY_ENABLED !== true) {
     return { delivered: false, status: "disabled", reason: "notification_flags_off" };
   }
 
-  const message =
-    workflowResult?.telegramReview?.message ||
-    workflowResult?.telegramReview?.text ||
-    [
-      "Recruitment automation review required",
-      `Recruitment: ${workflowResult?.recruitmentObject?.recruitmentName || "Unknown"}`,
-      `State: ${workflowResult?.workflowState || "detected"}`,
-      "",
-      "Manual review required — publishing remains disabled."
-    ].join("\n");
+  const message = formatTelegramReviewMessage({
+    workflowResult,
+    notice,
+    recruitmentId,
+    draftId,
+    reviewId
+  });
 
   return notificationGateway.sendNotification({
     channel: notificationGateway.CHANNELS.TELEGRAM,
-    payload: { message, telegramReview: workflowResult?.telegramReview || null },
+    payload: { message },
     meta: { source: "productionRuntime" }
   });
 }
@@ -372,7 +605,9 @@ async function runProductionDetectionPipeline({
     flags,
     workflowResult,
     recruitmentId: recruitmentRecord.recruitmentId,
-    recruitmentEventId: null
+    recruitmentEventId: null,
+    notice,
+    monitoredSite
   }).catch((err) => ({ skipped: true, reason: "draft_error", error: err.message }));
 
   const workflowRow = await persistWorkflow({
@@ -391,7 +626,8 @@ async function runProductionDetectionPipeline({
       workflowResult,
       recruitmentId: recruitmentRecord.recruitmentId,
       notice,
-      updateId
+      updateId,
+      draftId: draftResult.draftId || null
     });
   } catch (reviewErr) {
     logger.warn("production-runtime: review queue persistence failed", { message: reviewErr.message });
@@ -407,7 +643,21 @@ async function runProductionDetectionPipeline({
     logger.warn("production-runtime: audit/metrics persistence failed", { message: err.message });
   });
 
-  const telegramResult = await deliverTelegramReview({ flags, workflowResult });
+  const telegramResult =
+    reviewRow && reviewRow.reused
+      ? {
+          delivered: false,
+          status: "skipped_duplicate",
+          reason: "review_reused"
+        }
+      : await deliverTelegramReview({
+          flags,
+          workflowResult,
+          notice,
+          recruitmentId: recruitmentRecord.recruitmentId,
+          draftId: draftResult.draftId || null,
+          reviewId: reviewRow?.id || null
+        });
 
   return {
     skipped: false,
@@ -427,5 +677,11 @@ async function runProductionDetectionPipeline({
 
 module.exports = {
   isProductionRuntimeEnabled,
-  runProductionDetectionPipeline
+  runProductionDetectionPipeline,
+  persistDraft,
+  persistReviewQueue,
+  mapEventStageToRecruitmentLifecycleState,
+  resolveEventStageForPersistence,
+  buildBoundReviewItem,
+  formatTelegramReviewMessage
 };

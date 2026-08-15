@@ -726,6 +726,38 @@ function getLifecycleEventDescriptorByType(eventType) {
 }
 
 /**
+ * Map a lifecycle event type (or conceptual lifecycle event id) to the
+ * first typical parent recruitment.lifecycle_state. Returns null when the
+ * value is not a known event type and not already a recruitment lifecycle state.
+ * Does not invent states or fall back to announced for unknown inputs.
+ *
+ * @param {string|null|undefined} eventTypeOrStage
+ * @returns {string|null}
+ */
+function getTypicalRecruitmentLifecycleState(eventTypeOrStage) {
+  const normalized = normalizeString(eventTypeOrStage);
+  if (normalized == null) {
+    return DEFAULT_RECRUITMENT_LIFECYCLE_STATE;
+  }
+
+  if (RECRUITMENT_LIFECYCLE_STATES.includes(normalized)) {
+    return normalized;
+  }
+
+  const descriptor =
+    LIFECYCLE_EVENT_BY_TYPE[normalized] || LIFECYCLE_EVENT_BY_ID[normalized] || null;
+  if (
+    descriptor &&
+    Array.isArray(descriptor.typicalRecruitmentStates) &&
+    descriptor.typicalRecruitmentStates.length > 0
+  ) {
+    return descriptor.typicalRecruitmentStates[0];
+  }
+
+  return null;
+}
+
+/**
  * @returns {readonly Object[]}
  */
 function listLifecycleEventsInOrder() {
@@ -784,6 +816,7 @@ module.exports = {
   isPublicationState,
   getLifecycleEventDescriptor,
   getLifecycleEventDescriptorByType,
+  getTypicalRecruitmentLifecycleState,
   listLifecycleEventsInOrder,
   summarizeRecruitmentDomainModel
 };

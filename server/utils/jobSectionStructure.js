@@ -5,6 +5,11 @@ const { detectSections, bucketsToPublisherDocument } = require("./sectionDetecto
 const { validateAndRepair } = require("./validateOutput");
 const { normalizeSectionFormatting } = require("./normalizeSectionFormatting");
 const { tryPreserveStructuredInput } = require("./publisherSections");
+const { applyCanonicalPublisherFormat } = require("./canonicalPublisherFormat");
+
+function finishPublisherText(text) {
+  return applyCanonicalPublisherFormat(normalizeSectionFormatting(text));
+}
 
 /**
  * Deterministic sectioning from noisy PDF/OCR plain text (server).
@@ -14,7 +19,7 @@ const { tryPreserveStructuredInput } = require("./publisherSections");
 function structurePlainTextIntoSections(plainText) {
   const cleaned = smartCleanJobText(plainText);
   const buckets = detectSections(cleaned);
-  return normalizeSectionFormatting(bucketsToPublisherDocument(buckets));
+  return finishPublisherText(bucketsToPublisherDocument(buckets));
 }
 
 function trimShortInfoInStructuredText(text) {
@@ -24,10 +29,10 @@ function trimShortInfoInStructuredText(text) {
   if (!m) return t;
   const body = m[2].trim();
   const lines = body.split("\n").filter(Boolean);
-  const trimmed = lines.slice(0, 4).join("\n") || "—";
+  const kept = lines.join("\n") || "—";
   const start = m.index ?? 0;
   const end = start + m[0].length;
-  return `${t.slice(0, start)}[Section: Short Information]\n${trimmed}${t.slice(end)}`;
+  return `${t.slice(0, start)}[Section: Short Information]\n${kept}${t.slice(end)}`;
 }
 
 /**
@@ -38,7 +43,7 @@ function trimShortInfoInStructuredText(text) {
 function finalizeStructuredJobOutput(aiResult, cleanedSource) {
   const preserved = tryPreserveStructuredInput(cleanedSource);
   if (preserved) {
-    return normalizeSectionFormatting(preserved);
+    return finishPublisherText(preserved);
   }
 
   let r = normalizeSectionFormatting(
@@ -56,27 +61,28 @@ function finalizeStructuredJobOutput(aiResult, cleanedSource) {
 
   if (r && /\[Section:\s*(Eligibility|Short\s*Information|ShortInfo|Important\s*Dates|ImportantDates)\]/i.test(r)) {
     const v = validateAndRepair(trimShortInfoInStructuredText(r), buckets);
-    return normalizeSectionFormatting(v.text);
+    return finishPublisherText(v.text);
   }
   if (r && /\[Section:/i.test(r)) {
     const v = validateAndRepair(trimShortInfoInStructuredText(r), buckets);
-    return normalizeSectionFormatting(v.text);
+    return finishPublisherText(v.text);
   }
 
   if (src.length >= 50) {
     const v = validateAndRepair(trimShortInfoInStructuredText(structurePlainTextIntoSections(src)), buckets);
-    return normalizeSectionFormatting(v.text);
+    return finishPublisherText(v.text);
   }
   if (r.length > 0) {
     const v = validateAndRepair(trimShortInfoInStructuredText(structurePlainTextIntoSections(r)), buckets);
-    return normalizeSectionFormatting(v.text);
+    return finishPublisherText(v.text);
   }
   const v = validateAndRepair(trimShortInfoInStructuredText(structurePlainTextIntoSections("—")), buckets);
-  return normalizeSectionFormatting(v.text);
+  return finishPublisherText(v.text);
 }
 
 module.exports = {
   structurePlainTextIntoSections,
   trimShortInfoInStructuredText,
-  finalizeStructuredJobOutput
+  finalizeStructuredJobOutput,
+  finishPublisherText
 };

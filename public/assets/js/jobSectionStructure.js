@@ -214,11 +214,14 @@
     shortinfo: "Short Information",
     "short info": "Short Information",
     "short information": "Short Information",
+    eligibility: "Eligibility",
     importantdates: "Important Dates",
     "important dates": "Important Dates",
     applicationfee: "Application Fee",
     "application fee": "Application Fee",
     "application fees": "Application Fee",
+    selectionprocess: "Selection Process",
+    "selection process": "Selection Process",
     importantlinks: "Important Links",
     "important links": "Important Links",
     importantquestions: "Important Questions",
@@ -231,8 +234,9 @@
     let t = String(raw || "").trim();
     const forceTable = /\|\s*table\s*$/i.test(t);
     t = t.replace(/\|\s*table\s*$/i, "").trim();
-    const key = t.toLowerCase().replace(/\s+/g, " ");
-    const canonical = SECTION_ALIAS_MAP[key] || t;
+    const spaced = t.toLowerCase().replace(/\s+/g, " ");
+    const compact = spaced.replace(/\s+/g, "");
+    const canonical = SECTION_ALIAS_MAP[spaced] || SECTION_ALIAS_MAP[compact] || t;
     return forceTable ? `${canonical} | table` : canonical;
   }
 
@@ -642,7 +646,7 @@
         .map((ln) => ln.trim())
         .filter((ln) => ln.length > 0)
         .join("\n");
-      parts.push(`[Section: ${name}]`);
+      parts.push(`[Section: ${canonicalSectionTitle(name)}]`);
       if (body) parts.push(body);
     }
     return `${parts.join("\n")}\n`;

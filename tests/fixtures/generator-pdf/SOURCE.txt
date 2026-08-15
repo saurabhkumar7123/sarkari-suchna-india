@@ -1,0 +1,5 @@
+Source: Staff Selection Commission (official)
+URL: https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/tentative_vacancies_09072026.pdf
+Domain: ssc.gov.in
+Document: Tentative vacancies for Combined Hindi Translators Examination, 2026 (as on 09.07.2026)
+Notes: Public recruitment vacancy notice. No personal candidate data.

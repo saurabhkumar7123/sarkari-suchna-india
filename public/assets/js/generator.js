@@ -2273,55 +2273,29 @@ function ensureSections(aiResult, originalSource) {
   }
   const t = ai || src;
   if (!t) {
-    return `[Section: ShortInfo]
-—
-—
-
-[Section: Eligibility]
-Qualification: —
-Age Limit: —
-State: —
-
-[Section: ImportantDates]
+    return `[Section: Short Information]
 —
 
-[Section: SelectionProcess]
+[Section: Important Dates]
+—
+
+[Section: Application Fee]
 —
 
 [Section: Vacancy]
 —
 
-[Section: ImportantLinks]
+[Section: Important Links]
 —
 
 [Section: Important Questions]
 —
 `;
   }
-  if (/\[Section:\s*Eligibility\]/i.test(t) || /\[Section:/i.test(t)) return t;
+  if (/\[Section:/i.test(t)) return t;
   const body = t.length ? t : "—";
-  return `[Section: ShortInfo]
+  return `[Section: Short Information]
 ${body}
-
-[Section: Eligibility]
-Qualification: —
-Age Limit: —
-State: —
-
-[Section: ImportantDates]
-—
-
-[Section: SelectionProcess]
-—
-
-[Section: Vacancy]
-—
-
-[Section: ImportantLinks]
-—
-
-[Section: Important Questions]
-—
 `;
 }
 
@@ -2378,7 +2352,7 @@ EXTRACTION LOGIC:
 
 OUTPUT FORMAT (STRICT):
 
-[Section: ShortInfo]
+[Section: Short Information]
 <brief real summary>
 
 [Section: Eligibility]
@@ -2386,19 +2360,19 @@ Qualification: <must extract>
 Age Limit: <must extract>
 State: <must extract if mentioned>
 
-[Section: ImportantDates]
-Notification Date: <extract>
-Application Start Date: <extract>
-Last Date: <extract>
-Exam Date: <extract>
+[Section: Important Dates]
+Notification Date : <extract>
+Application Start Date : <extract>
+Last Date : <extract>
+Exam Date : <extract>
 
-[Section: SelectionProcess]
+[Section: Selection Process]
 <extract steps line by line>
 
 [Section: Vacancy]
 <extract real numbers and categories>
 
-[Section: ImportantLinks]
+[Section: Important Links]
 <extract real URLs>
 
 [Section: Important Questions]

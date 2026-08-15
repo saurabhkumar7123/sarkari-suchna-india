@@ -188,22 +188,38 @@ async function processSiteJob(job) {
       return { changed: false, duplicatesOnly: true };
     }
 
+    // Best-effort update alert. Telegram failure/skip must NOT discard detected
+    // updates or skip AMP-4B productionRuntime (AMP-4B staging activation).
     let telegramResult;
-    if (pendingBatch.length === 1) {
-      telegramResult = await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
-    } else {
-      telegramResult = await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
+    try {
+      if (pendingBatch.length === 1) {
+        telegramResult = await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
+      } else {
+        telegramResult = await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
+      }
+    } catch (telegramErr) {
+      telegramResult = {
+        sent: false,
+        error: telegramErr,
+        reason: telegramErr && telegramErr.message ? telegramErr.message : String(telegramErr)
+      };
+      logger.warn("updates-worker: telegram alert threw; continuing pipeline", {
+        siteId,
+        message: telegramResult.reason
+      });
     }
 
-    if (!telegramResult || telegramResult.sent !== true) {
-      logger.warn("updates-worker: telegram delivery failed; preserving state for retry", {
+    const telegramSent = Boolean(telegramResult && telegramResult.sent === true);
+    if (!telegramSent) {
+      logger.warn("updates-worker: telegram alert failed/skipped; persisting update and continuing runtime", {
         siteId,
-        skipped: Boolean(telegramResult && telegramResult.skipped)
+        skipped: Boolean(telegramResult && telegramResult.skipped),
+        reason: telegramResult && telegramResult.reason ? telegramResult.reason : null
       });
-      return { changed: true, savedCount, telegramFailed: true };
     }
 
     const recruitmentPipelineEnabled = isRecruitmentPipelineEnabled();
+    const productionOutcomes = [];
 
     for (const item of pendingBatch) {
       const updateId = await insertDetectedUpdate({
@@ -264,6 +280,7 @@ async function processSiteJob(job) {
                 url: site && site.url ? site.url : null
               }
             });
+            productionOutcomes.push(productionOutcome);
             logger.info("updates-worker: production runtime completed", {
               siteId,
               updateId,
@@ -277,6 +294,11 @@ async function processSiteJob(job) {
               updateId,
               message: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
             });
+            productionOutcomes.push({
+              skipped: false,
+              failed: true,
+              error: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
+            });
           }
         } else {
           logger.info("updates-worker: recruitment pipeline skipped — production runtime flags off", {
@@ -287,17 +309,31 @@ async function processSiteJob(job) {
         }
       }
     }
+
+    // Advance baseline after persistence so detections are not lost or infinitely re-queued.
+    // Alert cooldown marker is only set when the update alert actually delivered.
     if (result.baselineFingerprint) {
       await saveSiteBaseline(siteId, result.baselineFingerprint);
     }
-    await markAlertSent(siteId);
+    if (telegramSent) {
+      await markAlertSent(siteId);
+    }
 
-    logger.info("updates-worker: update alert sent", {
+    logger.info("updates-worker: update processed", {
       jobId: job.id,
       siteId,
-      savedCount
+      savedCount,
+      telegramSent,
+      pipelineContinued: true
     });
-    return { changed: true, savedCount };
+    return {
+      changed: true,
+      savedCount,
+      telegramSent,
+      telegramFailed: !telegramSent,
+      pipelineContinued: true,
+      productionOutcomeCount: productionOutcomes.length
+    };
   } catch (err) {
     await markSiteChecked(siteId).catch(() => null);
     const failure = await incrementSiteFailure(siteId).catch(() => null);

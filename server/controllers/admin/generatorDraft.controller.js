@@ -3,7 +3,6 @@
 const generatorDraftService = require("../../services/generatorDraft.service");
 const { recordActivity } = require("../../services/adminActivity.service");
 const { isGeneratorDraftsEnabled } = require("../../config/generatorDrafts");
-const { isRecruitmentEditorialAttachmentEnabled } = require("../../config/recruitmentLifecycle");
 
 function draftsDisabled(res) {
   return res.status(503).json({
@@ -22,13 +21,11 @@ function formatDraftSummary(row) {
     updatedAt: row.updated_at,
     publishedSlug: row.published_slug,
     publishedPageId: row.published_page_id,
-    publishedAt: row.published_at
+    publishedAt: row.published_at,
+    recruitmentId: row.recruitment_id != null ? Number(row.recruitment_id) : null,
+    recruitmentEventId:
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null
   };
-  if (isRecruitmentEditorialAttachmentEnabled()) {
-    data.recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
-    data.recruitmentEventId =
-      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
-  }
   return data;
 }
 
@@ -40,13 +37,11 @@ function formatDraftDetail(row) {
     payload: row.payload || {},
     status: row.status,
     createdAt: row.created_at,
-    updatedAt: row.updated_at
+    updatedAt: row.updated_at,
+    recruitmentId: row.recruitment_id != null ? Number(row.recruitment_id) : null,
+    recruitmentEventId:
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null
   };
-  if (isRecruitmentEditorialAttachmentEnabled()) {
-    data.recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
-    data.recruitmentEventId =
-      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
-  }
   return data;
 }
 

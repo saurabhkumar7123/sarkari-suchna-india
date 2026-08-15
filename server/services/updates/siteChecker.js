@@ -8,6 +8,18 @@ const {
   extractSscNoticeItems
 } = require("./sscNoticeChecker");
 
+const SOURCE_METHODS = Object.freeze({
+  HTML_SELECTOR: "HTML_SELECTOR",
+  SSC_JSON: "SSC_JSON"
+});
+
+function resolveSourceMethod(site) {
+  if (isSscApiEnabled() && isSscApiSite(site)) {
+    return SOURCE_METHODS.SSC_JSON;
+  }
+  return SOURCE_METHODS.HTML_SELECTOR;
+}
+
 function normalizeText(value) {
   return String(value || "")
     .replace(/\s+/g, " ")
@@ -108,6 +120,20 @@ function extractLatestItems(html, site) {
   return { items };
 }
 
+async function extractSourceItems(site) {
+  const method = resolveSourceMethod(site);
+  if (method === SOURCE_METHODS.SSC_JSON) {
+    logger.info("updates: using SSC API handler", { siteId: site.id, name: site.name, method });
+    const extracted = await extractSscNoticeItems(site, { buildSignature, normalizeText });
+    return extracted ? { method, ...extracted } : { method, invalid: true, reason: "selector_miss" };
+  }
+
+  const html = await fetchHtml(site.url);
+  logger.info("updates: fetched html", { siteId: site.id, bytes: html.length, method });
+  const extracted = extractLatestItems(html, site);
+  return extracted ? { method, ...extracted } : { method, invalid: true, reason: "selector_miss" };
+}
+
 /**
  * @param {object} site — full row including lastContent
  */
@@ -118,15 +144,7 @@ async function checkSite(site) {
     hasBaseline: Boolean(String(site.lastContent || "").trim())
   });
 
-  let extracted;
-  if (isSscApiEnabled() && isSscApiSite(site)) {
-    logger.info("updates: using SSC API handler", { siteId: site.id, name: site.name });
-    extracted = await extractSscNoticeItems(site, { buildSignature, normalizeText });
-  } else {
-    const html = await fetchHtml(site.url);
-    logger.info("updates: fetched html", { siteId: site.id, bytes: html.length });
-    extracted = extractLatestItems(html, site);
-  }
+  const extracted = await extractSourceItems(site);
   if (!extracted) {
     return { changed: false, reason: "selector_miss", invalid: true };
   }
@@ -179,5 +197,9 @@ module.exports = {
   buildSignature,
   normalizeStoredBaseline,
   isStoredFingerprint,
-  itemMatchesBaseline
+  itemMatchesBaseline,
+  SOURCE_METHODS,
+  resolveSourceMethod,
+  extractLatestItems,
+  extractSourceItems
 };

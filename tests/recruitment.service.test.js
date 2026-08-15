@@ -82,14 +82,44 @@ describe("recruitment.service", () => {
     ).rejects.toMatchObject({ statusCode: 409, message: "slug must be unique" });
   });
 
-  test("createRecruitment rejects invalid lifecycle_state", async () => {
+  test("createRecruitment rejects event-stage exam_date (not a recruitment lifecycle_state)", async () => {
     await expect(
       recruitmentService.createRecruitment({
         title: "SSC CGL 2026",
         slug: "ssc-cgl-2026",
-        lifecycle_state: "invalid_state"
+        lifecycle_state: "exam_date"
       })
     ).rejects.toMatchObject({ statusCode: 400, message: "Invalid lifecycle_state" });
+    expect(recruitmentRepository.createRecruitment).not.toHaveBeenCalled();
+  });
+
+  test("createRecruitment rejects detected fallback string", async () => {
+    await expect(
+      recruitmentService.createRecruitment({
+        title: "SSC CGL 2026",
+        slug: "ssc-cgl-2026",
+        lifecycle_state: "detected"
+      })
+    ).rejects.toMatchObject({ statusCode: 400, message: "Invalid lifecycle_state" });
+    expect(recruitmentRepository.createRecruitment).not.toHaveBeenCalled();
+  });
+
+  test("createRecruitment accepts mapped exam_scheduled lifecycle_state", async () => {
+    recruitmentRepository.createRecruitment.mockResolvedValue({
+      ...sampleRow,
+      lifecycle_state: "exam_scheduled"
+    });
+
+    const row = await recruitmentService.createRecruitment({
+      title: "SSC CGL 2026",
+      slug: "ssc-cgl-2026",
+      lifecycle_state: "exam_scheduled"
+    });
+
+    expect(recruitmentRepository.createRecruitment).toHaveBeenCalledWith(
+      expect.objectContaining({ lifecycle_state: "exam_scheduled" })
+    );
+    expect(row.lifecycle_state).toBe("exam_scheduled");
   });
 
   test("updateRecruitment updates an existing recruitment", async () => {
