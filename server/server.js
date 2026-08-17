@@ -22,7 +22,7 @@ const {
 } = require("./services/updates/schedulerLeadership");
 const { sendTelegramMessage } = require("./services/updates/telegramNotifier");
 const {
-  canStartMonitoringScheduler,
+  canStartSchedulerProcess,
   canDeliverTelegram,
   getAutomationFlags
 } = require("./config/automationFlags");
@@ -282,7 +282,7 @@ async function gracefulShutdown(signal, { exitCode = 0 } = {}) {
     });
   }
 
-  if (canStartMonitoringScheduler()) {
+  if (canStartSchedulerProcess()) {
     tryStartSchedulerWithLock().catch((err) => {
       if (err && err.code === "REDIS_CRITICAL_UNAVAILABLE") {
         logger.error("updates: scheduler startup aborted due to Redis dependency", {

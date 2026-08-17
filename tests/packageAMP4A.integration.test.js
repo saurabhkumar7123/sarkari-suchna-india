@@ -16,6 +16,7 @@ describe("Package AMP-4A Controlled Production Integration", () => {
     expect(current.PRODUCTION_MONITORING_ENABLED).toBe(false);
     expect(current.SCHEDULER_ACTIVATION_ENABLED).toBe(false);
     expect(current.WORKER_ACTIVATION_ENABLED).toBe(false);
+    expect(flags.canStartSchedulerProcess()).toBe(false);
     expect(flags.canStartMonitoringScheduler()).toBe(false);
     expect(flags.canRunAutomationWorkers()).toBe(false);
     expect(flags.canDeliverTelegram()).toBe(false);

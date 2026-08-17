@@ -11,7 +11,12 @@ const {
   buildHeartbeatMessage,
   buildDailySummaryMessage
 } = require("./telegramNotifier");
-const { canStartMonitoringScheduler } = require("../../config/automationFlags");
+const {
+  canStartMonitoringScheduler,
+  canStartSchedulerProcess,
+  canEnqueueLiveCrawlerJobs,
+  getAutomationFlags
+} = require("../../config/automationFlags");
 
 const MIN_INTERVAL = 5;
 const MAX_INTERVAL = 10;
@@ -26,6 +31,8 @@ function getIntervalMinutes() {
 let isRunning = false;
 let timer = null;
 let isSchedulerActive = false;
+let startInProgress = false;
+let schedulerHandle = null;
 let lastHeartbeatDate = "";
 let lastSummaryDate = "";
 let cycleCounter = 0;
@@ -134,13 +141,43 @@ function shouldCheckSiteThisCycle(site) {
 async function runOnce() {
   if (isRunning) {
     logger.warn("updates: previous cycle still running, skipping overlap");
-    return;
+    return { skipped: true, reason: "overlap" };
   }
 
   isRunning = true;
   try {
     cycleCounter += 1;
-    logger.info("updates: cycle started");
+    const flags = getAutomationFlags();
+    logger.info("updates: cycle started", {
+      cycle: cycleCounter,
+      mode: flags.LIVE_CRAWLER_ENABLED === true ? "live" : "scheduler_only",
+      SCHEDULER_ACTIVATION_ENABLED: flags.SCHEDULER_ACTIVATION_ENABLED,
+      PRODUCTION_MONITORING_ENABLED: flags.PRODUCTION_MONITORING_ENABLED,
+      LIVE_CRAWLER_ENABLED: flags.LIVE_CRAWLER_ENABLED,
+      AUTO_DRAFT_ENABLED: flags.AUTO_DRAFT_ENABLED,
+      TELEGRAM_DELIVERY_ENABLED: flags.TELEGRAM_DELIVERY_ENABLED,
+      NOTIFICATION_GATEWAY_ENABLED: flags.NOTIFICATION_GATEWAY_ENABLED,
+      AUTO_PUBLISH_ENABLED: flags.AUTO_PUBLISH_ENABLED,
+      RECRUITMENT_PIPELINE_ENABLED: flags.RECRUITMENT_PIPELINE_ENABLED
+    });
+
+    if (!canEnqueueLiveCrawlerJobs()) {
+      logger.warn("updates: live crawler blocked; scheduler-only cycle", {
+        enqueue: false,
+        cleanup: false,
+        telegramAttempted: false,
+        publish: false,
+        AUTO_PUBLISH_ENABLED: flags.AUTO_PUBLISH_ENABLED
+      });
+      return {
+        mode: "scheduler_only",
+        enqueued: 0,
+        crawled: false,
+        telegramAttempted: false,
+        published: false
+      };
+    }
+
     await maybeSendHeartbeat();
     const cleanupDeleted = await cleanupOldUpdates(CLEANUP_DAYS);
     if (cleanupDeleted > 0) {
@@ -176,24 +213,35 @@ async function runOnce() {
       }
     }
     await maybeSendDailySummary(stats);
+    return { mode: "live", enqueued: stats.enqueued, crawled: true };
   } catch (err) {
     logger.error("updates: cycle failed", {
       message: err && err.message ? err.message : String(err)
     });
+    return { mode: "error", enqueued: 0 };
   } finally {
     logger.info("updates: cycle finished");
     isRunning = false;
   }
 }
 
+function inactiveSchedulerHandle() {
+  return {
+    stop: () => {},
+    isActive: () => false
+  };
+}
+
+function isUpdateSchedulerActive() {
+  return isSchedulerActive === true;
+}
+
 async function startUpdateScheduler(options = {}) {
-  if (!canStartMonitoringScheduler()) {
+  if (!canStartSchedulerProcess()) {
     logger.warn("updates: scheduler start skipped by automation flags");
-    return {
-      stop: () => {},
-      isActive: () => false
-    };
+    return inactiveSchedulerHandle();
   }
+
   const verifyOwnership =
     options && typeof options.verifyOwnership === "function" ? options.verifyOwnership : null;
   const onLockLost =
@@ -201,8 +249,9 @@ async function startUpdateScheduler(options = {}) {
   const onStop = options && typeof options.onStop === "function" ? options.onStop : null;
 
   function stopScheduler(reason) {
-    if (!isSchedulerActive && !timer) return;
+    if (!isSchedulerActive && !timer && !startInProgress) return;
     isSchedulerActive = false;
+    startInProgress = false;
     if (timer) {
       clearInterval(timer);
       timer = null;
@@ -213,7 +262,21 @@ async function startUpdateScheduler(options = {}) {
         onStop(reason || "manual");
       } catch {}
     }
+    schedulerHandle = {
+      stop: (stopReason) => stopScheduler(stopReason || "manual"),
+      isActive: () => isSchedulerActive
+    };
   }
+
+  if (isSchedulerActive || timer || startInProgress) {
+    logger.warn("updates: scheduler already active; duplicate start ignored");
+    return schedulerHandle || {
+      stop: (reason) => stopScheduler(reason || "manual"),
+      isActive: () => isSchedulerActive
+    };
+  }
+
+  startInProgress = true;
 
   async function ensureOwnershipOrStop(source) {
     if (!verifyOwnership) return true;
@@ -238,36 +301,47 @@ async function startUpdateScheduler(options = {}) {
     }
   }
 
-  await ensureTables();
-  const intervalMinutes = getIntervalMinutes();
-  const intervalMs = intervalMinutes * 60 * 1000;
+  try {
+    const flags = getAutomationFlags();
+    if (canEnqueueLiveCrawlerJobs()) {
+      await ensureTables();
+    }
+    const intervalMinutes = getIntervalMinutes();
+    const intervalMs = intervalMinutes * 60 * 1000;
 
-  isSchedulerActive = true;
-  logger.info("updates: scheduler starting", {
-    intervalMinutes,
-    telegramConfigured: canSendTelegram()
-  });
-
-  const canRunInitialCycle = await ensureOwnershipOrStop("startup");
-  if (canRunInitialCycle) {
-    await runOnce();
-  }
-
-  timer = setInterval(async () => {
-    if (!isSchedulerActive) return;
-    const canRunCycle = await ensureOwnershipOrStop("interval");
-    if (!canRunCycle) return;
-    await runOnce().catch((err) => {
-      logger.error("updates: unhandled runOnce error", {
-        message: err && err.message ? err.message : String(err)
-      });
+    isSchedulerActive = true;
+    logger.info("updates: scheduler starting", {
+      intervalMinutes,
+      mode: flags.LIVE_CRAWLER_ENABLED === true ? "live" : "scheduler_only",
+      telegramConfigured: canSendTelegram(),
+      LIVE_CRAWLER_ENABLED: flags.LIVE_CRAWLER_ENABLED,
+      AUTO_PUBLISH_ENABLED: flags.AUTO_PUBLISH_ENABLED
     });
-  }, intervalMs);
 
-  return {
-    stop: (reason) => stopScheduler(reason || "manual"),
-    isActive: () => isSchedulerActive
-  };
+    const canRunInitialCycle = await ensureOwnershipOrStop("startup");
+    if (canRunInitialCycle) {
+      await runOnce();
+    }
+
+    timer = setInterval(async () => {
+      if (!isSchedulerActive) return;
+      const canRunCycle = await ensureOwnershipOrStop("interval");
+      if (!canRunCycle) return;
+      await runOnce().catch((err) => {
+        logger.error("updates: unhandled runOnce error", {
+          message: err && err.message ? err.message : String(err)
+        });
+      });
+    }, intervalMs);
+
+    schedulerHandle = {
+      stop: (reason) => stopScheduler(reason || "manual"),
+      isActive: () => isSchedulerActive
+    };
+    return schedulerHandle;
+  } finally {
+    startInProgress = false;
+  }
 }
 
 async function triggerManualUpdateCheck() {
@@ -282,5 +356,6 @@ async function triggerManualUpdateCheck() {
 
 module.exports = {
   startUpdateScheduler,
-  triggerManualUpdateCheck
+  triggerManualUpdateCheck,
+  isUpdateSchedulerActive
 };

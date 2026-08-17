@@ -55,9 +55,18 @@ function isAutomationDormant() {
   );
 }
 
+function canStartSchedulerProcess() {
+  const flags = getAutomationFlags();
+  return flags.PRODUCTION_MONITORING_ENABLED === true && flags.SCHEDULER_ACTIVATION_ENABLED === true;
+}
+
 function canStartMonitoringScheduler() {
   const flags = getAutomationFlags();
-  return flags.PRODUCTION_MONITORING_ENABLED && flags.SCHEDULER_ACTIVATION_ENABLED && flags.LIVE_CRAWLER_ENABLED;
+  return canStartSchedulerProcess() && flags.LIVE_CRAWLER_ENABLED === true;
+}
+
+function canEnqueueLiveCrawlerJobs() {
+  return getAutomationFlags().LIVE_CRAWLER_ENABLED === true && canStartMonitoringScheduler();
 }
 
 function canRunAutomationWorkers() {
@@ -95,7 +104,9 @@ module.exports = {
   getFlag,
   getAutomationFlags,
   isAutomationDormant,
+  canStartSchedulerProcess,
   canStartMonitoringScheduler,
+  canEnqueueLiveCrawlerJobs,
   canRunAutomationWorkers,
   canDeliverTelegram,
   canRunProductionPipeline,
