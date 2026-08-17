@@ -28,7 +28,8 @@ describe("Package AMP-4A Controlled Production Integration", () => {
       "/api/admin/automation-control-center/sources",
       "/api/admin/automation-control-center/settings",
       "/api/admin/automation-control-center/workflow",
-      "/api/admin/automation-control-center/audit"
+      "/api/admin/automation-control-center/audit",
+      "/api/admin/automation-control-center/controls"
     ];
     for (const endpoint of endpoints) {
       const res = await request(app).get(endpoint);

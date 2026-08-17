@@ -3,7 +3,7 @@
  * Presentation only: same routes/URLs, premium IA chrome.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "18";
+  const ADMIN_NAV_VERSION = "19";
 
   const SIDEBAR_TOP_HTML = `
   <a href="/admin/dashboard" class="sidebar-brand" title="Sarkari Suchna Admin">
@@ -143,6 +143,7 @@
     </button>
     <div class="nav-group-body">
       <a href="/admin/monitoring" data-nav-path="/admin/monitoring"><span class="nav-ico" aria-hidden="true">📊</span><span class="nav-text">Monitoring</span></a>
+      <a href="/admin/automation-control-center" data-nav-path="/admin/automation-control-center"><span class="nav-ico" aria-hidden="true">⚙️</span><span class="nav-text">Automation Control Center</span></a>
       <a href="/admin/alerts" data-nav-path="/admin/alerts"><span class="nav-ico" aria-hidden="true">🔔</span><span class="nav-text">Alerts</span></a>
       <a href="/admin/seo-diagnostics" data-nav-path="/admin/seo-diagnostics"><span class="nav-ico" aria-hidden="true">🔎</span><span class="nav-text">SEO Diagnostics</span></a>
     </div>

@@ -131,6 +131,183 @@
     setText("accPipelineStatusPill", `Pipeline: ${runtime.pipelineActive ? "Active" : "Off"}`);
     setText("accPublishStatusPill", `Publishing: ${runtime.autoPublishBlocked === false ? "Enabled" : "Manual only"}`);
     setText("accTelegramStatusPill", `Telegram: ${runtime.telegramActive ? "Active" : "Off"}`);
+    renderPublishingControls();
+    renderManualWorkflow();
+    renderActiveSources();
+    renderRecentPipelineActivity();
+  }
+
+  function stateClass(status) {
+    const normalized = String(status || "OFF").toUpperCase();
+    if (normalized.includes("LOCK")) return "is-locked";
+    if (normalized === "ON" || normalized === "READY") return "is-ready";
+    if (normalized === "PENDING") return "is-pending";
+    if (normalized === "ERROR") return "is-error";
+    return "is-off";
+  }
+
+  function setStateBadge(id, status) {
+    const el = qs(id);
+    if (!el) return;
+    const label = String(status || "OFF");
+    el.textContent = label;
+    el.classList.remove("is-off", "is-on", "is-locked", "is-pending", "is-ready", "is-error");
+    el.classList.add(stateClass(label));
+  }
+
+  function setSwitch(id, labelId, enabled) {
+    const button = qs(id);
+    const on = enabled === true;
+    if (button) {
+      button.setAttribute("aria-checked", on ? "true" : "false");
+      button.classList.toggle("is-on", on);
+    }
+    setText(labelId, on ? "ON" : "OFF");
+  }
+
+  function renderPublishingControls() {
+    const controls = state.dashboard?.publishingControls || {};
+    const scheduler = controls.scheduler || {};
+    const telegram = controls.telegram || {};
+    const autoPublish = controls.autoPublish || { status: "LOCKED OFF", locked: true };
+    const publishingMode = controls.publishingMode || "MANUAL REVIEW ONLY";
+    const schedulerStatus = scheduler.status || "OFF";
+    const telegramStatus = telegram.status || "OFF";
+
+    setStateBadge("accSchedulerStatusBadge", schedulerStatus);
+    setStateBadge("accTelegramStatusBadge", telegramStatus);
+    setStateBadge("accAutoPublishStatusBadge", autoPublish.status || "LOCKED OFF");
+    setText("accPublishingModeStatus", publishingMode);
+    setText("accPublishingModeBadge", `Publishing Mode: ${publishingMode}`);
+
+    setSwitch("accSchedulerToggle", "accSchedulerToggleLabel", scheduler.enabled === true);
+    setText("accSchedulerCurrentStatus", schedulerStatus);
+    setStateBadge("accSchedulerStateLabel", schedulerStatus);
+
+    setSwitch("accTelegramToggle", "accTelegramToggleLabel", telegram.enabled === true);
+    setText("accTelegramCurrentStatus", telegramStatus);
+    setText("accTelegramConfiguredStatus", telegram.configurationStatus || (telegram.configured ? "Configured" : "Not configured"));
+    setStateBadge("accTelegramStateLabel", telegramStatus);
+  }
+
+  function renderManualWorkflow() {
+    const host = qs("accManualWorkflow");
+    if (!host) return;
+    const stages = Array.isArray(state.dashboard?.manualWorkflow) ? state.dashboard.manualWorkflow : [];
+    host.innerHTML = stages.map((stage) => `
+      <li class="acc-flow__step">
+        <span class="acc-state ${stateClass(stage.status)}">${escapeHtml(stage.status || "OFF")}</span>
+        <span class="acc-flow__label">${escapeHtml(stage.label || "")}</span>
+        <strong class="acc-flow__count">${escapeHtml(stage.count ?? 0)}</strong>
+      </li>
+    `).join("");
+  }
+
+  function renderActiveSources() {
+    const host = qs("accActiveSources");
+    const countEl = qs("accActiveSourceCount");
+    const sources = Array.isArray(state.dashboard?.activeOfficialSources)
+      ? state.dashboard.activeOfficialSources
+      : [];
+    const count = Number.isInteger(state.dashboard?.activeOfficialSourceCount)
+      ? state.dashboard.activeOfficialSourceCount
+      : sources.length;
+    if (countEl) countEl.textContent = `Active official sources: ${count}`;
+    if (!host) return;
+    if (!sources.length) {
+      host.innerHTML = `<p class="acc-empty">No active official sources returned by the backend.</p>`;
+      return;
+    }
+    host.innerHTML = sources.map((source) => `
+      <article class="acc-source-pill">
+        <strong>${escapeHtml(source.name || "Source")}</strong>
+        <span class="acc-state is-ready">${escapeHtml(source.status || "ACTIVE")}</span>
+      </article>
+    `).join("");
+  }
+
+  function renderRecentPipelineActivity() {
+    const panel = qs("accRecentActivityPanel");
+    const host = qs("accRecentActivity");
+    const recent = state.dashboard?.recentPipelineActivity;
+    if (!panel || !host) return;
+    if (!recent || typeof recent !== "object") {
+      panel.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    const rows = [
+      ["lastMonitoring", "Last monitoring event"],
+      ["lastDetectedUpdate", "Last detected update"],
+      ["lastDraft", "Last draft"],
+      ["lastReview", "Last review"],
+      ["lastTelegramDelivery", "Last Telegram delivery"]
+    ].filter(([key]) => recent[key] && (recent[key].at || recent[key].summary));
+    if (!rows.length) {
+      panel.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    panel.hidden = false;
+    host.innerHTML = rows.map(([key, label]) => `
+      <div>
+        <dt>${escapeHtml(label)}</dt>
+        <dd>${escapeHtml(recent[key].summary || "-")}<small>${escapeHtml(recent[key].at || "")}</small></dd>
+      </div>
+    `).join("");
+  }
+
+  async function confirmEnable(title, details) {
+    if (window.AdminUI && typeof window.AdminUI.simpleConfirm === "function") {
+      return window.AdminUI.simpleConfirm({
+        title,
+        details,
+        warnText: "This requires explicit confirmation.",
+        confirmLabel: "Confirm enable",
+        variant: "danger"
+      });
+    }
+    return window.confirm(`${title}\n\n${details}`);
+  }
+
+  async function toggleControl(kind, nextEnabled) {
+    const payload = kind === "scheduler"
+      ? { schedulerEnabled: nextEnabled }
+      : { telegramEnabled: nextEnabled };
+    const data = await apiFetch("/api/admin/automation-control-center/controls", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!state.dashboard) state.dashboard = {};
+    state.dashboard.publishingControls = data;
+    renderPublishingControls();
+    await loadSnapshot();
+    renderAll();
+  }
+
+  async function onSchedulerToggle() {
+    const currentlyOn = qs("accSchedulerToggle")?.getAttribute("aria-checked") === "true";
+    if (!currentlyOn) {
+      const ok = await confirmEnable(
+        "Enable Scheduler?",
+        "Enabling Scheduler will allow automatic monitoring of active official sources."
+      );
+      if (!ok) return;
+    }
+    await toggleControl("scheduler", !currentlyOn);
+  }
+
+  async function onTelegramToggle() {
+    const currentlyOn = qs("accTelegramToggle")?.getAttribute("aria-checked") === "true";
+    if (!currentlyOn) {
+      const ok = await confirmEnable(
+        "Enable Telegram Gateway?",
+        "Telegram notifications may be sent for detected updates/review events."
+      );
+      if (!ok) return;
+    }
+    await toggleControl("telegram", !currentlyOn);
   }
 
   function renderCharts() {
@@ -663,6 +840,12 @@
     qs("accExportAuditBtn")?.addEventListener("click", () => toastSuccess("Audit export placeholder prepared. No publication performed."));
     qs("accSettingsForm")?.addEventListener("submit", (event) => {
       saveSettingsForm(event).catch((err) => toastError(err.message || "Settings save failed"));
+    });
+    qs("accSchedulerToggle")?.addEventListener("click", () => {
+      onSchedulerToggle().catch((err) => toastError(err.message || "Scheduler control failed"));
+    });
+    qs("accTelegramToggle")?.addEventListener("click", () => {
+      onTelegramToggle().catch((err) => toastError(err.message || "Telegram control failed"));
     });
   }
 

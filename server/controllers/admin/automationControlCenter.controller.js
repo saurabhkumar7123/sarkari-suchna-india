@@ -78,6 +78,18 @@ async function listAuditHandler(req, res) {
   res.json({ success: true, data: result.data, pagination: result.pagination });
 }
 
+function getControlsHandler(_req, res) {
+  const data = automationControlCenterService.getPublishingControlState();
+  res.json({ success: true, data });
+}
+
+async function updateControlsHandler(req, res) {
+  const body = req.body || {};
+  const data = automationControlCenterService.updatePublishingControls(body);
+  await logAction(req, "automation_controls_update", "publishing_controls");
+  res.json({ success: true, data });
+}
+
 module.exports = {
   getAccSnapshotHandler,
   listSourcesHandler,
@@ -89,5 +101,7 @@ module.exports = {
   updateSettingsHandler,
   getDashboardHandler,
   listWorkflowHandler,
-  listAuditHandler
+  listAuditHandler,
+  getControlsHandler,
+  updateControlsHandler
 };

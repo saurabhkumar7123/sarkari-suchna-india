@@ -16,9 +16,13 @@ function getTelegramConfig() {
   };
 }
 
-function canSendTelegram() {
+function isTelegramConfigured() {
   const { token, chatId } = getTelegramConfig();
-  return canDeliverTelegram() && Boolean(token && chatId);
+  return Boolean(token && chatId);
+}
+
+function canSendTelegram() {
+  return canDeliverTelegram() && isTelegramConfigured();
 }
 
 async function sendTelegramMessage(text) {
@@ -140,6 +144,7 @@ function buildPreDisableWarningMessage({ siteName, failCount, threshold }) {
 
 module.exports = {
   canSendTelegram,
+  isTelegramConfigured,
   sendTelegramMessage,
   buildUpdateMessage,
   buildHeartbeatMessage,

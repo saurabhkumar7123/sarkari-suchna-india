@@ -17,7 +17,7 @@ const SLUG_SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_BADGES_PER_PAGE = HOMEPAGE_BADGE_MAX;
 
 const adminPagePayloadSchema = Joi.object({
-  title: Joi.string().trim().max(150).required(),
+  title: Joi.string().trim().max(500).required(),
   slug: Joi.string()
     .trim()
     .lowercase()
@@ -694,6 +694,14 @@ const automationAuditListQuerySchema = Joi.object({
   .default({})
   .unknown(false);
 
+const automationControlsUpdateSchema = Joi.object({
+  schedulerEnabled: Joi.boolean().optional(),
+  telegramEnabled: Joi.boolean().optional()
+})
+  .or("schedulerEnabled", "telegramEnabled")
+  .required()
+  .unknown(false);
+
 module.exports = {
   adminPagePayloadSchema,
   adminLoginSchema,
@@ -733,6 +741,7 @@ module.exports = {
   automationSettingsUpdateSchema,
   automationWorkflowListQuerySchema,
   automationAuditListQuerySchema,
+  automationControlsUpdateSchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

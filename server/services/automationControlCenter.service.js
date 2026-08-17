@@ -19,11 +19,208 @@ const {
   canRunAutomationWorkers,
   canRunProductionPipeline,
   canDeliverTelegram,
-  isAutoPublishBlocked
+  canStartMonitoringScheduler,
+  isAutoPublishBlocked,
+  isAutomationDormant
 } = require("../config/automationFlags");
 const { getPlatformSnapshot } = require("./enterprise/enterprisePersistence.service");
 const { evaluateActivationReadiness } = require("../lib/recruitment/productionRuntime/activationReadiness");
 const notificationGateway = require("../lib/enterprise/notificationGateway");
+const { isTelegramConfigured } = require("./updates/telegramNotifier");
+
+const AUTO_PUBLISH_KEYS = new Set([
+  "AUTO_PUBLISH_ENABLED",
+  "autoPublishEnabled",
+  "autoPublish",
+  "AUTO_PUBLISH"
+]);
+
+function isTruthyFlag(value) {
+  return value === true || value === 1 || value === "1" || String(value).trim().toLowerCase() === "true";
+}
+
+function statusLabel(on) {
+  return on ? "ON" : "OFF";
+}
+
+function latestTimestamp(rows, fields) {
+  let latest = null;
+  for (const row of rows || []) {
+    for (const field of fields) {
+      const value = row && row[field];
+      if (!value) continue;
+      const time = Date.parse(value);
+      if (!Number.isFinite(time)) continue;
+      if (!latest || time > latest.time) {
+        latest = { time, at: value, row };
+      }
+    }
+  }
+  return latest;
+}
+
+function getPublishingControlState() {
+  const flags = getAutomationFlags();
+  const schedulerArmed = canStartMonitoringScheduler();
+  const telegramOn = canDeliverTelegram();
+  const telegramConfigured = isTelegramConfigured();
+  return {
+    scheduler: {
+      enabled: flags.SCHEDULER_ACTIVATION_ENABLED === true,
+      status: schedulerArmed ? "ON" : "OFF",
+      running: schedulerArmed === true,
+      armed: schedulerArmed === true
+    },
+    telegram: {
+      enabled: telegramOn === true,
+      status: statusLabel(telegramOn),
+      configured: telegramConfigured === true,
+      configurationStatus: telegramConfigured ? "Configured" : "Not configured"
+    },
+    autoPublish: {
+      enabled: false,
+      locked: true,
+      status: "LOCKED OFF",
+      blocked: isAutoPublishBlocked() === true
+    },
+    publishingMode: "MANUAL REVIEW ONLY",
+    dormant: isAutomationDormant() === true
+  };
+}
+
+function rejectAutoPublishEnable(input = {}) {
+  for (const key of Object.keys(input || {})) {
+    const looksLikeAutoPublish =
+      AUTO_PUBLISH_KEYS.has(key) || String(key).toUpperCase().includes("AUTO_PUBLISH");
+    if (looksLikeAutoPublish && isTruthyFlag(input[key])) {
+      const err = new Error("AUTO_PUBLISH cannot be enabled");
+      err.statusCode = 403;
+      throw err;
+    }
+  }
+}
+
+function updatePublishingControls(input = {}) {
+  rejectAutoPublishEnable(input);
+  process.env.AUTO_PUBLISH_ENABLED = "false";
+
+  if (input.schedulerEnabled === true) {
+    process.env.SCHEDULER_ACTIVATION_ENABLED = "true";
+  } else if (input.schedulerEnabled === false) {
+    process.env.SCHEDULER_ACTIVATION_ENABLED = "false";
+  }
+
+  if (input.telegramEnabled === true) {
+    process.env.NOTIFICATION_GATEWAY_ENABLED = "true";
+    process.env.TELEGRAM_DELIVERY_ENABLED = "true";
+  } else if (input.telegramEnabled === false) {
+    process.env.NOTIFICATION_GATEWAY_ENABLED = "false";
+    process.env.TELEGRAM_DELIVERY_ENABLED = "false";
+  }
+
+  return getPublishingControlState();
+}
+
+function buildActiveOfficialSources(sourceRows = []) {
+  return (sourceRows || [])
+    .filter((row) => row && row.enabled === true)
+    .map((row) => ({
+      id: row.id,
+      name: String(row.name || "").trim() || `Source ${row.id}`,
+      status: "ACTIVE"
+    }));
+}
+
+function buildManualWorkflow(updates = [], drafts = [], reviews = [], published = []) {
+  const pendingReview = (reviews || []).filter((row) =>
+    ["pending", "under_review"].includes(String(row.status || "").toLowerCase())
+  );
+  const approved = (reviews || []).filter(
+    (row) => String(row.status || "").toLowerCase() === "approved"
+  );
+  return [
+    {
+      id: "detected",
+      label: "Detected Update",
+      count: updates.length,
+      status: updates.length ? "READY" : "OFF"
+    },
+    {
+      id: "draft",
+      label: "Draft",
+      count: drafts.length,
+      status: drafts.length ? "READY" : "OFF"
+    },
+    {
+      id: "reviewQueue",
+      label: "Review Queue",
+      count: reviews.length,
+      status: reviews.length ? "PENDING" : "OFF"
+    },
+    {
+      id: "manualEdit",
+      label: "Manual Edit / Review",
+      count: pendingReview.length,
+      status: pendingReview.length ? "PENDING" : "OFF"
+    },
+    {
+      id: "manualApproval",
+      label: "Manual Approval",
+      count: approved.length,
+      status: approved.length ? "READY" : "OFF"
+    },
+    {
+      id: "manualPublish",
+      label: "Manual Publish",
+      count: published.length,
+      status: published.length ? "READY" : "OFF"
+    }
+  ];
+}
+
+function buildRecentPipelineActivity({ sources = [], updates = [], drafts = [], reviews = [], activity = [] } = {}) {
+  const lastMonitoring = latestTimestamp(sources, ["lastVisit", "lastSuccess", "lastCheckedAt"]);
+  const lastDetectedUpdate = latestTimestamp(updates, ["createdAt", "updatedAt"]);
+  const lastDraft = latestTimestamp(drafts, ["updated_at", "created_at", "updatedAt", "createdAt"]);
+  const lastReview = latestTimestamp(reviews, ["updated_at", "created_at", "updatedAt", "createdAt"]);
+  const telegramRows = (activity || []).filter((row) =>
+    /telegram/i.test(`${row.action || ""} ${row.event || ""} ${row.summary || ""} ${row.target || ""}`)
+  );
+  const lastTelegramDelivery = latestTimestamp(telegramRows, ["timestamp", "time"]);
+
+  const recent = {};
+  if (lastMonitoring) {
+    recent.lastMonitoring = {
+      at: lastMonitoring.at,
+      summary: lastMonitoring.row.name || "Monitoring event"
+    };
+  }
+  if (lastDetectedUpdate) {
+    recent.lastDetectedUpdate = {
+      at: lastDetectedUpdate.at,
+      summary: lastDetectedUpdate.row.title || lastDetectedUpdate.row.item || "Detected update"
+    };
+  }
+  if (lastDraft) {
+    recent.lastDraft = {
+      at: lastDraft.at,
+      summary: lastDraft.row.title || `Draft ${lastDraft.row.id}`
+    };
+  }
+  if (lastReview) {
+    recent.lastReview = {
+      at: lastReview.at,
+      summary: lastReview.row.title || `Review ${lastReview.row.id}`
+    };
+  }
+  if (lastTelegramDelivery) {
+    recent.lastTelegramDelivery = {
+      at: lastTelegramDelivery.at,
+      summary: lastTelegramDelivery.row.action || lastTelegramDelivery.row.event || "Telegram delivery"
+    };
+  }
+  return Object.keys(recent).length ? recent : null;
+}
 
 function toPositiveInt(value, fallback, { min = 1, max = 50 } = {}) {
   const parsed = parseInt(String(value || fallback), 10);
@@ -255,7 +452,7 @@ function saveSettings(input = {}) {
 }
 
 async function getDashboardSummary() {
-  const [sources, recruitments, drafts, reviewItems, recentActivity, enterpriseSnapshot, readiness] =
+  const [sources, recruitments, drafts, reviewItems, recentActivity, enterpriseSnapshot, readiness, updates] =
     await Promise.all([
     fetchSites().catch(() => []),
     recruitmentService.listRecruitments({ page: 1, limit: 100 }).catch(() => ({ data: [] })),
@@ -263,26 +460,43 @@ async function getDashboardSummary() {
     recruitmentReviewService.listReviewItems({ page: 1, limit: 100 }).catch(() => ({ data: [] })),
     listActivity({ page: 1, limit: 25 }).catch(() => ({ data: [] })),
     getPlatformSnapshot().catch(() => null),
-    evaluateActivationReadiness().catch(() => ({ ready: false, decision: "NO-GO", blockers: [] }))
+    evaluateActivationReadiness().catch(() => ({ ready: false, decision: "NO-GO", blockers: [] })),
+    fetchRecentUpdates(50).catch(() => [])
   ]);
 
   const flags = getAutomationFlags();
   const sourceRows = enrichSiteRows(sources);
   const recruitmentRows = Array.isArray(recruitments.data) ? recruitments.data : [];
   const draftRows = Array.isArray(drafts.drafts) ? drafts.drafts : [];
+  const publishedRows = Array.isArray(drafts.published) ? drafts.published : [];
   const reviewRows = Array.isArray(reviewItems.data) ? reviewItems.data : [];
+  const activityRows = Array.isArray(recentActivity.data) ? recentActivity.data : [];
+  const updateRows = Array.isArray(updates) ? updates : [];
+  const activeOfficialSources = buildActiveOfficialSources(sourceRows);
 
   return {
     flags,
-    isDormant: isAutomationDormant(flags),
+    isDormant: isAutomationDormant(),
     runtime: {
       workerActive: canRunAutomationWorkers(),
       pipelineActive: canRunProductionPipeline(),
       telegramActive: canDeliverTelegram(),
+      schedulerArmed: canStartMonitoringScheduler(),
       autoPublishBlocked: isAutoPublishBlocked(),
       activationDecision: readiness.decision,
       activationReady: readiness.ready === true
     },
+    publishingControls: getPublishingControlState(),
+    activeOfficialSources,
+    activeOfficialSourceCount: activeOfficialSources.length,
+    manualWorkflow: buildManualWorkflow(updateRows, draftRows, reviewRows, publishedRows),
+    recentPipelineActivity: buildRecentPipelineActivity({
+      sources: sourceRows,
+      updates: updateRows,
+      drafts: draftRows,
+      reviews: reviewRows,
+      activity: activityRows
+    }),
     enterprise: enterpriseSnapshot,
     readiness,
     notificationGateway: notificationGateway.getChannelStatus(),
@@ -294,23 +508,8 @@ async function getDashboardSummary() {
       drafts: draftRows.length,
       reviewQueue: reviewRows.length
     },
-    recentActivity: Array.isArray(recentActivity.data) ? recentActivity.data : []
+    recentActivity: activityRows
   };
-}
-
-function isAutomationDormant(flags) {
-  return (
-    flags.RECRUITMENT_PIPELINE_ENABLED === false &&
-    flags.AUTO_DRAFT_ENABLED === false &&
-    flags.AUTO_PUBLISH_ENABLED === false &&
-    flags.TELEGRAM_DELIVERY_ENABLED === false &&
-    flags.LIVE_CRAWLER_ENABLED === false &&
-    flags.NOTIFICATION_GATEWAY_ENABLED === false &&
-    flags.PRODUCTION_MONITORING_ENABLED === false &&
-    flags.SCHEDULER_ACTIVATION_ENABLED === false &&
-    flags.WORKER_ACTIVATION_ENABLED === false &&
-    flags.CRON_ACTIVATION_ENABLED === false
-  );
 }
 
 async function listWorkflowItems(query = {}) {
@@ -404,5 +603,10 @@ module.exports = {
   getDashboardSummary,
   listWorkflowItems,
   listAuditEntries,
-  getAccSnapshot
+  getAccSnapshot,
+  getPublishingControlState,
+  updatePublishingControls,
+  buildActiveOfficialSources,
+  buildManualWorkflow,
+  buildRecentPipelineActivity
 };

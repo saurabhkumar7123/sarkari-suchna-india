@@ -10,7 +10,8 @@ const {
   automationSourceUpsertSchema,
   automationSettingsUpdateSchema,
   automationWorkflowListQuerySchema,
-  automationAuditListQuerySchema
+  automationAuditListQuerySchema,
+  automationControlsUpdateSchema
 } = require("../../validations/admin.validation");
 
 const router = express.Router();
@@ -59,6 +60,16 @@ router.get(
   "/automation-control-center/audit",
   validateJoi(automationAuditListQuerySchema, "query"),
   asyncHandler(controller.listAuditHandler)
+);
+router.get(
+  "/automation-control-center/controls",
+  asyncHandler(controller.getControlsHandler)
+);
+router.patch(
+  "/automation-control-center/controls",
+  adminSensitiveLimiter,
+  validateJoi(automationControlsUpdateSchema, "body"),
+  asyncHandler(controller.updateControlsHandler)
 );
 
 module.exports = router;

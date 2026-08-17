@@ -5,7 +5,7 @@
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const ROUTES = [
-    { label: "Automation Control Center", href: "/admin/dashboard", group: "Go to", keywords: "dashboard automation control center acc overview productivity" },
+    { label: "Automation Control Center", href: "/admin/automation-control-center", group: "Go to", keywords: "dashboard automation control center acc overview publishing scheduler telegram" },
     { label: "Page Manager", href: "/admin/page-manager", group: "Go to", keywords: "pages edit list" },
     { label: "Monitoring", href: "/admin/monitoring", group: "Go to", keywords: "queue sites health" },
     { label: "PDF Alerts", href: "/admin/alerts", group: "Go to", keywords: "notifications pdf" },

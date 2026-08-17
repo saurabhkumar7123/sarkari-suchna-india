@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=20">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=7">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=3">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=4">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Control Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -38,6 +38,94 @@
       <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
     </div>
   </div>
+
+  <section class="acc-publishing" id="accPublishingControls" aria-label="Automation and publishing controls" data-acc-searchable="automation publishing scheduler telegram auto publish locked manual review">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Safety</p>
+        <h2>Automation &amp; Publishing</h2>
+      </div>
+      <span class="acc-guardrail" id="accPublishingModeBadge">Publishing Mode: MANUAL REVIEW ONLY</span>
+    </div>
+
+    <div class="acc-status-board" aria-label="Automation status">
+      <article class="acc-status-card">
+        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
+        <h3>Scheduler</h3>
+        <strong class="acc-state is-off" id="accSchedulerStatusBadge">OFF</strong>
+      </article>
+      <article class="acc-status-card">
+        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
+        <h3>Telegram Gateway</h3>
+        <strong class="acc-state is-off" id="accTelegramStatusBadge">OFF</strong>
+      </article>
+      <article class="acc-status-card acc-status-card--locked">
+        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
+        <h3>Auto Publish</h3>
+        <strong class="acc-state is-locked" id="accAutoPublishStatusBadge">LOCKED OFF</strong>
+      </article>
+      <article class="acc-status-card">
+        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
+        <h3>Publishing Mode</h3>
+        <strong class="acc-state is-ready" id="accPublishingModeStatus">MANUAL REVIEW ONLY</strong>
+      </article>
+    </div>
+
+    <div class="acc-control-grid">
+      <article class="acc-control-card">
+        <div class="acc-control-card__head">
+          <div>
+            <h3>Scheduler</h3>
+            <p>Uses the existing monitoring scheduler configuration. Does not start a second scheduler.</p>
+          </div>
+          <button type="button" class="acc-switch" id="accSchedulerToggle" role="switch" aria-checked="false" aria-label="Scheduler">
+            <span class="acc-switch__track" aria-hidden="true"><span class="acc-switch__thumb"></span></span>
+            <span class="acc-switch__label" id="accSchedulerToggleLabel">OFF</span>
+          </button>
+        </div>
+        <dl class="acc-control-meta">
+          <div><dt>Current status</dt><dd id="accSchedulerCurrentStatus">OFF</dd></div>
+          <div><dt>State</dt><dd><span class="acc-state is-off" id="accSchedulerStateLabel">OFF</span></dd></div>
+        </dl>
+      </article>
+
+      <article class="acc-control-card">
+        <div class="acc-control-card__head">
+          <div>
+            <h3>Telegram Gateway</h3>
+            <p>Uses the existing notification gateway. Secrets are never displayed.</p>
+          </div>
+          <button type="button" class="acc-switch" id="accTelegramToggle" role="switch" aria-checked="false" aria-label="Telegram Gateway">
+            <span class="acc-switch__track" aria-hidden="true"><span class="acc-switch__thumb"></span></span>
+            <span class="acc-switch__label" id="accTelegramToggleLabel">OFF</span>
+          </button>
+        </div>
+        <dl class="acc-control-meta">
+          <div><dt>Current status</dt><dd id="accTelegramCurrentStatus">OFF</dd></div>
+          <div><dt>Configuration</dt><dd id="accTelegramConfiguredStatus">Not configured</dd></div>
+          <div><dt>State</dt><dd><span class="acc-state is-off" id="accTelegramStateLabel">OFF</span></dd></div>
+        </dl>
+      </article>
+
+      <article class="acc-control-card acc-control-card--locked">
+        <div class="acc-control-card__head">
+          <div>
+            <h3>AUTO PUBLISH</h3>
+            <p>Automatic publishing is permanently disabled. Publishing requires human review and explicit manual approval.</p>
+          </div>
+          <div class="acc-locked-badge" aria-label="Auto Publish locked off">
+            <span aria-hidden="true">🔒</span>
+            <strong>LOCKED OFF</strong>
+          </div>
+        </div>
+        <dl class="acc-control-meta">
+          <div><dt>Status</dt><dd>Disabled</dd></div>
+          <div><dt>Publishing</dt><dd>Manual Review + Manual Approval + Manual Publish</dd></div>
+          <div><dt>State</dt><dd><span class="acc-state is-locked">LOCKED</span></dd></div>
+        </dl>
+      </article>
+    </div>
+  </section>
 
   <section class="acc-hero" aria-label="Control center overview">
     <div>
@@ -91,6 +179,66 @@
         <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open review queue</a>
       </div>
     </div>
+
+    <div class="acc-panels-grid acc-panels-grid--workflows">
+      <section class="acc-panel" aria-label="Manual publish workflow">
+        <div class="acc-panel__head">
+          <h3>MANUAL PUBLISH WORKFLOW</h3>
+          <span>Live backend counts</span>
+        </div>
+        <ol class="acc-flow" id="accManualWorkflow"></ol>
+      </section>
+      <section class="acc-panel" aria-label="Automated pipeline">
+        <div class="acc-panel__head">
+          <h3>AUTOMATED PIPELINE</h3>
+          <span>Read-only</span>
+        </div>
+        <ol class="acc-flow acc-flow--pipeline" id="accAutomatedPipeline">
+          <li class="acc-flow__step"><span class="acc-flow__label">Official Sources</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Monitoring</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Change Detection</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Update</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Document Resolution</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">PDF/OCR</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">AI Convert</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Draft</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Review Queue</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Telegram Notification</span></li>
+          <li class="acc-flow__step"><span class="acc-flow__label">Human Review</span></li>
+          <li class="acc-flow__branch" aria-label="Publishing branch">
+            <div class="acc-flow__branch-card is-ready">
+              <span class="acc-state is-ready">READY</span>
+              <strong>MANUAL APPROVAL</strong>
+              <span class="acc-flow__arrow" aria-hidden="true">↓</span>
+              <strong>MANUAL PUBLISH</strong>
+            </div>
+            <div class="acc-flow__branch-card is-locked" aria-disabled="true">
+              <span class="acc-state is-locked">LOCKED</span>
+              <strong class="acc-flow__not-path">AUTO PUBLISH</strong>
+              <small>Not a publishing path</small>
+            </div>
+          </li>
+        </ol>
+      </section>
+    </div>
+
+    <div class="acc-panels-grid acc-panels-grid--ops">
+      <section class="acc-panel" aria-label="Active official sources">
+        <div class="acc-panel__head">
+          <h3>Active official sources</h3>
+          <span id="accActiveSourceCount">Active official sources: 0</span>
+        </div>
+        <div class="acc-source-pills" id="accActiveSources"></div>
+      </section>
+      <section class="acc-panel" id="accRecentActivityPanel" hidden aria-label="Recent pipeline activity">
+        <div class="acc-panel__head">
+          <h3>Recent activity</h3>
+          <span>Existing monitoring data only</span>
+        </div>
+        <dl class="acc-activity-list" id="accRecentActivity"></dl>
+      </section>
+    </div>
+
     <div class="acc-stats-grid" id="accStatsGrid">
       <article class="acc-stat-card"><span>Official Sources</span><strong id="accTotalSources">0</strong><small>Registry coverage</small></article>
       <article class="acc-stat-card"><span>Sources Online</span><strong id="accSourcesOnline">0</strong><small>Healthy responses</small></article>
@@ -479,14 +627,14 @@
 </dialog>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=18"></script>
+<script src="/js/admin-nav.js?v=19"></script>
 <script src="/js/admin-shell.js?v=6"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js?v=4"></script>
+<script src="/js/admin-command-palette.js?v=5"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=3"></script>
+<script src="/js/admin-automation-control-center.js?v=4"></script>
 </body>
 </html>
