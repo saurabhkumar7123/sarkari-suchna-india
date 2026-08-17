@@ -169,6 +169,13 @@ function resolveOfficialDomain(sourceDomain, hintOfficialDomain) {
   };
 }
 
+function isApprovedOfficialMonitoringUrl(url) {
+  const host = extractHostname(url);
+  if (!host) return false;
+  if (isKnownMirrorHost(host)) return false;
+  return isOfficialHostSuffix(host) === true || isRegistryOfficialHost(host) === true;
+}
+
 module.exports = {
   OFFICIAL_HOST_SUFFIXES,
   EXTRA_OFFICIAL_HOSTS,
@@ -179,5 +186,6 @@ module.exports = {
   isOfficialHostSuffix,
   isRegistryOfficialHost,
   isKnownMirrorHost,
-  resolveOfficialDomain
+  resolveOfficialDomain,
+  isApprovedOfficialMonitoringUrl
 };

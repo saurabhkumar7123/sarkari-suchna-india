@@ -65,6 +65,7 @@ module.exports = {
   isOfficialHostSuffix: domains.isOfficialHostSuffix,
   isKnownMirrorHost: domains.isKnownMirrorHost,
   resolveOfficialDomain: domains.resolveOfficialDomain,
+  isApprovedOfficialMonitoringUrl: domains.isApprovedOfficialMonitoringUrl,
 
   SPECIALTY_PDF_RULES: classifier.SPECIALTY_PDF_RULES,
   buildSearchBlobs: classifier.buildSearchBlobs,

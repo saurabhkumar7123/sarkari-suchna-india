@@ -31,6 +31,7 @@ const {
   isProductionRuntimeEnabled
 } = require("../../lib/recruitment/productionRuntime");
 const { canRunAutomationWorkers } = require("../../config/automationFlags");
+const { isApprovedOfficialMonitoringUrl } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 const {
   lookupRecruitmentCandidatesForRuntime
 } = require("../recruitmentCandidateLookup.service");
@@ -71,6 +72,16 @@ async function processSiteJob(job) {
     return { skipped: true, reason: "inactive" };
   }
 
+  if (!isApprovedOfficialMonitoringUrl(row.url)) {
+    logger.warn("updates-worker: job skipped; not an approved official source", {
+      jobId: job && job.id ? job.id : null,
+      siteId,
+      siteName: row.name,
+      url: row.url
+    });
+    return { skipped: true, reason: "unapproved_source" };
+  }
+
   const site = {
     id: row.id,
     name: row.name,
@@ -93,6 +104,14 @@ async function processSiteJob(job) {
 
   try {
     const result = await checkSite(site);
+    logger.warn("updates-worker: check result", {
+      siteId,
+      siteName: site.name,
+      changed: Boolean(result && result.changed),
+      reason: result && result.reason ? result.reason : null,
+      invalid: Boolean(result && result.invalid),
+      establishBaseline: Boolean(result && result.establishBaseline)
+    });
 
     if (result && result.invalid) {
       await markSiteChecked(siteId).catch(() => null);

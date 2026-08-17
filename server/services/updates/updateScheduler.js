@@ -17,6 +17,7 @@ const {
   canEnqueueLiveCrawlerJobs,
   getAutomationFlags
 } = require("../../config/automationFlags");
+const { isApprovedOfficialMonitoringUrl } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 
 const MIN_INTERVAL = 5;
 const MAX_INTERVAL = 10;
@@ -128,6 +129,14 @@ async function maybeSendDailySummary(stats) {
 
 function shouldCheckSiteThisCycle(site) {
   if (!site.active) return false;
+  if (!isApprovedOfficialMonitoringUrl(site.url)) {
+    logger.warn("updates: site skipped; not an approved official source", {
+      siteId: site.id,
+      siteName: site && site.name ? site.name : null,
+      url: site && site.url ? site.url : null
+    });
+    return false;
+  }
   if (site.nextRetryAt) {
     const retryAt = new Date(site.nextRetryAt);
     if (!Number.isNaN(retryAt.getTime()) && retryAt.getTime() > Date.now()) return false;
@@ -212,6 +221,13 @@ async function runOnce() {
         });
       }
     }
+    logger.warn("updates: live monitoring cycle", {
+      checked: stats.checked,
+      enqueued: stats.enqueued,
+      errors: stats.errors,
+      AUTO_PUBLISH_ENABLED: flags.AUTO_PUBLISH_ENABLED,
+      TELEGRAM_DELIVERY_ENABLED: flags.TELEGRAM_DELIVERY_ENABLED
+    });
     await maybeSendDailySummary(stats);
     return { mode: "live", enqueued: stats.enqueued, crawled: true };
   } catch (err) {
