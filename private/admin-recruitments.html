@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html>
 <head>
 <title>Recruitment Operations</title>
@@ -8,20 +8,20 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
-<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=3">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=20">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=7">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
 <link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=3">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Recruitment Operations">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Recruitment,Recruitments">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">â°</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">â¨â©</button>
   </div>
 </div>
 <div class="main">
@@ -37,15 +37,24 @@
 
   <section class="rom-workflow" aria-label="Recruitment workflow">
     <span class="rom-workflow__step is-current" data-workflow-step="recruitment">1. Recruitment</span>
-    <span aria-hidden="true">→</span>
+    <span aria-hidden="true">â</span>
     <span class="rom-workflow__step" data-workflow-step="events">2. Events</span>
-    <span aria-hidden="true">→</span>
+    <span aria-hidden="true">â</span>
     <span class="rom-workflow__step" data-workflow-step="links">3. Page Links</span>
-    <span aria-hidden="true">→</span>
+    <span aria-hidden="true">â</span>
     <span class="rom-workflow__step" data-workflow-step="review">Ready for Review</span>
   </section>
 
   <p id="operationsMessage" class="rom-message" hidden role="status"></p>
+  <nav class="admin-ops-flow" aria-label="Recruitment workflow">
+    <span class="admin-ops-flow__step">Draft</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step is-current">Recruitment Review</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step">Approve</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+  </nav>
 
   <div class="rom-layout">
     <section class="rom-card rom-list-panel">
@@ -88,7 +97,7 @@
         <label class="rom-bulk-select-all"><input type="checkbox" id="bulkSelectAll"> Select page</label>
         <span id="bulkSelectedCount">0 selected</span>
         <select id="bulkActionSelect" aria-label="Bulk action">
-          <option value="">Bulk action…</option>
+          <option value="">Bulk actionâ¦</option>
           <option value="archive">Bulk Archive</option>
           <option value="restore">Bulk Restore</option>
           <option value="status_update">Bulk Status Update</option>
@@ -223,15 +232,15 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=19"></script>
-<script src="/js/admin-shell.js?v=6"></script>
+<script src="/js/admin-nav.js?v=20"></script>
+<script src="/js/admin-shell.js?v=7"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js?v=3"></script>
+<script src="/js/admin-command-palette.js?v=4"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
 <script src="/js/admin-recruitment-operations.js?v=3"></script>

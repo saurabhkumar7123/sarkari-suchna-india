@@ -82,7 +82,7 @@ function renderSitesTable(data) {
       : '<p class="empty-msg">No monitored sites found.</p>';
     return;
   }
-  host.innerHTML = `<div class="monitor-table monitor-table--sites"><div class="monitor-head"><div>Site</div><div>Status</div><div>Priority</div><div>Last Checked</div><div>Actions</div></div></div>`;
+  host.innerHTML = `<div class="monitor-table monitor-table--sites"><div class="monitor-head"><div>Source</div><div>Official URL</div><div>Status</div><div>Last checked</div><div>Last change</div><div>Failures</div><div>Actions</div></div></div>`;
   const table = host.querySelector(".monitor-table");
   const frag = document.createDocumentFragment();
   list.forEach((site) => {
@@ -90,7 +90,7 @@ function renderSitesTable(data) {
     row.className = "monitor-row";
     const isActive = Number(site && site.active) === 1;
     const isBroken = Number(site && site.broken) === 1;
-    const statusText = isBroken ? "Broken" : isActive ? "Active" : "Disabled";
+    const statusText = isBroken ? "Broken" : isActive ? "Active" : "Inactive";
     const statusClass = isBroken ? "is-broken" : isActive ? "is-active" : "is-disabled";
     const lastCheckedAt =
       (site &&
@@ -99,11 +99,30 @@ function renderSitesTable(data) {
           site.lastChecked ||
           site.checkedAt)) ||
       null;
+    const lastChangeAt =
+      (site &&
+        (site.lastChangeAt ||
+          site.last_change_at ||
+          site.lastChanged ||
+          site.last_changed_at ||
+          site.updated_at)) ||
+      null;
+    const failCount =
+      Number(
+        site &&
+          (site.failCount ||
+            site.failureCount ||
+            site.consecutiveFailures ||
+            site.fail_count ||
+            0)
+      ) || 0;
     row.innerHTML = `
-      <div class="monitor-site" data-label="Site"><strong>${escapeAttr(site && site.name ? site.name : "Unnamed Site")}</strong><span class="monitor-site-url">${escapeAttr(site && site.url ? site.url : "")}</span></div>
+      <div class="monitor-site" data-label="Source"><strong>${escapeAttr(site && site.name ? site.name : "Unnamed source")}</strong></div>
+      <div data-label="Official URL"><span class="monitor-site-url">${escapeAttr(site && site.url ? site.url : "")}</span></div>
       <div data-label="Status"><span class="monitor-status ${statusClass}"><span class="monitor-status-dot"></span>${statusText}</span></div>
-      <div data-label="Priority">${Number(site && site.priority) || 1}</div>
-      <div data-label="Checked">${escapeAttr(lastCheckedAt ? formatMonitorTime(lastCheckedAt) : "Not available")}</div>
+      <div data-label="Last checked">${escapeAttr(lastCheckedAt ? formatMonitorTime(lastCheckedAt) : "Never")}</div>
+      <div data-label="Last change">${escapeAttr(lastChangeAt ? formatMonitorTime(lastChangeAt) : "—")}</div>
+      <div data-label="Failures">${failCount}</div>
       <div class="monitor-row-actions" data-label="Actions">
         <button type="button" data-action="restore-site" data-site-id="${Number(site.id) || 0}">Restore</button>
         <button type="button" data-action="disable-site" data-site-id="${Number(site.id) || 0}">Disable</button>
@@ -232,9 +251,20 @@ async function loadRecentUpdates() {
     return;
   }
   box.innerHTML = rows
-    .map(
-      (r) => `<div class="page-item"><strong>${escapeAttr(r.site_name || r.siteName || "Site")}</strong> — ${escapeAttr(r.summary || r.title || r.url || "Update detected")} <span style="color:var(--muted,#64748b);font-size:12px;">${escapeAttr(formatMonitorTime(r.detected_at || r.detectedAt || r.created_at))}</span></div>`
-    )
+    .map((r) => {
+      const source = escapeAttr(r.site_name || r.siteName || "Source");
+      const title = escapeAttr(r.summary || r.title || "Update detected");
+      const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at);
+      const href = r.url ? escapeAttr(r.url) : "";
+      const status = escapeAttr(r.status || r.processing_status || r.draft_status || "detected");
+      return `<article class="detected-update">
+        <strong>${source}</strong>
+        <span>${title}</span>
+        <span>${escapeAttr(when)}</span>
+        <span class="badge">${status}</span>
+        ${href ? `<a href="${href}" target="_blank" rel="noopener">Official link</a>` : "<span></span>"}
+      </article>`;
+    })
     .join("");
 }
 

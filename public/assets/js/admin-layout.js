@@ -40,7 +40,7 @@
 
   function enhanceTopbar() {
     if (document.getElementById("adminTopbarTools")) return;
-    const header = document.querySelector("#standaloneAdminShell .admin-header") || document.querySelector(".admin-header");
+    const header = document.querySelector("#adminAppTopbar .admin-header") || document.querySelector("#standaloneAdminShell .admin-header") || document.querySelector(".admin-header");
     if (!header) return;
 
     const crumbs = parseBreadcrumbs();
@@ -69,15 +69,18 @@
     if (document.getElementById("standaloneAdminShell")) return;
     const header = document.querySelector(".admin-header");
     const main = document.querySelector(".main-container");
-    if (!header || !main || header.closest("#standaloneAdminShell")) return;
+    if (!main || main.closest("#standaloneAdminShell")) return;
 
     const shell = document.createElement("div");
     shell.id = "standaloneAdminShell";
     shell.className = "standalone-admin-content";
 
-    const parent = header.parentNode;
-    parent.insertBefore(shell, header);
-    shell.appendChild(header);
+    const anchor = header && header.parentNode === main.parentNode ? header : main;
+    const parent = anchor.parentNode;
+    parent.insertBefore(shell, anchor);
+    if (header && !header.closest("#adminAppTopbar") && header.parentNode === parent) {
+      shell.appendChild(header);
+    }
     shell.appendChild(main);
   }
 

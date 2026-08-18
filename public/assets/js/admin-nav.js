@@ -3,7 +3,7 @@
  * Presentation only: same routes/URLs, premium IA chrome.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "19";
+  const ADMIN_NAV_VERSION = "20";
 
   const SIDEBAR_TOP_HTML = `
   <a href="/admin/dashboard" class="sidebar-brand" title="Sarkari Suchna Admin">
@@ -14,7 +14,7 @@
       </svg>
     </span>
     <span class="sidebar-brand__copy">
-      <span class="sidebar-brand__name">Sarkari Suchna india</span>
+      <span class="sidebar-brand__name">Sarkari Suchna India</span>
       <span class="sidebar-brand__sub">Admin Control Center</span>
     </span>
   </a>
@@ -38,20 +38,23 @@
       <span class="sidebar-rail__num" aria-hidden="true">2</span>
       <span class="sidebar-rail__ico" aria-hidden="true">📄</span>
     </button>
-    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="recruitment" aria-controls="nav-group-recruitment" aria-label="Section 3 Recruitment" title="Recruitment">
+    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="automation" aria-controls="nav-group-automation" aria-label="Section 3 Automation" title="Automation">
       <span class="sidebar-rail__num" aria-hidden="true">3</span>
+      <span class="sidebar-rail__ico" aria-hidden="true">⚙️</span>
+    </button>
+    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="recruitment" aria-controls="nav-group-recruitment" aria-label="Section 4 Recruitment" title="Recruitment">
+      <span class="sidebar-rail__num" aria-hidden="true">4</span>
       <span class="sidebar-rail__ico" aria-hidden="true">🗂</span>
     </button>
-    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="monitoring" aria-controls="nav-group-monitoring" aria-label="Section 4 Monitoring" title="Monitoring">
-      <span class="sidebar-rail__num" aria-hidden="true">4</span>
-      <span class="sidebar-rail__ico" aria-hidden="true">📊</span>
-    </button>
-    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="system" aria-controls="nav-group-system" aria-label="Section 5 System" title="System">
+    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="quality" aria-controls="nav-group-quality" aria-label="Section 5 Quality" title="Quality">
       <span class="sidebar-rail__num" aria-hidden="true">5</span>
+      <span class="sidebar-rail__ico" aria-hidden="true">🔎</span>
+    </button>
+    <button type="button" class="sidebar-rail__item" role="tab" data-rail-group="system" aria-controls="nav-group-system" aria-label="Section 6 System" title="System">
+      <span class="sidebar-rail__num" aria-hidden="true">6</span>
       <span class="sidebar-rail__ico" aria-hidden="true">🧭</span>
     </button>
-    <button type="button" class="sidebar-rail__item sidebar-rail__item--account" role="tab" data-rail-group="account" aria-controls="nav-group-account" aria-label="Section 6 Account" title="Account">
-      <span class="sidebar-rail__num" aria-hidden="true">6</span>
+    <button type="button" class="sidebar-rail__item sidebar-rail__item--account" role="tab" data-rail-group="account" aria-controls="nav-group-account" aria-label="Account" title="Account">
       <span class="sidebar-rail__ico" aria-hidden="true">👤</span>
     </button>
   </div>
@@ -79,10 +82,11 @@
       <span class="nav-group-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="nav-group-body">
+      <a href="/admin/page-manager" data-nav-path="/admin/page-manager"><span class="nav-ico" aria-hidden="true">📄</span><span class="nav-text">Page Manager</span></a>
       <a href="/generator" data-nav-path="/generator"><span class="nav-ico" aria-hidden="true">➕</span><span class="nav-text">Generator</span></a>
-      <div class="sidebar-drafts" id="sidebarGeneratorDrafts" aria-label="Generator parked drafts">
+      <div class="sidebar-drafts" id="sidebarGeneratorDrafts" aria-label="Drafts">
         <div class="sidebar-drafts__head">
-          <span class="sidebar-drafts__title">Parked drafts</span>
+          <span class="sidebar-drafts__title">Drafts</span>
           <span class="sidebar-drafts__count" id="sidebarDraftCount">Total 0</span>
         </div>
         <div class="sidebar-drafts__section" data-draft-section="draft">
@@ -98,7 +102,7 @@
         </div>
         <div class="sidebar-drafts__section sidebar-drafts__section--published" data-draft-section="published">
           <button type="button" class="sidebar-drafts__toggle" data-draft-toggle="published" aria-expanded="false">
-            <span class="sidebar-drafts__toggle-label">Published</span>
+            <span class="sidebar-drafts__toggle-label">Published Pages</span>
             <span class="sidebar-drafts__badge is-muted" id="sidebarDraftBadgePublished">0</span>
             <span class="sidebar-drafts__chevron" aria-hidden="true">▾</span>
           </button>
@@ -109,15 +113,28 @@
         </div>
         <p class="sidebar-drafts__empty" id="sidebarDraftsEmpty">No parked drafts yet. Use <strong>Save draft</strong> in the generator.</p>
       </div>
-      <a href="/admin/page-manager" data-nav-path="/admin/page-manager"><span class="nav-ico" aria-hidden="true">📄</span><span class="nav-text">Page Manager</span></a>
+      <a href="/admin/editorial-review" data-nav-path="/admin/editorial-review" title="Editorial Review"><span class="nav-ico" aria-hidden="true">✅</span><span class="nav-text">Review Queue</span></a>
       <a href="/admin/homepage-management" data-nav-path="/admin/homepage-management"><span class="nav-ico" aria-hidden="true">🌐</span><span class="nav-text">Homepage Management</span></a>
-      <a href="/admin/csv-upload" data-nav-path="/admin/csv-upload"><span class="nav-ico" aria-hidden="true">📁</span><span class="nav-text">CSV Upload</span></a>
-      <a href="/upload" data-nav-path="/upload"><span class="nav-ico" aria-hidden="true">📤</span><span class="nav-text">Upload</span></a>
-      <a href="/trash" data-nav-path="/trash"><span class="nav-ico" aria-hidden="true">🗑</span><span class="nav-text">Trash</span></a>
+      <a href="/upload" data-nav-path="/upload"><span class="nav-ico" aria-hidden="true">📤</span><span class="nav-text">Upload PDF</span></a>
     </div>
   </div>
 
-  <div class="nav-group" id="nav-group-recruitment" data-nav-group="recruitment" data-nav-index="3" data-default-open="0">
+  <div class="nav-group" id="nav-group-automation" data-nav-group="automation" data-nav-index="3" data-default-open="0">
+    <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="automation">
+      <span class="nav-group-heading">
+        <span class="nav-group-title">Automation</span>
+      </span>
+      <span class="nav-group-chevron" aria-hidden="true">▾</span>
+    </button>
+    <div class="nav-group-body">
+      <a href="/admin/monitoring" data-nav-path="/admin/monitoring"><span class="nav-ico" aria-hidden="true">📊</span><span class="nav-text">Monitoring</span></a>
+      <a href="/admin/monitoring#recentUpdates" data-nav-path="/admin/monitoring" data-nav-alias="detections"><span class="nav-ico" aria-hidden="true">📡</span><span class="nav-text">Detected Updates</span></a>
+      <a href="/admin/automation-control-center" data-nav-path="/admin/automation-control-center"><span class="nav-ico" aria-hidden="true">⚙️</span><span class="nav-text">Automation Control Center</span></a>
+      <a href="/admin/automation-control-center#accAudit" data-nav-path="/admin/automation-control-center" data-nav-alias="acc-audit"><span class="nav-ico" aria-hidden="true">📜</span><span class="nav-text">Automation Activity</span></a>
+    </div>
+  </div>
+
+  <div class="nav-group" id="nav-group-recruitment" data-nav-group="recruitment" data-nav-index="4" data-default-open="0">
     <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="recruitment">
       <span class="nav-group-heading">
         <span class="nav-group-title">Recruitment</span>
@@ -126,30 +143,26 @@
     </button>
     <div class="nav-group-body">
       <a href="/admin/recruitments" data-nav-path="/admin/recruitments"><span class="nav-ico" aria-hidden="true">🗂</span><span class="nav-text">Recruitments</span></a>
-      <a href="/admin/recruitment-review-queue" data-nav-path="/admin/recruitment-review-queue"><span class="nav-ico" aria-hidden="true">📋</span><span class="nav-text">Review Queue</span></a>
-      <a href="/admin/editorial-review" data-nav-path="/admin/editorial-review"><span class="nav-ico" aria-hidden="true">✅</span><span class="nav-text">Editorial Review</span></a>
-      <a href="/admin/recruitment-runtime-preview" data-nav-path="/admin/recruitment-runtime-preview"><span class="nav-ico" aria-hidden="true">👁</span><span class="nav-text">Runtime Preview</span></a>
-      <a href="/admin/recruitment-testing" data-nav-path="/admin/recruitment-testing"><span class="nav-ico" aria-hidden="true">🧪</span><span class="nav-text">Recruitment Testing</span></a>
+      <a href="/admin/recruitment-review-queue" data-nav-path="/admin/recruitment-review-queue"><span class="nav-ico" aria-hidden="true">📋</span><span class="nav-text">Recruitment Review</span></a>
       <a href="/admin/recruitments#eventTimeline" data-nav-path="/admin/recruitments" data-nav-alias="events"><span class="nav-ico" aria-hidden="true">📅</span><span class="nav-text">Event Timeline</span></a>
+      <a href="/admin/recruitment-runtime-preview" data-nav-path="/admin/recruitment-runtime-preview" title="Shared Preview"><span class="nav-ico" aria-hidden="true">👁</span><span class="nav-text">Runtime Preview</span></a>
     </div>
   </div>
 
-  <div class="nav-group" id="nav-group-monitoring" data-nav-group="monitoring" data-nav-index="4" data-default-open="0">
-    <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="monitoring">
+  <div class="nav-group" id="nav-group-quality" data-nav-group="quality" data-nav-index="5" data-default-open="0">
+    <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="quality">
       <span class="nav-group-heading">
-        <span class="nav-group-title">Monitoring</span>
+        <span class="nav-group-title">Quality</span>
       </span>
       <span class="nav-group-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="nav-group-body">
-      <a href="/admin/monitoring" data-nav-path="/admin/monitoring"><span class="nav-ico" aria-hidden="true">📊</span><span class="nav-text">Monitoring</span></a>
-      <a href="/admin/automation-control-center" data-nav-path="/admin/automation-control-center"><span class="nav-ico" aria-hidden="true">⚙️</span><span class="nav-text">Automation Control Center</span></a>
-      <a href="/admin/alerts" data-nav-path="/admin/alerts"><span class="nav-ico" aria-hidden="true">🔔</span><span class="nav-text">Alerts</span></a>
       <a href="/admin/seo-diagnostics" data-nav-path="/admin/seo-diagnostics"><span class="nav-ico" aria-hidden="true">🔎</span><span class="nav-text">SEO Diagnostics</span></a>
+      <a href="/admin/recruitment-testing" data-nav-path="/admin/recruitment-testing" title="Recruitment Testing"><span class="nav-ico" aria-hidden="true">🧪</span><span class="nav-text">Validation / Diagnostics</span></a>
     </div>
   </div>
 
-  <div class="nav-group" id="nav-group-system" data-nav-group="system" data-nav-index="5" data-default-open="0">
+  <div class="nav-group" id="nav-group-system" data-nav-group="system" data-nav-index="6" data-default-open="0">
     <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="system">
       <span class="nav-group-heading">
         <span class="nav-group-title">System</span>
@@ -157,12 +170,16 @@
       <span class="nav-group-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="nav-group-body">
+      <a href="/admin/alerts" data-nav-path="/admin/alerts"><span class="nav-ico" aria-hidden="true">🔔</span><span class="nav-text">Alerts</span></a>
       <a href="/admin/activity" data-nav-path="/admin/activity"><span class="nav-ico" aria-hidden="true">📝</span><span class="nav-text">Activity</span></a>
       <a href="/admin/sessions" data-nav-path="/admin/sessions"><span class="nav-ico" aria-hidden="true">🧭</span><span class="nav-text">Sessions</span></a>
+      <a href="/admin/csv-upload" data-nav-path="/admin/csv-upload"><span class="nav-ico" aria-hidden="true">📁</span><span class="nav-text">CSV Upload</span></a>
+      <a href="/trash" data-nav-path="/trash"><span class="nav-ico" aria-hidden="true">🗑</span><span class="nav-text">Trash</span></a>
+      <a href="/admin/monitoring#systemHealthGrid" data-nav-path="/admin/monitoring" data-nav-alias="system-status"><span class="nav-ico" aria-hidden="true">💚</span><span class="nav-text">System Status</span></a>
     </div>
   </div>
 
-  <div class="nav-group nav-group--account" id="nav-group-account" data-nav-group="account" data-nav-index="6" data-default-open="0">
+  <div class="nav-group nav-group--account" id="nav-group-account" data-nav-group="account" data-nav-index="account" data-default-open="0">
     <button type="button" class="nav-group-toggle" aria-expanded="false" data-nav-group-toggle="account">
       <span class="nav-group-heading">
         <span class="nav-group-title">Account</span>

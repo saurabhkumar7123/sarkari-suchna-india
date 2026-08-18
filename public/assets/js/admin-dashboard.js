@@ -182,10 +182,12 @@ async function loadStatsCards() {
   set("todayViews", d.todayViews ?? 0);
   set("totalCategories", d.totalCategories ?? 0);
   set("successfulPublishes", d.successfulPublishes ?? 0);
+  set("kpiRecentPublishes", d.successfulPublishes ?? 0);
   set("failedActions", d.failedActions ?? 0);
   set("kpiTotalPages", d.totalPages ?? 0);
   set("kpiTotalUploads", d.totalUploads ?? 0);
   set("kpiFailedJobs", d.failedJobs ?? 0);
+  set("opsFailedJobs", d.failedJobs ?? 0);
   set("kpiPendingJobs", d.pendingJobs ?? 0);
   set("kpiSuccessRate", `${Number(d.successRate) || 0}%`);
   set("attentionFailedJobs", d.needsAttention && d.needsAttention.failedJobs ? d.needsAttention.failedJobs : 0);
@@ -295,6 +297,69 @@ async function loadChartsData() {
   renderChartsFromPages(res.data);
 }
 
+function setAutoStatusItem(id, on, labelOn, labelOff) {
+  const card = document.getElementById(id);
+  const value = document.getElementById(id + "Value");
+  const isOn = Boolean(on);
+  if (card) {
+    card.classList.toggle("is-on", isOn);
+    card.classList.toggle("is-off", !isOn);
+  }
+  if (value) value.textContent = isOn ? labelOn : labelOff;
+}
+
+async function loadAutomationSafetyStatus() {
+  const [controlsRes, settingsRes] = await Promise.all([
+    window.adminSafeFetch("/api/admin/automation-control-center/controls"),
+    window.adminSafeFetch("/api/admin/automation-control-center/settings")
+  ]);
+  const controls = controlsRes && controlsRes.success ? controlsRes.data || {} : {};
+  const flags = settingsRes && settingsRes.success && settingsRes.data ? settingsRes.data.runtimeFlags || {} : {};
+  setAutoStatusItem(
+    "autoStatusMonitoring",
+    flags.PRODUCTION_MONITORING_ENABLED === true,
+    "ON",
+    "OFF"
+  );
+  setAutoStatusItem(
+    "autoStatusCrawler",
+    flags.LIVE_CRAWLER_ENABLED === true,
+    "ON",
+    "OFF"
+  );
+  setAutoStatusItem(
+    "autoStatusDraft",
+    flags.AUTO_DRAFT_ENABLED === true,
+    "ON",
+    "OFF"
+  );
+  const telegramOn = controls.telegram && (controls.telegram.status === "ON" || controls.telegram.enabled === true);
+  setAutoStatusItem("autoStatusTelegram", telegramOn, "ON", "OFF");
+}
+
+async function loadRecentDetections() {
+  const host = document.getElementById("dashboardRecentDetections");
+  const countEl = document.getElementById("opsDetectedUpdates");
+  if (!host && !countEl) return;
+  const res = await window.adminSafeFetch("/api/admin/updates?limit=8");
+  const rows = res && res.success && Array.isArray(res.data) ? res.data : [];
+  if (countEl) countEl.textContent = String(rows.length);
+  if (!host) return;
+  if (!rows.length) {
+    host.innerHTML = `<p class="dashboard-expiry-empty">No recent detections.</p>`;
+    return;
+  }
+  host.innerHTML = rows
+    .map((r) => {
+      const title = escapeAttr(r.summary || r.title || r.url || "Update detected");
+      const source = escapeAttr(r.site_name || r.siteName || "Source");
+      const when = escapeAttr(r.detected_at || r.detectedAt || r.created_at || "");
+      const href = r.url ? escapeAttr(r.url) : "";
+      return `<div class="detected-update"><strong>${source}</strong><span>${title}</span><span>${when ? new Date(when).toLocaleString("en-IN") : "—"}</span>${href ? `<a href="${href}" target="_blank" rel="noopener">Open</a>` : "<span></span>"}</div>`;
+    })
+    .join("");
+}
+
 async function loadProductivityWidgets() {
   const set = (id, v) => {
     const el = document.getElementById(id);
@@ -321,7 +386,7 @@ async function loadProductivityWidgets() {
 
 async function initAdminDashboard() {
   loadPendingDraftMetric();
-  await Promise.all([loadStatsCards(), loadProductivityWidgets()]);
+  await Promise.all([loadStatsCards(), loadProductivityWidgets(), loadAutomationSafetyStatus(), loadRecentDetections()]);
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
   updateLiveStripLabel();
   window.AdminPageToolbar?.markUpdated?.();

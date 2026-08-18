@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <title>Admin Dashboard</title>
@@ -10,10 +10,10 @@
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
-<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=3">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=20">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=7">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=2">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Dashboard">
@@ -60,94 +60,80 @@
   <section class="dashboard-hero" aria-label="Dashboard overview">
     <p class="dashboard-hero__eyebrow" id="dashboardDateLine">Today</p>
     <h1 class="dashboard-hero__title" id="dashboardHeroTitle">Dashboard</h1>
-    <p class="dashboard-hero__sub">Overview, KPIs, and quick actions for Sarkari Suchna India</p>
-    <div class="dashboard-quick-grid">
-      <a href="/generator" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">➕</span>
-        <span class="dashboard-quick-card__label">New Page</span>
-        <span class="dashboard-quick-card__hint">Open generator</span>
-      </a>
-      <a href="/upload" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">📤</span>
-        <span class="dashboard-quick-card__label">Upload PDF</span>
-        <span class="dashboard-quick-card__hint">Files &amp; alerts</span>
-      </a>
-      <a href="/admin/page-manager" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">📄</span>
-        <span class="dashboard-quick-card__label">Page Manager</span>
-        <span class="dashboard-quick-card__hint">Edit &amp; publish</span>
-      </a>
-      <a href="/admin/monitoring" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">📊</span>
-        <span class="dashboard-quick-card__label">Monitoring</span>
-        <span class="dashboard-quick-card__hint">Queue &amp; sites</span>
-      </a>
-      <a href="/admin/alerts" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">🔔</span>
-        <span class="dashboard-quick-card__label">PDF Alerts</span>
-        <span class="dashboard-quick-card__hint">Notifications</span>
-      </a>
-      <a href="/admin/homepage-management" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">🌐</span>
-        <span class="dashboard-quick-card__label">Homepage</span>
-        <span class="dashboard-quick-card__hint">Boxes &amp; badges</span>
-      </a>
-      <a href="/admin/recruitments" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">🗂</span>
-        <span class="dashboard-quick-card__label">Recruitments</span>
-        <span class="dashboard-quick-card__hint">Events &amp; page links</span>
-      </a>
-      <a href="/admin/editorial-review" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">✅</span>
-        <span class="dashboard-quick-card__label">Editorial Review</span>
-        <span class="dashboard-quick-card__hint">Draft binding inbox</span>
-      </a>
-      <a href="/admin/recruitments#eventTimeline" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">📅</span>
-        <span class="dashboard-quick-card__label">Open Events</span>
-        <span class="dashboard-quick-card__hint">Recruitment timeline</span>
-      </a>
-      <a href="/generator" class="dashboard-quick-card" id="quickCreateDraftCard">
-        <span class="dashboard-quick-card__icon">📝</span>
-        <span class="dashboard-quick-card__label">Create Draft</span>
-        <span class="dashboard-quick-card__hint">Park a generator draft</span>
-      </a>
-      <a href="/admin/recruitments" class="dashboard-quick-card" id="quickSearchRecruitmentsCard">
-        <span class="dashboard-quick-card__icon">🔎</span>
-        <span class="dashboard-quick-card__label">Search Recruitments</span>
-        <span class="dashboard-quick-card__hint">Find &amp; filter ops</span>
-      </a>
-      <a href="/admin/recruitment-runtime-preview" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">👁</span>
-        <span class="dashboard-quick-card__label">Shared Preview</span>
-        <span class="dashboard-quick-card__hint">Runtime preview surface</span>
-      </a>
-      <a href="/admin/seo-diagnostics" class="dashboard-quick-card">
-        <span class="dashboard-quick-card__icon">🔎</span>
-        <span class="dashboard-quick-card__label">SEO Diagnostics</span>
-        <span class="dashboard-quick-card__hint">Content pipeline &amp; report</span>
-      </a>
-    </div>
+    <p class="dashboard-hero__sub">What is happening, and what needs your attention. Publishing stays manual.</p>
+    <nav class="dashboard-jump-row" aria-label="Operator shortcuts">
+      <a href="/admin/monitoring#recentUpdates">Detected updates</a>
+      <a href="/generator">Generator</a>
+      <a href="/generator" id="quickCreateDraftCard">Create Draft</a>
+      <a href="/admin/editorial-review">Editorial Review</a>
+      <a href="/admin/page-manager">Page Manager</a>
+      <a href="/admin/recruitments">Recruitments</a>
+      <a href="/admin/recruitments" id="quickSearchRecruitmentsCard">Search Recruitments</a>
+      <a href="/admin/recruitments#eventTimeline">Open Events</a>
+      <a href="/admin/recruitment-runtime-preview">Shared Preview</a>
+      <a href="/admin/automation-control-center">Automation Control</a>
+      <a href="/admin/seo-diagnostics">SEO Diagnostics</a>
+    </nav>
   </section>
 
-  <section class="dashboard-ops-productivity" id="dashboardOpsProductivity" aria-label="Recruitment productivity">
+  <nav class="admin-ops-flow" aria-label="Content workflow">
+    <span class="admin-ops-flow__step">Detected Update</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step">Draft</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step is-current">Review</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step">Approve</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+  </nav>
+
+  <section class="dashboard-ops-productivity dashboard-kpi-row" id="dashboardOpsProductivity" aria-label="Work that needs attention">
+    <a class="dashboard-today-card" href="/admin/monitoring#recentUpdates"><strong id="opsDetectedUpdates">—</strong><span>Detected updates</span></a>
+    <a class="dashboard-today-card" href="/generator"><strong id="opsDraftsWaiting">—</strong><span>Pending drafts</span></a>
+    <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsPendingReviews">—</strong><span>Pending reviews</span></a>
+    <a class="dashboard-today-card" href="/admin/page-manager"><strong id="kpiRecentPublishes">—</strong><span>Recent publications</span></a>
+    <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsActiveRecruitments">—</strong><span>Active recruitments</span></a>
+    <a class="dashboard-today-card" href="/admin/monitoring"><strong id="opsFailedJobs">—</strong><span>Failed jobs</span></a>
+    <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsBrokenPageLinks">—</strong><span>Broken page links</span></a>
+    <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsValidationWarnings">—</strong><span>Validation warnings</span></a>
+  </section>
+
+  <section class="admin-auto-status" id="dashboardAutoStatus" aria-label="Automation safety status">
+    <article class="admin-auto-status__item is-off" id="autoStatusMonitoring">
+      <span>Monitoring</span>
+      <strong class="admin-auto-status__state" id="autoStatusMonitoringValue">—</strong>
+    </article>
+    <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
+      <span>Crawler</span>
+      <strong class="admin-auto-status__state" id="autoStatusCrawlerValue">—</strong>
+    </article>
+    <article class="admin-auto-status__item is-off" id="autoStatusDraft">
+      <span>AI Draft</span>
+      <strong class="admin-auto-status__state" id="autoStatusDraftValue">—</strong>
+    </article>
+    <article class="admin-auto-status__item is-off" id="autoStatusTelegram">
+      <span>Telegram</span>
+      <strong class="admin-auto-status__state" id="autoStatusTelegramValue">—</strong>
+    </article>
+    <article class="admin-auto-status__item is-locked" id="autoStatusPublish">
+      <span>Auto Publish</span>
+      <strong class="admin-auto-status__state">DISABLED / MANUAL ONLY</strong>
+    </article>
+  </section>
+
+  <section class="dashboard-action-inbox is-hidden" id="dashboardActionInbox" aria-label="Pending work">
     <div class="dashboard-panel-head">
-      <h2>Recruitment productivity</h2>
-      <span class="dashboard-panel-hint">Manual ops snapshot — no background polling</span>
+      <h2>Pending work</h2>
+      <span class="dashboard-panel-hint">Items that need a human decision</span>
     </div>
-    <div class="dashboard-today-grid" id="dashboardOpsGrid">
-      <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsPendingReviews">—</strong><span>Pending Reviews</span></a>
-      <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsActiveRecruitments">—</strong><span>Active Recruitments</span></a>
-      <a class="dashboard-today-card" href="/generator"><strong id="opsDraftsWaiting">—</strong><span>Drafts Waiting</span></a>
-      <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsBrokenPageLinks">—</strong><span>Broken Page Links</span></a>
-      <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsValidationWarnings">—</strong><span>Validation Warnings</span></a>
-    </div>
+    <ul class="dashboard-action-list" id="dashboardActionList"></ul>
   </section>
 
-  <section class="dashboard-today-summary" id="dashboardTodaySummary" aria-label="Today's summary">
+  <section class="dashboard-today-summary" id="dashboardTodaySummary" aria-label="Recent detections and activity">
     <div class="dashboard-today-summary__head">
-      <h2>Today's summary</h2>
-      <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">View monitoring</a>
+      <h2>Recent detections and activity</h2>
+      <a href="/admin/monitoring#recentUpdates" class="header-action-btn" style="text-decoration:none;">View detections</a>
     </div>
     <div class="dashboard-today-grid" id="dashboardTodayGrid">
       <div class="dashboard-today-card"><strong id="todayPdfUploads">—</strong><span>PDF uploads today</span></div>
@@ -157,14 +143,7 @@
       <div class="dashboard-today-card" id="todayBrokenCard"><strong id="todayBrokenSites">—</strong><span>Broken sites</span></div>
       <div class="dashboard-today-card" id="todayTelegramCard"><strong id="todayTelegramStatus">—</strong><span>Telegram alerts</span></div>
     </div>
-  </section>
-
-  <section class="dashboard-action-inbox is-hidden" id="dashboardActionInbox" aria-label="Action inbox">
-    <div class="dashboard-panel-head">
-      <h2>Action inbox</h2>
-      <span class="dashboard-panel-hint">Items that need attention today</span>
-    </div>
-    <ul class="dashboard-action-list" id="dashboardActionList"></ul>
+    <div id="dashboardRecentDetections" class="dashboard-expiry-list" aria-live="polite"></div>
   </section>
 
   <section class="dashboard-expiry-panel" id="dashboardExpiryPanel" aria-label="Last date watch">
@@ -268,16 +247,16 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=19"></script>
-<script src="/js/admin-shell.js?v=6"></script>
+<script src="/js/admin-nav.js?v=20"></script>
+<script src="/js/admin-shell.js?v=7"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js?v=3"></script>
+<script src="/js/admin-command-palette.js?v=4"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-dashboard.js?v=6"></script>
+<script src="/js/admin-dashboard.js?v=7"></script>
 </body>
 </html>

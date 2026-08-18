@@ -238,6 +238,16 @@ body.admin-saas-v2 .sidebar {
   margin-top: auto;
 }
 
+.sidebar-rail__item--account .sidebar-rail__num {
+  display: none;
+}
+
+.nav-group--account {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--sb-border-soft);
+}
+
 .sidebar-rail__num {
   width: 22px;
   height: 22px;

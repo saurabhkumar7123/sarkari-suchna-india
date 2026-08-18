@@ -441,23 +441,48 @@
     return String(value || "").toLowerCase().replace(/\/$/, "") || "/";
   }
 
-  function isNavLinkActive(href, path) {
-    const h = normalizeNavPath(href);
+  function currentLocationHash() {
+    return String(window.location.hash || "").replace(/^#/, "");
+  }
+
+  function splitHref(href) {
+    const raw = String(href || "");
+    const idx = raw.indexOf("#");
+    if (idx < 0) return { path: raw, hash: "" };
+    return { path: raw.slice(0, idx), hash: raw.slice(idx + 1) };
+  }
+
+  function isNavLinkActive(linkEl, path) {
+    const href = linkEl.getAttribute("href") || "";
+    if (linkEl.classList.contains("sidebar-view-site") || href === "/") return false;
+    const parts = splitHref(href);
+    const h = normalizeNavPath(parts.path);
     const p = normalizeNavPath(path);
     if (!h || h === "#") return false;
-    if (h === p) return true;
     if (h === "/admin/dashboard" && p === "/dashboard") return true;
     if (h === "/admin/alerts" && p === "/notification") return true;
-    return false;
+    if (h !== p) return false;
+    const hash = currentLocationHash();
+    if (parts.hash) return hash === parts.hash;
+    const sidebar = linkEl.closest("#sidebar");
+    if (sidebar && hash) {
+      const claimed = Array.from(sidebar.querySelectorAll("a[href*='#']")).some((other) => {
+        if (other === linkEl) return false;
+        const otherParts = splitHref(other.getAttribute("href") || "");
+        return normalizeNavPath(otherParts.path) === p && otherParts.hash === hash;
+      });
+      if (claimed) return false;
+    }
+    return true;
   }
 
   function markActiveSidebarLink() {
     const links = Array.from(document.querySelectorAll("#sidebar a[href]"));
     const path = window.location.pathname;
     links.forEach((a) => {
-      const href = a.getAttribute("href") || "";
-      a.classList.toggle("active", isNavLinkActive(href, path));
-      if (isNavLinkActive(href, path)) {
+      const active = isNavLinkActive(a, path);
+      a.classList.toggle("active", active);
+      if (active) {
         a.setAttribute("aria-current", "page");
       } else {
         a.removeAttribute("aria-current");
@@ -492,6 +517,48 @@
     toggle.dataset.shellUpgraded = "1";
     toggle.innerHTML = '<span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span>';
     toggle.setAttribute("aria-label", "Open navigation");
+  }
+
+  function hoistAdminTopbar() {
+    const header = document.querySelector(".admin-header");
+    if (!header) return;
+    let bar = document.getElementById("adminAppTopbar");
+    if (!bar) {
+      bar = document.createElement("header");
+      bar.id = "adminAppTopbar";
+      bar.className = "admin-app-topbar";
+      bar.setAttribute("role", "banner");
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+    const toggle = document.getElementById("sidebarToggle");
+    if (toggle && toggle.parentElement !== bar) {
+      bar.insertBefore(toggle, bar.firstChild);
+    }
+    if (header.parentElement !== bar) {
+      bar.appendChild(header);
+    }
+    document.body.classList.add("admin-has-topbar");
+  }
+
+  function bindRailKeyboard() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar || sidebar.dataset.railKeysBound === "1") return;
+    sidebar.dataset.railKeysBound = "1";
+    sidebar.addEventListener("keydown", (e) => {
+      const items = Array.from(sidebar.querySelectorAll(".sidebar-rail__item[data-rail-group]"));
+      const current = document.activeElement;
+      const index = items.indexOf(current);
+      if (index < 0) return;
+      let next = -1;
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (index + 1) % items.length;
+      else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (index - 1 + items.length) % items.length;
+      else if (e.key === "Home") next = 0;
+      else if (e.key === "End") next = items.length - 1;
+      if (next < 0) return;
+      e.preventDefault();
+      items[next].focus();
+      items[next].click();
+    });
   }
 
   /** Re-bind sidebar controls after admin-layout injects sidebar on standalone pages. */
@@ -532,10 +599,12 @@
         logout();
       });
     }
+    hoistAdminTopbar();
     markActiveSidebarLink();
     applyNavGroupStateFromStorage();
     expandNavGroupForActiveLink();
     bindNavGroupToggles();
+    bindRailKeyboard();
     bindSidebarSwipeClose();
     syncSidebarCollapseButton();
     syncCollapsedNavTooltips();
@@ -568,6 +637,12 @@
     setSidebarOpen(false);
   });
 
+  window.addEventListener("hashchange", () => {
+    markActiveSidebarLink();
+    expandNavGroupForActiveLink();
+    syncRailActiveState();
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     const cmd = document.getElementById("adminCmdOverlay");
@@ -575,6 +650,8 @@
     const sidebar = document.getElementById("sidebar");
     if (!sidebar || !sidebar.classList.contains("active")) return;
     setSidebarOpen(false);
+    const toggle = document.getElementById("sidebarToggle");
+    if (toggle) toggle.focus();
   });
 
   dashboardMobileMq.addEventListener("change", () => {

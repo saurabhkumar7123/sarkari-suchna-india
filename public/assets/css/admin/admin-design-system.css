@@ -37,16 +37,16 @@ body.admin-saas-v2 {
   --admin-space-8: 32px;
 
   /* Radius */
-  --admin-radius-xs: 8px;
-  --admin-radius-sm: 10px;
-  --admin-radius: 14px;
-  --admin-radius-lg: 16px;
+  --admin-radius-xs: 6px;
+  --admin-radius-sm: 8px;
+  --admin-radius: 8px;
+  --admin-radius-lg: 10px;
   --admin-radius-pill: 999px;
 
   /* Shadow */
   --admin-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
-  --admin-shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
+  --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --admin-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
 
   /* Motion */
   --admin-ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -57,6 +57,7 @@ body.admin-saas-v2 {
   /* Layout */
   --admin-content-max: 1240px;
   --admin-control-h: 40px;
+  --admin-topbar-h: 56px;
   --admin-font: "Segoe UI", system-ui, -apple-system, sans-serif;
   --admin-font-mono: "Cascadia Mono", "Segoe UI Mono", "SF Mono", Consolas, monospace;
 
@@ -204,17 +205,69 @@ body.admin-saas-v2 {
   overflow-x: hidden;
 }
 
-body.admin-saas-v2 .sidebar,
-body.admin-saas-v2 #sidebar {
+body.admin-saas-v2.admin-has-topbar .sidebar,
+body.admin-saas-v2.admin-has-topbar #sidebar {
+  top: var(--admin-topbar-h);
+  height: calc(100vh - var(--admin-topbar-h));
+  height: calc(100dvh - var(--admin-topbar-h));
+}
+
+body.admin-saas-v2.admin-has-topbar .main,
+body.admin-saas-v2.admin-has-topbar #standaloneAdminShell,
+body.admin-saas-v2.admin-has-topbar .standalone-admin-content {
+  margin-top: var(--admin-topbar-h);
+  min-height: calc(100vh - var(--admin-topbar-h));
+}
+
+/* ===== App top bar ===== */
+#adminAppTopbar,
+body.admin-saas-v2 #adminAppTopbar {
   position: fixed;
-  left: 0;
   top: 0;
-  height: 100vh;
-  width: var(--admin-sidebar-current);
-  min-width: var(--admin-sidebar-current);
-  max-width: var(--admin-sidebar-current);
-  z-index: calc(var(--z-modal, 1000) + 20);
+  left: 0;
+  right: 0;
+  z-index: calc(var(--z-modal, 1000) + 28);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--admin-topbar-h);
+  padding: 0 12px 0 12px;
+  background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-border);
+  box-shadow: none;
   box-sizing: border-box;
+}
+
+#adminAppTopbar .toggle-btn {
+  position: static;
+  display: none;
+  flex: 0 0 auto;
+  margin: 0;
+  box-shadow: none;
+}
+
+#adminAppTopbar .admin-header {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 8px 4px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  position: static !important;
+  top: auto !important;
+}
+
+@media (max-width: 768px) {
+  #adminAppTopbar .toggle-btn {
+    display: inline-flex;
+  }
 }
 
 body.admin-saas-v2 .main,
@@ -304,7 +357,12 @@ body.admin-saas-v2 .main > .content-wrapper {
   }
 
   body.admin-saas-v2 .sidebar,
-  body.admin-saas-v2 #sidebar {
+  body.admin-saas-v2 #sidebar,
+  body.admin-saas-v2.admin-has-topbar .sidebar,
+  body.admin-saas-v2.admin-has-topbar #sidebar {
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
     width: min(92vw, 338px);
     min-width: 0;
     max-width: min(92vw, 338px);
@@ -315,6 +373,11 @@ body.admin-saas-v2 .main > .content-wrapper {
   body.admin-saas-v2 .standalone-admin-content {
     margin-left: 0 !important;
     width: 100% !important;
+  }
+
+  body.admin-saas-v2.admin-has-topbar .main,
+  body.admin-saas-v2.admin-has-topbar #standaloneAdminShell {
+    padding-top: 16px;
   }
 }
 
@@ -470,10 +533,10 @@ body.admin-saas-v2 .saas-btn--primary,
 body.admin-saas-v2 .btn-primary,
 body.admin-saas-v2 .btn-save,
 body.admin-saas-v2 button.primary {
-  background: linear-gradient(135deg, var(--admin-brand), var(--admin-brand-hover));
+  background: var(--admin-brand);
   border: 1px solid var(--admin-brand-hover);
   color: #fff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
+  box-shadow: none;
 }
 
 body.admin-saas-v2 .saas-btn--primary:hover,
@@ -535,14 +598,231 @@ body.admin-saas-v2 .monitor-row:hover {
 
 body.admin-saas-v2 .page-table-wrap,
 body.admin-saas-v2 .table-wrap,
-body.admin-saas-v2 .table-scroll {
+body.admin-saas-v2 .table-scroll,
+body.admin-saas-v2 .sites-table-host {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+body.admin-saas-v2 .page-table-wrap,
+body.admin-saas-v2 .table-wrap,
+body.admin-saas-v2 .table-scroll {
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius);
   background: var(--admin-surface);
-  box-shadow: var(--admin-shadow);
+  box-shadow: none;
+}
+
+body.admin-saas-v2 .page-table {
+  min-width: 780px;
+}
+
+/* ===== Operator workflow strip ===== */
+.admin-ops-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  color: var(--admin-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admin-ops-flow__step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.admin-ops-flow__step.is-current {
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+}
+
+.admin-ops-flow__step.is-locked {
+  color: var(--admin-warning);
+  background: var(--admin-warning-soft);
+}
+
+.admin-ops-flow__arrow {
+  opacity: 0.45;
+}
+
+/* ===== Automation status board ===== */
+.admin-auto-status {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.admin-auto-status__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+}
+
+.admin-auto-status__item strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.admin-auto-status__item span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.admin-auto-status__state {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-auto-status__item.is-off .admin-auto-status__state {
+  color: var(--admin-muted);
+}
+
+.admin-auto-status__item.is-on .admin-auto-status__state {
+  color: var(--admin-success);
+}
+
+.admin-auto-status__item.is-locked {
+  border-color: #fde68a;
+  background: var(--admin-warning-soft);
+}
+
+.admin-auto-status__item.is-locked .admin-auto-status__state {
+  color: var(--admin-warning);
+}
+
+.admin-kpi-row,
+.dashboard-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.dashboard-jump-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dashboard-jump-row a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dashboard-jump-row a:hover {
+  border-color: #93c5fd;
+  background: var(--admin-brand-soft);
+}
+
+.er-publish-gate {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px dashed var(--admin-border-strong);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-2);
+}
+
+.er-publish-gate p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--admin-text-secondary);
+}
+
+.er-publish-gate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.er-decisions [data-decision="approve"] {
+  background: var(--admin-brand);
+  border-color: var(--admin-brand-hover);
+  color: #fff;
+}
+
+.detected-update {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr) auto auto auto;
+  gap: 8px 12px;
+  align-items: start;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--admin-border);
+  font-size: 13px;
+}
+
+.detected-update:last-child {
+  border-bottom: none;
+}
+
+.detected-update strong {
+  color: var(--admin-text);
+}
+
+.detected-update a {
+  color: var(--admin-brand);
+  word-break: break-all;
+}
+
+@media (max-width: 1024px) {
+  .admin-auto-status {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  body.generator-page .main-container {
+    max-width: 1280px;
+  }
+}
+
+@media (max-width: 768px) {
+  body.admin-saas-v2.admin-has-topbar .main,
+  body.admin-saas-v2.admin-has-topbar.standalone-admin-page #standaloneAdminShell {
+    padding-top: 16px;
+  }
+
+  .admin-auto-status,
+  .detected-update {
+    grid-template-columns: 1fr;
+  }
+
+  #adminAppTopbar {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
 }
 
 /* ===== Badges ===== */
@@ -664,6 +944,11 @@ body.admin-saas-v2 .monitor-row:hover {
 }
 
 /* ===== Dark mode panel coverage ===== */
+body.dark.admin-saas-v2 #adminAppTopbar {
+  background: var(--admin-surface);
+  border-bottom-color: var(--admin-border);
+}
+
 body.dark.admin-saas-v2 .main > .admin-header,
 body.dark.admin-saas-v2.standalone-admin-page .admin-header,
 body.dark.admin-saas-v2 .card,
@@ -757,6 +1042,11 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
   body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
     padding: 16px 12px 28px;
     padding-top: 62px;
+  }
+
+  body.admin-saas-v2.admin-has-topbar .main,
+  body.admin-saas-v2.admin-has-topbar.standalone-admin-page #standaloneAdminShell {
+    padding-top: 16px;
   }
 
   body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn),

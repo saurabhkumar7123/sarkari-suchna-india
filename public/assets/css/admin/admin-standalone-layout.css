@@ -11,14 +11,25 @@ body.standalone-admin-page{
   overflow-x:hidden;
 }
 
-body.standalone-admin-page .sidebar{
-  position:fixed;
-  left:0;
-  top:0;
-  height:100vh;
-  z-index:calc(var(--z-modal, 1000) + 20);
-  display:flex;
-  flex-direction:column;
+body.standalone-admin-page.admin-has-topbar .sidebar{
+  top: var(--admin-topbar-h, 56px);
+  height: calc(100vh - var(--admin-topbar-h, 56px));
+  height: calc(100dvh - var(--admin-topbar-h, 56px));
+}
+
+body.standalone-admin-page.admin-has-topbar #standaloneAdminShell{
+  margin-top: var(--admin-topbar-h, 56px);
+  min-height: calc(100vh - var(--admin-topbar-h, 56px));
+}
+
+body.standalone-admin-page.generator-page.admin-has-topbar .admin-header{
+  position: static;
+  top: auto;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 /* Single content column beside sidebar — offset from --admin-sidebar-current */
@@ -174,6 +185,16 @@ body.standalone-admin-page #standaloneAdminShell > .admin-global-error-banner{
     margin-left:0 !important;
     width:100% !important;
     padding-top:52px;
+  }
+
+  body.standalone-admin-page.admin-has-topbar #standaloneAdminShell{
+    padding-top:12px;
+  }
+
+  body.standalone-admin-page.admin-has-topbar .sidebar{
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
   }
 
   body.standalone-admin-page .toggle-btn{

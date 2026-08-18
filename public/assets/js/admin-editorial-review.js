@@ -122,7 +122,7 @@
 
     const allowed = data.allowedDecisions || [];
     byId("erDecisions").innerHTML = allowed.length
-      ? allowed.map((decision) => `<button type="button" class="header-action-btn" data-decision="${escapeHtml(decision)}">${escapeHtml(DECISION_LABELS[decision] || decision)}</button>`).join("")
+      ? allowed.map((decision) => `<button type="button" class="header-action-btn${decision === "approve" ? " btn-primary" : ""}" data-decision="${escapeHtml(decision)}">${escapeHtml(DECISION_LABELS[decision] || decision)}</button>`).join("")
       : "<p>No decisions available in the current state.</p>";
     byId("erDecisions").querySelectorAll("[data-decision]").forEach((btn) => {
       btn.addEventListener("click", () => applyDecision(btn.dataset.decision));

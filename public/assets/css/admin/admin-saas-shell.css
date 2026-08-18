@@ -179,9 +179,9 @@ body.dark .upload-stat strong{color:#e2e8f0}
   cursor:wait;
 }
 
-.saas-btn--primary{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
-  border-color:#1d4ed8;
+body.admin-saas-v2 .saas-btn--primary{
+  background:var(--saas-brand);
+  border-color:var(--saas-brand);
   color:#fff;
 }
 
@@ -284,7 +284,11 @@ body.dark .upload-stat strong{color:#e2e8f0}
 
 .monitor-table--sites .monitor-head,
 .monitor-table--sites .monitor-row{
-  grid-template-columns:2fr 1fr .8fr 1.2fr 1.2fr;
+  grid-template-columns:1.2fr 1.6fr .8fr 1fr 1fr .6fr 1.1fr;
+}
+
+body.admin-saas-v2 .monitor-table--sites {
+  min-width: 960px;
 }
 
 .monitor-row{

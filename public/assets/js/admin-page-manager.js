@@ -382,7 +382,7 @@ function renderPages(pages) {
   const pageSlugs = pages.map((p) => String(p.slug || "").trim()).filter(Boolean);
   selectedSlugs = new Set(Array.from(selectedSlugs).filter((slug) => pageSlugs.includes(slug)));
   const allSelected = pageSlugs.length > 0 && pageSlugs.every((slug) => selectedSlugs.has(slug));
-  box.innerHTML = `<div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div></div>`;
+  box.innerHTML = `<div class="page-table-wrap"><div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div></div></div>`;
   const table = box.querySelector(".page-table");
   const frag = document.createDocumentFragment();
   pages.forEach((p) => {
@@ -560,10 +560,19 @@ document.getElementById("pageSearchClear")?.addEventListener("click", () => {
 initSearch();
 window.adminPageRefreshHandler = () => loadPageManager();
 
-(function initExpiryFromUrl() {
-  const expiry = new URLSearchParams(window.location.search).get("expiry");
+(function initFiltersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const expiry = params.get("expiry");
   if (expiry && ["closing_soon", "expired", "no_last_date"].includes(expiry)) {
     currentFilters.expiry = expiry;
+  }
+  const status = params.get("status");
+  if (status) currentFilters.status = status;
+  const q = params.get("q");
+  if (q) {
+    currentFilters.search = q;
+    const input = document.getElementById("searchPage");
+    if (input) input.value = q;
   }
 })();
 

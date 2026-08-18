@@ -34,18 +34,19 @@ body.admin-saas-v2 .main{
 
 /* ---- Top header (replaces legacy navy bar) ---- */
 body.admin-saas-v2 .main > .admin-header,
-body.admin-saas-v2.standalone-admin-page .admin-header{
-  background:rgba(255,255,255,.88) !important;
+body.admin-saas-v2.standalone-admin-page .admin-header,
+body.admin-saas-v2 #adminAppTopbar .admin-header{
+  background:transparent !important;
   color:var(--saas-text) !important;
-  border:1px solid var(--saas-line) !important;
-  border-radius:var(--saas-radius) !important;
-  box-shadow:var(--saas-shadow) !important;
-  backdrop-filter:blur(12px);
-  padding:14px 18px !important;
-  margin-bottom:18px;
-  position:sticky;
-  top:10px;
-  z-index:80;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none;
+  padding:8px 4px !important;
+  margin-bottom:0;
+  position:static;
+  top:auto;
+  z-index:auto;
 }
 
 body.admin-saas-v2 .admin-title,
@@ -108,18 +109,14 @@ body.admin-saas-v2 .dashboard-welcome-banner{
 body.admin-saas-v2 .dashboard-hero{
   border-radius:var(--saas-radius);
   border:1px solid var(--saas-line);
-  background:linear-gradient(165deg,#fff 0%,#f8fafc 100%);
-  box-shadow:var(--saas-shadow);
+  background:var(--saas-surface);
+  box-shadow:none;
   position:relative;
   overflow:hidden;
 }
 
 body.admin-saas-v2 .dashboard-hero::before{
-  content:"";
-  position:absolute;
-  inset:0 0 auto;
-  height:3px;
-  background:linear-gradient(90deg,#2563eb,#4f46e5,#7c3aed);
+  display:none;
 }
 
 body.admin-saas-v2 .dashboard-hero__eyebrow{
