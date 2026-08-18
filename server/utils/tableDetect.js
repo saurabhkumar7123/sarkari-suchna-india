@@ -24,6 +24,15 @@ function stripRowNumberPrefix(line) {
  * @param {string} line
  * @returns {","|"|"|\t"|null}
  */
+function looksLikePostCodeDepartmentLine(line) {
+  const t = String(line || "").trim();
+  if (!/^[A-Z]{1,3}\d{2,4}\s+\S+/i.test(t)) return false;
+  const toks = t.split(/\s+/);
+  if (toks.length < 3) return false;
+  if (/^(UR|EWS|OBC|SC|ST|PWD|ESM|OH|HH|VH|OTHERS)$/i.test(toks[1])) return false;
+  return true;
+}
+
 function detectRowDelimiter(line) {
   const t = stripRowNumberPrefix(line);
   if (!t) return null;
@@ -36,6 +45,9 @@ function detectRowDelimiter(line) {
     if (parts.length >= 2) return "|";
   }
   if (/,/.test(t)) {
+    // Space-separated post-code department rows often contain commas inside
+    // organization names. Those commas are not CSV delimiters.
+    if (looksLikePostCodeDepartmentLine(t)) return null;
     const parts = splitNaiveCsvLine(t);
     if (parts.length >= 2) return ",";
   }
@@ -85,6 +97,7 @@ function tryExtractTableRunAt(lines, start) {
 
   const delim = detectRowDelimiter(first);
   if (!delim) return null;
+  if (delim === "," && looksLikePostCodeDepartmentLine(first)) return null;
 
   const expectedCols = countColumns(first, delim);
   if (expectedCols < 2) return null;
@@ -244,6 +257,7 @@ module.exports = {
   detectRowDelimiter,
   countColumns,
   normalizeRowToCsv,
+  looksLikePostCodeDepartmentLine,
   tryExtractTableRunAt,
   evaluatePublisherTable,
   resolveVacancySectionHeader,

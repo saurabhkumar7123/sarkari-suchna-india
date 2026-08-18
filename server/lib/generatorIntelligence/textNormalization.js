@@ -54,6 +54,51 @@ function fixMergedWords(text) {
     .replace(/\b(अंतिम)(तिथि)\b/g, "$1 $2");
 }
 
+const MONTH_ALT =
+  "January|February|March|April|May|June|July|August|September|October|November|December";
+
+/**
+ * Rejoin PDF superscript ordinals split across lines:
+ * "23\\nrd\\nAugust,\\n2026" → "23rd August 2026"
+ * Does not invent missing day numbers.
+ * @param {string} text
+ * @returns {string}
+ */
+function joinSplitOrdinalDates(text) {
+  const months = MONTH_ALT;
+  return String(text || "")
+    .replace(
+      new RegExp(
+        `(\\d{1,2})\\s*\\n+\\s*(st|nd|rd|th)\\s*\\n+\\s*(${months})\\s*,?\\s*\\n+\\s*(\\d{4})`,
+        "gi"
+      ),
+      "$1$2 $3 $4"
+    )
+    .replace(
+      new RegExp(
+        `(\\d{1,2})\\s*\\n+\\s*(st|nd|rd|th)\\s*\\n+\\s*(${months})\\s*,?\\s*(\\d{4})`,
+        "gi"
+      ),
+      "$1$2 $3 $4"
+    )
+    .replace(
+      new RegExp(
+        `(\\d{1,2})\\s*\\n+\\s*(st|nd|rd|th)\\s+(${months})\\s*,?\\s*\\n+\\s*(\\d{4})`,
+        "gi"
+      ),
+      "$1$2 $3 $4"
+    )
+    .replace(
+      new RegExp(
+        `(\\d{1,2})\\s+(st|nd|rd|th)\\s*\\n+\\s*(${months})\\s*,?\\s*\\n+\\s*(\\d{4})`,
+        "gi"
+      ),
+      "$1$2 $3 $4"
+    )
+    .replace(new RegExp(`(\\d{1,2})\\s*\\n+\\s*(st|nd|rd|th)\\b`, "gi"), "$1$2")
+    .replace(new RegExp(`\\b(\\d{1,2})\\s+(st|nd|rd|th)\\s+(${months})\\b`, "gi"), "$1$2 $3");
+}
+
 /**
  * Rejoin only hyphenated mid-word line breaks. Do not collapse paragraph newlines.
  * @param {string} text
@@ -138,6 +183,7 @@ function stripRepeatedHeadersFooters(text) {
 function advancedNormalize(text) {
   let t = unicodeNormalize(String(text || ""));
   t = fixBrokenLines(t);
+  t = joinSplitOrdinalDates(t);
   t = t
     .split("\n")
     .map((line) => fixSpacedWordsLine(line))
@@ -151,6 +197,8 @@ function advancedNormalize(text) {
     .split("\n")
     .filter((line) => !isNoiseLine(line))
     .join("\n");
+  t = normalizeSpacing(t);
+  t = joinSplitOrdinalDates(t);
   t = normalizeSpacing(t);
   return t;
 }
@@ -193,8 +241,10 @@ function softCleanForStructuring(text) {
       }
       continue;
     }
+    // Drop RTI / writ / tribunal legal noise, but keep post-code department /
+    // allocation rows whose employer name legitimately contains "Tribunal".
     if (/\b(rti|right\s+to\s+information|writ\s+petition|tribunal)\b/i.test(tr) && tr.length > 40) {
-      continue;
+      if (!/^[A-Z]{1,3}\d{2,4}\s+\S+/i.test(tr)) continue;
     }
     out.push(line);
   }
@@ -206,6 +256,7 @@ module.exports = {
   fixSpacedWordsLine,
   fixMergedWords,
   fixBrokenLines,
+  joinSplitOrdinalDates,
   normalizeSpacing,
   isNoiseLine,
   stripRepeatedHeadersFooters,

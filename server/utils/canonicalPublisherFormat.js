@@ -163,33 +163,36 @@ function normalizePublisherSection(title, body) {
     nextBody = normalizeFaqBody(nextBody);
   } else if (kind === "vacancy") {
     const lines = nextBody.split("\n").map((l) => l.trim()).filter(Boolean);
-    const tables = detectSmartTables(lines);
-    const fullTable =
-      tables.length === 1 &&
-      tables[0].csvBody &&
-      tables[0].startIndex === 0 &&
-      tables[0].endIndex >= lines.length
-        ? tables[0]
-        : null;
-    if (fullTable) {
-      nextBody = fullTable.csvBody;
-    } else {
-      const reconstructed = reconstructDelimiterLessVacancyGrid(lines);
-      if (reconstructed) {
-        const reconLines = reconstructed.split("\n").map((l) => l.trim()).filter(Boolean);
-        const reconTables = detectSmartTables(reconLines);
-        nextBody =
-          reconTables.length === 1 &&
-          reconTables[0].csvBody &&
-          reconTables[0].startIndex === 0 &&
-          reconTables[0].endIndex >= reconLines.length
-            ? reconTables[0].csvBody
-            : reconstructed;
+    const hasMixedMarkers = lines.some((l) => /^---table---$/i.test(l) || /^---endtable---$/i.test(l));
+    if (!hasMixedMarkers) {
+      const tables = detectSmartTables(lines);
+      const fullTable =
+        tables.length === 1 &&
+        tables[0].csvBody &&
+        tables[0].startIndex === 0 &&
+        tables[0].endIndex >= lines.length
+          ? tables[0]
+          : null;
+      if (fullTable) {
+        nextBody = fullTable.csvBody;
+      } else {
+        const reconstructed = reconstructDelimiterLessVacancyGrid(lines);
+        if (reconstructed) {
+          const reconLines = reconstructed.split("\n").map((l) => l.trim()).filter(Boolean);
+          const reconTables = detectSmartTables(reconLines);
+          nextBody =
+            reconTables.length === 1 &&
+            reconTables[0].csvBody &&
+            reconTables[0].startIndex === 0 &&
+            reconTables[0].endIndex >= reconLines.length
+              ? reconTables[0].csvBody
+              : reconstructed;
+        }
       }
+      const resolved = resolveVacancySectionHeader(nextBody);
+      nextTitle = resolved.title;
+      nextBody = resolved.body === "—" ? nextBody : resolved.body;
     }
-    const resolved = resolveVacancySectionHeader(nextBody);
-    nextTitle = resolved.title;
-    nextBody = resolved.body === "—" ? nextBody : resolved.body;
   }
 
   return { title: nextTitle, body: nextBody };

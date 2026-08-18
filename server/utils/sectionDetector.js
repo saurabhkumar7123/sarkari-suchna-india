@@ -1,6 +1,12 @@
 "use strict";
 
-const { extractStrictDateFromText, extractDateValueForDisplay } = require("./extractDateValue");
+const {
+  extractStrictDateFromText,
+  extractDateValueForDisplay,
+  isNonApplicationDateContext,
+  isAllocationTableDateRow,
+  isMilestoneEventDateLine
+} = require("./extractDateValue");
 const { shouldDropLine } = require("./smartClean");
 const {
   tryExtractTableRunAt,
@@ -72,6 +78,10 @@ function classifyLine(line) {
   ) {
     return "selection";
   }
+  if (isNonApplicationDateContext(s) || isAllocationTableDateRow(s)) {
+    if (looksLikeVacancyOrAllocationRow(s)) return "vacancy";
+    return "other";
+  }
   if (
     /\b(last\s*date|closing\s*date|opening\s*date|notification\s*date|exam\s*date|start\s*date|apply\s*start|online\s*apply|application\s*begin)\b/i.test(
       l
@@ -81,23 +91,23 @@ function classifyLine(line) {
     return "dates";
   }
   if (/\bfee\s*payment\s*last\b/i.test(l)) return "dates";
-  if (/\d{1,2}[\s./-]+\d{1,2}[\s./-]+\d{2,4}/.test(s)) return "dates";
-  if (/\b(last|exam|date|notification|start|schedule)\b/i.test(l) && /\d/.test(s)) return "dates";
-  if (/\b(age|years?|आयु|वर्ष|born)\b/i.test(l) && /\d/.test(s)) return "age";
+  if (isMilestoneEventDateLine(s) && !isFeeLine(s)) return "dates";
   if (
-    /\b(qualification|degree|graduation|certificate|diploma|b\.?e|b\.?tech|m\.?a|m\.?sc|12th|10th|phd|matric|intermediate)\b/i.test(l)
+    /\b(age\s*limit|minimum\s*age|maximum\s*age|आयु\s*सीमा|\d{1,2}\s*[-–]\s*\d{1,2}\s*years?|years?\s*(?:of\s*)?age)\b/i.test(
+      l
+    ) &&
+    /\d/.test(s)
+  ) {
+    return "age";
+  }
+  if (
+    /\b(educational\s*qualification|qualifications?\s*[:：]|degree\s+in|graduation|diploma(?:\s+in)?|b\.e\.?|b\.tech|m\.a\.|m\.sc|ph\.?d|(?:10th|12th)\s*(?:pass|class|passed)|matric|intermediate)\b/i.test(
+      l
+    )
   ) {
     return "qualification";
   }
-  if (
-    !isFeeLine(s) &&
-    ((/\b(vacancy|vacancies|vacant|posts?|category|total)\b/i.test(l) && /\d/.test(s)) ||
-      /\b(vacancy|vacancies|posts?\s*per|post\s*[:-]|category\s*[:/-])\b/i.test(l) ||
-      (/\b(recruitment|भर्ती)\b/i.test(l) &&
-        /\b(posts?|vacancies|vacant|vacancy|पद|seats?)\b/i.test(l) &&
-        /\d/.test(s)) ||
-      (/\b(obc|sc\b|st\b|ews|ur\b|gen)\b/i.test(l) && /\b(post|vacancy|seat)\b/i.test(l) && /\d/.test(s)))
-  ) {
+  if (!isFeeLine(s) && looksLikeVacancyOrAllocationRow(s)) {
     return "vacancy";
   }
   if (/\b(written|interview|\btest\b|phase\s*[ivx\d]|prelims|mains|objective|descriptive)\b/i.test(l)) {
@@ -106,15 +116,51 @@ function classifyLine(line) {
   if (/\bexamination\b/i.test(l) && /\b(tier|phase|stage|written|computer\s*based|cbt)\b/i.test(l)) {
     return "selection";
   }
+  return "other";
+}
+
+/**
+ * Vacancy / allocation grid semantics. Exam-name lists are not vacancies.
+ * @param {string} line
+ */
+function looksLikeVacancyOrAllocationRow(line) {
+  const s = String(line || "").trim();
+  const l = s.toLowerCase();
+  if (!s) return false;
+  if (/\b(name of examination|limited departmental competitive examination|departmental\s+examinations?)\b/i.test(l)) {
+    return false;
+  }
+  if (isAllocationTableDateRow(s) || /^[A-Z]{1,3}\d{2,4}\s+\b(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|OTHERS|PWD)/i.test(s)) {
+    return true;
+  }
+  if (
+    /^[A-Z]{1,3}\d{2,4}\s+\S+/i.test(s) &&
+    !/^[A-Z]{1,3}\d{2,4}\s+(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|OTHERS|PWD)\b/i.test(s)
+  ) {
+    return true;
+  }
+  if (
+    (/\b(vacancy|vacancies|vacant|total\s*posts?)\b/i.test(l) && /\d/.test(s)) ||
+    /\b(vacancy|vacancies|posts?\s*per|post\s*name|post\s*[:-]|category\s*[:/-])\b/i.test(l) ||
+    (/\b(recruitment|भर्ती)\b/i.test(l) &&
+      /\b(posts?|vacancies|vacant|vacancy|पद|seats?)\b/i.test(l) &&
+      /\d/.test(s)) ||
+    (/\b(obc|sc\b|st\b|ews|ur\b|gen)\b/i.test(l) && /\b(post|vacancy|seat)\b/i.test(l) && /\d/.test(s)) ||
+    (/\b(candidates?\s+recommended|cut[- ]?off(?:\s+marks)?)\b/i.test(l) &&
+      (s.match(/\d+(?:\.\d+)?%?/g) || []).length >= 6)
+  ) {
+    return true;
+  }
   if (
     detectRowDelimiter(s) &&
     s.length < 220 &&
     !isFeeLine(s) &&
-    !/https?:\/\//i.test(s)
+    !/https?:\/\//i.test(s) &&
+    /\b(vacancy|vacancies|post\s*name|posts?\b|category|ur\b|obc|sc\b|st\b|ews|total\s*posts?|पद|रिक्ति)\b/i.test(l)
   ) {
-    return "vacancy";
+    return true;
   }
-  return "other";
+  return false;
 }
 
 function uniq(lines) {
@@ -546,5 +592,6 @@ module.exports = {
   extractDateValueForDisplay,
   classifyLine,
   isNoiseLine,
-  isFeeLine
+  isFeeLine,
+  looksLikeVacancyOrAllocationRow
 };

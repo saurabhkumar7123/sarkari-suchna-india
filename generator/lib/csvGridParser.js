@@ -347,13 +347,28 @@ function parseNaiveCommaGrid(lines) {
   return { rows, columnCount, issues, parser: "naive" };
 }
 
+function hasQuotedCommaCell(lines) {
+  return (lines || []).some((l) => /"[^"\n]*,[^"\n]*"/.test(String(l || "")));
+}
+
+function isPostDepartmentTableHeader(line) {
+  const h = String(line || "");
+  return /post\s*name/i.test(h) && /organization/i.test(h);
+}
+
 /**
  * Parse grid from line array (uses V2 line parser when flag on).
+ * Post/Department tables with quoted org commas also use V2 without
+ * enabling TABLE_PARSER_V2 globally.
  * @param {string[]} lines
  * @param {{ delimiter?: string, allowV2?: boolean }} [options]
  */
 function parseGrid(lines, options = {}) {
-  const useV2 = isGridParserV2Enabled() && options.allowV2 !== false;
+  const src = lines || [];
+  const quotedPostDept =
+    isPostDepartmentTableHeader(src[0]) && hasQuotedCommaCell(src);
+  const useV2 =
+    options.allowV2 !== false && (isGridParserV2Enabled() || quotedPostDept);
   if (useV2) {
     return parseV2Grid(lines, options);
   }

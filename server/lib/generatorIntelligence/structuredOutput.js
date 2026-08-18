@@ -41,9 +41,15 @@ function buildStructuredDocument(rawText, options = {}) {
     confidence: sec.confidence,
     blocks: sec.blocks || [],
     originalContent: sec.originalContent || (sec.lines || []).join("\n"),
-    forceTable: Boolean(
-      (sec.blocks || []).some((b) => b.type === "table" && (b.kind === "vacancy" || b.kind === "reservation"))
-    )
+    forceTable: (() => {
+      const blocks = sec.blocks || [];
+      if (!blocks.length) return false;
+      const allTables = blocks.every((b) => b.type === "table");
+      return (
+        allTables &&
+        blocks.some((b) => b.kind === "vacancy" || b.kind === "reservation")
+      );
+    })()
   }));
 
   const metadata = {

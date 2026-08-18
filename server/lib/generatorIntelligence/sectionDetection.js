@@ -15,7 +15,12 @@ const { detectSmartTables, pickPrimaryVacancyTable } = require("./smartTableDete
 const { detectAndClassifyLinks } = require("./linkClassification");
 const { softCleanForStructuring } = require("./textNormalization");
 const { classifyLine, isFeeLine } = require("../../utils/sectionDetector");
-const { extractDateValueForDisplay } = require("../../utils/extractDateValue");
+const {
+  extractDateValueForDisplay,
+  isMilestoneEventDateLine,
+  isAllocationTableDateRow
+} = require("../../utils/extractDateValue");
+const { compileVacancySectionBlocks } = require("../../utils/reconstructDelimiterLessVacancy");
 
 /**
  * @param {string} line
@@ -211,6 +216,18 @@ function isVacancyGridRetainLine(line) {
   if (/URSCST|SCSTOBC/i.test(t)) return true;
   const catHits = t.match(/\b(UR|GEN|OBC|SC|ST|EWS|Total|OH|HH|VH|PWD)\b/gi) || [];
   if (catHits.length >= 4 && !/[|,]/.test(t)) return true;
+  if (
+    /\b(candidates?\s+recommended|cut[- ]?off(?:\s+marks)?|cut[- ]?off\s+on\s+percentage)\b/i.test(t) &&
+    (t.match(/\d+(?:\.\d+)?%?/g) || []).length >= 6
+  ) {
+    return true;
+  }
+  if (
+    /^[A-Z]{1,3}\d{2,4}\s+\S+/i.test(t) &&
+    !/^[A-Z]{1,3}\d{2,4}\s+(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|OTHERS|PWD)\b/i.test(t)
+  ) {
+    return true;
+  }
   return isFlattenedVacancyGridCell(t);
 }
 
@@ -241,6 +258,52 @@ function vacancyGridRetainIndexes(lines) {
   (lines || []).forEach((line, idx) => {
     if (retain.has(idx + 1) && isFlattenedVacancyGridCell(lines[idx + 1]) && isAdjacentVacancyPostTitle(line)) {
       retain.add(idx);
+    }
+  });
+  (lines || []).forEach((line, idx) => {
+    if (!retain.has(idx)) return;
+    const next = String(lines[idx + 1] || "").trim();
+    if (!next || retain.has(idx + 1)) return;
+    const parts = next.split(/\s+/).filter(Boolean);
+    if (parts.length < 1 || parts.length > 2) return;
+    const cats = new Set(["UR", "SC", "ST", "OBC", "EWS", "ESM", "OH", "HH", "VH", "TOTAL", "OTHERS", "PWD", "PWDOTHERS"]);
+    const allCats = parts.every((p) => cats.has(p.replace(/[^A-Za-z]/g, "").toUpperCase()) || /^PWD/i.test(p));
+    if (allCats && (String(line).match(/\b(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|PWD)/gi) || []).length >= 4) {
+      retain.add(idx + 1);
+    }
+  });
+  (lines || []).forEach((line, idx) => {
+    if (!retain.has(idx)) return;
+    const cur = String(line || "").trim();
+    const next = String(lines[idx + 1] || "").trim();
+    if (!next || retain.has(idx + 1)) return;
+    if (!/^[A-Z]{1,3}\d{2,4}\s+\S+$/i.test(cur)) return;
+    if (/^[A-Z]{1,3}\d{2,4}\s+(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|OTHERS|PWD)\b/i.test(cur)) return;
+    if (/^[A-Z]{1,3}\d{2,4}\b/i.test(next) || /^\d+\./.test(next)) return;
+    if (next.length > 160) return;
+    retain.add(idx + 1);
+  });
+  // Retain unambiguous wrap continuations of post-code department rows
+  // (post-name fragments and org lines), without pulling in new post codes.
+  (lines || []).forEach((line, idx) => {
+    if (!retain.has(idx)) return;
+    const cur = String(line || "").trim();
+    if (!/^[A-Z]{1,3}\d{2,4}\s+\S+/i.test(cur)) return;
+    if (/^[A-Z]{1,3}\d{2,4}\s+(UR|SC|ST|OBC|EWS|ESM|OH|HH|VH|OTHERS|PWD)\b/i.test(cur)) return;
+    for (let k = 1; k <= 3; k += 1) {
+      const next = String(lines[idx + k] || "").trim();
+      if (!next || retain.has(idx + k)) continue;
+      if (/^[A-Z]{1,3}\d{2,4}\b/i.test(next) || /^\d+\./.test(next)) break;
+      if (next.length > 160) break;
+      if (/^(note\s*\d|details of post|#\s*\d|cut[- ]?off|category[- ]wise)/i.test(next)) break;
+      const toks = next.split(/\s+/);
+      const looksOrg =
+        /^(o\/o|office|department|ministry|staff|central|directorate|commission|board|bureau|national|armed|niti|lal|archaeological|controller|registrar|intelligence|election)\b/i.test(
+          next
+        );
+      const looksPostCont = toks.length <= 4 && !/^\d/.test(next) && !/^[-*]/.test(next);
+      if (looksOrg || looksPostCont) retain.add(idx + k);
+      else break;
     }
   });
   return retain;
@@ -274,6 +337,7 @@ function detectByLineClassification(text) {
     salary: [],
     howToApply: [],
     helpline: [],
+    notification: [],
     other: []
   };
 
@@ -288,6 +352,13 @@ function detectByLineClassification(text) {
     }
     if (/https?:\/\/|www\./i.test(line)) {
       buckets.links.push(line);
+      const withoutUrl = line
+        .replace(/https?:\/\/[^\s)]+/gi, " ")
+        .replace(/www\.[^\s)]+/gi, " ")
+        .replace(/\(\s*\)/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (withoutUrl && isMilestoneEventDateLine(withoutUrl)) buckets.dates.push(withoutUrl);
       return;
     }
     if (isFeeLine(line)) {
@@ -319,6 +390,7 @@ function detectByLineClassification(text) {
     else if (kind === "fee") buckets.fee.push(line);
     else if (kind === "links") buckets.links.push(line);
     else if (kind === "faq") buckets.faq.push(line);
+    else if (looksLikeExamListLine(line)) buckets.notification.push(line);
     else buckets.other.push(line);
   });
 
@@ -332,6 +404,8 @@ function detectByLineClassification(text) {
     else if (t.kind === "important_dates") buckets.dates.push(t.csvBody);
     else if (t.kind === "qualification") buckets.qualification.push(t.csvBody);
     else if (t.kind === "vacancy" || t.kind === "reservation") buckets.vacancy.push(t.csvBody);
+    else if (looksLikeExamNameTable(t)) buckets.notification.push(t.csvBody);
+    else if (t.kind === "unknown" && t.csvBody) buckets.other.push(t.csvBody);
   }
 
   return { buckets, tables, links: detectAndClassifyLinks(buckets.links) };
@@ -373,6 +447,24 @@ function buildBlocks(sectionType, lines, extras = {}) {
     if (pairs.length) return [{ type: BLOCK_TYPES.FAQ, pairs }];
   }
 
+  if (sectionType === SECTION_TYPES.VACANCY_DETAILS) {
+    const compiled = compileVacancySectionBlocks(bodyLines);
+    if (compiled && compiled.some((b) => b.type === "table")) {
+      return compiled.map((b) => {
+        if (b.type === "table") {
+          return {
+            type: BLOCK_TYPES.TABLE,
+            kind: b.kind,
+            rows: b.rows,
+            csvBody: b.csvBody,
+            confidence: b.confidence
+          };
+        }
+        return { type: BLOCK_TYPES.PARAGRAPH, text: b.text };
+      });
+    }
+  }
+
   if (sectionType === SECTION_TYPES.IMPORTANT_DATES) {
     const items = bodyLines.map((line) => {
       const m = line.match(/^([^:：]+)[:：]\s*(.+)$/);
@@ -412,6 +504,95 @@ function buildBlocks(sectionType, lines, extras = {}) {
   }
 
   return [{ type: BLOCK_TYPES.PARAGRAPH, text: bodyLines.join("\n") }];
+}
+
+/**
+ * Departmental / sitting-notice exam titles — not vacancy posts.
+ * @param {string} line
+ */
+function looksLikeExamListLine(line) {
+  const t = String(line || "").trim();
+  const l = t.toLowerCase();
+  if (!t) return false;
+  if (/\b(vacancy|vacancies|total\s*posts?|apply\s*online|application\s*fee|age\s*limit)\b/i.test(l)) {
+    return false;
+  }
+  if (/^s\.?\s*(no\.?)?\s*\|?\s*name of examination/i.test(t)) return true;
+  if (/\bname of examination\b/i.test(l)) return true;
+  if (/\blimited departmental competitive examination\b/i.test(l)) return true;
+  if (
+    /^\d+[.)]\s+/.test(t) &&
+    /\b(examination|assistant|clerk|officer|secretariat|grade)\b/i.test(l) &&
+    !/\b(vacancy|allocated)\b/i.test(l)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @param {object} table
+ */
+function looksLikeExamNameTable(table) {
+  const blob = String(table?.csvBody || "").toLowerCase();
+  if (!blob) return false;
+  if (/\b(vacancy|vacancies|total\s*posts?)\b/.test(blob)) return false;
+  return /\b(name of examination|limited departmental competitive examination)\b/.test(blob);
+}
+
+/**
+ * True only for actual eligibility rules, not sliding/process fragments.
+ * @param {string} line
+ */
+function isActualEligibilityContent(line) {
+  const t = String(line || "")
+    .replace(/^(qualification|age limit)\s*:\s*/i, "")
+    .trim();
+  if (!t) return false;
+  if (/\b(sliding(?:\s+process)?|reallocation|venue, date and slot|choose the venue)\b/i.test(t)) {
+    return false;
+  }
+  if (/\bwill be\b/i.test(t) && !/\b(age\s*limit|degree|graduate|10th|12th|diploma|qualification)\b/i.test(t)) {
+    return false;
+  }
+  return /\b(age\s*limit|minimum\s*age|maximum\s*age|आयु|educational\s*qualification|degree\s+in|graduate|diploma|10th|12th|matric|intermediate|b\.e|b\.tech|years?\s*(?:of\s*)?age|\d{1,2}\s*[-–]\s*\d{1,2}\s*years?)\b/i.test(
+    t
+  );
+}
+
+/**
+ * Keep a concise factual preamble instead of dumping leftover fragments.
+ * @param {string[]} lines
+ * @returns {string[]}
+ */
+function condenseShortInformationLines(lines) {
+  const src = (lines || []).map((l) => String(l).trim()).filter(Boolean);
+  const prose = src.filter((l) => {
+    if (l.length < 12) return false;
+    if (isAllocationTableDateRow(l)) return false;
+    if (/^[A-Z]{1,3}\d{2,4}\s+\b(UR|SC|ST|OBC|EWS|ESM)/i.test(l)) return false;
+    if (/^\d{10,}$/.test(l)) return false;
+    if (/^(st|nd|rd|th)$/i.test(l)) return false;
+    if (/^(sc|st|obc|ews|ur|esm|oh|hh|vh)\s+(sc|st|obc)/i.test(l)) return false;
+    return true;
+  });
+  const preferred = prose.filter(
+    (l) =>
+      l.length < 240 &&
+      /\b(commission|board|department|ministry|subject:|important notice|tentative allocation|declaration|examination,|staff selection)\b/i.test(
+        l
+      )
+  );
+  const picked = [];
+  const seen = new Set();
+  for (const line of preferred.concat(prose)) {
+    const key = line.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    picked.push(line);
+    if (picked.length >= 6 || picked.join("\n").length > 1400) break;
+  }
+  return picked.length ? picked : prose.slice(0, 4);
 }
 
 /**
@@ -473,14 +654,38 @@ function detectDocumentSections(rawText) {
     });
   };
 
-  if (buckets.other.length) push(SECTION_TYPES.SHORT_INFORMATION, buckets.other, 0.55);
+  if (buckets.other.length) {
+    const examFromOther = [];
+    const shortRaw = [];
+    for (const line of buckets.other) {
+      if (looksLikeExamListLine(line)) examFromOther.push(line);
+      else shortRaw.push(line);
+    }
+    if (examFromOther.length) {
+      buckets.notification = [...(buckets.notification || []), ...examFromOther];
+    }
+    const shortLines = condenseShortInformationLines(shortRaw);
+    push(SECTION_TYPES.SHORT_INFORMATION, shortLines, 0.55);
+  }
   const elig = [];
-  if (buckets.qualification.length) elig.push(...buckets.qualification.map((x) => `Qualification: ${x}`));
-  if (buckets.age.length) elig.push(...buckets.age.map((x) => `Age Limit: ${x}`));
+  if (buckets.qualification.length) {
+    for (const x of buckets.qualification) {
+      if (isActualEligibilityContent(x)) elig.push(`Qualification: ${x}`);
+    }
+  }
+  if (buckets.age.length) {
+    for (const x of buckets.age) {
+      if (isActualEligibilityContent(x)) elig.push(`Age Limit: ${x}`);
+    }
+  }
   if (elig.length) push(SECTION_TYPES.ELIGIBILITY, elig, 0.7);
-  push(SECTION_TYPES.IMPORTANT_DATES, buckets.dates, 0.75);
+  const dateLines = (buckets.dates || []).filter((line) => {
+    if (/\n/.test(line)) return true;
+    return isMilestoneEventDateLine(line);
+  });
+  push(SECTION_TYPES.IMPORTANT_DATES, dateLines, 0.75);
   push(SECTION_TYPES.APPLICATION_FEE, buckets.fee, 0.8);
-  push(SECTION_TYPES.AGE_LIMIT, buckets.age.length && !elig.length ? buckets.age : [], 0.7);
+  push(SECTION_TYPES.AGE_LIMIT, buckets.age.length && !elig.length ? buckets.age.filter(isActualEligibilityContent) : [], 0.7);
   push(SECTION_TYPES.VACANCY_DETAILS, buckets.vacancy, 0.8);
   push(SECTION_TYPES.SELECTION_PROCESS, buckets.selection, 0.7);
   push(SECTION_TYPES.SALARY, buckets.salary, 0.7);
@@ -494,6 +699,7 @@ function detectDocumentSections(rawText) {
   }
   push(SECTION_TYPES.FAQ, buckets.faq, 0.8);
   push(SECTION_TYPES.HELPLINE, buckets.helpline, 0.7);
+  push(SECTION_TYPES.NOTIFICATION_DETAILS, buckets.notification, 0.7);
 
   // Preserve leftover unclassified lines as unknown section rather than discard
   const used = new Set(
@@ -521,5 +727,8 @@ module.exports = {
   buildBlocks,
   detectDocumentSections,
   isVacancyGridRetainLine,
-  isFlattenedVacancyGridCell
+  isFlattenedVacancyGridCell,
+  looksLikeExamListLine,
+  isActualEligibilityContent,
+  condenseShortInformationLines
 };

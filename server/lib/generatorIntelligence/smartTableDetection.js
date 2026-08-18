@@ -26,18 +26,33 @@ function classifyTableKind(headerRow, sampleBody) {
   ) {
     return TABLE_KINDS.FEE;
   }
-  if (/\b(age|years?|आयु|min(?:imum)?|max(?:imum)?|born)\b/.test(blob) && /\d/.test(blob)) {
+  if (
+    /\b(name of examination|limited departmental competitive examination|departmental\s+examinations?)\b/.test(
+      blob
+    ) &&
+    !/\b(vacancy|vacancies|total\s*posts?)\b/.test(blob)
+  ) {
+    return TABLE_KINDS.UNKNOWN;
+  }
+  if (/\b(date\s*of\s*birth|d\.?o\.?b\.?|last\s+selected)\b/.test(blob)) {
+    if (/\b(vacancy|allocated|post|category)\b/.test(blob)) return TABLE_KINDS.VACANCY;
+    return TABLE_KINDS.UNKNOWN;
+  }
+  if (
+    /\b(age\s*limit|min(?:imum)?\s*age|max(?:imum)?\s*age|years?\s*(?:of\s*)?age|आयु)\b/.test(blob) &&
+    /\d/.test(blob)
+  ) {
     return TABLE_KINDS.AGE;
   }
   if (
-    /\b(date|schedule|opening|closing|last\s*date|exam\s*date|notification)\b/.test(blob) &&
+    /\b(schedule|opening|closing|last\s*date|exam\s*date|notification\s*date|start\s*date)\b/.test(blob) &&
     /\d{1,2}[./-]|\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/.test(
       blob
     )
   ) {
     return TABLE_KINDS.IMPORTANT_DATES;
   }
-  if (/\b(qualification|degree|diploma|graduate|10th|12th|योग्यता)\b/.test(blob)) {
+  if (/\b(educational\s*qualification|qualification|degree|diploma|graduate|10th|12th|योग्यता)\b/.test(blob)) {
     return TABLE_KINDS.QUALIFICATION;
   }
   if (
@@ -47,8 +62,9 @@ function classifyTableKind(headerRow, sampleBody) {
     return TABLE_KINDS.RESERVATION;
   }
   if (
-    /\b(post|vacancy|vacancies|posts?|category|ur\b|obc|sc\b|st\b|ews|gen|total|पद|रिक्ति)\b/.test(blob) &&
-    /\d/.test(blob)
+    /\b(post\s*name|vacancy|vacancies|total\s*posts?|category|ur\b|obc|sc\b|st\b|ews|gen|पद|रिक्ति)\b/.test(blob) &&
+    /\d/.test(blob) &&
+    !/\bname of examination\b/.test(blob)
   ) {
     return TABLE_KINDS.VACANCY;
   }
@@ -124,10 +140,7 @@ function pickPrimaryVacancyTable(tables) {
   const vacancy = (tables || []).filter(
     (t) => t.kind === TABLE_KINDS.VACANCY || t.kind === TABLE_KINDS.RESERVATION
   );
-  if (!vacancy.length) {
-    const eligible = (tables || []).filter((t) => t.eligible && t.kind === TABLE_KINDS.UNKNOWN);
-    return eligible.sort((a, b) => b.confidence - a.confidence)[0] || null;
-  }
+  if (!vacancy.length) return null;
   return vacancy.sort((a, b) => b.confidence - a.confidence)[0] || null;
 }
 

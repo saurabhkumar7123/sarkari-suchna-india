@@ -58,6 +58,21 @@ function blockToText(block) {
 function sectionBodyText(section) {
   const blocks = Array.isArray(section?.blocks) ? section.blocks : [];
   if (blocks.length) {
+    const hasTable = blocks.some((b) => b.type === BLOCK_TYPES.TABLE);
+    const hasOther = blocks.some((b) => b.type !== BLOCK_TYPES.TABLE);
+    if (hasTable && hasOther) {
+      return blocks
+        .map((block) => {
+          const text = blockToText(block);
+          if (!text) return "";
+          if (block.type === BLOCK_TYPES.TABLE) {
+            return `---table---\n${text}\n---endtable---`;
+          }
+          return text;
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
     return blocks.map(blockToText).filter(Boolean).join("\n");
   }
   const raw = String(section?.originalContent || "").trim();
@@ -96,6 +111,9 @@ function resolvePublisherTitle(section, body) {
     section.sectionType === SECTION_TYPES.VACANCY_DETAILS ||
     /^vacancy/i.test(base)
   ) {
+    if (/(^|\n)---table---(\n|$)/i.test(String(body || ""))) {
+      return "Vacancy";
+    }
     const resolved = resolveVacancySectionHeader(body);
     return resolved.title;
   }

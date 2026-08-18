@@ -110,7 +110,7 @@ function parseLinkLine(line) {
     if (left && /^(https?:\/\/|www\.|\/)/i.test(right)) {
       const url = right.startsWith("www.") ? `https://${right}` : right;
       const category = classifyLink(left, url);
-      return { label: left || labelForCategory(category), url, category };
+      return { label: sanitizeLinkLabel(left, category), url, category };
     }
   }
 
@@ -121,7 +121,7 @@ function parseLinkLine(line) {
     const url = root[0];
     const label = t.replace(url, "").replace(/[=:\-–|]+/g, " ").trim() || labelForCategory(LINK_CATEGORIES.OTHER);
     const category = classifyLink(label, url);
-    return { label: label || labelForCategory(category), url, category };
+    return { label: sanitizeLinkLabel(label, category), url, category };
   }
 
   const url = urls[0];
@@ -129,10 +129,33 @@ function parseLinkLine(line) {
   label = label.replace(/[=:\-–|]+/g, " ").replace(/\s+/g, " ").trim();
   const category = classifyLink(label, url);
   return {
-    label: label || labelForCategory(category),
+    label: sanitizeLinkLabel(label, category),
     url,
     category
   };
+}
+
+/**
+ * Drop punctuation-only or sentence-wrap leftovers such as "()".
+ * @param {string} label
+ * @param {string} category
+ */
+function sanitizeLinkLabel(label, category) {
+  const fallback = labelForCategory(category);
+  const t = String(label || "")
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!t || !/[A-Za-z\u0900-\u097F]{3,}/.test(t) || t.length > 48) return fallback;
+  if (
+    category &&
+    category !== "other" &&
+    !new RegExp(`^${fallback.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i").test(t) &&
+    /\b(from|while|designated|website of|login module|visit|choosing)\b/i.test(t)
+  ) {
+    return fallback;
+  }
+  return t;
 }
 
 /**
@@ -200,5 +223,6 @@ module.exports = {
   parseLinkLine,
   dedupeLinks,
   detectAndClassifyLinks,
-  formatLinksForPublisher
+  formatLinksForPublisher,
+  sanitizeLinkLabel
 };
