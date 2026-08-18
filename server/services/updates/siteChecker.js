@@ -2,6 +2,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const crypto = require("crypto");
 const logger = require("../../utils/logger");
+const { extractHostname } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 const {
   isSscApiEnabled,
   isSscApiSite,
@@ -65,6 +66,41 @@ function itemMatchesBaseline(itemFingerprint, baseline) {
   return String(itemFingerprint || "") === baseline.fingerprint;
 }
 
+function isUpscOfficialSite(site) {
+  const host = extractHostname(site && site.url);
+  return host === "upsc.gov.in" || Boolean(host && host.endsWith(".upsc.gov.in"));
+}
+
+function parseHrefContainsSelector(selector) {
+  const raw = String(selector || "").trim();
+  const match = raw.match(/^a\[href\*=["']([^"']+)["']\]$/i);
+  return match ? match[1] : null;
+}
+
+function selectLatestRoots($, site) {
+  const roots = $(site.selector);
+  if (roots.length) return roots;
+  if (!isUpscOfficialSite(site)) return roots;
+
+  const needle = parseHrefContainsSelector(site.selector);
+  if (!needle) return roots;
+
+  const lower = needle.toLowerCase();
+  const matched = $("a[href]").filter((_, el) =>
+    String($(el).attr("href") || "")
+      .toLowerCase()
+      .includes(lower)
+  );
+  if (matched.length) {
+    logger.info("updates: UPSC href selector matched case-insensitively", {
+      siteId: site && site.id,
+      selector: site && site.selector,
+      matched: matched.length
+    });
+  }
+  return matched;
+}
+
 function absolutizeLink(siteUrl, href) {
   const raw = String(href || "").trim();
   if (!raw) return "";
@@ -88,7 +124,7 @@ async function fetchHtml(url) {
 
 function extractLatestItems(html, site) {
   const $ = cheerio.load(html);
-  const roots = $(site.selector);
+  const roots = selectLatestRoots($, site);
 
   if (!roots.length) {
     logger.warn("updates: selector not found (structure changed?)", {
@@ -201,5 +237,6 @@ module.exports = {
   SOURCE_METHODS,
   resolveSourceMethod,
   extractLatestItems,
-  extractSourceItems
+  extractSourceItems,
+  isUpscOfficialSite
 };
