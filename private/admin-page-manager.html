@@ -7,50 +7,30 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 <link rel="stylesheet" href="/css/admin/admin-confirm.css?v=3">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Content,Page Manager">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Content,Published Pages">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
-  </div>
-  <div class="nav-group-title">Admin</div>
-  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
-  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
-  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
-  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
-  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
-  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
-  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
-  <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
-  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
-  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
-  <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
-  <div class="nav-group-title">System</div>
-  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
-  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+  <div class="sidebar-top"></div>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">📄 Page Manager</div>
+    <div class="admin-title">Published Pages</div>
     <div class="admin-header-actions">
       <button type="button" class="header-action-btn" id="managerRefreshBtn">Refresh Pages</button>
     </div>
   </div>
   <section class="page-manager" aria-label="Page list">
     <div class="manager-header">
-      <h1 class="manager-title">Page Manager</h1>
-      <p class="manager-hint">Search, filter by tag or status. Newest and recently updated pages appear first. Publish remains a separate manual action.</p>
+      <h1 class="manager-title">Published Pages</h1>
+      <p class="manager-hint">Live/public pages. Search, filter, and manage published content. This is not the review queue. Publish remains a separate manual action.</p>
       <nav class="admin-ops-flow" aria-label="Content workflow">
         <span class="admin-ops-flow__step">Detected Update</span>
         <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
@@ -61,6 +41,8 @@
         <span class="admin-ops-flow__step">Approve</span>
         <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
         <span class="admin-ops-flow__step is-current is-locked">Manual Publish</span>
+        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+        <span class="admin-ops-flow__step is-done">Published</span>
       </nav>
     </div>
     <div class="saas-stats-bar" id="pageManagerStats" hidden aria-live="polite"></div>
@@ -107,11 +89,11 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js?v=5"></script>

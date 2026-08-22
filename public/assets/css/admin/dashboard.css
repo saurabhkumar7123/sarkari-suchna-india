@@ -909,8 +909,8 @@ body.dark .page-row:hover{
     left:0;
     top:0;
     z-index:var(--z-overlay);
-    transform:translateX(-100%);
-    transition:transform .25s ease;
+    transform:translateX(-105%);
+    transition:transform .2s ease;
     box-shadow:none;
   }
 
@@ -920,7 +920,7 @@ body.dark .page-row:hover{
   }
 
   .main{
-    padding:56px 16px 24px;
+    padding:16px 16px 24px;
     width:100%;
   }
 
@@ -1244,9 +1244,8 @@ body.dark .pagination button{
 
 .main{
   flex:1;
-  margin-left:250px;
-  max-width:none;
-  width:calc(100% - 250px);
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,232px)));
   padding:18px 22px 28px;
   transition:margin-left .25s ease, width .25s ease;
 }
@@ -1263,14 +1262,14 @@ body.admin-saas-v2{
 
 body.admin-saas-v2 .main{
   flex:none;
-  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
-  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,338px)));
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,232px)));
   max-width:none;
 }
 
 body.admin-saas-v2.sidebar-collapsed .main{
-  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-collapsed,72px));
-  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-collapsed,72px)));
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-collapsed,68px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-collapsed,68px)));
 }
 
 .admin-header{
@@ -1449,17 +1448,31 @@ body.admin-saas-v2.sidebar-collapsed .main{
 
 @media(max-width:768px){
   .toggle-btn{display:block}
-  .toggle-btn{z-index:calc(var(--z-modal, 1000) + 30)}
+  .toggle-btn{z-index:calc(var(--z-modal, 1000) + 46)}
   .sidebar{
-    transform:translateX(-100%);
-    width:250px !important;
-    z-index:calc(var(--z-modal, 1000) + 20);
+    transform:translateX(-105%);
+    z-index:calc(var(--z-modal, 1000) + 40);
     pointer-events:none;
   }
-  .sidebar.active{
-    transform:translateX(0);
+  body.admin-saas-v2 .sidebar,
+  body.admin-saas-v2 #sidebar,
+  body.admin-saas-v2.admin-has-topbar .sidebar,
+  body.admin-saas-v2.admin-has-topbar #sidebar{
+    width:min(92vw, 288px) !important;
+    min-width:0 !important;
+    max-width:min(92vw, 288px) !important;
+    transform:translateX(-105%);
+    pointer-events:none;
+  }
+  .sidebar.active,
+  body.admin-saas-v2 .sidebar.active,
+  body.admin-saas-v2 #sidebar.active,
+  body.admin-saas-v2.admin-has-topbar .sidebar.active,
+  body.admin-saas-v2.admin-has-topbar #sidebar.active{
+    transform:translateX(0) !important;
     pointer-events:auto;
   }
+  html.dashboard-sidebar-open,
   body.dashboard-sidebar-open{
     overflow:hidden;
     touch-action:none;
@@ -1467,7 +1480,7 @@ body.admin-saas-v2.sidebar-collapsed .main{
   .main{
     margin-left:0;
     width:100%;
-    padding:58px 14px 20px;
+    padding:16px 14px 20px;
   }
   body.sidebar-collapsed .main{
     margin-left:0;

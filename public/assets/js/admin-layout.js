@@ -39,26 +39,72 @@
   }
 
   function enhanceTopbar() {
+    if (typeof window.AdminHoistTopbar === "function") {
+      window.AdminHoistTopbar();
+    }
     if (document.getElementById("adminTopbarTools")) return;
-    const header = document.querySelector("#adminAppTopbar .admin-header") || document.querySelector("#standaloneAdminShell .admin-header") || document.querySelector(".admin-header");
-    if (!header) return;
+    const bar = document.getElementById("adminAppTopbar");
+    if (!bar) return;
 
-    const crumbs = parseBreadcrumbs();
-    if (crumbs.length && !header.querySelector(".admin-breadcrumbs")) {
-      const bc = document.createElement("div");
-      bc.innerHTML = renderBreadcrumbsHtml(crumbs);
-      header.insertBefore(bc.firstElementChild, header.firstChild);
+    let identity = document.getElementById("adminTopbarIdentity");
+    if (!identity) {
+      identity = document.createElement("div");
+      identity.id = "adminTopbarIdentity";
+      const toggle = document.getElementById("sidebarToggle");
+      if (toggle && toggle.parentElement === bar) {
+        bar.insertBefore(identity, toggle.nextSibling);
+      } else {
+        bar.insertBefore(identity, bar.firstChild);
+      }
     }
 
-    const toolsHost = header.querySelector(".admin-right") || header;
+    const crumbs = parseBreadcrumbs();
+    if (crumbs.length && !identity.querySelector(".admin-breadcrumbs")) {
+      identity.innerHTML = renderBreadcrumbsHtml(crumbs);
+    }
+
     const tools = document.createElement("div");
     tools.id = "adminTopbarTools";
     tools.className = "admin-topbar-tools";
     tools.setAttribute("aria-label", "Admin tools");
-    toolsHost.appendChild(tools);
+
+    const searchBtn = document.createElement("button");
+    searchBtn.type = "button";
+    searchBtn.className = "admin-topbar-search";
+    searchBtn.id = "adminTopbarSearchBtn";
+    searchBtn.setAttribute("aria-label", "Search admin pages");
+    searchBtn.textContent = "Search";
+    searchBtn.addEventListener("click", () => {
+      if (window.AdminCommandPalette && typeof window.AdminCommandPalette.open === "function") {
+        window.AdminCommandPalette.open();
+      }
+    });
+    tools.appendChild(searchBtn);
+
+    bar.appendChild(tools);
 
     if (typeof window.AdminNotifications !== "undefined") {
       window.AdminNotifications.mount(tools);
+    }
+
+    const darkBtn = document.createElement("button");
+    darkBtn.type = "button";
+    darkBtn.className = "admin-topbar-iconbtn";
+    darkBtn.id = "topbarDarkModeToggle";
+    darkBtn.setAttribute("aria-label", "Toggle dark mode");
+    darkBtn.textContent = document.body.classList.contains("dark") ? "Light" : "Dark";
+    tools.appendChild(darkBtn);
+
+    const account = document.createElement("a");
+    account.href = "/admin/sessions";
+    account.className = "admin-topbar-iconbtn";
+    account.setAttribute("aria-label", "Account and sessions");
+    account.textContent = "Account";
+    account.style.textDecoration = "none";
+    tools.appendChild(account);
+
+    if (typeof window.AdminShellRebind === "function") {
+      window.AdminShellRebind();
     }
   }
 
@@ -98,6 +144,11 @@
     }
 
     wrapStandaloneContent();
+    if (typeof window.AdminHoistTopbar === "function") {
+      window.AdminHoistTopbar();
+    } else if (typeof window.AdminShellRebind === "function") {
+      window.AdminShellRebind();
+    }
     enhanceTopbar();
 
     if (typeof window.AdminShellRebind === "function") {
@@ -112,6 +163,9 @@
   if (mode === "standalone") {
     mountStandaloneShell();
   } else if (document.getElementById("sidebar")) {
+    if (typeof window.AdminHoistTopbar === "function") {
+      window.AdminHoistTopbar();
+    }
     enhanceTopbar();
   }
 })();

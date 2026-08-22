@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <title>Admin Monitoring</title>
@@ -7,71 +7,64 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Monitoring">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
-  </div>
-  <div class="nav-group-title">Admin</div>
-  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
-  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
-  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
-  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
-  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
-  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
-  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
-  <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
-  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
-  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
-  <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
-  <div class="nav-group-title">System</div>
-  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
-  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+  <div class="sidebar-top"></div>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">📊 Monitoring</div>
+    <div class="admin-title">Monitoring</div>
     <div class="admin-header-actions">
-      <button type="button" class="header-action-btn" id="refreshSitesBtn">↻ Refresh</button>
+      <button type="button" class="header-action-btn" id="refreshSitesBtn">Refresh</button>
     </div>
   </div>
   <section class="monitoring-section" aria-label="Monitoring panel">
-    <div class="manager-header">
-      <h1 class="manager-title">Source health</h1>
-      <p class="manager-hint">Official sources, last check, change detection, and queue status. Automation flags are not changed from this page.</p>
-      <nav class="admin-ops-flow" aria-label="Automation workflow">
-        <span class="admin-ops-flow__step is-current">Monitoring</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Detected Update</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Draft</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Review</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-      </nav>
+    <div class="admin-page-head manager-header" data-workspace="monitoring">
+      <div>
+        <h1 class="manager-title">Monitoring</h1>
+        <p class="manager-hint">Monitor approved official government sources and their health. Detected notices live in Detected Updates.</p>
+      </div>
     </div>
+    <div class="admin-page-head manager-header" data-workspace="detections">
+      <div>
+        <h1 class="manager-title">Detected Updates</h1>
+        <p class="manager-hint">Review notices discovered by the monitoring system. This is not the source-health table.</p>
+      </div>
+    </div>
+    <nav class="admin-ops-flow" aria-label="Automation workflow">
+      <span class="admin-ops-flow__step is-current">Monitoring</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Detected</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Draft</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Review</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Approve</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Published</span>
+    </nav>
     <div class="saas-stats-bar" id="monitoringStats" hidden aria-live="polite"></div>
+    <div class="monitoring-sources-block">
     <div class="monitoring-grid">
       <div class="card card-indigo"><h3><span class="card-icon">🌐</span> Total Sites</h3><p id="totalSites">0</p></div>
-      <div class="card card-green"><h3><span class="card-icon">✅</span> Active Sites</h3><p id="activeSites">0</p></div>
+      <div class="card card-green"><h3><span class="card-icon">?</span> Active Sites</h3><p id="activeSites">0</p></div>
       <div class="card card-red"><h3><span class="card-icon">⚠️</span> Broken Sites</h3><p id="brokenSites">0</p></div>
     </div>
     <div class="monitoring-grid">
       <div class="card card-blue"><h3><span class="card-icon">📥</span> Queue Waiting</h3><p id="queueWaiting">0</p></div>
       <div class="card card-teal"><h3><span class="card-icon">⚙️</span> Queue Active</h3><p id="queueActive">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">❌</span> Queue Failed</h3><p id="queueFailed">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">?</span> Queue Failed</h3><p id="queueFailed">0</p></div>
     </div>
     <section class="admin-health-panel" aria-label="System health">
       <div class="saas-toolbar">
@@ -85,9 +78,9 @@
       </div>
     </section>
     <div class="monitor-actions">
-      <button type="button" id="runCheckBtn">▶ Run Check</button>
-      <button type="button" id="retryFailedBtn">♻ Retry Failed</button>
-      <button type="button" id="clearQueueBtn">🧹 Clear Queue</button>
+      <button type="button" id="runCheckBtn">? Run Check</button>
+      <button type="button" id="retryFailedBtn">? Retry Failed</button>
+      <button type="button" id="clearQueueBtn">Clear Queue</button>
     </div>
     <div class="saas-toolbar">
       <div class="saas-toolbar__title">
@@ -103,11 +96,23 @@
     </div>
     <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
     <div id="sitesTable" class="sites-table-host"></div>
+    </div>
     <div class="recent" id="recentUpdates">
-      <h3>Detected updates</h3>
+      <div class="admin-page-head">
+        <div>
+          <h3>Detected Updates</h3>
+          <p class="manager-hint">What the monitoring system found. Open a draft from here when a notice needs conversion.</p>
+        </div>
+      </div>
+      <div class="admin-filter-row" role="group" aria-label="Detected update filters">
+        <button type="button" class="admin-filter-chip is-active" data-update-filter="all">All</button>
+        <button type="button" class="admin-filter-chip" data-update-filter="needs-draft">Needs Draft</button>
+        <button type="button" class="admin-filter-chip" data-update-filter="drafted">Drafted</button>
+        <button type="button" class="admin-filter-chip" data-update-filter="reviewed">Reviewed</button>
+      </div>
       <div id="recentUpdatesList"><p class="empty-msg">Loading…</p></div>
     </div>
-    <div class="recent">
+    <div class="recent monitoring-failed-block">
       <h3>Queue Failed Jobs</h3>
       <div class="filters-toolbar" style="margin-bottom:10px;">
         <div class="filter-group">
@@ -123,11 +128,11 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>

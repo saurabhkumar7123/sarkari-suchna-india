@@ -7,13 +7,13 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/pdf.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 </head>
 <body class="admin-alerts-page admin-saas-v2" data-admin-breadcrumbs="System,Alerts">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -31,7 +31,7 @@
   <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
   <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
   <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
+  <a href="/generator"><span class="nav-ico">?</span><span class="nav-text">Page Generator</span></a>
   <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
   <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
   <div class="nav-group-title">Homepage</div>
@@ -41,18 +41,18 @@
   <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
 </div>
 <div class="main">
-  <div class="admin-header"><div class="admin-title">🔔 PDF Alerts</div></div>
+  <div class="admin-header"><div class="admin-title">Alerts</div></div>
   <div class="main-container">
     <div class="page-header page-header--with-search">
       <div class="page-header__text">
-        <h1>PDF Notifications</h1>
-        <p>Latest PDF uploads and site announcements</p>
+        <h1>Alerts</h1>
+        <p>System alerts for PDF uploads and site announcements. This is not the activity log.</p>
       </div>
       <div class="pdf-alerts-toolbar">
         <div class="pdf-alerts-toolbar-actions">
           <a href="/upload" class="pdf-alerts-btn pdf-alerts-btn--primary">Upload PDF</a>
           <button type="button" id="pdfAlertsRefresh" class="pdf-alerts-btn pdf-alerts-btn--ghost" aria-label="Refresh PDF list">
-            ↻ Refresh
+            ? Refresh
           </button>
         </div>
         <label class="search-wrap pdf-alerts-search" for="pdfAlertsSearch">
@@ -81,11 +81,11 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/pdf.js?v=6"></script>

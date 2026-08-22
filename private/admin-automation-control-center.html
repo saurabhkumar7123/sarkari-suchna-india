@@ -9,13 +9,13 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=5">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Control Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -29,7 +29,7 @@
   <div class="admin-header acc-header">
     <div class="acc-header__copy">
       <div class="admin-title">Automation Control Center</div>
-      <p class="acc-header__sub">Enterprise admin UI for live automation operations, review workflows, source governance, and runtime health.</p>
+      <p class="acc-header__sub">Automation safety, gates, and control state. Operator work (sources, drafts, reviews, recruitments) lives on the dedicated pages — not here.</p>
     </div>
     <div class="admin-header-actions acc-header__actions">
       <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
@@ -130,10 +130,10 @@
   <section class="acc-hero" aria-label="Control center overview">
     <div>
       <p class="acc-kicker">AMP-4B / ACC</p>
-      <h1>Primary interface for the automation ecosystem</h1>
+      <h1>Automation controls and safety state</h1>
       <p class="acc-hero__sub">
-        Monitor official sources, review automation output, inspect recruitments, manage runtime settings,
-        and observe live worker, pipeline, repository, and Telegram health. Publishing remains manual-only.
+        Gates, scheduler, Telegram, and publish lock. Operator lists (sources, detections, drafts, reviews)
+        live on their own pages. Publishing remains manual-only.
       </p>
       <div class="acc-hero__meta">
         <span id="accLastScanHero">Last scan: Manual refresh only</span>
@@ -155,24 +155,24 @@
     </div>
   </section>
 
-  <div class="acc-section-nav" role="tablist" aria-label="Dashboard sections">
-    <button type="button" class="acc-tab is-active" role="tab" id="accTab-accDashboard" data-acc-tab="accDashboard" aria-controls="accDashboard" aria-selected="true" tabindex="0">Dashboard</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accSources" data-acc-tab="accSources" aria-controls="accSources" aria-selected="false" tabindex="-1">Source Manager</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accRecruitments" data-acc-tab="accRecruitments" aria-controls="accRecruitments" aria-selected="false" tabindex="-1">Recruitment Explorer</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accReview" data-acc-tab="accReview" aria-controls="accReview" aria-selected="false" tabindex="-1">Review Center</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accDrafts" data-acc-tab="accDrafts" aria-controls="accDrafts" aria-selected="false" tabindex="-1">Draft Viewer</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accWorkflow" data-acc-tab="accWorkflow" aria-controls="accWorkflow" aria-selected="false" tabindex="-1">Workflow Queue</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accInsights" data-acc-tab="accInsights" aria-controls="accInsights" aria-selected="false" tabindex="-1">AI Insights</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accMonitoring" data-acc-tab="accMonitoring" aria-controls="accMonitoring" aria-selected="false" tabindex="-1">Monitoring</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accAudit" data-acc-tab="accAudit" aria-controls="accAudit" aria-selected="false" tabindex="-1">Audit Center</button>
-    <button type="button" class="acc-tab" role="tab" id="accTab-accSettings" data-acc-tab="accSettings" aria-controls="accSettings" aria-selected="false" tabindex="-1">Settings</button>
+  <div class="acc-section-nav" role="tablist" aria-label="Automation control sections">
+    <button type="button" class="acc-tab is-active" role="tab" id="accTab-accDashboard" data-acc-tab="accDashboard" aria-controls="accDashboard" aria-selected="true" tabindex="0">Control overview</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accSources" data-acc-tab="accSources" aria-controls="accSources" aria-selected="false" tabindex="-1">Official sources</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accRecruitments" data-acc-tab="accRecruitments" aria-controls="accRecruitments" aria-selected="false" tabindex="-1">Recruitment snapshot</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accReview" data-acc-tab="accReview" aria-controls="accReview" aria-selected="false" tabindex="-1">Review snapshot</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accDrafts" data-acc-tab="accDrafts" aria-controls="accDrafts" aria-selected="false" tabindex="-1">Draft snapshot</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accWorkflow" data-acc-tab="accWorkflow" aria-controls="accWorkflow" aria-selected="false" tabindex="-1">Queue snapshot</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accInsights" data-acc-tab="accInsights" aria-controls="accInsights" aria-selected="false" tabindex="-1">Insights</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accMonitoring" data-acc-tab="accMonitoring" aria-controls="accMonitoring" aria-selected="false" tabindex="-1">Health snapshot</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accAudit" data-acc-tab="accAudit" aria-controls="accAudit" aria-selected="false" tabindex="-1">Automation logs</button>
+    <button type="button" class="acc-tab" role="tab" id="accTab-accSettings" data-acc-tab="accSettings" aria-controls="accSettings" aria-selected="false" tabindex="-1">Control flags</button>
   </div>
 
   <section class="acc-section is-acc-tab-active" id="accDashboard" role="tabpanel" aria-labelledby="accTab-accDashboard" data-acc-searchable="dashboard cards charts health">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Overview</p>
-        <h2>Automation Dashboard</h2>
+        <h2>Automation overview</h2>
       </div>
       <div class="acc-section__actions">
         <a href="/admin/recruitments" class="header-action-btn" style="text-decoration:none;">Open recruitments</a>
@@ -280,6 +280,7 @@
         <h2>Official Source Manager</h2>
       </div>
       <div class="acc-section__actions">
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
         <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Source</button>
       </div>
     </div>
@@ -382,7 +383,8 @@
         <h2>Review Center</h2>
       </div>
       <div class="acc-section__actions">
-        <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open queue workspace</a>
+        <a href="/admin/editorial-review" class="header-action-btn" style="text-decoration:none;">Open Review Queue</a>
+        <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open Recruitment Review</a>
       </div>
     </div>
     <div class="acc-three-column">
@@ -432,6 +434,7 @@
         <h2>Draft Viewer</h2>
       </div>
       <div class="acc-section__actions">
+        <a href="/generator#drafts" class="header-action-btn" style="text-decoration:none;">Open Drafts</a>
         <button type="button" class="header-action-btn" id="accPrintDraftBtn">Print Ready</button>
       </div>
     </div>
@@ -526,7 +529,7 @@
         <h2>Monitoring Dashboard</h2>
       </div>
       <div class="acc-section__actions">
-        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open legacy monitoring</a>
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
       </div>
     </div>
     <div class="acc-monitor-grid" id="accMonitorGrid"></div>
@@ -539,6 +542,7 @@
         <h2>Audit Center</h2>
       </div>
       <div class="acc-section__actions">
+        <a href="/admin/activity" class="header-action-btn" style="text-decoration:none;">Open system Activity</a>
         <button type="button" class="header-action-btn" id="accExportAuditBtn">Export Ready</button>
       </div>
     </div>
@@ -566,7 +570,7 @@
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Controls</p>
-        <h2>Settings</h2>
+        <h2>Control flags</h2>
       </div>
     </div>
     <div class="acc-two-column">
@@ -627,11 +631,11 @@
 </dialog>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=5"></script>
 <script src="/js/admin-ui.js"></script>

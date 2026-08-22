@@ -81,8 +81,8 @@
     byId("erEmpty").hidden = true;
     byId("erDetail").hidden = false;
     const rec = data.recruitment || {};
-    byId("erRecruitmentTitle").textContent = rec.title || `Recruitment #${rec.id}`;
-    byId("erStatusLine").innerHTML = `${badge(data.workflowState, data.workflowStateLabel)} ${badge(data.bindingStatus, data.bindingStatusLabel)}`;
+    byId("erRecruitmentTitle").textContent = rec.title || `Review #${rec.id}`;
+    byId("erStatusLine").innerHTML = `${badge(data.workflowState, data.workflowStateLabel)} ${badge(data.bindingStatus, data.bindingStatusLabel)} <span>Source → Draft → Review</span>`;
     byId("erOpsLink").href = "/admin/recruitments";
     byId("erRecruitmentMeta").innerHTML = `
       <dt>ID</dt><dd>${escapeHtml(rec.id)}</dd>

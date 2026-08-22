@@ -6,12 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
 <link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=3">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
@@ -26,12 +26,25 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Recruitment Operations</div>
+    <div class="admin-title">Recruitments</div>
     <div class="admin-header-actions rom-header-links">
       <a class="header-action-btn rom-secondary" href="/admin/dashboard" style="text-decoration:none;">Dashboard</a>
       <a class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review</a>
       <a class="header-action-btn rom-secondary" href="/admin/recruitments#eventTimeline" style="text-decoration:none;">Events</a>
       <button type="button" class="header-action-btn" id="newRecruitmentBtn">+ New recruitment</button>
+    </div>
+  </div>
+
+  <div class="admin-page-head" data-workspace="recruitments">
+    <div>
+      <h1>Recruitments</h1>
+      <p class="manager-hint">Recruitment Manager — manage recruitment records, status, and metadata. Event chronology is a separate workspace for the selected recruitment.</p>
+    </div>
+  </div>
+  <div class="admin-page-head" data-workspace="events">
+    <div>
+      <h1>Event Timeline</h1>
+      <p class="manager-hint">Chronological history of the selected recruitment. Select a record in the list, then work the events — this is not the recruitment table.</p>
     </div>
   </div>
 
@@ -60,7 +73,7 @@
     <section class="rom-card rom-list-panel">
       <div class="rom-card__head">
         <div>
-          <h1>Recruitment Manager</h1>
+          <h1>Recruitment records</h1>
           <p id="recruitmentCount">0 recruitments</p>
         </div>
       </div>
@@ -154,9 +167,9 @@
           </form>
         </section>
 
-        <section class="rom-card">
+        <section class="rom-card rom-events-card">
           <div class="rom-card__head">
-            <div><h2>Recruitment Events</h2><p>Ordered lifecycle timeline with manual statuses.</p></div>
+            <div><h2>Event Timeline</h2><p>Recruitment Events for the selected record. Chronological history — not a second recruitment list.</p></div>
             <button type="button" class="header-action-btn" id="addEventBtn">+ Add event</button>
           </div>
           <form id="eventForm" class="rom-inline-form" hidden>
@@ -232,11 +245,11 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>

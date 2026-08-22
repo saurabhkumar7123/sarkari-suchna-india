@@ -6,12 +6,12 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
 <link rel="stylesheet" href="/css/admin/editorial-review.css?v=3">
 <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
@@ -28,31 +28,36 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Editorial Review Workspace</div>
+    <div class="admin-title">Review Queue</div>
     <div class="admin-header-actions rom-header-links">
-      <a class="header-action-btn rom-secondary" href="/admin/dashboard" style="text-decoration:none;">Dashboard</a>
-      <a class="header-action-btn" href="/admin/recruitments" style="text-decoration:none;">Recruitment Operations</a>
-      <a class="header-action-btn rom-secondary" href="/admin/recruitment-runtime-preview" style="text-decoration:none;">Shared Preview</a>
-      <button type="button" class="header-action-btn" id="erRefreshBtn">↻ Refresh</button>
+      <a class="header-action-btn rom-secondary" href="/generator#drafts" style="text-decoration:none;">Drafts</a>
+      <a class="header-action-btn" href="/admin/recruitments" style="text-decoration:none;">Recruitments</a>
+      <button type="button" class="header-action-btn" id="erRefreshBtn">Refresh</button>
     </div>
   </div>
 
-  <p class="er-help">
-    Human review only — compare a recruitment with its linked generator draft, leave internal notes,
-    and apply manual decisions. No automatic routing or publishing.
-  </p>
+  <div class="admin-page-head">
+    <div>
+      <h1>Review Queue</h1>
+      <p class="er-help">
+        Editorial Review Workspace — human editorial review of generated content.
+        This is not Recruitment Review and not the drafts list.
+        Approve does not publish. Manual publish is a separate action.
+      </p>
+    </div>
+  </div>
   <nav class="admin-ops-flow" aria-label="Review workflow">
-    <span class="admin-ops-flow__step">Source</span>
+    <span class="admin-ops-flow__step is-done">Detected</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Conversion</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Draft</span>
+    <span class="admin-ops-flow__step is-done">Draft</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step is-current">Review</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Notification</span>
+    <span class="admin-ops-flow__step">Approve</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step">Published</span>
   </nav>
   <p id="erMessage" class="er-message" hidden role="status"></p>
 
@@ -94,8 +99,8 @@
         <section class="er-card">
           <div class="er-card__head">
             <div>
-              <h2 id="erRecruitmentTitle">Recruitment</h2>
-              <p id="erStatusLine">—</p>
+              <h2 id="erRecruitmentTitle">Review</h2>
+              <p id="erStatusLine">Source ? Draft ? Review</p>
             </div>
             <a id="erOpsLink" class="header-action-btn er-secondary" href="/admin/recruitments" style="text-decoration:none;">Open in Operations</a>
           </div>
@@ -172,11 +177,11 @@
           <dialog class="ew-shortcuts" id="ewShortcuts">
             <h3>Keyboard productivity</h3>
             <dl>
-              <dt>Alt + ↓</dt><dd>Next issue</dd>
-              <dt>Alt + ↑</dt><dd>Previous issue</dd>
+              <dt>Alt + ?</dt><dd>Next issue</dd>
+              <dt>Alt + ?</dt><dd>Previous issue</dd>
               <dt>Alt + ]</dt><dd>Next section</dd>
               <dt>Alt + [</dt><dd>Previous section</dd>
-              <dt>Ctrl/⌘ + S</dt><dd>Save review progress (never publish)</dd>
+              <dt>Ctrl/? + S</dt><dd>Save review progress (never publish)</dd>
             </dl>
             <form method="dialog" style="margin-top:0.75rem;"><button type="submit" class="ew-btn">Close</button></form>
           </dialog>
@@ -223,10 +228,12 @@
           </div>
           <div class="er-decisions" id="erDecisions"></div>
           <aside class="er-publish-gate" aria-label="Manual publish remains separate">
-            <p><strong>Approval does not publish.</strong> Final publishing is always a separate manual action.</p>
+            <p class="er-publish-gate__title">Manual Publish</p>
+            <p><strong>Approval does not publish.</strong> Auto Publish is disabled. Preview or publish the page as a separate manual action.</p>
             <div class="er-publish-gate__actions">
-              <a class="header-action-btn" href="/admin/page-manager" style="text-decoration:none;">Open Page Manager</a>
-              <a class="header-action-btn" href="/generator" style="text-decoration:none;">Open Generator</a>
+              <a class="header-action-btn" href="/admin/recruitment-runtime-preview" style="text-decoration:none;">Preview</a>
+              <a class="header-action-btn" href="/admin/page-manager" style="text-decoration:none;">Publish Page</a>
+              <a class="header-action-btn er-secondary" href="/generator" style="text-decoration:none;">Edit Draft</a>
             </div>
           </aside>
           <label class="er-comment">Decision comment
@@ -263,11 +270,11 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>

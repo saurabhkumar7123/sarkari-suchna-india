@@ -163,17 +163,28 @@
   function setSidebarOpen(open) {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
+    const wasOpen = sidebar.classList.contains("active");
     const isOpen = Boolean(open);
+    const mobile = isMobileSidebarMode();
     sidebar.classList.toggle("active", isOpen);
-    document.body.classList.toggle("dashboard-sidebar-open", isOpen && isMobileSidebarMode());
-    if (isMobileSidebarMode()) {
+    const lock = isOpen && mobile;
+    document.body.classList.toggle("dashboard-sidebar-open", lock);
+    document.documentElement.classList.toggle("dashboard-sidebar-open", lock);
+    if (mobile) {
+      sidebar.setAttribute("aria-hidden", isOpen ? "false" : "true");
       const backdrop = ensureSidebarBackdrop();
       backdrop.classList.toggle("active", isOpen);
-    } else if (sidebarBackdropEl) {
-      sidebarBackdropEl.classList.remove("active");
+    } else {
+      sidebar.removeAttribute("aria-hidden");
+      if (sidebarBackdropEl) sidebarBackdropEl.classList.remove("active");
       document.body.classList.remove("dashboard-sidebar-open");
+      document.documentElement.classList.remove("dashboard-sidebar-open");
     }
     syncMobileToggleButton();
+    if (!isOpen && wasOpen && mobile) {
+      const toggle = document.getElementById("sidebarToggle");
+      if (toggle) toggle.focus();
+    }
   }
 
   function syncCollapsedNavTooltips() {
@@ -197,23 +208,9 @@
   function syncRailActiveState() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
-    const openGroup = sidebar.querySelector(".nav-group:not(.is-collapsed)[data-nav-group]");
-    const openKey = (openGroup && openGroup.getAttribute("data-nav-group")) || "";
-    const activeLink = sidebar.querySelector("a.active");
-    const activeLinkKey =
-      (activeLink && activeLink.closest(".nav-group") && activeLink.closest(".nav-group").getAttribute("data-nav-group")) ||
-      "";
-    const railKey = openKey || activeLinkKey;
-    sidebar.querySelectorAll(".sidebar-rail__item[data-rail-group]").forEach((btn) => {
-      const key = btn.getAttribute("data-rail-group");
-      const isActive = Boolean(key && key === railKey);
-      btn.classList.toggle("is-active", isActive);
-      btn.setAttribute("aria-selected", isActive ? "true" : "false");
-      btn.setAttribute("tabindex", isActive ? "0" : "-1");
-    });
     sidebar.querySelectorAll(".nav-group[data-nav-group]").forEach((group) => {
-      const key = group.getAttribute("data-nav-group");
-      group.classList.toggle("is-open", Boolean(key && key === openKey));
+      group.classList.add("is-open");
+      group.classList.remove("is-collapsed");
     });
   }
 
@@ -280,68 +277,18 @@
     );
   }
 
-  function setNavGroupOpen(group, open, options) {
+  function setNavGroupOpen(group, open) {
     if (!group) return;
-    const isOpen = Boolean(open);
-    const exclusive = !options || options.exclusive !== false;
-    const persist = !options || options.persist !== false;
-    const sidebar = group.closest("#sidebar") || document.getElementById("sidebar");
-
-    if (isOpen && exclusive && sidebar) {
-      sidebar.querySelectorAll(".nav-group[data-nav-group]").forEach((other) => {
-        if (other === group) return;
-        other.classList.add("is-collapsed");
-        other.classList.remove("is-open");
-        const otherToggle = other.querySelector("[data-nav-group-toggle]");
-        if (otherToggle) otherToggle.setAttribute("aria-expanded", "false");
-      });
-    }
-
-    group.classList.toggle("is-collapsed", !isOpen);
-    group.classList.toggle("is-open", isOpen);
-    const toggle = group.querySelector("[data-nav-group-toggle]");
-    if (toggle) toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    const key = group.getAttribute("data-nav-group");
-    if (key && persist) {
-      try {
-        if (isOpen) {
-          localStorage.setItem("adminNavOpenGroup", key);
-        } else {
-          const current = localStorage.getItem("adminNavOpenGroup");
-          if (current === key) localStorage.removeItem("adminNavOpenGroup");
-        }
-        localStorage.setItem("adminNavGroup:" + key, isOpen ? "1" : "0");
-      } catch (_) {
-        /* ignore */
-      }
-    }
-    syncRailActiveState();
+    group.classList.toggle("is-collapsed", !open);
+    group.classList.toggle("is-open", Boolean(open));
   }
 
   function applyNavGroupStateFromStorage() {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
-    let preferred = null;
-    try {
-      preferred = localStorage.getItem("adminNavOpenGroup");
-    } catch (_) {
-      preferred = null;
-    }
-    const groups = Array.from(sidebar.querySelectorAll(".nav-group[data-nav-group]"));
-    let openKey = preferred;
-    if (!openKey || !groups.some((g) => g.getAttribute("data-nav-group") === openKey)) {
-      const defaultGroup = groups.find((g) => g.getAttribute("data-default-open") === "1");
-      openKey = defaultGroup ? defaultGroup.getAttribute("data-nav-group") : "dashboard";
-    }
-    groups.forEach((group) => {
-      const key = group.getAttribute("data-nav-group");
-      setNavGroupOpen(group, key === openKey, { exclusive: false, persist: false });
+    sidebar.querySelectorAll(".nav-group[data-nav-group]").forEach((group) => {
+      setNavGroupOpen(group, true);
     });
-    try {
-      if (openKey) localStorage.setItem("adminNavOpenGroup", openKey);
-    } catch (_) {
-      /* ignore */
-    }
     syncRailActiveState();
   }
 
@@ -357,29 +304,11 @@
     if (!sidebar) return;
     if (sidebar.dataset.navGroupsBound === "1") return;
     sidebar.dataset.navGroupsBound = "1";
-    sidebar.addEventListener("click", (e) => {
-      const railBtn = e.target.closest(".sidebar-rail__item[data-rail-group]");
-      if (railBtn && sidebar.contains(railBtn)) {
-        e.preventDefault();
-        const key = railBtn.getAttribute("data-rail-group");
-        const group = sidebar.querySelector('.nav-group[data-nav-group="' + key + '"]');
-        if (!group) return;
-        expandSidebarFromRailIfNeeded();
-        setNavGroupOpen(group, true);
-        return;
-      }
-      const toggle = e.target.closest("[data-nav-group-toggle]");
-      if (!toggle || !sidebar.contains(toggle)) return;
-      e.preventDefault();
-      const group = toggle.closest(".nav-group");
-      if (!group) return;
-      const isOpen = toggle.getAttribute("aria-expanded") !== "false";
-      if (isOpen) {
-        setNavGroupOpen(group, false);
-      } else {
-        setNavGroupOpen(group, true);
-      }
-    });
+    const closeBtn = document.getElementById("sidebarCloseBtn");
+    if (closeBtn && closeBtn.dataset.shellBound !== "1") {
+      closeBtn.dataset.shellBound = "1";
+      closeBtn.addEventListener("click", () => setSidebarOpen(false));
+    }
   }
 
   function syncSidebarCollapseButton() {
@@ -454,7 +383,7 @@
 
   function isNavLinkActive(linkEl, path) {
     const href = linkEl.getAttribute("href") || "";
-    if (linkEl.classList.contains("sidebar-view-site") || href === "/") return false;
+    if (linkEl.classList.contains("sidebar-view-site") || linkEl.classList.contains("sidebar-account-link") || href === "/") return false;
     const parts = splitHref(href);
     const h = normalizeNavPath(parts.path);
     const p = normalizeNavPath(path);
@@ -474,6 +403,23 @@
       if (claimed) return false;
     }
     return true;
+  }
+
+  function applyWorkspaceHash() {
+    const hash = currentLocationHash();
+    document.body.setAttribute("data-admin-hash", hash);
+    document.querySelectorAll(".admin-workspace-target").forEach((el) => {
+      el.classList.remove("admin-workspace-target");
+    });
+    if (!hash) return;
+    const el = document.getElementById(hash);
+    if (!el) return;
+    el.classList.add("admin-workspace-target");
+    window.setTimeout(() => {
+      if (typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ block: "start", behavior: "smooth" });
+      }
+    }, 40);
   }
 
   function markActiveSidebarLink() {
@@ -497,13 +443,19 @@
   }
 
   function syncDarkModeToggleButton() {
-    const btn = document.getElementById("darkModeToggle");
-    if (!btn) return;
     const isDark = document.body.classList.contains("dark");
-    const ico = btn.querySelector(".nav-ico");
-    const label = btn.querySelector(".nav-text");
-    if (ico) ico.textContent = isDark ? "☀️" : "🌙";
-    if (label) label.textContent = isDark ? "Light Mode" : "Dark Mode";
+    const btn = document.getElementById("darkModeToggle");
+    if (btn) {
+      const label = btn.querySelector(".nav-text");
+      if (label) label.textContent = isDark ? "Light Mode" : "Dark Mode";
+      btn.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+    }
+    const topBtn = document.getElementById("topbarDarkModeToggle");
+    if (topBtn) {
+      topBtn.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+      topBtn.setAttribute("title", isDark ? "Light mode" : "Dark mode");
+      topBtn.textContent = isDark ? "Light" : "Dark";
+    }
   }
 
   async function logout() {
@@ -520,8 +472,7 @@
   }
 
   function hoistAdminTopbar() {
-    const header = document.querySelector(".admin-header");
-    if (!header) return;
+    if (!document.getElementById("sidebar") && !document.getElementById("sidebarToggle")) return;
     let bar = document.getElementById("adminAppTopbar");
     if (!bar) {
       bar = document.createElement("header");
@@ -534,31 +485,20 @@
     if (toggle && toggle.parentElement !== bar) {
       bar.insertBefore(toggle, bar.firstChild);
     }
-    if (header.parentElement !== bar) {
-      bar.appendChild(header);
+    let identity = document.getElementById("adminTopbarIdentity");
+    if (!identity) {
+      identity = document.createElement("div");
+      identity.id = "adminTopbarIdentity";
+    }
+    if (identity.parentElement !== bar) {
+      const afterToggle = toggle && toggle.parentElement === bar ? toggle.nextSibling : bar.firstChild;
+      bar.insertBefore(identity, afterToggle);
     }
     document.body.classList.add("admin-has-topbar");
   }
 
   function bindRailKeyboard() {
-    const sidebar = document.getElementById("sidebar");
-    if (!sidebar || sidebar.dataset.railKeysBound === "1") return;
-    sidebar.dataset.railKeysBound = "1";
-    sidebar.addEventListener("keydown", (e) => {
-      const items = Array.from(sidebar.querySelectorAll(".sidebar-rail__item[data-rail-group]"));
-      const current = document.activeElement;
-      const index = items.indexOf(current);
-      if (index < 0) return;
-      let next = -1;
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (index + 1) % items.length;
-      else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (index - 1 + items.length) % items.length;
-      else if (e.key === "Home") next = 0;
-      else if (e.key === "End") next = items.length - 1;
-      if (next < 0) return;
-      e.preventDefault();
-      items[next].focus();
-      items[next].click();
-    });
+    /* Classic sidebar: no numbered rail keyboard surface. */
   }
 
   /** Re-bind sidebar controls after admin-layout injects sidebar on standalone pages. */
@@ -581,6 +521,11 @@
         setSidebarOpen(!sidebar.classList.contains("active"));
       });
     }
+    const closeBtn = document.getElementById("sidebarCloseBtn");
+    if (closeBtn && closeBtn.dataset.shellBound !== "1") {
+      closeBtn.dataset.shellBound = "1";
+      closeBtn.addEventListener("click", () => setSidebarOpen(false));
+    }
     const collapse = document.getElementById("sidebarCollapseBtn");
     if (collapse && collapse.dataset.shellBound !== "1") {
       collapse.dataset.shellBound = "1";
@@ -591,6 +536,11 @@
       dark.dataset.shellBound = "1";
       dark.addEventListener("click", () => toggleDarkMode());
     }
+    const topDark = document.getElementById("topbarDarkModeToggle");
+    if (topDark && topDark.dataset.shellBound !== "1") {
+      topDark.dataset.shellBound = "1";
+      topDark.addEventListener("click", () => toggleDarkMode());
+    }
     const logoutLink = document.getElementById("logoutLink");
     if (logoutLink && logoutLink.dataset.shellBound !== "1") {
       logoutLink.dataset.shellBound = "1";
@@ -600,7 +550,14 @@
       });
     }
     hoistAdminTopbar();
+    if (isMobileSidebarMode()) {
+      const sidebar = document.getElementById("sidebar");
+      if (sidebar && !sidebar.classList.contains("active")) {
+        sidebar.setAttribute("aria-hidden", "true");
+      }
+    }
     markActiveSidebarLink();
+    applyWorkspaceHash();
     applyNavGroupStateFromStorage();
     expandNavGroupForActiveLink();
     bindNavGroupToggles();
@@ -641,6 +598,7 @@
     markActiveSidebarLink();
     expandNavGroupForActiveLink();
     syncRailActiveState();
+    applyWorkspaceHash();
   });
 
   document.addEventListener("keydown", (e) => {
@@ -650,8 +608,6 @@
     const sidebar = document.getElementById("sidebar");
     if (!sidebar || !sidebar.classList.contains("active")) return;
     setSidebarOpen(false);
-    const toggle = document.getElementById("sidebarToggle");
-    if (toggle) toggle.focus();
   });
 
   dashboardMobileMq.addEventListener("change", () => {
@@ -685,6 +641,7 @@
 
   window.adminSafeFetch = adminSafeFetch;
   window.AdminShellRebind = bindShellEvents;
+  window.AdminHoistTopbar = hoistAdminTopbar;
   window.showGlobalErrorBanner = showGlobalErrorBanner;
   window.hideGlobalErrorBanner = hideGlobalErrorBanner;
 

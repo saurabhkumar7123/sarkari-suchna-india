@@ -106,6 +106,7 @@
     if (bar) return bar;
 
     const host =
+      document.getElementById("drafts") ||
       document.querySelector(".generator-hero") ||
       document.querySelector(".admin-workflow-banner") ||
       document.querySelector(".main-container");
@@ -115,10 +116,10 @@
     bar.id = "generatorDraftsBar";
     bar.className = "generator-drafts-bar";
     bar.hidden = true;
-    bar.setAttribute("aria-label", "Parked drafts");
+    bar.setAttribute("aria-label", "Drafts");
     bar.innerHTML = `
       <div class="generator-drafts-bar__head">
-        <strong class="generator-drafts-bar__title">Parked drafts</strong>
+        <strong class="generator-drafts-bar__title">Unpublished drafts</strong>
         <span class="generator-drafts-bar__count" id="generatorDraftsBarTotal">Total 0</span>
       </div>
       <div class="generator-drafts-bar__section" data-draft-section="draft">
@@ -299,7 +300,8 @@
 
     const meta = document.createElement("span");
     meta.className = isBar ? "generator-drafts-bar__row-meta" : "sidebar-drafts__link-meta";
-    meta.textContent = when;
+    const status = String(row.status || row.workflow_state || (mode === "published" ? "Published" : "Draft")).trim();
+    meta.textContent = [when, status].filter(Boolean).join(" · ");
 
     main.appendChild(titleEl);
     main.appendChild(meta);
@@ -310,7 +312,7 @@
     const openBtn = document.createElement("a");
     openBtn.className = isBar ? "generator-drafts-bar__btn generator-drafts-bar__btn--open" : "sidebar-drafts__btn sidebar-drafts__btn--open";
     openBtn.href = href;
-    openBtn.textContent = "Open";
+    openBtn.textContent = isBar ? "Open Draft" : "Open";
 
     actions.appendChild(openBtn);
 
@@ -377,6 +379,19 @@
     const countEl = el("sidebarDraftCount");
     if (countEl) countEl.textContent = `Total ${total}`;
 
+    const navDrafts = document.getElementById("navDraftsLink");
+    if (navDrafts) {
+      let badge = document.getElementById("navDraftsBadge");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.id = "navDraftsBadge";
+        badge.className = "nav-badge";
+        navDrafts.appendChild(badge);
+      }
+      badge.textContent = String(drafts.length);
+      badge.hidden = drafts.length === 0;
+    }
+
     const badgeDraft = el("sidebarDraftBadgeDraft");
     if (badgeDraft) badgeDraft.textContent = String(drafts.length);
 
@@ -427,7 +442,15 @@
       "bar"
     );
 
-    bar.hidden = total === 0;
+    bar.hidden = total === 0 && String(window.location.hash || "") !== "#drafts";
+    if (String(window.location.hash || "") === "#drafts") {
+      bar.hidden = false;
+      setSectionOpen(bar, "draft", true, "bar");
+      openBarSection = "draft";
+      if (typeof bar.scrollIntoView === "function") {
+        bar.scrollIntoView({ block: "start" });
+      }
+    }
     restoreOpenSections(null, bar);
   }
 

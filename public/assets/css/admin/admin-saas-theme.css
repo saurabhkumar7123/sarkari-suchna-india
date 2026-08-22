@@ -51,8 +51,8 @@ body.admin-saas-v2 #adminAppTopbar .admin-header{
 
 body.admin-saas-v2 .admin-title,
 body.admin-saas-v2 .admin-left h1{
-  font-size:clamp(17px,2.5vw,20px) !important;
-  font-weight:800 !important;
+  font-size:18px !important;
+  font-weight:750 !important;
   letter-spacing:-.02em;
   color:var(--saas-text) !important;
 }
@@ -71,11 +71,11 @@ body.admin-saas-v2 .admin-badge{
 }
 
 body.admin-saas-v2 .admin-breadcrumbs{
-  flex:1 1 100%;
+  flex:0 1 auto;
   font-size:12px;
   font-weight:600;
   color:var(--saas-muted);
-  margin:0 0 2px;
+  margin:0;
 }
 
 body.admin-saas-v2 .header-action-btn,
@@ -107,12 +107,13 @@ body.admin-saas-v2 .dashboard-welcome-banner{
 }
 
 body.admin-saas-v2 .dashboard-hero{
-  border-radius:var(--saas-radius);
-  border:1px solid var(--saas-line);
-  background:var(--saas-surface);
+  border-radius:0;
+  border:none;
+  background:transparent;
   box-shadow:none;
   position:relative;
-  overflow:hidden;
+  overflow:visible;
+  padding:0;
 }
 
 body.admin-saas-v2 .dashboard-hero::before{
@@ -172,7 +173,7 @@ body.admin-saas-v2 .card h3{
 }
 
 body.admin-saas-v2 .card p{
-  font-size:clamp(24px,4vw,30px) !important;
+  font-size:22px !important;
   letter-spacing:-.02em;
 }
 
@@ -402,7 +403,6 @@ body.dark.admin-saas-v2 .saas-btn{
 @media (max-width:768px){
   body.admin-saas-v2 .main{
     padding:16px 12px 28px;
-    padding-top:62px !important;
   }
 
   body.admin-saas-v2 .main > .admin-header{

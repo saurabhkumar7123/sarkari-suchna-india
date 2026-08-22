@@ -8,14 +8,14 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
-<link rel="stylesheet" href="/css/admin/recruitment-runtime-preview.css?v=3">
+<link rel="stylesheet" href="/css/admin/recruitment-runtime-preview.css?v=4">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Recruitment,Runtime Preview">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -47,21 +47,26 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">👁 Recruitment Runtime Preview</div>
+    <div class="admin-left">
+      <div class="admin-title">Runtime Preview</div>
+      <p class="manager-hint">Preview-only. This is not a review queue and it does not publish.</p>
+    </div>
     <div class="admin-header-actions">
-      <span class="rrp-badge">Internal · Preview only · In-memory</span>
+      <span class="rrp-badge">Preview only · Not published</span>
     </div>
   </div>
 
-  <section class="monitoring-section rrp">
+  <section class="admin-page-head">
+    <div>
+      <h1>Runtime Preview</h1>
+      <p>Preview how a selected recruitment pipeline entry will appear at runtime. Choose an entry, then inspect the public-shaped output on the right.</p>
+    </div>
+  </section>
+
+  <section class="monitoring-section rrp rrp--preview">
     <p class="rrp-help">
-      Inspect recent recruitment pipeline output from live monitoring events when
-      <code>RECRUITMENT_PIPELINE_ENABLED</code> is on. Entries live only in
-      <strong>process-local memory</strong> (max 100, FIFO) and are cleared on
-      restart or Clear buffer. Nothing is written to the database or review queue.
-      Under PM2 with a separate worker process, this page only shows previews
-      recorded in the same Node process — see
-      <code>docs/recruitment-runtime-preview.md</code>.
+      Preview surface for recruitment pipeline output stored in this process.
+      Nothing here is a review decision, and nothing is published.
     </p>
 
     <form id="rrpFilters" class="rrp-filters" autocomplete="off">
@@ -105,7 +110,7 @@
     <div class="rrp-layout">
       <section class="rrp-card rrp-card--list">
         <div class="rrp-list-head">
-          <h2>Preview entries</h2>
+          <h2>Choose a preview entry</h2>
           <span id="rrpListMeta" class="rrp-list-meta"></span>
         </div>
         <div class="rrp-table-wrap">
@@ -135,8 +140,10 @@
       </section>
 
       <section class="rrp-card rrp-card--detail" id="rrpDetailPanel" hidden>
+        <p class="rrp-preview-empty">Select a recruitment entry on the left to preview runtime / public output. Shared Preview is read-only.</p>
         <div class="rrp-detail-head">
-          <h2>Full processor output</h2>
+          <p class="rrp-preview-banner">Preview only</p>
+          <h2>Runtime / public rendering</h2>
           <button type="button" class="header-action-btn header-action-btn--ghost" id="rrpCloseDetail">Close</button>
         </div>
         <p id="rrpDetailMessage" class="rrp-message" hidden role="status"></p>
@@ -161,8 +168,11 @@
 </div>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-layout.js?v=3"></script>
+<script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-recruitment-runtime-preview.js?v=3"></script>

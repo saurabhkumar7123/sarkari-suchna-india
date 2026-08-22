@@ -11,15 +11,20 @@ body.standalone-admin-page{
   overflow-x:hidden;
 }
 
+body.standalone-admin-page .sidebar,
+body.standalone-admin-page #sidebar,
 body.standalone-admin-page.admin-has-topbar .sidebar{
-  top: var(--admin-topbar-h, 56px);
-  height: calc(100vh - var(--admin-topbar-h, 56px));
-  height: calc(100dvh - var(--admin-topbar-h, 56px));
+  position:fixed;
+  top:0;
+  left:0;
+  height:100vh;
+  height:100dvh;
+  z-index:calc(var(--z-modal, 1000) + 12);
 }
 
 body.standalone-admin-page.admin-has-topbar #standaloneAdminShell{
-  margin-top: var(--admin-topbar-h, 56px);
-  min-height: calc(100vh - var(--admin-topbar-h, 56px));
+  margin-top: var(--admin-topbar-h, 50px);
+  min-height: calc(100vh - var(--admin-topbar-h, 50px));
 }
 
 body.standalone-admin-page.generator-page.admin-has-topbar .admin-header{
@@ -34,8 +39,8 @@ body.standalone-admin-page.generator-page.admin-has-topbar .admin-header{
 
 /* Single content column beside sidebar — offset from --admin-sidebar-current */
 body.standalone-admin-page #standaloneAdminShell{
-  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
-  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,338px)));
+  margin-left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,232px)));
   min-height:100vh;
   box-sizing:border-box;
   transition:margin-left var(--admin-duration-nav,.2s) var(--admin-ease,ease),width var(--admin-duration-nav,.2s) var(--admin-ease,ease);
@@ -55,16 +60,16 @@ body.standalone-admin-page.generator-page{
 }
 
 body.standalone-admin-page.generator-page .admin-header{
-  background:var(--gen-surface,var(--site-surface,#fff));
+  background:transparent;
   color:var(--gen-text,var(--site-text,#0f172a));
-  border:1px solid var(--gen-border,var(--site-border,#e2e8f0));
-  border-radius:var(--gen-radius,var(--site-radius,14px));
-  box-shadow:var(--gen-shadow,var(--site-shadow-sm));
-  margin:0 0 18px;
-  padding:16px 22px;
-  position:sticky;
-  top:0;
-  z-index:var(--z-sticky,100);
+  border:none;
+  border-radius:0;
+  box-shadow:none;
+  margin:0 0 14px;
+  padding:0 0 12px;
+  position:static;
+  top:auto;
+  z-index:auto;
   display:flex;
   flex-wrap:wrap;
   align-items:center;
@@ -73,7 +78,7 @@ body.standalone-admin-page.generator-page .admin-header{
 }
 
 body.standalone-admin-page.generator-page .admin-left h1{
-  font-size:22px;
+  font-size:18px;
   font-weight:800;
   line-height:1.2;
 }
@@ -107,8 +112,8 @@ body.standalone-admin-page.generator-page.has-sticky-publish-bar #standaloneAdmi
 }
 
 body.standalone-admin-page.generator-page .action-bar.is-sticky-publish{
-  left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
-  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,338px)));
+  left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
+  width:calc(100% - var(--admin-sidebar-current,var(--admin-sidebar-width,232px)));
 }
 
 /* ---- Upload page ---- */
@@ -116,17 +121,19 @@ body.standalone-admin-page.upload-page{
   background:#eef2f8;
 }
 
-body.standalone-admin-page.upload-page .admin-header{
-  background:#fff;
-  color:var(--up-text,#0f172a);
-  border-bottom:1px solid var(--up-line,#e2e8f0);
+body.standalone-admin-page.upload-page .admin-header,
+body.standalone-admin-page.trash-page .admin-header{
+  background:transparent;
+  color:var(--admin-text,#0f172a);
+  border:none;
+  border-bottom:1px solid var(--admin-border,#e2e8f0);
   border-radius:0;
-  box-shadow:0 8px 22px rgba(15,23,42,.08);
-  margin:0;
-  padding:14px 22px;
-  position:sticky;
-  top:0;
-  z-index:var(--z-sticky,100);
+  box-shadow:none;
+  margin:0 0 14px;
+  padding:0 0 12px;
+  position:static;
+  top:auto;
+  z-index:auto;
 }
 
 body.standalone-admin-page.upload-page .main-container{
@@ -139,19 +146,6 @@ body.standalone-admin-page.upload-page .main-container{
 /* ---- Trash page ---- */
 body.standalone-admin-page.trash-page{
   background:#eef2f8;
-}
-
-body.standalone-admin-page.trash-page .admin-header{
-  background:#fff;
-  color:#0f172a;
-  border-bottom:1px solid #e2e8f0;
-  border-radius:0;
-  box-shadow:0 4px 14px rgba(15,23,42,.06);
-  margin:0;
-  padding:14px 24px;
-  position:sticky;
-  top:0;
-  z-index:var(--z-base,10);
 }
 
 body.standalone-admin-page.trash-page .main-container{
@@ -168,9 +162,9 @@ body.standalone-admin-page .admin-topbar-tools{
 }
 
 body.standalone-admin-page .admin-breadcrumbs{
-  flex:1 1 100%;
-  margin:0 0 6px;
-  order:-1;
+  flex:0 1 auto;
+  margin:0;
+  order:0;
 }
 
 /* Global error banner inside shell */
@@ -191,10 +185,15 @@ body.standalone-admin-page #standaloneAdminShell > .admin-global-error-banner{
     padding-top:12px;
   }
 
-  body.standalone-admin-page.admin-has-topbar .sidebar{
+  body.standalone-admin-page.admin-has-topbar .sidebar,
+  body.standalone-admin-page .sidebar,
+  body.standalone-admin-page #sidebar{
+    position:fixed;
     top: 0;
+    left: 0;
     height: 100vh;
     height: 100dvh;
+    z-index: calc(var(--z-modal, 1000) + 40);
   }
 
   body.standalone-admin-page .toggle-btn{
@@ -240,7 +239,7 @@ body.standalone-admin-page.trash-page .modal{
 /* AdminUI confirm overlay — above fixed sidebar, centered in content column */
 body.standalone-admin-page #adminConfirmModalHost{
   z-index:99999 !important;
-  left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
+  left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
   right:0;
   width:auto;
 }

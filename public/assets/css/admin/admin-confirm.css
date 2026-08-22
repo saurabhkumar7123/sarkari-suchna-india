@@ -22,7 +22,7 @@
 }
 
 body.standalone-admin-page #adminConfirmModalHost{
-  left:var(--admin-sidebar-current,var(--admin-sidebar-width,338px));
+  left:var(--admin-sidebar-current,var(--admin-sidebar-width,232px));
   width:auto;
 }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 <title>Admin Dashboard</title>
@@ -8,44 +8,27 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="/css/base/tokens.css">
-<link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
-<link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+<link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=3">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Dashboard">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
-  </div>
-  <div class="nav-group-title">Admin</div>
-  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
-  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
-  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
-  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
-  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
-  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
-  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
-  <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">➕</span><span class="nav-text">Page Generator</span></a>
-  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
-  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
-  <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
-  <div class="nav-group-title">System</div>
-  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
-  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+  <div class="sidebar-top"></div>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title" id="dashboardGreeting">👋 Welcome, Admin</div>
+    <div class="admin-left">
+      <p class="dashboard-hero__eyebrow" id="dashboardDateLine">Today</p>
+      <div class="admin-title" id="dashboardGreeting">Dashboard</div>
+    </div>
     <div class="admin-header-actions">
-      <button type="button" class="header-action-btn" id="dashboardRefreshBtn">↻ Refresh</button>
+      <button type="button" class="header-action-btn" id="dashboardRefreshBtn">Refresh</button>
     </div>
   </div>
 
@@ -57,11 +40,12 @@
     <button type="button" class="dashboard-welcome-banner__dismiss" id="dashboardWelcomeDismiss">Got it</button>
   </div>
 
-  <section class="dashboard-hero" aria-label="Dashboard overview">
-    <p class="dashboard-hero__eyebrow" id="dashboardDateLine">Today</p>
-    <h1 class="dashboard-hero__title" id="dashboardHeroTitle">Dashboard</h1>
-    <p class="dashboard-hero__sub">What is happening, and what needs your attention. Publishing stays manual.</p>
-    <nav class="dashboard-jump-row" aria-label="Operator shortcuts">
+  <section class="admin-page-head dashboard-hero content-section" aria-label="Dashboard overview">
+    <div>
+      <h1 class="dashboard-hero__title" id="dashboardHeroTitle">Dashboard</h1>
+      <p class="dashboard-hero__sub">What is happening in the system right now. This is not the automation control panel. Publishing stays manual — Approve never publishes.</p>
+    </div>
+    <nav class="dashboard-jump-row admin-page-head__actions" aria-label="Operator shortcuts">
       <a href="/admin/monitoring#recentUpdates">Detected updates</a>
       <a href="/generator">Generator</a>
       <a href="/generator" id="quickCreateDraftCard">Create Draft</a>
@@ -76,37 +60,74 @@
     </nav>
   </section>
 
-  <nav class="admin-ops-flow" aria-label="Content workflow">
-    <span class="admin-ops-flow__step">Detected Update</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Draft</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step is-current">Review</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Approve</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-  </nav>
-
-  <section class="dashboard-ops-productivity dashboard-kpi-row" id="dashboardOpsProductivity" aria-label="Work that needs attention">
-    <a class="dashboard-today-card" href="/admin/monitoring#recentUpdates"><strong id="opsDetectedUpdates">—</strong><span>Detected updates</span></a>
-    <a class="dashboard-today-card" href="/generator"><strong id="opsDraftsWaiting">—</strong><span>Pending drafts</span></a>
-    <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsPendingReviews">—</strong><span>Pending reviews</span></a>
-    <a class="dashboard-today-card" href="/admin/page-manager"><strong id="kpiRecentPublishes">—</strong><span>Recent publications</span></a>
-    <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsActiveRecruitments">—</strong><span>Active recruitments</span></a>
-    <a class="dashboard-today-card" href="/admin/monitoring"><strong id="opsFailedJobs">—</strong><span>Failed jobs</span></a>
-    <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsBrokenPageLinks">—</strong><span>Broken page links</span></a>
-    <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsValidationWarnings">—</strong><span>Validation warnings</span></a>
+  <section class="content-section" aria-labelledby="needsAttentionTitle">
+    <h2 id="needsAttentionTitle">Needs Attention</h2>
+    <p class="manager-hint">Pending reviews, drafts waiting, detections, and failed checks.</p>
+    <section class="dashboard-ops-productivity dashboard-kpi-row admin-attention" id="dashboardOpsProductivity" aria-label="Work that needs attention">
+      <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsPendingReviews">—</strong><span>Pending reviews</span></a>
+      <a class="dashboard-today-card" href="/generator#drafts"><strong id="opsDraftsWaiting">—</strong><span>Drafts waiting for review</span></a>
+      <a class="dashboard-today-card" href="/admin/monitoring#recentUpdates"><strong id="opsDetectedUpdates">—</strong><span>Detected updates</span></a>
+      <a class="dashboard-today-card" href="/admin/monitoring"><strong id="opsFailedJobs">—</strong><span>Failed monitoring checks</span></a>
+    </section>
   </section>
 
-  <section class="admin-auto-status" id="dashboardAutoStatus" aria-label="Automation safety status">
+  <section class="content-section" aria-label="Key counts">
+    <h2>Key counts</h2>
+    <div class="dashboard-kpi-row admin-kpi-row">
+      <a class="dashboard-today-card" href="/admin/page-manager"><strong id="kpiRecentPublishes">—</strong><span>Published</span></a>
+      <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsActiveRecruitments">—</strong><span>Active recruitments</span></a>
+      <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsBrokenPageLinks">—</strong><span>Broken page links</span></a>
+      <a class="dashboard-today-card" href="/admin/editorial-review"><strong id="opsValidationWarnings">—</strong><span>Validation warnings</span></a>
+    </div>
+  </section>
+
+  <section class="content-section">
+    <h2>Current Workflow</h2>
+    <nav class="admin-ops-flow" aria-label="Content workflow">
+      <span class="admin-ops-flow__step is-done">Detected</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-done">Draft</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-current">Review</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Approve</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Published</span>
+    </nav>
+  </section>
+
+  <section class="dashboard-action-inbox is-hidden" id="dashboardActionInbox" aria-label="Pending work">
+    <div class="dashboard-panel-head">
+      <h2>Pending work</h2>
+      <span class="dashboard-panel-hint">Items that need a human decision</span>
+    </div>
+    <ul class="dashboard-action-list" id="dashboardActionList"></ul>
+  </section>
+
+  <section class="dashboard-today-summary" id="dashboardTodaySummary" aria-label="Recent activity">
+    <div class="dashboard-today-summary__head">
+      <h2>Recent Activity</h2>
+      <a href="/admin/activity" class="header-action-btn" style="text-decoration:none;">View activity</a>
+    </div>
+    <div class="dashboard-today-grid" id="dashboardTodayGrid">
+      <div class="dashboard-today-card"><strong id="todayPdfUploads">—</strong><span>PDF uploads today</span></div>
+      <div class="dashboard-today-card"><strong id="todayCsvImports">—</strong><span>CSV imports today</span></div>
+      <div class="dashboard-today-card"><strong id="todayAdminActions">—</strong><span>Admin actions today</span></div>
+      <div class="dashboard-today-card" id="todayQueueCard"><strong id="todayQueueFailed">—</strong><span>Queue failed</span></div>
+      <div class="dashboard-today-card" id="todayBrokenCard"><strong id="todayBrokenSites">—</strong><span>Broken sites</span></div>
+      <div class="dashboard-today-card" id="todayTelegramCard"><strong id="todayTelegramStatus">—</strong><span>Telegram alerts</span></div>
+    </div>
+    <div id="dashboardRecentDetections" class="dashboard-expiry-list" aria-live="polite"></div>
+  </section>
+
+  <section class="admin-auto-status content-section" id="dashboardAutoStatus" aria-label="Automation safety">
+    <h2>Automation safety</h2>
+    <p class="manager-hint">Live status only. Open Automation Control to inspect gates. No controls on this page.</p>
     <article class="admin-auto-status__item is-off" id="autoStatusMonitoring">
       <span>Monitoring</span>
       <strong class="admin-auto-status__state" id="autoStatusMonitoringValue">—</strong>
-    </article>
-    <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
-      <span>Crawler</span>
-      <strong class="admin-auto-status__state" id="autoStatusCrawlerValue">—</strong>
     </article>
     <article class="admin-auto-status__item is-off" id="autoStatusDraft">
       <span>AI Draft</span>
@@ -118,32 +139,12 @@
     </article>
     <article class="admin-auto-status__item is-locked" id="autoStatusPublish">
       <span>Auto Publish</span>
-      <strong class="admin-auto-status__state">DISABLED / MANUAL ONLY</strong>
+      <strong class="admin-auto-status__state">MANUAL ONLY · DISABLED</strong>
     </article>
-  </section>
-
-  <section class="dashboard-action-inbox is-hidden" id="dashboardActionInbox" aria-label="Pending work">
-    <div class="dashboard-panel-head">
-      <h2>Pending work</h2>
-      <span class="dashboard-panel-hint">Items that need a human decision</span>
-    </div>
-    <ul class="dashboard-action-list" id="dashboardActionList"></ul>
-  </section>
-
-  <section class="dashboard-today-summary" id="dashboardTodaySummary" aria-label="Recent detections and activity">
-    <div class="dashboard-today-summary__head">
-      <h2>Recent detections and activity</h2>
-      <a href="/admin/monitoring#recentUpdates" class="header-action-btn" style="text-decoration:none;">View detections</a>
-    </div>
-    <div class="dashboard-today-grid" id="dashboardTodayGrid">
-      <div class="dashboard-today-card"><strong id="todayPdfUploads">—</strong><span>PDF uploads today</span></div>
-      <div class="dashboard-today-card"><strong id="todayCsvImports">—</strong><span>CSV imports today</span></div>
-      <div class="dashboard-today-card"><strong id="todayAdminActions">—</strong><span>Admin actions today</span></div>
-      <div class="dashboard-today-card" id="todayQueueCard"><strong id="todayQueueFailed">—</strong><span>Queue failed</span></div>
-      <div class="dashboard-today-card" id="todayBrokenCard"><strong id="todayBrokenSites">—</strong><span>Broken sites</span></div>
-      <div class="dashboard-today-card" id="todayTelegramCard"><strong id="todayTelegramStatus">—</strong><span>Telegram alerts</span></div>
-    </div>
-    <div id="dashboardRecentDetections" class="dashboard-expiry-list" aria-live="polite"></div>
+    <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
+      <span>Crawler</span>
+      <strong class="admin-auto-status__state" id="autoStatusCrawlerValue">—</strong>
+    </article>
   </section>
 
   <section class="dashboard-expiry-panel" id="dashboardExpiryPanel" aria-label="Last date watch">
@@ -179,11 +180,11 @@
   <section class="stats-section dashboard-kpi-strip" aria-label="Actionable analytics">
     <h2 class="section-heading">Key metrics</h2>
     <div class="cards stats-cards">
-      <a class="card card-blue" href="/admin/page-manager"><h3><span class="card-icon">📄</span> Total Pages</h3><p id="kpiTotalPages">0</p></a>
-      <a class="card card-indigo" href="/upload"><h3><span class="card-icon">📤</span> Total Uploads</h3><p id="kpiTotalUploads">0</p></a>
-      <a class="card card-red" href="/admin/monitoring"><h3><span class="card-icon">❌</span> Failed Jobs</h3><p id="kpiFailedJobs">0</p></a>
-      <a class="card card-teal" href="/admin/monitoring"><h3><span class="card-icon">📥</span> Pending Queue</h3><p id="kpiPendingJobs">0</p></a>
-      <a class="card card-green" href="/admin/monitoring"><h3><span class="card-icon">✅</span> Success Rate</h3><p id="kpiSuccessRate">0%</p></a>
+      <a class="card card-blue" href="/admin/page-manager"><h3><span class="card-icon">•</span> Total Pages</h3><p id="kpiTotalPages">0</p></a>
+      <a class="card card-indigo" href="/upload"><h3><span class="card-icon">•</span> Total Uploads</h3><p id="kpiTotalUploads">0</p></a>
+      <a class="card card-red" href="/admin/monitoring"><h3><span class="card-icon">•</span> Failed Jobs</h3><p id="kpiFailedJobs">0</p></a>
+      <a class="card card-teal" href="/admin/monitoring"><h3><span class="card-icon">•</span> Pending Queue</h3><p id="kpiPendingJobs">0</p></a>
+      <a class="card card-green" href="/admin/monitoring"><h3><span class="card-icon">•</span> Success Rate</h3><p id="kpiSuccessRate">0%</p></a>
     </div>
   </section>
   <div class="dashboard-grid">
@@ -212,16 +213,16 @@
       <div class="admin-collapse-section__body">
     <h2 class="section-heading">Overview</h2>
     <div class="cards stats-cards">
-      <div class="card card-blue"><h3><span class="card-icon">📄</span> Total Pages</h3><p id="totalPages">0</p></div>
-      <div class="card card-purple"><h3><span class="card-icon">📑</span> Small Pages</h3><p id="smallPages">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">🗑</span> Trash</h3><p id="trashPages">0</p></div>
-      <div class="card card-green"><h3><span class="card-icon">👁</span> Total Views</h3><p id="totalViews">0</p></div>
-      <div class="card card-orange" title="Counts real visitor page views recorded today (bots and admin traffic excluded)."><h3><span class="card-icon">📊</span> Today Views</h3><p id="todayViews">0</p></div>
-      <div class="card card-indigo"><h3><span class="card-icon">📂</span> Total Categories</h3><p id="totalCategories">0</p></div>
-      <div class="card card-teal" title="Active recruitments that are not archived."><h3><span class="card-icon">🗂</span> Active Recruitments</h3><p id="kpiActiveRecruitments">0</p></div>
-      <div class="card card-blue"><h3><span class="card-icon">✅</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">⚠️</span> Failed Actions</h3><p id="failedActions">0</p></div>
-      <div class="card card-purple"><h3><span class="card-icon">📝</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">•</span> Total Pages</h3><p id="totalPages">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">•</span> Small Pages</h3><p id="smallPages">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">•</span> Trash</h3><p id="trashPages">0</p></div>
+      <div class="card card-green"><h3><span class="card-icon">•</span> Total Views</h3><p id="totalViews">0</p></div>
+      <div class="card card-orange" title="Counts real visitor page views recorded today (bots and admin traffic excluded)."><h3><span class="card-icon">•</span> Today Views</h3><p id="todayViews">0</p></div>
+      <div class="card card-indigo"><h3><span class="card-icon">•</span> Total Categories</h3><p id="totalCategories">0</p></div>
+      <div class="card card-teal" title="Active recruitments that are not archived."><h3><span class="card-icon">•</span> Active Recruitments</h3><p id="kpiActiveRecruitments">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">•</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">•</span> Failed Actions</h3><p id="failedActions">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">•</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
     </div>
   <section class="charts-section" aria-label="Charts">
     <div class="chart-card"><h3 class="chart-block-title">Pages by status</h3><div class="chart-wrap"><canvas id="statusChart" height="100"></canvas></div></div>
@@ -247,16 +248,16 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=4"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-dashboard.js?v=7"></script>
+<script src="/js/admin-dashboard.js?v=8"></script>
 </body>
 </html>

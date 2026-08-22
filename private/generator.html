@@ -20,27 +20,27 @@
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
-  <link rel="stylesheet" href="/css/admin/dashboard.css?v=7">
+  <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
   <link rel="stylesheet" href="/css/admin/generator.css?v=21">
   <link rel="stylesheet" href="/css/admin/generator-saas.css?v=26">
   <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
   <link rel="stylesheet" href="/css/admin/generator-workspace.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-  <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=21">
-  <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=5">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=8">
-  <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css?v=5">
+  <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+  <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+  <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css?v=6">
 </head>
 
-<body class="standalone-admin-page generator-page generator-saas-v2 admin-saas-v2" data-admin-layout="standalone" data-admin-breadcrumbs="Content,Page Generator">
+<body class="standalone-admin-page generator-page generator-saas-v2 admin-saas-v2" data-admin-layout="standalone" data-admin-breadcrumbs="Content,Generator">
   <div class="admin-header">
   <div class="admin-left">
-    <h1>Welcome, Saurabh 👋</h1>
-    <p>Admin Dashboard</p>
+    <h1>Generator</h1>
+    <p>Create and edit structured content. Parked drafts are a separate workspace.</p>
   </div>
   <div class="admin-right">
-    <span class="admin-badge">🛡 ADMIN</span>
+    <span class="admin-badge">Manual publish only</span>
   </div>
 </div>
 
@@ -56,18 +56,23 @@
   <span class="admin-ops-flow__step is-locked">Manual Publish</span>
 </nav>
 
-<h2 class="visually-hidden">Page Generator</h2>
-
-<header class="generator-hero" id="generatorHero">
+<section class="admin-page-head generator-hero" id="generatorHero">
   <div class="generator-hero__copy">
     <p class="generator-hero__eyebrow">Content studio</p>
     <h2 class="generator-hero__title">Page Generator</h2>
-    <p class="page-subtitle">Workbench: extract the official PDF, convert to structured content, preview, then save a draft. Publishing stays manual.</p>
+    <p class="page-subtitle">Workbench: extract the official PDF, convert to structured content, preview, then save a draft. Publishing stays manual. Auto Publish is disabled.</p>
   </div>
   <div class="generator-hero__aside">
     <div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create mode · URL editable</div>
   </div>
-</header>
+</section>
+
+<section id="drafts" class="admin-page-head" aria-label="Drafts workspace">
+  <div>
+    <h2>Drafts</h2>
+    <p class="page-subtitle">Review and edit generated drafts before human approval. This is not the generator form and not the review queue.</p>
+  </div>
+</section>
 
 <div id="generatorQuickBanner" class="generator-quick-banner is-hidden" aria-live="polite">
   <div class="generator-quick-banner__copy">
@@ -190,7 +195,7 @@
           <option value="7">Small Box Slot 7 (Desktop Only)</option>
           <option value="8">Small Box Slot 8 (Desktop Only)</option>
         </select>
-        <p class="field-hint" id="smallBoxSlotHint">Desktop shows 8 boxes (4×2). Mobile shows slots 1–6 only (3×2). Slots 7–8 are desktop only. Choosing a slot replaces the current occupant.</p>
+        <p class="field-hint" id="smallBoxSlotHint">Desktop shows 8 boxes (4×2). Mobile shows slots 1–6 only (3×2). Slots 7—8 are desktop only. Choosing a slot replaces the current occupant.</p>
       </div>
       <div class="breaking-badges-block" data-quick-hide>
         <div class="generator-inline-row generator-inline-row--breaking">
@@ -205,7 +210,7 @@
           </div>
           <div class="field-group field-group--inline" id="breakingOrderGroup">
             <label for="breakingOrder">Breaking Order</label>
-            <input type="number" id="breakingOrder" placeholder="1, 2, 3…" min="1" step="1">
+            <input type="number" id="breakingOrder" placeholder="1, 2, 3—" min="1" step="1">
           </div>
         </div>
         <div class="field-group field-group--badges" id="badgesGroup">
@@ -251,7 +256,7 @@
     <div class="card-fields">
       <div class="field-group">
         <label>Topics (tags)</label>
-        <p class="field-hint">Optional: 1–2 exam/topic words (e.g. ssc, cgl). Not for status or department — use Section and Filter for those.</p>
+        <p class="field-hint">Optional: 1—2 exam/topic words (e.g. ssc, cgl). Not for status or department — use Section and Filter for those.</p>
         <div class="tag-wrapper">
           <div class="tag-chip-box" id="tagChipBox">
             <div id="tagChips" class="tag-chips"></div>
@@ -386,7 +391,7 @@
     <div class="gw-modal__panel">
       <div class="gw-modal__head">
         <h4 id="gwShortcutsTitle">Keyboard shortcuts</h4>
-        <button type="button" class="gw-modal__close" data-gw-action="close-shortcuts" aria-label="Close">×</button>
+        <button type="button" class="gw-modal__close" data-gw-action="close-shortcuts" aria-label="Close">—</button>
       </div>
       <table>
         <tbody id="gwShortcutTable"></tbody>
@@ -406,7 +411,7 @@
         </div>
         <div class="panel-head__actions">
           <button type="button" id="editorFullscreenBtn" class="editor-fullscreen-btn" aria-pressed="false" aria-label="Expand editor fullscreen">
-            <span class="editor-fullscreen-btn__icon" aria-hidden="true">⛶</span>
+            <span class="editor-fullscreen-btn__icon" aria-hidden="true">?</span>
             <span class="editor-fullscreen-btn__label">Expand</span>
           </button>
           <div class="editor-stats">
@@ -431,7 +436,7 @@
         </div>
         <div class="section-editor-toolbar__actions">
           <button type="button" id="sectionEditorRepairBtn" class="section-editor-repair-btn" title="Normalize table markers, color tags, and section headers">
-            <span class="section-editor-repair-btn__icon" aria-hidden="true">✦</span>
+            <span class="section-editor-repair-btn__icon" aria-hidden="true">?</span>
             <span class="section-editor-repair-btn__label">Fix for section builder</span>
           </button>
           <button type="button" id="sectionEditorAddBtn" class="section-editor-add-btn">+ Add Section</button>
@@ -479,7 +484,7 @@
         <h3>Content analysis</h3>
         <span class="preview-hint" id="contentAnalysisSummary">—</span>
       </span>
-      <span class="content-analysis-panel__chevron" aria-hidden="true">▾</span>
+      <span class="content-analysis-panel__chevron" aria-hidden="true">?</span>
     </summary>
     <div id="contentAnalysisBody" class="content-analysis-body"></div>
   </details>
@@ -487,7 +492,7 @@
   <section class="pdf-extract-panel" id="pdfExtractSection" aria-label="PDF Extract">
     <div class="pdf-extract-bar" id="pdfExtractBar">
       <div class="pdf-extract-bar__intro">
-        <span class="pdf-extract-bar__icon" aria-hidden="true">📄</span>
+        <span class="pdf-extract-bar__icon" aria-hidden="true">PDF</span>
         <div class="pdf-extract-bar__copy">
           <strong>PDF Extract</strong>
           <span>Upload a recruitment PDF to fill the editor above</span>
@@ -496,7 +501,7 @@
       <form id="pdfExtractForm" class="pdf-extract-bar__form" action="#" autocomplete="off">
         <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
         <label for="pdfFile" id="pdfDropZone" class="pdf-extract-drop" title="Choose or drop PDF">
-          <span class="pdf-extract-drop__ico" aria-hidden="true">⤴</span>
+          <span class="pdf-extract-drop__ico" aria-hidden="true">?</span>
           <span class="pdf-extract-drop__text pdf-extract-drop__text--desktop">Choose PDF</span>
           <span class="pdf-extract-drop__text pdf-extract-drop__text--mobile">PDF</span>
         </label>
@@ -514,23 +519,23 @@
 <div class="action-bar is-sticky-publish">
   <div class="action-bar__inner">
     <div class="action-group action-group-tools">
-      <button type="button" id="previewBtn" class="btn-tool btn-tool--preview" data-label-desktop="👁 Preview" data-label-mobile="Preview">
-        <span class="action-btn__label action-btn__label--desktop">👁 Preview</span>
+      <button type="button" id="previewBtn" class="btn-tool btn-tool--preview" data-label-desktop="Preview" data-label-mobile="Preview">
+        <span class="action-btn__label action-btn__label--desktop">Preview</span>
         <span class="action-btn__label action-btn__label--mobile">Preview</span>
       </button>
-      <button type="button" id="saveDraftBtn" class="btn-tool btn-tool--draft" data-label-desktop="💾 Save draft" data-label-mobile="Draft">
-        <span class="action-btn__label action-btn__label--desktop">💾 Save draft</span>
+      <button type="button" id="saveDraftBtn" class="btn-tool btn-tool--draft" data-label-desktop="Save draft" data-label-mobile="Draft">
+        <span class="action-btn__label action-btn__label--desktop">Save draft</span>
         <span class="action-btn__label action-btn__label--mobile">Draft</span>
       </button>
-      <button type="button" id="aiConvertBtn" class="btn-tool btn-tool--ai" data-label-desktop="✨ Convert with AI" data-label-mobile="AI">
-        <span class="action-btn__label action-btn__label--desktop">✨ Convert with AI</span>
+      <button type="button" id="aiConvertBtn" class="btn-tool btn-tool--ai" data-label-desktop="Convert with AI" data-label-mobile="AI">
+        <span class="action-btn__label action-btn__label--desktop">Convert with AI</span>
         <span class="action-btn__label action-btn__label--mobile">AI</span>
       </button>
-      <button type="button" id="deleteBtn" class="btn-tool btn-tool--delete is-hidden">🗑 Delete</button>
+      <button type="button" id="deleteBtn" class="btn-tool btn-tool--delete is-hidden">Delete</button>
     </div>
     <div class="action-group action-group-primary">
-      <button type="button" id="savePageBtn" class="btn btn-save btn-primary" data-label-desktop="🚀 Save / Update" data-label-mobile="Save">
-        <span class="action-btn__label action-btn__label--desktop">🚀 Save / Update</span>
+      <button type="button" id="savePageBtn" class="btn btn-save btn-primary" data-label-desktop="Save / Update" data-label-mobile="Save">
+        <span class="action-btn__label action-btn__label--desktop">Save / Update</span>
         <span class="action-btn__label action-btn__label--mobile">Save</span>
       </button>
     </div>
@@ -543,12 +548,12 @@
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=20"></script>
-<script src="/js/admin-shell.js?v=7"></script>
+<script src="/js/admin-nav.js?v=24"></script>
+<script src="/js/admin-shell.js?v=10"></script>
 <script src="/js/admin-generator-drafts.js?v=4"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js"></script>
+<script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>

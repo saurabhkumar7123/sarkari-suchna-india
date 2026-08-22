@@ -244,25 +244,63 @@ async function loadSystemHealth() {
 async function loadRecentUpdates() {
   const box = document.getElementById("recentUpdatesList");
   if (!box) return;
-  const res = await window.adminSafeFetch("/api/admin/updates?limit=12");
+  const res = await window.adminSafeFetch("/api/admin/updates?limit=24");
   const rows = res && res.success && Array.isArray(res.data) ? res.data : [];
-  if (!rows.length) {
-    box.innerHTML = '<p class="empty-msg">No recent detections.</p>';
+  window.__adminDetectedUpdates = rows;
+  renderDetectedUpdates(rows);
+}
+
+function classifyUpdate(r) {
+  const raw = String(r.status || r.processing_status || r.draft_status || r.review_status || "detected").toLowerCase();
+  const hasDraft = Boolean(r.draft_id || r.draftId || r.draft_status || /draft/.test(raw));
+  const reviewed = Boolean(r.review_status || /review|approved/.test(raw));
+  if (reviewed) return "reviewed";
+  if (hasDraft) return "drafted";
+  return "needs-draft";
+}
+
+function renderDetectedUpdates(rows) {
+  const box = document.getElementById("recentUpdatesList");
+  if (!box) return;
+  const filterBtn = document.querySelector("[data-update-filter].is-active");
+  const filter = filterBtn ? filterBtn.getAttribute("data-update-filter") : "all";
+  const list = (Array.isArray(rows) ? rows : []).filter((r) => filter === "all" || classifyUpdate(r) === filter);
+  if (!list.length) {
+    box.innerHTML = '<p class="empty-msg">No detections in this filter.</p>';
     return;
   }
-  box.innerHTML = rows
+  box.innerHTML = list
     .map((r) => {
-      const source = escapeAttr(r.site_name || r.siteName || "Source");
+      const source = escapeAttr(r.site_name || r.siteName || r.source || "Source");
       const title = escapeAttr(r.summary || r.title || "Update detected");
       const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at);
       const href = r.url ? escapeAttr(r.url) : "";
       const status = escapeAttr(r.status || r.processing_status || r.draft_status || "detected");
+      const review = escapeAttr(r.review_status || r.reviewStatus || "—");
+      const draftId = r.draft_id || r.draftId || "";
+      const stage = classifyUpdate(r);
+      const stageLabel = stage === "reviewed" ? "Reviewed" : stage === "drafted" ? "Drafted" : "Needs Draft";
+      const idMeta = r.id != null ? `<span class="detected-update__url">ID ${escapeAttr(r.id)}</span>` : "";
+      const draftBtn = draftId
+        ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}">Open Draft</a>`
+        : "";
       return `<article class="detected-update">
-        <strong>${source}</strong>
-        <span>${title}</span>
+        <div>
+          <strong>${source}</strong>
+          ${idMeta}
+        </div>
+        <div>
+          <div class="detected-update__title">${title}</div>
+          ${href ? `<div class="detected-update__url">${href}</div>` : ""}
+        </div>
         <span>${escapeAttr(when)}</span>
-        <span class="badge">${status}</span>
-        ${href ? `<a href="${href}" target="_blank" rel="noopener">Official link</a>` : "<span></span>"}
+        <span class="badge badge--info">${status}</span>
+        <span class="badge">${stageLabel}</span>
+        <div class="detected-update__actions">
+          ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">Open Update</a>` : ""}
+          ${draftBtn}
+          <span class="badge">Review: ${review}</span>
+        </div>
       </article>`;
     })
     .join("");
@@ -434,6 +472,13 @@ document.getElementById("queueFailedList")?.addEventListener("click", (e) => {
   retryFailedJobById(jobId, btn);
 });
 document.getElementById("failedSort")?.addEventListener("change", () => loadQueueFailedJobs());
+document.querySelectorAll("[data-update-filter]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-update-filter]").forEach((el) => el.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    renderDetectedUpdates(window.__adminDetectedUpdates || []);
+  });
+});
 
 let sitesSearchDebounce = null;
 document.getElementById("sitesSearch")?.addEventListener("input", (e) => {
