@@ -31,6 +31,20 @@ audit-screenshots/
 # Uploaded PDFs (runtime user content)
 storage/uploads/
 
+# Local OCR traineddata (runtime; do not commit large binaries)
+eng.traineddata
+hin.traineddata
+*.traineddata
+
+# Local one-shot M2/M3/M4 ops scripts (not production source)
+scripts/_m2_*
+scripts/_m3_*
+scripts/_m4_*
+
+# Enterprise / preview runtime JSON (local operator state)
+server/data/enterprise/
+server/data/shared-previews.json
+
 tmp-*.png
 scripts/tmp-*
 .rc-archive/

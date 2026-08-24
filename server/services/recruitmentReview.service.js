@@ -93,6 +93,18 @@ async function saveReviewItem(input = {}) {
   return created;
 }
 
+async function getReviewItemByUpdateId(updateId) {
+  await assertTable();
+  const id = parseInt(String(updateId), 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+  if (typeof recruitmentReviewRepository.findByUpdateId !== "function") {
+    return null;
+  }
+  return recruitmentReviewRepository.findByUpdateId(id);
+}
+
 async function getReviewItemById(id) {
   await assertTable();
   const reviewId = parseInt(String(id), 10);
@@ -286,6 +298,7 @@ async function bindReviewItemRecruitment(id, recruitmentId) {
 module.exports = {
   saveReviewItem,
   getReviewItemById,
+  getReviewItemByUpdateId,
   listPendingReviewItems,
   listReviewItems,
   updateReviewDecision,

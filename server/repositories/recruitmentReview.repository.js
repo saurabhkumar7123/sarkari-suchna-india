@@ -328,6 +328,22 @@ async function findById(id) {
 /**
  * @param {{ limit?: number, offset?: number }} opts
  */
+async function findByUpdateId(updateId) {
+  const id = parseInt(String(updateId), 10);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const schema = await detectSchema();
+  const [rows] = await db.query(
+    `SELECT ${buildSelectColumns(schema)}
+     FROM recruitment_review_queue
+     WHERE update_id = ?
+     ORDER BY id DESC
+     LIMIT 1`,
+    [id]
+  );
+  const row = Array.isArray(rows) ? rows[0] : null;
+  return row ? mapRow(row, schema) : null;
+}
+
 async function findPending(opts = {}) {
   const schema = await detectSchema();
   const limit = Math.min(100, Math.max(1, parseInt(String(opts.limit || 50), 10) || 50));
@@ -507,6 +523,7 @@ module.exports = {
   invalidateSchemaCache,
   create,
   findById,
+  findByUpdateId,
   findPending,
   list,
   updateDecision,

@@ -139,7 +139,7 @@ function mockPersistenceAndReview() {
 }
 
 describe("AMP-4B pipeline continues after lifecycle mapping", () => {
-  test("Schedule of Examinations maps exam_date → exam_scheduled and createRecruitment accepts it", async () => {
+  test("Schedule of Examinations does not fabricate a recruitment when none matched", async () => {
     armRuntimeFlags();
     db.query.mockResolvedValue([[]]);
     jest.resetModules();
@@ -148,7 +148,6 @@ describe("AMP-4B pipeline continues after lifecycle mapping", () => {
     const { runProductionDetectionPipeline } = require("../server/lib/recruitment/productionRuntime");
     const flags = require("../server/config/automationFlags");
     const { PUBLISHING_POLICY } = require("../server/lib/productionWorkflow/publishingPolicy");
-    const recruitmentRepository = require("../server/repositories/recruitment.repository");
 
     const outcome = await runProductionDetectionPipeline({
       notice: {
@@ -167,16 +166,17 @@ describe("AMP-4B pipeline continues after lifecycle mapping", () => {
     expect(outcome.failed).not.toBe(true);
     expect(outcome.success).toBe(true);
     expect(outcome.publishingBlocked).toBe(true);
-    expect(outcome.recruitmentCreated).toBe(true);
+    expect(outcome.recruitmentCreated).toBe(false);
+    expect(outcome.recruitmentId == null).toBe(true);
     expect(outcome.stage).not.toBe("recruitment_persistence");
-    expect(createRecruitment).toHaveBeenCalled();
-    expect(recruitmentRepository.createRecruitment).toHaveBeenCalledWith(
-      expect.objectContaining({ lifecycle_state: "exam_scheduled" })
-    );
-    expect(outcome.review && outcome.review.id).toBe(88);
+    expect(createRecruitment).not.toHaveBeenCalled();
+    // AUTO_DRAFT off → no draft → review handoff is intentionally skipped.
+    expect(outcome.draft && outcome.draft.skipped).toBe(true);
+    expect(outcome.draft && outcome.draft.reason).toBe("auto_draft_disabled");
+    expect(outcome.review).toBeNull();
   });
 
-  test("unknown currentStage still fails persistence (no silent fallback)", async () => {
+  test("unknown currentStage without a matched recruitment does not fabricate or fail the pipeline", async () => {
     armRuntimeFlags();
     db.query.mockResolvedValue([[]]);
     jest.resetModules();
@@ -218,9 +218,12 @@ describe("AMP-4B pipeline continues after lifecycle mapping", () => {
     });
 
     expect(flags.isAutoPublishBlocked()).toBe(true);
-    expect(outcome.failed).toBe(true);
-    expect(outcome.stage).toBe("recruitment_persistence");
-    expect(outcome.error && outcome.error.message).toBe("Invalid lifecycle_state");
+    expect(outcome.failed).not.toBe(true);
+    expect(outcome.success).toBe(true);
+    expect(outcome.recruitmentCreated).toBe(false);
+    expect(outcome.recruitmentId == null).toBe(true);
     expect(createRecruitment).not.toHaveBeenCalled();
+    expect(outcome.draft && outcome.draft.skipped).toBe(true);
+    expect(outcome.review).toBeNull();
   });
 });

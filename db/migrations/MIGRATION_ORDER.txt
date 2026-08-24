@@ -20,9 +20,10 @@
 14. 2026-07-13-add-generator-drafts-recruitment-linkage.sql
 15. 2026-07-14-recruitment-review-queue-persistence.sql
 16. 2026-07-20-amp4a2-enterprise-persistence.sql
+17. 2026-08-16-pages-title-varchar-500.sql
 
 # OPTIONAL (operator approval required):
-# 17. suggested_indexes.sql
+# 18. suggested_indexes.sql
 
 # Notes:
 # - Skip any migration already applied in production.

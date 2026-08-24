@@ -18,7 +18,6 @@ const { defaultService } = require("../../../services/enterprise/enterprisePersi
 const recruitmentReviewService = require("../../../services/recruitmentReview.service");
 const generatorDraftService = require("../../../services/generatorDraft.service");
 const generatorDraftRepository = require("../../../repositories/generatorDraft.repository");
-const recruitmentService = require("../../../services/recruitment.service");
 const notificationGateway = require("../../enterprise/notificationGateway");
 const { METRIC_TYPES } = require("../../../repositories/enterprise/metricsEnterprise.repository");
 const { isLifecycleEventType } = require("../recruitmentDomainModel");
@@ -37,20 +36,6 @@ function collapseWhitespace(value) {
   return String(value ?? "")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function slugify(value) {
-  return collapseWhitespace(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
-}
-
-function uniqueSlug(base, suffix) {
-  const root = slugify(base) || "recruitment";
-  const tail = suffix != null ? `-${String(suffix)}` : "";
-  return `${root}${tail}`.slice(0, 160);
 }
 
 function resolveEventStageForPersistence(detection, recruitmentObject) {
@@ -102,37 +87,43 @@ async function resolveRecruitmentRecord({
     return { recruitmentId: matched.id, created: false, row: matched };
   }
 
+  logger.info("production-runtime: no matched recruitment; continuing without fabricating one", {
+    updateId: pipelineOutcome.updateId || null,
+    title: notice && notice.title ? notice.title : null
+  });
+  return { recruitmentId: null, created: false, row: null };
+}
+
+function seedPublisherDraftPayload({ workflowResult, notice, updateId } = {}) {
+  const raw =
+    workflowResult?.generatorPayload ||
+    workflowResult?.draftPackage?.generatorPayload ||
+    workflowResult?.draftCoordination?.draftPackage?.generatorPayload ||
+    null;
+  const base = raw && typeof raw === "object" && !Array.isArray(raw) ? { ...raw } : {};
   const title =
-    collapseWhitespace(recruitmentObject.recruitmentName) ||
-    collapseWhitespace(notice?.title) ||
-    "Detected recruitment";
-  const slug = uniqueSlug(title, pipelineOutcome.updateId || Date.now());
-  const eventStage = resolveEventStageForPersistence(detection, recruitmentObject);
-  const lifecycleState = mapEventStageToRecruitmentLifecycleState(eventStage);
-  const created = await recruitmentService.createRecruitment({
+    collapseWhitespace(base.title) ||
+    collapseWhitespace(notice && notice.title) ||
+    "Official update";
+  const pageUrl =
+    collapseWhitespace(base.pageUrl) ||
+    collapseWhitespace(notice && (notice.pdfUrl || notice.url)) ||
+    "";
+  const data =
+    typeof base.data === "string" && String(base.data).trim()
+      ? base.data
+      : `[Section: Short Information]\n${title}${pageUrl ? `\nOfficial URL: ${pageUrl}` : ""}`;
+  const payload = {
+    ...base,
     title,
-    slug,
-    department: recruitmentObject.department || null,
-    post_name: recruitmentObject.postName || null,
-    advertisement_no: recruitmentObject.advertisementNo || null,
-    cycle_year: recruitmentObject.cycleYear || null,
-    lifecycle_state: lifecycleState
-  });
-
-  await defaultService.recruitment.upsertExtended(created.id, {
-    timeline: workflowResult?.intelligenceResult?.timeline?.timeline || [],
-    confidence: workflowResult?.intelligenceResult?.confidence || {},
-    validation: workflowResult?.validation || {},
-    missing_information: workflowResult?.intelligenceResult?.missingResult?.missingInformation || { items: [] },
-    history_recovery: workflowResult?.historyRecovery || {},
-    current_stage: eventStage,
-    metadata: {
-      updateId: pipelineOutcome.updateId,
-      sourceUrl: notice?.url || null
-    }
-  });
-
-  return { recruitmentId: created.id, created: true, row: created };
+    pageUrl,
+    data
+  };
+  const numericUpdateId = Number(updateId);
+  if (Number.isFinite(numericUpdateId) && numericUpdateId > 0) {
+    payload.updateId = numericUpdateId;
+  }
+  return payload;
 }
 
 async function persistDraft({
@@ -141,19 +132,16 @@ async function persistDraft({
   recruitmentId,
   recruitmentEventId,
   notice = null,
-  monitoredSite = null
+  monitoredSite = null,
+  updateId = null,
+  requireAcceptedConvert = false
 }) {
   if (flags.AUTO_DRAFT_ENABLED !== true) {
     return { skipped: true, reason: "auto_draft_disabled" };
   }
 
-  const payload =
-    workflowResult?.generatorPayload ||
-    workflowResult?.draftPackage?.generatorPayload ||
-    workflowResult?.draftCoordination?.draftPackage?.generatorPayload ||
-    null;
-
-  if (!payload || typeof payload !== "object") {
+  const payload = seedPublisherDraftPayload({ workflowResult, notice, updateId });
+  if (!payload.title && !payload.pageUrl) {
     return { skipped: true, reason: "no_draft_payload" };
   }
 
@@ -222,8 +210,38 @@ async function persistDraft({
     }
   }
 
+  if (requireAcceptedConvert && (!pdfExtraction.ok || aiConvert.ok !== true)) {
+    return {
+      skipped: true,
+      reason: pdfExtraction.ok ? aiConvert.reason || "conversion_not_accepted" : pdfExtraction.reason || "extraction_failed",
+      pdfExtraction,
+      aiConvert
+    };
+  }
+
   let existingDraftId;
-  if (recruitmentId && typeof generatorDraftService.listDraftsByRecruitmentId === "function") {
+  const numericUpdateId = Number(updateId != null ? updateId : payload.updateId);
+  if (
+    Number.isFinite(numericUpdateId) &&
+    numericUpdateId > 0 &&
+    typeof generatorDraftService.findUnpublishedDraftByUpdateId === "function"
+  ) {
+    try {
+      const existingByUpdate = await generatorDraftService.findUnpublishedDraftByUpdateId(numericUpdateId);
+      if (existingByUpdate && existingByUpdate.id && String(existingByUpdate.status) === "draft") {
+        existingDraftId = existingByUpdate.id;
+      }
+    } catch (err) {
+      logger.warn("production-runtime: update-keyed draft lookup failed; continuing", {
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
+  if (
+    existingDraftId == null &&
+    recruitmentId &&
+    typeof generatorDraftService.listDraftsByRecruitmentId === "function"
+  ) {
     try {
       const rows = await generatorDraftService.listDraftsByRecruitmentId(recruitmentId, { limit: 10 });
       const existing = Array.isArray(rows)
@@ -276,7 +294,8 @@ async function persistDraft({
 }
 
 async function persistWorkflow({ workflowResult, recruitmentId, updateId }) {
-  const workflowKey = `recruitment:${recruitmentId}:update:${updateId || "unknown"}`;
+  const recruitmentKey = recruitmentId != null ? recruitmentId : "none";
+  const workflowKey = `recruitment:${recruitmentKey}:update:${updateId || "unknown"}`;
   const existing = await defaultService.workflow.getByKey(workflowKey);
   const currentState = workflowResult?.workflowState || "detected";
   const failureRecovery = workflowResult?.failureRecovery || {};
@@ -372,6 +391,19 @@ async function persistReviewQueue({
     recruitmentId,
     notice
   });
+
+  if (typeof recruitmentReviewService.getReviewItemByUpdateId === "function" && updateId) {
+    try {
+      const existingByUpdate = await recruitmentReviewService.getReviewItemByUpdateId(updateId);
+      if (existingByUpdate && existingByUpdate.id) {
+        return { ...existingByUpdate, reused: true };
+      }
+    } catch (err) {
+      logger.warn("production-runtime: update-keyed review lookup failed; continuing", {
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
 
   if (typeof recruitmentReviewService.listReviewItems === "function" && (recruitmentId || updateId)) {
     try {
@@ -607,7 +639,9 @@ async function runProductionDetectionPipeline({
     recruitmentId: recruitmentRecord.recruitmentId,
     recruitmentEventId: null,
     notice,
-    monitoredSite
+    monitoredSite,
+    updateId,
+    requireAcceptedConvert: true
   }).catch((err) => ({ skipped: true, reason: "draft_error", error: err.message }));
 
   const workflowRow = await persistWorkflow({
@@ -620,17 +654,25 @@ async function runProductionDetectionPipeline({
   });
 
   let reviewRow = null;
-  try {
-    reviewRow = await persistReviewQueue({
-      pipelineOutcome,
-      workflowResult,
-      recruitmentId: recruitmentRecord.recruitmentId,
-      notice,
+  const draftReady = Boolean(draftResult && draftResult.skipped !== true && draftResult.draftId);
+  if (!draftReady) {
+    logger.warn("production-runtime: review skipped because draft was not created", {
       updateId,
-      draftId: draftResult.draftId || null
+      draftReason: draftResult && (draftResult.reason || draftResult.error) ? draftResult.reason || draftResult.error : "draft_missing"
     });
-  } catch (reviewErr) {
-    logger.warn("production-runtime: review queue persistence failed", { message: reviewErr.message });
+  } else {
+    try {
+      reviewRow = await persistReviewQueue({
+        pipelineOutcome,
+        workflowResult,
+        recruitmentId: recruitmentRecord.recruitmentId,
+        notice,
+        updateId,
+        draftId: draftResult.draftId
+      });
+    } catch (reviewErr) {
+      logger.warn("production-runtime: review queue persistence failed", { message: reviewErr.message });
+    }
   }
 
   await persistAuditAndMetrics({
@@ -643,8 +685,13 @@ async function runProductionDetectionPipeline({
     logger.warn("production-runtime: audit/metrics persistence failed", { message: err.message });
   });
 
-  const telegramResult =
-    reviewRow && reviewRow.reused
+  const telegramResult = !reviewRow
+    ? {
+        delivered: false,
+        status: "skipped",
+        reason: draftReady ? "review_missing" : "draft_not_created"
+      }
+    : reviewRow.reused
       ? {
           delivered: false,
           status: "skipped_duplicate",
@@ -656,7 +703,7 @@ async function runProductionDetectionPipeline({
           notice,
           recruitmentId: recruitmentRecord.recruitmentId,
           draftId: draftResult.draftId || null,
-          reviewId: reviewRow?.id || null
+          reviewId: reviewRow.id || null
         });
 
   return {
@@ -680,8 +727,10 @@ module.exports = {
   runProductionDetectionPipeline,
   persistDraft,
   persistReviewQueue,
+  seedPublisherDraftPayload,
   mapEventStageToRecruitmentLifecycleState,
   resolveEventStageForPersistence,
   buildBoundReviewItem,
-  formatTelegramReviewMessage
+  formatTelegramReviewMessage,
+  deliverTelegramReview
 };

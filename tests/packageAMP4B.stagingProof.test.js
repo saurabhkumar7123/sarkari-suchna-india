@@ -189,12 +189,13 @@ describe("AMP-4B staging proof — productionRuntime AUTO_DRAFT + review", () =>
     expect(draftService.saveDraft).not.toHaveBeenCalled();
     expect(outcome.draft && outcome.draft.skipped).toBe(true);
     expect(outcome.draft && outcome.draft.reason).toBe("auto_draft_disabled");
-    expect(reviewService.saveReviewItem).toHaveBeenCalled();
-    expect(outcome.review && outcome.review.id).toBe(55);
+    // Review is created only after a successful draft (M2 handoff contract).
+    expect(reviewService.saveReviewItem).not.toHaveBeenCalled();
+    expect(outcome.review).toBeNull();
     expect(outcome.telegram && outcome.telegram.delivered).not.toBe(true);
   });
 
-  test("AUTO_DRAFT on persists draft when workflow yields generatorPayload", async () => {
+  test("AUTO_DRAFT on persists draft when accepted convert yields publisher data", async () => {
     armStagingFlags({ autoDraft: true, telegram: false });
     db.query.mockResolvedValue([[]]);
     jest.resetModules();
@@ -206,10 +207,13 @@ describe("AMP-4B staging proof — productionRuntime AUTO_DRAFT + review", () =>
       payload: { title: "SSC CGL 2026" }
     });
     jest.doMock("../server/services/generatorDraft.service", () => ({
-      saveDraft: mockSaveDraft
+      saveDraft: mockSaveDraft,
+      findUnpublishedDraftByUpdateId: jest.fn().mockResolvedValue(null)
     }));
     jest.doMock("../server/services/recruitmentReview.service", () => ({
-      saveReviewItem: jest.fn().mockResolvedValue({ id: 56, status: "pending" })
+      saveReviewItem: jest.fn().mockResolvedValue({ id: 56, status: "pending" }),
+      getReviewItemByUpdateId: jest.fn().mockResolvedValue(null),
+      listReviewItems: jest.fn().mockResolvedValue([])
     }));
     jest.doMock("../server/services/recruitment.service", () => ({
       createRecruitment: jest.fn().mockResolvedValue({
@@ -219,7 +223,8 @@ describe("AMP-4B staging proof — productionRuntime AUTO_DRAFT + review", () =>
       })
     }));
 
-    // Force a generator payload onto the automation workflow result.
+    const publisher =
+      "[Section: Short Information]\nNew SSC CGL vacancy detected from official source.";
     jest.doMock("../server/lib/recruitment/automationWorkflow", () => {
       const actual = jest.requireActual("../server/lib/recruitment/automationWorkflow");
       return {
@@ -230,20 +235,28 @@ describe("AMP-4B staging proof — productionRuntime AUTO_DRAFT + review", () =>
             ...base,
             generatorPayload: {
               title: "SSC CGL 2026 Recruitment",
+              pageUrl: "https://ssc.gov.in/api/attachment/uploads/notice.pdf",
               slug: "ssc-cgl-2026-recruitment",
-              data: "[Section: Short Information]\nNew SSC CGL vacancy detected from official source."
-            },
-            draftPackage: {
-              generatorPayload: {
-                title: "SSC CGL 2026 Recruitment",
-                slug: "ssc-cgl-2026-recruitment",
-                data: "[Section: Short Information]\nNew SSC CGL vacancy detected from official source."
-              }
+              data: publisher
             }
           };
         })
       };
     });
+    jest.doMock("../server/lib/recruitment/productionRuntime/downloadOfficialPdfForGeneratorExtraction", () => ({
+      downloadOfficialPdfForGeneratorExtraction: jest.fn().mockResolvedValue({
+        text: "SSC CGL 2026 official PDF body",
+        sourceUrl: "https://ssc.gov.in/api/attachment/uploads/notice.pdf"
+      })
+    }));
+    jest.doMock("../server/lib/recruitment/productionRuntime/applyGeneratorAiConvert", () => ({
+      convertAmpExtractedTextToPublisher: jest.fn().mockResolvedValue({
+        accepted: true,
+        reason: "accepted",
+        result: publisher
+      }),
+      withConvertedPublisherData: (payload, publisherText) => ({ ...payload, data: publisherText })
+    }));
 
     const { runProductionDetectionPipeline } = require("../server/lib/recruitment/productionRuntime");
     const flags = require("../server/config/automationFlags");
@@ -252,10 +265,12 @@ describe("AMP-4B staging proof — productionRuntime AUTO_DRAFT + review", () =>
       notice: {
         title: "SSC CGL 2026 Recruitment",
         content: "SSC CGL 2026 Recruitment",
-        url: "https://ssc.nic.in/Portal/Apply"
+        url: "https://ssc.gov.in/api/attachment/uploads/notice.pdf",
+        pdfUrl: "https://ssc.gov.in/api/attachment/uploads/notice.pdf"
       },
       updateId: 9002,
-      candidateRecruitments: []
+      candidateRecruitments: [],
+      monitoredSite: { id: 1, name: "SSC", url: "https://ssc.gov.in/" }
     });
 
     expect(flags.getAutomationFlags().AUTO_PUBLISH_ENABLED).toBe(false);

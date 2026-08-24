@@ -147,6 +147,30 @@ async function listDrafts(opts = {}) {
   return rows;
 }
 
+async function findUnpublishedDraftByUpdateId(updateId) {
+  const id = parseInt(String(updateId), 10);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const needle = String(id);
+  try {
+    const [rows] = await db.query(
+      `SELECT id FROM generator_drafts
+       WHERE status = 'draft'
+         AND (
+           JSON_UNQUOTE(JSON_EXTRACT(CAST(payload AS JSON), '$.updateId')) = ?
+           OR JSON_UNQUOTE(JSON_EXTRACT(CAST(payload AS JSON), '$.update_id')) = ?
+         )
+       ORDER BY id DESC
+       LIMIT 1`,
+      [needle, needle]
+    );
+    const row = rows && rows[0];
+    if (!row || row.id == null) return null;
+    return findById(row.id);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * @param {{ recruitment_id: number, limit?: number }} opts
  */
@@ -236,6 +260,7 @@ module.exports = {
   updateDraft,
   findById,
   listDrafts,
+  findUnpublishedDraftByUpdateId,
   listDraftsByRecruitmentId,
   markPublished,
   deleteDraft,

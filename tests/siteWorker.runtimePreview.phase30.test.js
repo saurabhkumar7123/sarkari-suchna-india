@@ -1,16 +1,21 @@
 "use strict";
 
 /**
- * Phase 30 — end-to-end worker → in-memory preview buffer (real buffer module).
+ * Phase 30 successor — worker no longer writes the in-memory runtime preview
+ * buffer. Production path uses runProductionDetectionPipeline instead.
+ * This file guards that contract so the obsolete preview side-channel is not
+ * silently reintroduced.
  */
 
 const mockInsertDetectedUpdate = jest.fn().mockResolvedValue(undefined);
 const mockMarkAlertSent = jest.fn().mockResolvedValue(undefined);
 const mockSaveSiteBaseline = jest.fn().mockResolvedValue(undefined);
 const mockHasRecentDuplicate = jest.fn().mockResolvedValue(false);
-const mockSendTelegramMessage = jest.fn().mockResolvedValue({ sent: true });
+const mockSendTelegramMessage = jest.fn().mockResolvedValue({ sent: false });
 const mockCheckSite = jest.fn();
 const mockIsRecruitmentPipelineEnabled = jest.fn();
+const mockRunProductionDetectionPipeline = jest.fn();
+const mockIsProductionRuntimeEnabled = jest.fn();
 
 jest.mock("../server/services/updates/updates.repository", () => ({
   getSiteById: jest.fn(),
@@ -40,10 +45,16 @@ jest.mock("../server/config/recruitmentPipeline", () => ({
   isRecruitmentPipelineEnabled: mockIsRecruitmentPipelineEnabled
 }));
 
-jest.mock("../server/repositories/recruitment.repository", () => ({
-  tableExists: jest.fn().mockResolvedValue(true),
-  findCandidatesForLookup: jest.fn().mockResolvedValue([]),
-  findCandidatesByAdvertisementNoLoose: jest.fn().mockResolvedValue([])
+jest.mock("../server/lib/recruitment/productionRuntime", () => ({
+  runProductionDetectionPipeline: mockRunProductionDetectionPipeline,
+  isProductionRuntimeEnabled: mockIsProductionRuntimeEnabled
+}));
+
+jest.mock("../server/services/recruitmentCandidateLookup.service", () => ({
+  lookupRecruitmentCandidatesForRuntime: jest.fn().mockResolvedValue({
+    candidates: [],
+    lookupSummary: { status: "skipped", strategy: "insufficient_criteria", candidateCount: 0 }
+  })
 }));
 
 jest.mock("bullmq", () => ({
@@ -68,8 +79,7 @@ jest.mock("../server/services/file.service", () => ({
 const { getSiteById } = require("../server/services/updates/updates.repository");
 const {
   resetRuntimePreviewBuffer,
-  getRuntimePreviewSize,
-  listRuntimePreviews
+  getRuntimePreviewSize
 } = require("../server/lib/recruitment/runtimePreviewBuffer");
 const { processSiteJob } = require("../server/services/workers/siteWorker");
 
@@ -92,6 +102,13 @@ describe("siteWorker → runtime preview buffer integration", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetRuntimePreviewBuffer();
+    process.env.PRODUCTION_MONITORING_ENABLED = "true";
+    process.env.WORKER_ACTIVATION_ENABLED = "true";
+    process.env.LIVE_CRAWLER_ENABLED = "true";
+    process.env.RECRUITMENT_PIPELINE_ENABLED = "true";
+    process.env.TELEGRAM_DELIVERY_ENABLED = "false";
+    process.env.NOTIFICATION_GATEWAY_ENABLED = "false";
+    process.env.AUTO_PUBLISH_ENABLED = "false";
     getSiteById.mockResolvedValue(siteRow);
     mockCheckSite.mockResolvedValue({
       changed: true,
@@ -105,73 +122,29 @@ describe("siteWorker → runtime preview buffer integration", () => {
       baselineFingerprint: "fp-1"
     });
     mockIsRecruitmentPipelineEnabled.mockReturnValue(false);
+    mockIsProductionRuntimeEnabled.mockReturnValue(false);
+    mockRunProductionDetectionPipeline.mockResolvedValue({
+      skipped: false,
+      success: true,
+      publishingBlocked: true
+    });
   });
 
   test("feature flag off does not write preview entries", async () => {
     await processSiteJob(job);
     expect(getRuntimePreviewSize()).toBe(0);
+    expect(mockRunProductionDetectionPipeline).not.toHaveBeenCalled();
   });
 
-  test("feature flag on stores processor output in preview buffer", async () => {
+  test("production runtime path does not write obsolete preview buffer", async () => {
     mockIsRecruitmentPipelineEnabled.mockReturnValue(true);
+    mockIsProductionRuntimeEnabled.mockReturnValue(true);
     mockInsertDetectedUpdate.mockResolvedValue(777);
 
     const result = await processSiteJob(job);
 
-    expect(result).toEqual({ changed: true, savedCount: 1 });
-    expect(getRuntimePreviewSize()).toBe(1);
-
-    const listed = listRuntimePreviews({});
-    expect(listed.data[0].noticeTitle).toBe("SSC CGL 2026 Admit Card");
-    expect(listed.data[0].updateId).toBe(777);
-    expect(listed.data[0].monitoredSite).toEqual({
-      id: 7,
-      name: "SSC",
-      url: "https://ssc.nic.in"
-    });
-    expect(listed.data[0].eventType).toEqual(expect.any(String));
-    expect(listed.data[0].processorResult).toEqual(
-      expect.objectContaining({
-        status: expect.any(String),
-        warnings: expect.any(Array)
-      })
-    );
-    expect(listed.data[0].lookupSummary).toEqual(
-      expect.objectContaining({
-        status: expect.any(String),
-        strategy: expect.any(String),
-        candidateCount: expect.any(Number)
-      })
-    );
-    expect(listed.data[0].eligibility).toEqual(
-      expect.objectContaining({
-        eligible: expect.any(Boolean),
-        status: expect.any(String),
-        reasons: expect.any(Array)
-      })
-    );
-    expect(listed.data[0].lifecycleArchitecture).toEqual(
-      expect.objectContaining({
-        observationOnly: true,
-        architectureOnly: true,
-        enabled: true,
-        wiringPhase: 41,
-        sideEffects: false,
-        persistenceEnabled: false,
-        automationEnabled: false,
-        policyDecision: expect.objectContaining({
-          action: expect.any(String)
-        }),
-        executionPlan: expect.objectContaining({
-          executable: false
-        }),
-        transactionPlan: expect.objectContaining({
-          executable: false,
-          transactionBegun: false
-        }),
-        auditEvents: expect.any(Array)
-      })
-    );
-    expect(listed.data[0].lifecycleArchitecture.auditEvents.length).toBe(4);
+    expect(result).toMatchObject({ changed: true, savedCount: 1, productionOutcomeCount: 1 });
+    expect(mockRunProductionDetectionPipeline).toHaveBeenCalledTimes(1);
+    expect(getRuntimePreviewSize()).toBe(0);
   });
 });
