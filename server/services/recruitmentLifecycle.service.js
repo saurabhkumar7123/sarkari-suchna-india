@@ -237,14 +237,23 @@ async function applyParentToDraftAndReview({
 }) {
   if (draftId && recruitmentId) {
     try {
-      const existing = await generatorDraftService.getDraftById(draftId);
-      if (existing && String(existing.status) === "draft") {
-        await generatorDraftService.saveDraft({
-          id: draftId,
-          payload: existing.payload || { title: existing.title },
+      // Use linkage-only bind so ATTACH works even when
+      // RECRUITMENT_LIFECYCLE_EDITORIAL_ATTACHMENT_ENABLED is false.
+      if (typeof generatorDraftService.bindDraftRecruitmentLinkage === "function") {
+        await generatorDraftService.bindDraftRecruitmentLinkage(draftId, {
           recruitmentId,
           recruitmentEventId
         });
+      } else {
+        const existing = await generatorDraftService.getDraftById(draftId);
+        if (existing && String(existing.status) === "draft") {
+          await generatorDraftService.saveDraft({
+            id: draftId,
+            payload: existing.payload || { title: existing.title },
+            recruitmentId,
+            recruitmentEventId
+          });
+        }
       }
     } catch (err) {
       logger.warn("lifecycle: draft rebind failed", { message: err && err.message });

@@ -279,6 +279,56 @@ async function deleteDraftById(id) {
   return { deleted: id };
 }
 
+/**
+ * Lifecycle ATTACH / Needs Matching rebind.
+ * Writes recruitment linkage even when editorial-attachment feature flag is off.
+ */
+async function bindDraftRecruitmentLinkage(id, { recruitmentId, recruitmentEventId } = {}) {
+  await assertTable();
+  await assertLinkageColumnsReady();
+  const draftId = parseInt(String(id), 10);
+  if (!Number.isInteger(draftId) || draftId <= 0) {
+    const err = new Error("Invalid draft id");
+    err.statusCode = 400;
+    throw err;
+  }
+  const rid = parseOptionalPositiveId(recruitmentId, "recruitment_id");
+  const eid =
+    recruitmentEventId === undefined
+      ? null
+      : parseOptionalPositiveId(recruitmentEventId, "recruitment_event_id");
+  if (rid == null) {
+    const err = new Error("recruitment_id is required");
+    err.statusCode = 400;
+    throw err;
+  }
+  await assertRecruitmentExists(rid);
+  if (eid != null) {
+    await assertRecruitmentEventExists(eid, rid);
+  }
+  const existing = await generatorDraftRepository.findById(draftId);
+  if (!existing) {
+    const err = new Error("Draft not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  if (String(existing.status) !== "draft") {
+    const err = new Error("Only unpublished drafts can be rebound");
+    err.statusCode = 400;
+    throw err;
+  }
+  const ok = await generatorDraftRepository.updateDraftLinkage(draftId, {
+    recruitmentId: rid,
+    recruitmentEventId: eid
+  });
+  if (!ok) {
+    const err = new Error("Draft linkage could not be updated");
+    err.statusCode = 409;
+    throw err;
+  }
+  return generatorDraftRepository.findById(draftId);
+}
+
 module.exports = {
   saveDraft,
   listDrafts,
@@ -287,5 +337,6 @@ module.exports = {
   getDraftById,
   markDraftPublished,
   deleteDraftById,
+  bindDraftRecruitmentLinkage,
   MAX_GENERATOR_DRAFTS
 };

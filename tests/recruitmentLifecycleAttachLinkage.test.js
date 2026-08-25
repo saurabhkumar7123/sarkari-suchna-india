@@ -86,6 +86,13 @@ describe("resolveNeedsMatching ATTACH event linkage", () => {
         row.recruitment_event_id = recruitmentEventId;
         drafts.set(Number(id), row);
         return row;
+      }),
+      bindDraftRecruitmentLinkage: jest.fn(async (id, { recruitmentId, recruitmentEventId }) => {
+        const row = drafts.get(Number(id));
+        row.recruitment_id = recruitmentId;
+        row.recruitment_event_id = recruitmentEventId;
+        drafts.set(Number(id), row);
+        return row;
       })
     }));
 
@@ -156,6 +163,11 @@ describe("resolveNeedsMatching ATTACH event linkage", () => {
     });
     expect(reviewService.bindReviewItemRecruitment).toHaveBeenCalledWith(13, 9, 100);
     expect(eventService.createRecruitmentEvent).toHaveBeenCalledTimes(1);
+    const draftService = require("../server/services/generatorDraft.service");
+    expect(draftService.bindDraftRecruitmentLinkage).toHaveBeenCalledWith(6, {
+      recruitmentId: 9,
+      recruitmentEventId: 100
+    });
   });
 
   test("same update reuses active event; no duplicate event", async () => {
