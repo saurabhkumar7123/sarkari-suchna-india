@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Automation,Monitoring">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Sources">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top"></div>
@@ -29,20 +29,31 @@
   <section class="monitoring-section" aria-label="Monitoring panel">
     <div class="admin-page-head manager-header" data-workspace="monitoring">
       <div>
-        <h1 class="manager-title">Monitoring</h1>
-        <p class="manager-hint">Monitor approved official government sources and their health. Detected notices live in Detected Updates.</p>
+        <h1 class="manager-title">Source Health</h1>
+        <p class="manager-hint">Official government sources and their health. Detected notices live under Detected Updates.</p>
       </div>
     </div>
     <div class="admin-page-head manager-header" data-workspace="detections">
       <div>
         <h1 class="manager-title">Detected Updates</h1>
-        <p class="manager-hint">Review notices discovered by the monitoring system. This is not the source-health table.</p>
+        <p class="manager-hint">Notices discovered by monitoring. Open a draft when a notice needs conversion.</p>
       </div>
     </div>
-    <nav class="admin-ops-flow" aria-label="Automation workflow">
-      <span class="admin-ops-flow__step is-current">Monitoring</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step">Detected</span>
+    <div class="admin-page-head manager-header" data-workspace="activity" data-workspace-activity="1">
+      <div>
+        <h1 class="manager-title">Monitoring Activity</h1>
+        <p class="manager-hint">Failed queue jobs and retry history for source checks.</p>
+      </div>
+    </div>
+
+    <nav class="admin-workspace-tabs" aria-label="Monitoring workspaces">
+      <a href="/admin/monitoring" data-mon-tab="sources">Source Health</a>
+      <a href="/admin/monitoring#recentUpdates" data-mon-tab="detections">Detected Updates</a>
+      <a href="/admin/monitoring#monitoringActivity" data-mon-tab="activity">Activity</a>
+    </nav>
+
+    <nav class="admin-ops-flow" aria-label="Content pipeline" id="monitoringPipelineFlow">
+      <span class="admin-ops-flow__step is-current">Detected</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Draft</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
@@ -54,17 +65,18 @@
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Published</span>
     </nav>
+
     <div class="saas-stats-bar" id="monitoringStats" hidden aria-live="polite"></div>
     <div class="monitoring-sources-block">
     <div class="monitoring-grid">
-      <div class="card card-indigo"><h3><span class="card-icon">🌐</span> Total Sites</h3><p id="totalSites">0</p></div>
-      <div class="card card-green"><h3><span class="card-icon">?</span> Active Sites</h3><p id="activeSites">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">⚠️</span> Broken Sites</h3><p id="brokenSites">0</p></div>
+      <div class="card card-indigo"><h3><span class="card-icon">•</span> Total Sites</h3><p id="totalSites">0</p></div>
+      <div class="card card-green"><h3><span class="card-icon">✓</span> Active Sites</h3><p id="activeSites">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">!</span> Broken Sites</h3><p id="brokenSites">0</p></div>
     </div>
     <div class="monitoring-grid">
-      <div class="card card-blue"><h3><span class="card-icon">📥</span> Queue Waiting</h3><p id="queueWaiting">0</p></div>
-      <div class="card card-teal"><h3><span class="card-icon">⚙️</span> Queue Active</h3><p id="queueActive">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">?</span> Queue Failed</h3><p id="queueFailed">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">○</span> Queue Waiting</h3><p id="queueWaiting">0</p></div>
+      <div class="card card-teal"><h3><span class="card-icon">●</span> Queue Active</h3><p id="queueActive">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">×</span> Queue Failed</h3><p id="queueFailed">0</p></div>
     </div>
     <section class="admin-health-panel" aria-label="System health">
       <div class="saas-toolbar">
@@ -78,8 +90,8 @@
       </div>
     </section>
     <div class="monitor-actions">
-      <button type="button" id="runCheckBtn">? Run Check</button>
-      <button type="button" id="retryFailedBtn">? Retry Failed</button>
+      <button type="button" id="runCheckBtn">Run Check</button>
+      <button type="button" id="retryFailedBtn">Retry Failed</button>
       <button type="button" id="clearQueueBtn">Clear Queue</button>
     </div>
     <div class="saas-toolbar">
@@ -101,7 +113,7 @@
       <div class="admin-page-head">
         <div>
           <h3>Detected Updates</h3>
-          <p class="manager-hint">What the monitoring system found. Open a draft from here when a notice needs conversion.</p>
+          <p class="manager-hint">What the monitoring system found. One update maps to one draft when converted.</p>
         </div>
       </div>
       <div class="admin-filter-row" role="group" aria-label="Detected update filters">
@@ -109,11 +121,17 @@
         <button type="button" class="admin-filter-chip" data-update-filter="needs-draft">Needs Draft</button>
         <button type="button" class="admin-filter-chip" data-update-filter="drafted">Drafted</button>
         <button type="button" class="admin-filter-chip" data-update-filter="reviewed">Reviewed</button>
+        <button type="button" class="admin-filter-chip" data-update-filter="needs-matching">Needs Matching</button>
       </div>
       <div id="recentUpdatesList"><p class="empty-msg">Loading…</p></div>
     </div>
-    <div class="recent monitoring-failed-block">
-      <h3>Queue Failed Jobs</h3>
+    <div class="recent monitoring-failed-block" id="monitoringActivity">
+      <div class="admin-page-head" data-workspace-activity="1">
+        <div>
+          <h3>Queue Failed Jobs</h3>
+          <p class="manager-hint">Errors from source checks. Retry is safe and manual.</p>
+        </div>
+      </div>
       <div class="filters-toolbar" style="margin-bottom:10px;">
         <div class="filter-group">
           <label for="failedSort">Sort</label>
@@ -128,14 +146,14 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=24"></script>
-<script src="/js/admin-shell.js?v=10"></script>
+<script src="/js/admin-nav.js?v=25"></script>
+<script src="/js/admin-shell.js?v=11"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-monitoring.js"></script>
+<script src="/js/admin-monitoring.js?v=2"></script>
 </body>
 </html>

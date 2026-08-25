@@ -542,6 +542,41 @@ document.getElementById("nextBtn")?.addEventListener("click", () => {
 });
 document.getElementById("managerRefreshBtn")?.addEventListener("click", () => loadPageManager());
 
+document.getElementById("publishedCategoryChips")?.addEventListener("click", (event) => {
+  const btn = event.target.closest("[data-pub-cat]");
+  if (!btn) return;
+  const key = btn.getAttribute("data-pub-cat") || "";
+  const statusMap = {
+    "": "",
+    "latest-jobs": "Latest Job",
+    "admit-card": "Admit Card",
+    "answer-key": "Answer Key",
+    result: "Result",
+    correction: "Correction",
+    other: ""
+  };
+  document.querySelectorAll("#publishedCategoryChips [data-pub-cat]").forEach((el) => {
+    const active = el === btn;
+    el.classList.toggle("is-active", active);
+    el.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+  if (key === "other") {
+    currentFilters.status = "";
+    currentFilters.category = "";
+    const stSel = document.getElementById("statusFilter");
+    if (stSel) stSel.value = "";
+  } else {
+    currentFilters.status = statusMap[key] || "";
+    const stSel = document.getElementById("statusFilter");
+    if (stSel) {
+      const exists = Array.from(stSel.options).some((o) => o.value === currentFilters.status);
+      if (exists) stSel.value = currentFilters.status;
+    }
+  }
+  currentPage = 1;
+  loadPageManager();
+});
+
 document.getElementById("sortOrder")?.addEventListener("change", (e) => {
   sortOrder = e.target.value === "asc" ? "asc" : "desc";
   currentPage = 1;

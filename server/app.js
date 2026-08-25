@@ -1516,12 +1516,18 @@ function sendPrivatePage(res, fileName) {
   res.type("html").send(html);
 }
 
+app.get(["/admin", "/admin/"], verifyToken, (req, res) => {
+  return res.redirect(302, "/admin/dashboard");
+});
+app.get(
+  ["/admin/dashboard", "/admin/dashboard/", "/admin/dashboard.html"],
+  verifyToken,
+  (req, res) => {
+    return sendPrivatePage(res, "admin-dashboard.html");
+  }
+);
 app.get(
   [
-    "/admin",
-    "/admin/dashboard",
-    "/admin/dashboard/",
-    "/admin/dashboard.html",
     "/admin/automation-control-center",
     "/admin/automation-control-center/",
     "/admin/automation-control-center.html"

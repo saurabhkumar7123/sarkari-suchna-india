@@ -375,6 +375,60 @@
       .join("");
   }
 
+  function renderLinkage(item) {
+    const panel = document.getElementById("rrqLinkagePanel");
+    const meta = document.getElementById("rrqLinkageMeta");
+    if (!panel || !meta) return;
+    const status = String(item && item.status || "").toLowerCase();
+    const hasRecruitment = item && item.recruitment_id;
+    const show =
+      hasRecruitment &&
+      status !== "needs_matching" &&
+      status !== "rejected";
+    panel.hidden = !show;
+    if (!show) {
+      meta.innerHTML = "";
+      return;
+    }
+    const draftId = item.draft_id || item.draftId || item.generator_draft_id || "—";
+    const eventType = item.event_type || "—";
+    const updateId = item.update_id || "—";
+    meta.innerHTML = `
+      <div><dt>Recruitment</dt><dd>${escapeHtml(item.recruitment_id)}</dd></div>
+      <div><dt>Update</dt><dd>${escapeHtml(updateId)}</dd></div>
+      <div><dt>Event</dt><dd>${escapeHtml(eventType)}</dd></div>
+      <div><dt>Draft</dt><dd>${escapeHtml(draftId)}</dd></div>
+      <div><dt>Review</dt><dd>#${escapeHtml(item.id)} · ${escapeHtml(item.status || "—")}</dd></div>
+    `;
+  }
+
+  function syncStatusChips() {
+    const status = document.getElementById("filterStatus")?.value || "";
+    document.querySelectorAll("#rrqStatusChips [data-rrq-status]").forEach((btn) => {
+      const active = (btn.getAttribute("data-rrq-status") || "") === status;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function applyStatusFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const status = params.get("status");
+      if (status == null) return;
+      const select = document.getElementById("filterStatus");
+      if (!select) return;
+      const allowed = new Set(
+        Array.from(select.options).map((o) => o.value)
+      );
+      if (allowed.has(status)) {
+        select.value = status;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   function renderDetail(item) {
     selectedItem = item;
     selectedId = item ? item.id : null;
@@ -404,6 +458,7 @@
     renderDecisionAssist(assist);
     renderComparison(assist);
     renderNeedsMatching(item);
+    renderLinkage(item);
     renderHistory(assist, item);
 
     const notesEl = document.getElementById("rrqNotes");
@@ -570,6 +625,7 @@
   document.getElementById("rrqFilters")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     currentPage = 1;
+    syncStatusChips();
     await loadList();
   });
 
@@ -579,6 +635,22 @@
     document.getElementById("filterEventType").value = "";
     document.getElementById("filterRecruitmentId").value = "";
     currentPage = 1;
+    syncStatusChips();
+    await loadList();
+  });
+
+  document.getElementById("filterStatus")?.addEventListener("change", () => {
+    syncStatusChips();
+  });
+
+  document.getElementById("rrqStatusChips")?.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-rrq-status]");
+    if (!btn) return;
+    const status = btn.getAttribute("data-rrq-status") || "";
+    const select = document.getElementById("filterStatus");
+    if (select) select.value = status;
+    currentPage = 1;
+    syncStatusChips();
     await loadList();
   });
 
@@ -638,5 +710,7 @@
 
   document.getElementById("rrqSaveNotes")?.addEventListener("click", saveNotes);
 
+  applyStatusFromUrl();
+  syncStatusChips();
   loadList();
 })();

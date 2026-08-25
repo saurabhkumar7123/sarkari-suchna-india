@@ -9,60 +9,62 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
 <link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=3">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Recruitment,Recruitments">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">â°</button>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Recruitments,All Recruitments">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">â¨â©</button>
-  </div>
+  <div class="sidebar-top"></div>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Recruitments</div>
+    <div class="admin-title">All Recruitments</div>
     <div class="admin-header-actions rom-header-links">
-      <a class="header-action-btn rom-secondary" href="/admin/dashboard" style="text-decoration:none;">Dashboard</a>
-      <a class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review</a>
-      <a class="header-action-btn rom-secondary" href="/admin/recruitments#eventTimeline" style="text-decoration:none;">Events</a>
+      <a class="header-action-btn rom-secondary" href="/admin/recruitment-review-queue" style="text-decoration:none;">Review Center</a>
+      <a class="header-action-btn rom-secondary" href="/admin/recruitments#eventTimeline" style="text-decoration:none;">Timeline</a>
       <button type="button" class="header-action-btn" id="newRecruitmentBtn">+ New recruitment</button>
     </div>
   </div>
 
   <div class="admin-page-head" data-workspace="recruitments">
     <div>
-      <h1>Recruitments</h1>
-      <p class="manager-hint">Recruitment Manager — manage recruitment records, status, and metadata. Event chronology is a separate workspace for the selected recruitment.</p>
+      <h1>All Recruitments</h1>
+      <p class="manager-hint">Recruitment Manager — organization, exam, year, advertisement, lifecycle state. Timeline and linked content live with the selected record.</p>
     </div>
   </div>
   <div class="admin-page-head" data-workspace="events">
     <div>
-      <h1>Event Timeline</h1>
-      <p class="manager-hint">Chronological history of the selected recruitment. Select a record in the list, then work the events — this is not the recruitment table.</p>
+      <h1>Recruitment Timeline</h1>
+      <p class="manager-hint">Recruitment Events chronology: Notification → Correction → Admit Card → Answer Key → Result → Joining for the selected recruitment.</p>
     </div>
   </div>
 
-  <section class="rom-workflow" aria-label="Recruitment workflow">
-    <span class="rom-workflow__step is-current" data-workflow-step="recruitment">1. Recruitment</span>
-    <span aria-hidden="true">â</span>
-    <span class="rom-workflow__step" data-workflow-step="events">2. Events</span>
-    <span aria-hidden="true">â</span>
-    <span class="rom-workflow__step" data-workflow-step="links">3. Page Links</span>
-    <span aria-hidden="true">â</span>
+  <section class="rom-workflow" aria-label="Recruitment content chain">
+    <span class="rom-workflow__step is-current" data-workflow-step="recruitment">Recruitment</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="update">Update</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="events">Event</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="draft">Draft</span>
+    <span aria-hidden="true">→</span>
     <span class="rom-workflow__step" data-workflow-step="review">Ready for Review</span>
+    <span aria-hidden="true">→</span>
+    <span class="rom-workflow__step" data-workflow-step="links">Published Page</span>
   </section>
 
   <p id="operationsMessage" class="rom-message" hidden role="status"></p>
-  <nav class="admin-ops-flow" aria-label="Recruitment workflow">
-    <span class="admin-ops-flow__step">Draft</span>
+  <nav class="admin-ops-flow" aria-label="Publish workflow">
+    <span class="admin-ops-flow__step">Detected</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step is-current">Recruitment Review</span>
+    <span class="admin-ops-flow__step is-current">Recruitment</span>
+    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+    <span class="admin-ops-flow__step">Review</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step">Approve</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
@@ -280,8 +282,8 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=24"></script>
-<script src="/js/admin-shell.js?v=10"></script>
+<script src="/js/admin-nav.js?v=25"></script>
+<script src="/js/admin-shell.js?v=11"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>

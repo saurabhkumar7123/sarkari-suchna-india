@@ -1398,6 +1398,7 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
 
 /* Hash workspaces: same route, distinct operator task */
 #recentUpdates,
+#monitoringActivity,
 #eventTimeline,
 #drafts,
 #generatorDraftsBar,
@@ -1412,13 +1413,28 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
   border-radius: var(--admin-radius-lg);
 }
 
+/* Monitoring workspaces: Sources (default) | Detected Updates | Activity */
 body[data-admin-hash="recentUpdates"] [data-workspace="monitoring"],
+body[data-admin-hash="monitoringActivity"] [data-workspace="monitoring"],
 body:not([data-admin-hash="recentUpdates"]) [data-workspace="detections"] {
   display: none;
 }
 
+body:not([data-admin-hash="monitoringActivity"]) [data-workspace="activity"] {
+  display: none;
+}
+
 body[data-admin-hash="recentUpdates"] .monitoring-sources-block,
-body[data-admin-hash="recentUpdates"] .monitoring-failed-block {
+body[data-admin-hash="monitoringActivity"] .monitoring-sources-block {
+  display: none;
+}
+
+body[data-admin-hash="recentUpdates"] .monitoring-failed-block,
+body:not([data-admin-hash="monitoringActivity"]) .monitoring-failed-block {
+  display: none;
+}
+
+body[data-admin-hash="monitoringActivity"] #recentUpdates {
   display: none;
 }
 
@@ -1427,7 +1443,233 @@ body:not([data-admin-hash="recentUpdates"]) #recentUpdates {
 }
 
 body[data-admin-hash="recentUpdates"] #recentUpdates {
+  display: block;
   margin-top: 0;
+}
+
+body[data-admin-hash="monitoringActivity"] .monitoring-failed-block {
+  display: block;
+  margin-top: 0;
+}
+
+/* ===== Feature-first attention cards ===== */
+.admin-attention-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+}
+
+.admin-attention-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  box-shadow: var(--admin-shadow);
+  min-width: 0;
+}
+
+.admin-attention-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-attention-card__count {
+  font-size: 28px;
+  font-weight: 750;
+  line-height: 1.1;
+  color: var(--admin-text);
+}
+
+.admin-attention-card__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.admin-attention-card__desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--admin-text-muted);
+  flex: 1 1 auto;
+}
+
+.admin-attention-card.is-amber {
+  border-color: color-mix(in srgb, var(--admin-warning) 35%, var(--admin-border));
+  background: var(--admin-warning-soft);
+}
+
+.admin-attention-card.is-red {
+  border-color: color-mix(in srgb, var(--admin-danger) 35%, var(--admin-border));
+  background: var(--admin-danger-soft);
+}
+
+.admin-attention-card.is-blue {
+  border-color: color-mix(in srgb, var(--admin-info) 35%, var(--admin-border));
+  background: var(--admin-info-soft);
+}
+
+.admin-attention-card.is-ok .admin-attention-card__count {
+  color: var(--admin-success);
+}
+
+/* ===== Semantic status chips (icon + label + color) ===== */
+.admin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.admin-status__ico {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.admin-status--success {
+  color: var(--admin-success);
+  background: var(--admin-success-soft);
+  border-color: color-mix(in srgb, var(--admin-success) 22%, transparent);
+}
+
+.admin-status--warning {
+  color: var(--admin-warning);
+  background: var(--admin-warning-soft);
+  border-color: color-mix(in srgb, var(--admin-warning) 22%, transparent);
+}
+
+.admin-status--danger {
+  color: var(--admin-danger);
+  background: var(--admin-danger-soft);
+  border-color: color-mix(in srgb, var(--admin-danger) 22%, transparent);
+}
+
+.admin-status--info {
+  color: var(--admin-info);
+  background: var(--admin-info-soft);
+  border-color: color-mix(in srgb, var(--admin-info) 22%, transparent);
+}
+
+.admin-status--muted {
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-3);
+  border-color: var(--admin-border);
+}
+
+/* ===== Workspace tab strip ===== */
+.admin-workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.admin-workspace-tabs a,
+.admin-workspace-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  color: var(--admin-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--admin-duration) var(--admin-ease-out),
+    border-color var(--admin-duration) var(--admin-ease-out),
+    color var(--admin-duration) var(--admin-ease-out);
+}
+
+.admin-workspace-tabs a:hover,
+.admin-workspace-tabs button:hover {
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+}
+
+.admin-workspace-tabs a.is-active,
+.admin-workspace-tabs a[aria-current="page"],
+.admin-workspace-tabs button.is-active,
+.admin-workspace-tabs button[aria-current="true"] {
+  background: var(--admin-brand-soft);
+  border-color: color-mix(in srgb, var(--admin-brand) 40%, var(--admin-border));
+  color: var(--admin-brand);
+}
+
+.admin-workspace-tabs a:focus-visible,
+.admin-workspace-tabs button:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: 2px;
+}
+
+/* Mini pipeline on cards */
+.admin-mini-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 8px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted);
+}
+
+.admin-mini-flow__step.is-done {
+  color: var(--admin-success);
+}
+
+.admin-mini-flow__step.is-current {
+  color: var(--admin-brand);
+}
+
+.admin-mini-flow__step.is-muted {
+  opacity: 0.45;
+}
+
+.admin-ops-flow__step.is-alert::before {
+  content: "!";
+  color: var(--admin-warning);
+}
+
+body.dark.admin-saas-v2 .admin-attention-card,
+body.dark.admin-saas-v2 .admin-workspace-tabs a,
+body.dark.admin-saas-v2 .admin-workspace-tabs button {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text-secondary);
+}
+
+body.dark.admin-saas-v2 .admin-attention-card.is-amber {
+  background: color-mix(in srgb, var(--admin-warning) 12%, var(--admin-surface));
+}
+
+body.dark.admin-saas-v2 .admin-attention-card.is-red {
+  background: color-mix(in srgb, var(--admin-danger) 12%, var(--admin-surface));
+}
+
+body.dark.admin-saas-v2 .admin-attention-card.is-blue {
+  background: color-mix(in srgb, var(--admin-info) 12%, var(--admin-surface));
 }
 
 body[data-admin-hash="accAudit"] .acc-hero,
@@ -1485,4 +1727,100 @@ body[data-admin-hash="drafts"] .admin-header .admin-left p {
 body[data-admin-hash="drafts"] .admin-header .admin-left p::after {
   content: "Review and edit generated drafts before human approval.";
   font-size: 0.88rem;
+}
+
+/* ===== Browser polish: overflow + dark surfaces + table scroll ===== */
+html.admin-saas-v2,
+body.admin-saas-v2,
+body.admin-saas-v2.generator-page,
+body.admin-saas-v2.generator-saas-v2 {
+  overflow-x: clip;
+  max-width: 100vw;
+}
+
+body.admin-saas-v2 .main,
+body.admin-saas-v2 #standaloneAdminShell,
+body.admin-saas-v2 .standalone-admin-content,
+body.admin-saas-v2 .main-container {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+body.admin-saas-v2 .rrq-table-wrap,
+body.admin-saas-v2 .rom-table-wrap,
+body.admin-saas-v2 .sites-table-host,
+body.admin-saas-v2 .page-list-host,
+body.admin-saas-v2 .acc-table-wrap,
+body.admin-saas-v2 .filters-toolbar,
+body.admin-saas-v2 .admin-ops-flow,
+body.admin-saas-v2 .rom-workflow {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.admin-saas-v2 .admin-header-actions,
+body.admin-saas-v2 .rom-header-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  body.admin-saas-v2 .admin-ops-flow,
+  body.admin-saas-v2 .rom-workflow {
+    gap: 6px;
+  }
+
+  body.admin-saas-v2 .admin-workspace-tabs a,
+  body.admin-saas-v2 .admin-workspace-tabs button,
+  body.admin-saas-v2 .header-action-btn,
+  body.admin-saas-v2 .rrq-actions .header-action-btn {
+    min-height: 42px;
+  }
+
+  body.admin-saas-v2 .action-bar__inner,
+  body.admin-saas-v2 .action-group {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* Generator dark-mode: override hardcoded #fff surfaces from generator-saas */
+body.dark.admin-saas-v2.generator-saas-v2 .generator-drafts-bar,
+body.dark.admin-saas-v2.generator-saas-v2 .generator-drafts-bar__toggle,
+body.dark.admin-saas-v2.generator-saas-v2 .generator-hero,
+body.dark.admin-saas-v2.generator-saas-v2 .admin-ops-flow,
+body.dark.admin-saas-v2.generator-saas-v2 .gw-pane,
+body.dark.admin-saas-v2.generator-saas-v2 .form-card,
+body.dark.admin-saas-v2.generator-saas-v2 .panel,
+body.dark.admin-saas-v2.generator-saas-v2 .content-analysis-panel,
+body.dark.admin-saas-v2.generator-saas-v2 .pdf-extract-panel,
+body.dark.admin-saas-v2.generator-saas-v2 .preview-panel,
+body.dark.admin-saas-v2.generator-saas-v2 .action-bar,
+body.dark.admin-saas-v2.generator-saas-v2 input,
+body.dark.admin-saas-v2.generator-saas-v2 select,
+body.dark.admin-saas-v2.generator-saas-v2 textarea {
+  background: var(--admin-surface) !important;
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+body.dark.admin-saas-v2.generator-saas-v2 .generator-drafts-bar__badge,
+body.dark.admin-saas-v2.generator-saas-v2 .generator-drafts-bar__count {
+  background: var(--admin-surface-3);
+  color: var(--admin-text-secondary);
+  border-color: var(--admin-border);
+}
+
+body.dark.admin-saas-v2 .rrq-card,
+body.dark.admin-saas-v2 .rom-card,
+body.dark.admin-saas-v2 .rrq-filters,
+body.dark.admin-saas-v2 .rom-filters {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
 }

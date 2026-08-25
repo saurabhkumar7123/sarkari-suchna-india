@@ -11,63 +11,55 @@
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
-<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=23">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=11">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
-<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=4">
+<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=5">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Recruitment,Recruitment Review">
-<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Center">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-top">
-    <h2>Admin Panel</h2>
-    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
-  </div>
-  <div class="nav-group-title">Admin</div>
-  <a href="/admin/dashboard"><span class="nav-ico">🏠</span><span class="nav-text">Dashboard</span></a>
-  <a href="/admin/page-manager"><span class="nav-ico">📄</span><span class="nav-text">Page Manager</span></a>
-  <a href="/admin/monitoring"><span class="nav-ico">📊</span><span class="nav-text">Monitoring</span></a>
-  <a href="/admin/alerts"><span class="nav-ico">🔔</span><span class="nav-text">Alerts</span></a>
-  <a href="/admin/csv-upload"><span class="nav-ico">📁</span><span class="nav-text">CSV Upload</span></a>
-  <a href="/admin/sessions"><span class="nav-ico">🧭</span><span class="nav-text">Sessions</span></a>
-  <a href="/admin/activity"><span class="nav-ico">📝</span><span class="nav-text">Activity</span></a>
-  <div class="nav-group-title">Content</div>
-  <a href="/generator"><span class="nav-ico">?</span><span class="nav-text">Page Generator</span></a>
-  <a href="/upload"><span class="nav-ico">📤</span><span class="nav-text">Upload PDF</span></a>
-  <a href="/trash"><span class="nav-ico">🗑</span><span class="nav-text">Trash</span></a>
-  <div class="nav-group-title">Homepage</div>
-  <a href="/admin/homepage-management"><span class="nav-ico">🌐</span><span class="nav-text">Homepage Management</span></a>
-  <div class="nav-group-title">System</div>
-  <a href="/admin/recruitment-testing"><span class="nav-ico">•</span><span class="nav-text">Recruitment Testing</span></a>
-  <a href="/admin/recruitment-review-queue"><span class="nav-ico">•</span><span class="nav-text">Review Queue</span></a>
-  <a href="/admin/recruitment-runtime-preview"><span class="nav-ico">•</span><span class="nav-text">Runtime Preview</span></a>
-  <button type="button" class="sidebar-nav-btn" id="darkModeToggle"><span class="nav-ico">🌙</span><span class="nav-text">Dark Mode</span></button>
-  <a href="#" class="logout-link" id="logoutLink"><span class="nav-ico">🚪</span><span class="nav-text">Logout</span></a>
+  <div class="sidebar-top"></div>
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Recruitment Review Queue</div>
+    <div class="admin-title">Review Center</div>
     <div class="admin-header-actions">
-      <span class="rrq-badge">Internal — Admin only</span>
+      <span class="rrq-badge">Human decisions only — Approve is not publish</span>
     </div>
   </div>
 
   <section class="monitoring-section rrq">
     <p class="rrq-help">
-      Recruitment-specific items waiting for a human decision.
-      This is not the editorial Review Queue and not the recruitment records list.
-      All actions are manual. Approve is not publish.
+      Primary human-work queue: Needs Matching, pending review, and approval.
+      Attach / Create Parent / Standalone / Reject never run automatically.
+      Approve and Manual Publish stay separate. Auto Publish is disabled.
     </p>
     <nav class="admin-ops-flow" aria-label="Review workflow">
+      <span class="admin-ops-flow__step">Detected</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-alert is-current">Needs Matching</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Draft</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step is-current">Review</span>
+      <span class="admin-ops-flow__step">Review</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Approve</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Published</span>
     </nav>
+
+    <div class="admin-workspace-tabs" role="group" aria-label="Review Center filters" id="rrqStatusChips">
+      <button type="button" class="is-active" data-rrq-status="">All</button>
+      <button type="button" data-rrq-status="needs_matching">Needs Matching</button>
+      <button type="button" data-rrq-status="pending">Pending Review</button>
+      <button type="button" data-rrq-status="approved">Approved</button>
+      <button type="button" data-rrq-status="rejected">Rejected</button>
+      <button type="button" data-rrq-status="under_review">Under Review</button>
+    </div>
 
     <form id="rrqFilters" class="rrq-filters" autocomplete="off">
       <label>
@@ -216,10 +208,27 @@
               <input type="number" id="rrqAttachRecruitmentId" min="1" step="1" placeholder="Attach ID">
             </label>
             <button type="button" class="header-action-btn" data-match-action="attach">Attach</button>
-            <button type="button" class="header-action-btn" data-match-action="create_parent">Create parent</button>
+            <button type="button" class="header-action-btn" data-match-action="create_parent">Create Parent</button>
             <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="standalone">Standalone</button>
             <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="reject">Reject</button>
           </div>
+        </section>
+
+        <section class="rrq-linkage" id="rrqLinkagePanel" hidden aria-label="Linked chain after attach">
+          <h3>Linked chain</h3>
+          <p class="rrq-assist-note">After Attach, confirm the relationship before Approve. Manual Publish stays separate.</p>
+          <nav class="admin-ops-flow" aria-label="Recruitment content chain">
+            <span class="admin-ops-flow__step is-done" id="rrqLinkRecruitment">Recruitment</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step is-done" id="rrqLinkUpdate">Update</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step is-current" id="rrqLinkEvent">Event</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" id="rrqLinkDraft">Draft</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" id="rrqLinkReview">Review</span>
+          </nav>
+          <dl class="rrq-history-grid" id="rrqLinkageMeta"></dl>
         </section>
 
         <section class="rrq-history" id="rrqHistory" aria-label="Review history">
@@ -232,6 +241,7 @@
           <button type="button" class="header-action-btn" data-action="reject">Reject</button>
           <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review">Mark Under Review</button>
           <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze">Freeze</button>
+          <a class="header-action-btn header-action-btn--ghost" id="rrqManualPublishLink" href="/admin/page-manager" style="text-decoration:none;">Manual Publish (Page Manager)</a>
         </div>
 
         <label class="rrq-notes-label">
@@ -287,14 +297,14 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=24"></script>
-<script src="/js/admin-shell.js?v=10"></script>
+<script src="/js/admin-nav.js?v=25"></script>
+<script src="/js/admin-shell.js?v=11"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-recruitment-review-queue.js?v=3"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=4"></script>
 </body>
 </html>

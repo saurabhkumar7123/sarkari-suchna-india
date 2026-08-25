@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "24";
+  const ADMIN_NAV_VERSION = "25";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -14,8 +14,12 @@
     gen: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v11M3.5 8h9"/></svg>',
     home: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5 8 2.8l5.5 4.7V13.5H2.5z"/></svg>',
     monitor: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 11.5h11M4 11.5V6.5M8 11.5V4.5M12 11.5V8"/></svg>',
+    sources: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 2.5v1.8M8 11.7v1.8M2.5 8h1.8M11.7 8h1.8M4.2 4.2l1.3 1.3M10.5 10.5l1.3 1.3M11.8 4.2l-1.3 1.3M5.5 10.5 4.2 11.8"/></svg>',
     activity: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8h2.2l1.6-3.2 2.4 6.4L10.8 8h2.7"/></svg>',
     control: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.2"/><path d="M8 2.5v1.6M8 11.9v1.6M2.5 8h1.6M11.9 8h1.6M4.1 4.1l1.1 1.1M10.8 10.8l1.1 1.1M11.9 4.1l-1.1 1.1M5.2 10.8l-1.1 1.1"/></svg>',
+    ai: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5 9.2 6.2 13 7.5 9.2 8.8 8 12.5 6.8 8.8 3 7.5l3.8-1.3z"/></svg>',
+    notify: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5h9M5 10.5V7a3 3 0 0 1 6 0v3.5"/><path d="M6.5 12.2a1.5 1.5 0 0 0 3 0"/></svg>',
+    safety: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5 12.5 4.5v3.8c0 3-2 5.2-4.5 6.2-2.5-1-4.5-3.2-4.5-6.2V4.5z"/></svg>',
     rec: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M6 7h4M6 9.5h2.5"/></svg>',
     cal: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M6 2.5v2M10 2.5v2"/></svg>',
     eye: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8s2.4-4.5 6-4.5S14 8 14 8s-2.4 4.5-6 4.5S2 8 2 8z"/><circle cx="8" cy="8" r="1.8"/></svg>',
@@ -27,7 +31,6 @@
     csv: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5h5.5L13 6v7.5H4z"/><path d="M9.5 2.5V6H13"/></svg>',
     trash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 4.5h9M6 4.5V3h4v1.5M5 6.5v6h6v-6"/></svg>',
     up: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11.5V4.5M4.5 7.5 8 4.5l3.5 3"/></svg>',
-    user: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="6" r="2.4"/><path d="M3.5 13.2c.7-2.2 2.3-3.4 4.5-3.4s3.8 1.2 4.5 3.4"/></svg>',
     moon: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 9.2A5 5 0 0 1 6.8 3.5 5.2 5.2 0 1 0 12.5 9.2z"/></svg>',
     out: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5H3.5v9h3M7 8h6M10.5 5.5 13 8l-2.5 2.5"/></svg>'
   };
@@ -71,54 +74,65 @@
     </div>
   </div>
 
+  <div class="nav-group is-open" id="nav-group-monitoring" data-nav-group="monitoring" data-default-open="1">
+    <p class="nav-group-label">Monitoring</p>
+    <div class="nav-group-body">
+      ${navLink("/admin/monitoring", "/admin/monitoring", I.sources, "Sources", 'data-nav-alias="sources"')}
+      ${navLink("/admin/monitoring#recentUpdates", "/admin/monitoring", I.detect, "Detected Updates", 'data-nav-alias="detections"')}
+      ${navLink("/admin/monitoring#monitoringActivity", "/admin/monitoring", I.activity, "Monitoring Activity", 'data-nav-alias="monitoring-activity"')}
+    </div>
+  </div>
+
+  <div class="nav-group is-open" id="nav-group-recruitment" data-nav-group="recruitment" data-default-open="1">
+    <p class="nav-group-label">Recruitments</p>
+    <div class="nav-group-body">
+      ${navLink("/admin/recruitments", "/admin/recruitments", I.rec, "All Recruitments")}
+      ${navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Recruitment Timeline", 'data-nav-alias="events"')}
+      ${navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Recruitment Review", 'data-nav-alias="recruitment-review" title="Recruitment matching & review"')}
+    </div>
+  </div>
+
   <div class="nav-group is-open" id="nav-group-content" data-nav-group="content" data-default-open="1">
     <p class="nav-group-label">Content</p>
     <div class="nav-group-body">
-      ${navLink("/admin/monitoring#recentUpdates", "/admin/monitoring", I.detect, "Detected Updates", 'data-nav-alias="detections"')}
       ${navLink("/generator#drafts", "/generator", I.draft, "Drafts", 'id="navDraftsLink" data-nav-alias="drafts"')}
-      ${navLink("/admin/editorial-review", "/admin/editorial-review", I.review, "Review Queue")}
+      ${navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Review Center", 'data-nav-alias="review-center" title="Needs Matching + approval queue"')}
+      ${navLink("/admin/editorial-review", "/admin/editorial-review", I.review, "Editorial Review", 'title="Review Queue — draft approval"')}
       ${navLink("/admin/page-manager", "/admin/page-manager", I.pages, "Published Pages", 'title="Page Manager"')}
       ${navLink("/generator", "/generator", I.gen, "Generator")}
-      ${navLink("/admin/homepage-management", "/admin/homepage-management", I.home, "Homepage")}
     </div>
   </div>
 
   <div class="nav-group is-open" id="nav-group-automation" data-nav-group="automation" data-default-open="1">
     <p class="nav-group-label">Automation</p>
     <div class="nav-group-body">
-      ${navLink("/admin/monitoring", "/admin/monitoring", I.monitor, "Monitoring")}
+      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Overview", 'title="Automation Control Center"')}
+      ${navLink("/admin/automation-control-center#accDrafts", "/admin/automation-control-center", I.ai, "AI / Conversion", 'data-nav-alias="acc-drafts"')}
+      ${navLink("/admin/automation-control-center#accPublishingControls", "/admin/automation-control-center", I.notify, "Notifications", 'data-nav-alias="acc-notify"')}
       ${navLink("/admin/automation-control-center#accAudit", "/admin/automation-control-center", I.activity, "Automation Activity", 'data-nav-alias="acc-audit"')}
-      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Control", 'title="Automation Control Center"')}
-    </div>
-  </div>
-
-  <div class="nav-group is-open" id="nav-group-recruitment" data-nav-group="recruitment" data-default-open="1">
-    <p class="nav-group-label">Recruitment</p>
-    <div class="nav-group-body">
-      ${navLink("/admin/recruitments", "/admin/recruitments", I.rec, "Recruitments")}
-      ${navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Recruitment Review")}
-      ${navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Event Timeline", 'data-nav-alias="events"')}
-      ${navLink("/admin/recruitment-runtime-preview", "/admin/recruitment-runtime-preview", I.eye, "Runtime Preview", 'title="Shared Preview"')}
+      ${navLink("/admin/automation-control-center#accSettings", "/admin/automation-control-center", I.safety, "Safety / Control Center", 'data-nav-alias="acc-safety"')}
     </div>
   </div>
 
   <div class="nav-group is-open" id="nav-group-quality" data-nav-group="quality" data-default-open="1">
-    <p class="nav-group-label">Quality</p>
+    <p class="nav-group-label">Quality &amp; Audit</p>
     <div class="nav-group-body">
       ${navLink("/admin/seo-diagnostics", "/admin/seo-diagnostics", I.seo, "SEO Diagnostics")}
       ${navLink("/admin/recruitment-testing", "/admin/recruitment-testing", I.test, "Validation / Testing", 'title="Recruitment Testing"')}
+      ${navLink("/admin/recruitment-runtime-preview", "/admin/recruitment-runtime-preview", I.eye, "Audit", 'title="Runtime Preview / Shared Preview"')}
+      ${navLink("/admin/alerts", "/admin/alerts", I.bell, "Alerts")}
+      ${navLink("/admin/activity", "/admin/activity", I.log, "Activity")}
     </div>
   </div>
 
   <div class="nav-group is-open" id="nav-group-system" data-nav-group="system" data-default-open="1">
     <p class="nav-group-label">System</p>
     <div class="nav-group-body">
-      ${navLink("/admin/alerts", "/admin/alerts", I.bell, "Alerts")}
-      ${navLink("/admin/activity", "/admin/activity", I.log, "Activity")}
       ${navLink("/admin/sessions", "/admin/sessions", I.sess, "Sessions")}
       ${navLink("/admin/csv-upload", "/admin/csv-upload", I.csv, "CSV Upload")}
-      ${navLink("/upload", "/upload", I.up, "Upload PDF")}
+      ${navLink("/upload", "/upload", I.up, "Upload")}
       ${navLink("/trash", "/trash", I.trash, "Trash")}
+      ${navLink("/admin/homepage-management", "/admin/homepage-management", I.home, "Homepage Management")}
     </div>
   </div>
   `;
@@ -254,19 +268,24 @@ data-nav-path="/admin/recruitment-runtime-preview"
 Page Manager
 Shared Preview
 Automation Control Center
+Review Queue
 Canonical destinations (existing routes only):
+Sources -> /admin/monitoring
 Detected Updates -> /admin/monitoring#recentUpdates
+Monitoring Activity -> /admin/monitoring#monitoringActivity
 Drafts -> /generator#drafts
-Review Queue -> /admin/editorial-review
+Review Center -> /admin/recruitment-review-queue
+Editorial Review / Review Queue -> /admin/editorial-review
 Published Pages -> /admin/page-manager
-Monitoring -> /admin/monitoring
+Automation Overview -> /admin/automation-control-center
+AI / Conversion -> /admin/automation-control-center#accDrafts
+Notifications -> /admin/automation-control-center#accPublishingControls
 Automation Activity -> /admin/automation-control-center#accAudit
-Automation Control -> /admin/automation-control-center
-Recruitments -> /admin/recruitments
+Safety / Control Center -> /admin/automation-control-center#accSettings
+All Recruitments -> /admin/recruitments
 Recruitment Review -> /admin/recruitment-review-queue
-Event Timeline -> /admin/recruitments#eventTimeline
-Runtime Preview -> /admin/recruitment-runtime-preview
+Recruitment Timeline -> /admin/recruitments#eventTimeline
+Audit (Runtime Preview) -> /admin/recruitment-runtime-preview
 Sessions -> /admin/sessions
-ACC-only subsections (not sidebar items):
-accSources, accInsights, accSettings, accWorkflow, accDrafts, accReview
+ACC subsection deep-links: accSources, accInsights, accSettings, accWorkflow, accDrafts, accReview, accAudit
 */

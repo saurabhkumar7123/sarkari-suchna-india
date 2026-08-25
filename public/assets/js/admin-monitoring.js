@@ -252,11 +252,51 @@ async function loadRecentUpdates() {
 
 function classifyUpdate(r) {
   const raw = String(r.status || r.processing_status || r.draft_status || r.review_status || "detected").toLowerCase();
+  const matchState = String(r.match_status || r.matching_status || r.recruitment_match_status || "").toLowerCase();
+  const needsMatching =
+    matchState === "needs_matching" ||
+    /needs[_-]?matching/.test(raw) ||
+    Boolean(r.needs_matching);
+  if (needsMatching) return "needs-matching";
   const hasDraft = Boolean(r.draft_id || r.draftId || r.draft_status || /draft/.test(raw));
-  const reviewed = Boolean(r.review_status || /review|approved/.test(raw));
+  const reviewed = Boolean(r.review_status || /review|approved|published/.test(raw));
   if (reviewed) return "reviewed";
   if (hasDraft) return "drafted";
   return "needs-draft";
+}
+
+function buildUpdateMiniFlow(stage) {
+  const needsMatching = stage === "needs-matching";
+  const steps = needsMatching
+    ? [
+        { id: "detected", label: "Detected" },
+        { id: "needs-matching", label: "Needs Matching" },
+        { id: "review", label: "Review" },
+        { id: "approve", label: "Approve" },
+        { id: "publish", label: "Manual Publish" }
+      ]
+    : [
+        { id: "detected", label: "Detected" },
+        { id: "draft", label: "Draft" },
+        { id: "review", label: "Review" },
+        { id: "publish", label: "Publish" }
+      ];
+  const current =
+    stage === "needs-matching"
+      ? "needs-matching"
+      : stage === "reviewed"
+        ? "review"
+        : stage === "drafted"
+          ? "draft"
+          : "detected";
+  const currentIdx = Math.max(0, steps.findIndex((s) => s.id === current));
+  return `<div class="admin-mini-flow" aria-label="Update pipeline">${steps
+    .map((s, i) => {
+      const cls = i < currentIdx ? "is-done" : i === currentIdx ? "is-current" : "is-muted";
+      const arrow = i < steps.length - 1 ? `<span aria-hidden="true">→</span>` : "";
+      return `<span class="admin-mini-flow__step ${cls}">${s.label}</span>${arrow}`;
+    })
+    .join("")}</div>`;
 }
 
 function renderDetectedUpdates(rows) {
@@ -275,15 +315,37 @@ function renderDetectedUpdates(rows) {
       const title = escapeAttr(r.summary || r.title || "Update detected");
       const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at);
       const href = r.url ? escapeAttr(r.url) : "";
-      const status = escapeAttr(r.status || r.processing_status || r.draft_status || "detected");
-      const review = escapeAttr(r.review_status || r.reviewStatus || "—");
+      const classification = escapeAttr(r.classification || r.event_type || r.category || "—");
+      const recruitment =
+        r.recruitment_title || r.recruitmentTitle || r.recruitment_id || r.recruitmentId || "—";
       const draftId = r.draft_id || r.draftId || "";
       const stage = classifyUpdate(r);
-      const stageLabel = stage === "reviewed" ? "Reviewed" : stage === "drafted" ? "Drafted" : "Needs Draft";
+      const stageLabel =
+        stage === "needs-matching"
+          ? "Needs Matching"
+          : stage === "reviewed"
+            ? "Reviewed"
+            : stage === "drafted"
+              ? "Drafted"
+              : "Needs Draft";
+      const statusTone =
+        stage === "needs-matching"
+          ? "warning"
+          : stage === "reviewed"
+            ? "success"
+            : stage === "drafted"
+              ? "info"
+              : "muted";
+      const statusIco =
+        stage === "needs-matching" ? "!" : stage === "reviewed" ? "✓" : stage === "drafted" ? "●" : "○";
       const idMeta = r.id != null ? `<span class="detected-update__url">ID ${escapeAttr(r.id)}</span>` : "";
       const draftBtn = draftId
         ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}">Open Draft</a>`
         : "";
+      const reviewHref =
+        stage === "needs-matching"
+          ? `/admin/recruitment-review-queue?status=needs_matching`
+          : `/admin/recruitment-review-queue`;
       return `<article class="detected-update">
         <div>
           <strong>${source}</strong>
@@ -292,18 +354,37 @@ function renderDetectedUpdates(rows) {
         <div>
           <div class="detected-update__title">${title}</div>
           ${href ? `<div class="detected-update__url">${href}</div>` : ""}
+          ${buildUpdateMiniFlow(stage)}
         </div>
         <span>${escapeAttr(when)}</span>
-        <span class="badge badge--info">${status}</span>
-        <span class="badge">${stageLabel}</span>
+        <span class="admin-status admin-status--${statusTone}"><span class="admin-status__ico" aria-hidden="true">${statusIco}</span>${stageLabel}</span>
         <div class="detected-update__actions">
+          <span class="badge">Class: ${classification}</span>
+          <span class="badge">Recruitment: ${escapeAttr(String(recruitment))}</span>
           ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">Open Update</a>` : ""}
           ${draftBtn}
-          <span class="badge">Review: ${review}</span>
+          <a class="header-action-btn" href="${reviewHref}">Open Review</a>
         </div>
       </article>`;
     })
     .join("");
+}
+
+function syncMonitoringWorkspaceTabs() {
+  const hash = String(window.location.hash || "").replace(/^#/, "");
+  const tab =
+    hash === "recentUpdates" ? "detections" : hash === "monitoringActivity" ? "activity" : "sources";
+  document.querySelectorAll(".admin-workspace-tabs [data-mon-tab]").forEach((el) => {
+    const active = el.getAttribute("data-mon-tab") === tab;
+    el.classList.toggle("is-active", active);
+    if (active) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
+  });
+  const title = document.querySelector(".admin-header .admin-title");
+  if (title) {
+    title.textContent =
+      tab === "detections" ? "Detected Updates" : tab === "activity" ? "Monitoring Activity" : "Monitoring";
+  }
 }
 
 async function refreshMonitoringAll(triggerBtn) {
@@ -479,6 +560,9 @@ document.querySelectorAll("[data-update-filter]").forEach((btn) => {
     renderDetectedUpdates(window.__adminDetectedUpdates || []);
   });
 });
+
+syncMonitoringWorkspaceTabs();
+window.addEventListener("hashchange", syncMonitoringWorkspaceTabs);
 
 let sitesSearchDebounce = null;
 document.getElementById("sitesSearch")?.addEventListener("input", (e) => {

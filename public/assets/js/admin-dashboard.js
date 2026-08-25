@@ -83,6 +83,7 @@ function renderTodaySummary(d) {
   set("todayQueueFailed", s.queueFailed ?? 0);
   set("todayBrokenSites", s.brokenSites ?? 0);
   set("todayTelegramStatus", s.telegramConfigured ? "Ready" : "Not set");
+  set("dashBrokenSites", s.brokenSites ?? 0);
 
   const queueCard = document.getElementById("todayQueueCard");
   if (queueCard) queueCard.classList.toggle("is-warn", Number(s.queueFailed) > 0);
@@ -190,6 +191,7 @@ async function loadStatsCards() {
   set("opsFailedJobs", d.failedJobs ?? 0);
   set("kpiPendingJobs", d.pendingJobs ?? 0);
   set("kpiSuccessRate", `${Number(d.successRate) || 0}%`);
+  set("dashQueueFailed", d.failedJobs ?? 0);
   set("attentionFailedJobs", d.needsAttention && d.needsAttention.failedJobs ? d.needsAttention.failedJobs : 0);
   set("attentionManualItems", d.needsAttention && d.needsAttention.manualActionItems ? d.needsAttention.manualActionItems : 0);
   set("avgProcessingTime", d.avgProcessingTimeMs != null ? `${d.avgProcessingTimeMs} ms` : "N/A");
@@ -360,6 +362,34 @@ async function loadRecentDetections() {
     .join("");
 }
 
+async function loadNeedsMatchingCount() {
+  const set = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v;
+  };
+  const res = await window.adminSafeFetch(
+    "/api/admin/recruitment-review-queue?status=needs_matching&page=1&limit=1"
+  );
+  if (!res || !res.success) {
+    set("opsNeedsMatching", "—");
+    return;
+  }
+  const total = res.pagination?.total ?? (Array.isArray(res.data) ? res.data.length : 0);
+  set("opsNeedsMatching", total);
+  const desc = document.getElementById("opsNeedsMatchingDesc");
+  if (desc) {
+    desc.textContent =
+      Number(total) === 1
+        ? "1 update requires recruitment matching"
+        : `${total} updates require recruitment matching`;
+  }
+  const card = document.getElementById("attnNeedsMatchingCard");
+  if (card) {
+    card.classList.toggle("is-amber", Number(total) > 0);
+    card.classList.toggle("is-ok", Number(total) === 0);
+  }
+}
+
 async function loadProductivityWidgets() {
   const set = (id, v) => {
     const el = document.getElementById(id);
@@ -382,11 +412,27 @@ async function loadProductivityWidgets() {
   set("opsBrokenPageLinks", d.brokenPageLinks ?? 0);
   set("opsValidationWarnings", d.validationWarnings ?? 0);
   set("kpiActiveRecruitments", d.activeRecruitments ?? 0);
+  const pendingCard = document.getElementById("attnPendingReviewsCard");
+  if (pendingCard) pendingCard.classList.toggle("is-amber", Number(d.pendingReviews) > 0);
+  const draftsCard = document.getElementById("attnDraftsCard");
+  if (draftsCard) draftsCard.classList.toggle("is-blue", Number(d.draftsWaiting) > 0);
+  const failedCard = document.getElementById("attnFailedCard");
+  if (failedCard) {
+    const failedEl = document.getElementById("opsFailedJobs");
+    const failed = failedEl ? Number(failedEl.textContent) : 0;
+    failedCard.classList.toggle("is-red", Number.isFinite(failed) && failed > 0);
+  }
 }
 
 async function initAdminDashboard() {
   loadPendingDraftMetric();
-  await Promise.all([loadStatsCards(), loadProductivityWidgets(), loadAutomationSafetyStatus(), loadRecentDetections()]);
+  await Promise.all([
+    loadStatsCards(),
+    loadProductivityWidgets(),
+    loadNeedsMatchingCount(),
+    loadAutomationSafetyStatus(),
+    loadRecentDetections()
+  ]);
   await Promise.all([loadActivityLog(), loadLatestAndTrending(), checkServerHealth(), loadChartsData()]);
   updateLiveStripLabel();
   window.AdminPageToolbar?.markUpdated?.();

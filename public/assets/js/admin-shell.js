@@ -367,7 +367,10 @@
   }
 
   function normalizeNavPath(value) {
-    return String(value || "").toLowerCase().replace(/\/$/, "") || "/";
+    let raw = String(value || "").toLowerCase();
+    const q = raw.indexOf("?");
+    if (q >= 0) raw = raw.slice(0, q);
+    return raw.replace(/\/$/, "") || "/";
   }
 
   function currentLocationHash() {
