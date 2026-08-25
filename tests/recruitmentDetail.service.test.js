@@ -23,10 +23,20 @@ jest.mock("../server/services/generatorDraft.service", () => ({
   listDraftsByRecruitmentId: jest.fn()
 }));
 
+jest.mock("../server/services/recruitmentUpdateLink.service", () => ({
+  listLinkedUpdates: jest.fn()
+}));
+
+jest.mock("../server/services/recruitmentReview.service", () => ({
+  listReviewItems: jest.fn()
+}));
+
 const recruitmentRepository = require("../server/repositories/recruitment.repository");
 const recruitmentEventService = require("../server/services/recruitmentEvent.service");
 const recruitmentPageLinkService = require("../server/services/recruitmentPageLink.service");
 const generatorDraftService = require("../server/services/generatorDraft.service");
+const recruitmentUpdateLinkService = require("../server/services/recruitmentUpdateLink.service");
+const recruitmentReviewService = require("../server/services/recruitmentReview.service");
 const recruitmentService = require("../server/services/recruitment.service");
 
 const sampleRecruitment = {
@@ -49,6 +59,8 @@ describe("recruitment.service getRecruitmentDetail", () => {
     recruitmentEventService.listRecruitmentEvents.mockResolvedValue({ data: [], pagination: { total: 0 } });
     recruitmentPageLinkService.listLinkedPages.mockResolvedValue({ data: [], pagination: { total: 0 } });
     generatorDraftService.listDraftsByRecruitmentId.mockResolvedValue([]);
+    recruitmentUpdateLinkService.listLinkedUpdates.mockResolvedValue({ data: [], pagination: { total: 0 } });
+    recruitmentReviewService.listReviewItems.mockResolvedValue({ data: [], pagination: { total: 0 } });
   });
 
   test("returns recruitment not found when parent row is missing", async () => {
@@ -67,7 +79,9 @@ describe("recruitment.service getRecruitmentDetail", () => {
       recruitment: sampleRecruitment,
       events: [],
       pages: [],
-      drafts: []
+      drafts: [],
+      updates: [],
+      reviews: []
     });
     expect(recruitmentEventService.listRecruitmentEvents).toHaveBeenCalledWith(
       expect.objectContaining({ recruitment_id: 10 })
@@ -98,6 +112,14 @@ describe("recruitment.service getRecruitmentDetail", () => {
       pagination: { page: 1, limit: 20, total: 1 }
     });
     generatorDraftService.listDraftsByRecruitmentId.mockResolvedValue([draft]);
+    recruitmentUpdateLinkService.listLinkedUpdates.mockResolvedValue({
+      data: [{ id: 100, title: "Admit Card", recruitment_id: 10 }],
+      pagination: { total: 1 }
+    });
+    recruitmentReviewService.listReviewItems.mockResolvedValue({
+      data: [{ id: 5, status: "pending", update_id: 100, recruitment_id: 10 }],
+      pagination: { total: 1 }
+    });
 
     const detail = await recruitmentService.getRecruitmentDetail(10);
 
@@ -105,6 +127,8 @@ describe("recruitment.service getRecruitmentDetail", () => {
     expect(detail.events).toEqual([event]);
     expect(detail.pages).toEqual([page]);
     expect(detail.drafts).toEqual([draft]);
+    expect(detail.updates).toHaveLength(1);
+    expect(detail.reviews).toHaveLength(1);
   });
 
   test("returns empty pages when page linkage is unavailable", async () => {
@@ -117,5 +141,7 @@ describe("recruitment.service getRecruitmentDetail", () => {
     expect(detail.pages).toEqual([]);
     expect(detail.events).toEqual([]);
     expect(detail.drafts).toEqual([]);
+    expect(detail.updates).toEqual([]);
+    expect(detail.reviews).toEqual([]);
   });
 });

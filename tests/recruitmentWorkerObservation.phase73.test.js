@@ -880,6 +880,7 @@ describe("Phase 73 — recruitmentWorkerObservation", () => {
         saveSiteBaseline: mockSaveSiteBaseline,
         markSiteChecked: jest.fn().mockResolvedValue(undefined),
         hasRecentDuplicate: mockHasRecentDuplicate,
+        findDuplicateUpdate: jest.fn().mockResolvedValue(null),
         markAlertSent: mockMarkAlertSent,
         isInCooldown: jest.fn().mockResolvedValue(false),
         incrementSiteFailure: jest.fn(),

@@ -59,10 +59,31 @@ const updateRecruitmentHandler = async (req, res) => {
   res.json({ success: true, data: row });
 };
 
+const createManualRecruitmentUpdateHandler = async (req, res) => {
+  const recruitmentLifecycleService = require("../../services/recruitmentLifecycle.service");
+  const result = await recruitmentLifecycleService.createManualRecruitmentUpdate({
+    recruitmentId: req.params.id,
+    eventType: req.body && req.body.event_type,
+    title: req.body && req.body.title,
+    payload: req.body && req.body.payload
+  });
+  await recordActivity({
+    admin: adminUsername(req),
+    action: "recruitment_manual_update",
+    target: String(req.params.id),
+    status: "success",
+    ip: req.ip,
+    userAgent: String(req.headers["user-agent"] || ""),
+    requestId: req.id || ""
+  }).catch(() => {});
+  res.status(201).json({ success: true, data: result });
+};
+
 module.exports = {
   listRecruitmentsHandler,
   getRecruitmentHandler,
   getRecruitmentDetailHandler,
   createRecruitmentHandler,
-  updateRecruitmentHandler
+  updateRecruitmentHandler,
+  createManualRecruitmentUpdateHandler
 };

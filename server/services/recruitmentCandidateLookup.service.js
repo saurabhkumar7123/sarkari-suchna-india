@@ -360,6 +360,7 @@ module.exports = {
   MAX_CANDIDATES,
   LOOKUP_EXECUTION_STATUS,
   extractLookupCriteria,
+  buildPostSearchTerms,
   mapRowToCandidate,
   sortCandidatesDeterministically,
   hasSufficientLookupCriteria,

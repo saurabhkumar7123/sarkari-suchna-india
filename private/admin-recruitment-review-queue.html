@@ -79,6 +79,7 @@
         <select id="filterStatus" name="status">
           <option value="">All</option>
           <option value="pending">Pending</option>
+          <option value="needs_matching">Needs Matching</option>
           <option value="under_review">Under Review</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
@@ -189,6 +190,38 @@
           </div>
         </section>
 
+        <section class="rrq-needs-matching" id="rrqNeedsMatching" hidden aria-label="Needs Matching">
+          <h3>Needs Matching</h3>
+          <p class="rrq-assist-note" id="rrqNeedsMatchingReason">Resolve parent recruitment before publish.</p>
+          <div class="rrq-table-wrap">
+            <table class="rrq-table" aria-label="Candidate parents">
+              <thead>
+                <tr>
+                  <th>Kind</th>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Level</th>
+                  <th>Score</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="rrqCandidateBody">
+                <tr><td colspan="6" class="rrq-empty">No candidates.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="rrq-actions" id="rrqNeedsMatchingActions">
+            <label>
+              Recruitment ID
+              <input type="number" id="rrqAttachRecruitmentId" min="1" step="1" placeholder="Attach ID">
+            </label>
+            <button type="button" class="header-action-btn" data-match-action="attach">Attach</button>
+            <button type="button" class="header-action-btn" data-match-action="create_parent">Create parent</button>
+            <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="standalone">Standalone</button>
+            <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="reject">Reject</button>
+          </div>
+        </section>
+
         <section class="rrq-history" id="rrqHistory" aria-label="Review history">
           <h3>History</h3>
           <dl class="rrq-history-grid" id="rrqHistoryGrid"></dl>
@@ -262,6 +295,6 @@
 <script src="/js/admin-notifications.js"></script>
 <script src="/js/admin-command-palette.js?v=2"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-recruitment-review-queue.js?v=2"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=3"></script>
 </body>
 </html>

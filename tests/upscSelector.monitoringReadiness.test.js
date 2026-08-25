@@ -26,6 +26,7 @@ jest.mock("../server/services/updates/updates.repository", () => ({
   saveSiteBaseline: jest.fn(),
   markSiteChecked: jest.fn().mockResolvedValue(undefined),
   hasRecentDuplicate: jest.fn().mockResolvedValue(false),
+  findDuplicateUpdate: jest.fn().mockResolvedValue(null),
   markAlertSent: jest.fn(),
   isInCooldown: jest.fn().mockResolvedValue(false),
   incrementSiteFailure: mockIncrementSiteFailure,

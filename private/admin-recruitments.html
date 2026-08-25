@@ -234,6 +234,41 @@
         <section class="rom-card">
           <div class="rom-card__head">
             <div>
+              <h2>Linked Updates &amp; Reviews</h2>
+              <p>Lifecycle visibility: updates, drafts, and review queue items for this recruitment.</p>
+            </div>
+          </div>
+          <div class="rom-table-wrap">
+            <table class="rom-table">
+              <thead><tr><th>Update</th><th>Title</th><th>Event</th><th>Source</th></tr></thead>
+              <tbody id="lifecycleUpdateRows"></tbody>
+            </table>
+          </div>
+          <div class="rom-table-wrap" style="margin-top:.75rem;">
+            <table class="rom-table">
+              <thead><tr><th>Review</th><th>Status</th><th>Event</th><th>Update</th></tr></thead>
+              <tbody id="lifecycleReviewRows"></tbody>
+            </table>
+          </div>
+          <form id="manualUpdateForm" class="rom-link-form" style="margin-top:.75rem;">
+            <label>Event type
+              <select id="manualUpdateEventType" required>
+                <option value="correction">correction</option>
+                <option value="exam_date">exam_date</option>
+                <option value="admit_card">admit_card</option>
+                <option value="answer_key">answer_key</option>
+                <option value="result">result</option>
+                <option value="final_result">final_result</option>
+              </select>
+            </label>
+            <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Exam Date Changed"></label>
+            <button type="submit" class="header-action-btn">Create manual update</button>
+          </form>
+        </section>
+
+        <section class="rom-card">
+          <div class="rom-card__head">
+            <div>
               <h2>Shared Runtime Preview</h2>
               <p>Authoritative preview shared with Editorial Review. Manual refresh only.</p>
             </div>
@@ -256,6 +291,6 @@
 <script src="/js/admin-command-palette.js?v=4"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
-<script src="/js/admin-recruitment-operations.js?v=3"></script>
+<script src="/js/admin-recruitment-operations.js?v=4"></script>
 </body>
 </html>

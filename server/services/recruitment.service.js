@@ -243,7 +243,10 @@ async function getRecruitmentDetail(id, query = {}) {
   const recruitment = await getRecruitment(id);
   const recruitmentId = recruitment.id;
 
-  const [eventsResult, pages, drafts] = await Promise.all([
+  const recruitmentUpdateLinkService = require("./recruitmentUpdateLink.service");
+  const recruitmentReviewService = require("./recruitmentReview.service");
+
+  const [eventsResult, pages, drafts, updatesResult, reviewsResult] = await Promise.all([
     recruitmentEventService.listRecruitmentEvents({
       recruitment_id: recruitmentId,
       page: query.events_page || query.page,
@@ -253,14 +256,30 @@ async function getRecruitmentDetail(id, query = {}) {
     listLinkedPagesForDetail(recruitmentId, query),
     generatorDraftService.listDraftsByRecruitmentId(recruitmentId, {
       limit: query.drafts_limit || query.limit
-    })
+    }),
+    recruitmentUpdateLinkService
+      .listLinkedUpdates({
+        recruitment_id: recruitmentId,
+        page: query.updates_page || query.page,
+        limit: query.updates_limit || query.limit
+      })
+      .catch(() => ({ data: [] })),
+    recruitmentReviewService
+      .listReviewItems({
+        recruitment_id: recruitmentId,
+        page: query.reviews_page || query.page,
+        limit: query.reviews_limit || query.limit
+      })
+      .catch(() => ({ data: [] }))
   ]);
 
   return {
     recruitment,
     events: Array.isArray(eventsResult.data) ? eventsResult.data : [],
     pages,
-    drafts: Array.isArray(drafts) ? drafts : []
+    drafts: Array.isArray(drafts) ? drafts : [],
+    updates: Array.isArray(updatesResult.data) ? updatesResult.data : [],
+    reviews: Array.isArray(reviewsResult.data) ? reviewsResult.data : []
   };
 }
 

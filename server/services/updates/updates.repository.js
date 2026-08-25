@@ -115,12 +115,24 @@ async function fetchSites() {
  *
  * @returns {Promise<number|null>}
  */
-async function insertDetectedUpdate({ siteId, title, link }) {
-  const [result] = await db.query("INSERT INTO updates (site_id, title, link) VALUES (?, ?, ?)", [
-    siteId,
-    title,
-    link || null
-  ]);
+async function insertDetectedUpdate({ siteId, title, link, documentHash = null, supersedesUpdateId = null }) {
+  const hasHash = await updatesHasColumn("document_hash");
+  const hasSupersedes = await updatesHasColumn("supersedes_update_id");
+  const columns = ["site_id", "title", "link"];
+  const values = [siteId, title, link || null];
+  if (hasHash) {
+    columns.push("document_hash");
+    values.push(documentHash || null);
+  }
+  if (hasSupersedes && supersedesUpdateId != null) {
+    columns.push("supersedes_update_id");
+    values.push(supersedesUpdateId);
+  }
+  const placeholders = columns.map(() => "?").join(", ");
+  const [result] = await db.query(
+    `INSERT INTO updates (${columns.join(", ")}) VALUES (${placeholders})`,
+    values
+  );
   const insertId = result && result.insertId != null ? Number(result.insertId) : NaN;
   return Number.isFinite(insertId) && insertId > 0 ? insertId : null;
 }
@@ -158,9 +170,31 @@ async function saveDetectedUpdate({ siteId, title, link, latestContent }) {
   }
 }
 
-async function hasRecentDuplicate({ siteId, title, link }) {
+async function updatesHasColumn(columnName) {
+  try {
+    const [rows] = await db.query(
+      `SELECT 1 AS ok FROM information_schema.columns
+       WHERE table_schema = DATABASE()
+         AND table_name = 'updates'
+         AND column_name = ?
+       LIMIT 1`,
+      [columnName]
+    );
+    return Array.isArray(rows) && rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+async function findDuplicateUpdate({ siteId, title, link }) {
+  const hasHash = await updatesHasColumn("document_hash");
+  const hasSupersedes = await updatesHasColumn("supersedes_update_id");
+  const extra = [
+    hasHash ? "document_hash AS documentHash" : "NULL AS documentHash",
+    hasSupersedes ? "supersedes_update_id AS supersedesUpdateId" : "NULL AS supersedesUpdateId"
+  ].join(", ");
   const [rows] = await db.query(
-    `SELECT id
+    `SELECT id, site_id AS siteId, title, link, recruitment_id AS recruitmentId, ${extra}
      FROM updates
      WHERE site_id = ?
        AND title = ?
@@ -169,7 +203,21 @@ async function hasRecentDuplicate({ siteId, title, link }) {
      LIMIT 1`,
     [siteId, title, link || ""]
   );
-  return rows.length > 0;
+  return rows && rows[0] ? rows[0] : null;
+}
+
+async function hasRecentDuplicate({ siteId, title, link }) {
+  const row = await findDuplicateUpdate({ siteId, title, link });
+  return Boolean(row && row.id);
+}
+
+async function storeDocumentHash(updateId, documentHash) {
+  const id = Number(updateId);
+  const hash = String(documentHash || "").trim();
+  if (!Number.isFinite(id) || id <= 0 || !hash) return false;
+  if (!(await updatesHasColumn("document_hash"))) return false;
+  await db.query("UPDATE updates SET document_hash = ? WHERE id = ?", [hash, id]);
+  return true;
 }
 
 async function markAlertSent(siteId) {
@@ -383,7 +431,9 @@ module.exports = {
   saveSiteBaseline,
   markSiteChecked,
   saveDetectedUpdate,
+  findDuplicateUpdate,
   hasRecentDuplicate,
+  storeDocumentHash,
   markAlertSent,
   isInCooldown,
   incrementSiteFailure,

@@ -237,6 +237,144 @@
     `;
   }
 
+  function candidateIdentity(row) {
+    const rid = Number(row && (row.recruitmentId || row.recruitment_id));
+    if (Number.isFinite(rid) && rid > 0) return `recruitment:${rid}`;
+    const kind = String((row && row.kind) || "").toLowerCase();
+    if ((kind === "recruitment" || kind === "") && row && row.id != null) {
+      const id = Number(row.id);
+      if (Number.isFinite(id) && id > 0) return `recruitment:${id}`;
+    }
+    const pageId = Number(row && (row.pageId || row.page_id));
+    if (Number.isFinite(pageId) && pageId > 0) return `page:${pageId}`;
+    if (row && row.id != null) return `${kind || "unknown"}:${row.id}`;
+    return `composite:${kind}|${String((row && row.title) || "").trim().toLowerCase()}|${String(
+      (row && row.slug) || ""
+    )
+      .trim()
+      .toLowerCase()}`;
+  }
+
+  function levelRank(level) {
+    const key = String(level || "")
+      .trim()
+      .toLowerCase();
+    const ranks = { high: 4, medium: 3, ambiguous: 2, low: 1, hard_negative: 0, no_match: 0 };
+    return ranks[key] != null ? ranks[key] : -1;
+  }
+
+  function mergeCandidate(existing, incoming) {
+    if (!existing) return Object.assign({}, incoming);
+    if (!incoming) return Object.assign({}, existing);
+    const existingScore = Number(existing.score);
+    const incomingScore = Number(incoming.score);
+    const es = Number.isFinite(existingScore) ? existingScore : Number.NEGATIVE_INFINITY;
+    const is = Number.isFinite(incomingScore) ? incomingScore : Number.NEGATIVE_INFINITY;
+    const preferIncoming =
+      is > es ||
+      (is === es &&
+        levelRank(incoming.level || incoming.matchLevel) >
+          levelRank(existing.level || existing.matchLevel));
+    const primary = preferIncoming ? incoming : existing;
+    const secondary = preferIncoming ? existing : incoming;
+    const merged = Object.assign({}, secondary, primary);
+    const rid = Number(primary.recruitmentId || primary.recruitment_id || secondary.recruitmentId || secondary.recruitment_id || primary.id || secondary.id);
+    if (Number.isFinite(rid) && rid > 0) {
+      merged.recruitmentId = rid;
+      merged.recruitment_id = rid;
+    }
+    merged.title = primary.title || secondary.title || merged.title;
+    merged.level = primary.level || primary.matchLevel || secondary.level || secondary.matchLevel;
+    merged.matchLevel = primary.matchLevel || primary.level || secondary.matchLevel || secondary.level;
+    merged.score = Math.max(es, is) === Number.NEGATIVE_INFINITY ? primary.score ?? secondary.score : Math.max(es, is);
+    merged.confidence = primary.confidence || secondary.confidence;
+    merged.reason = primary.reason || secondary.reason;
+    merged.recommendation = primary.recommendation || secondary.recommendation;
+    merged.recommendedAction = primary.recommendedAction || secondary.recommendedAction;
+    return merged;
+  }
+
+  function normalizeNeedsMatchingCandidates(candidates) {
+    const list = Array.isArray(candidates) ? candidates.filter((row) => row && typeof row === "object") : [];
+    const byKey = new Map();
+    const order = [];
+    for (const row of list) {
+      const key = candidateIdentity(row);
+      if (!byKey.has(key)) {
+        byKey.set(key, Object.assign({}, row));
+        order.push(key);
+      } else {
+        byKey.set(key, mergeCandidate(byKey.get(key), row));
+      }
+    }
+    return order.map((key) => byKey.get(key));
+  }
+
+  function renderNeedsMatching(item) {
+    const panel = document.getElementById("rrqNeedsMatching");
+    const body = document.getElementById("rrqCandidateBody");
+    const reasonEl = document.getElementById("rrqNeedsMatchingReason");
+    if (!panel || !body) return;
+
+    const payload = item && item.payload && typeof item.payload === "object" ? item.payload : {};
+    const processor =
+      item && item.processor_output && typeof item.processor_output === "object"
+        ? item.processor_output
+        : {};
+    const needs =
+      payload.needsMatching ||
+      processor.needsMatching ||
+      (String(item && item.status || "").toLowerCase() === "needs_matching" ? {} : null);
+
+    if (!needs) {
+      panel.hidden = true;
+      return;
+    }
+
+    panel.hidden = false;
+    if (reasonEl) {
+      reasonEl.textContent =
+        needs.reason ||
+        processor.persistenceReason ||
+        "Human must choose the parent recruitment.";
+    }
+
+    const candidates = Array.isArray(item.needs_matching_candidates)
+      ? item.needs_matching_candidates
+      : normalizeNeedsMatchingCandidates(
+          []
+            .concat(needs.candidateRecruitments || [])
+            .concat(needs.candidatePages || [])
+            .concat(needs.candidates || [])
+            .concat(processor.candidates || [])
+        );
+
+    if (!candidates.length) {
+      body.innerHTML = '<tr><td colspan="6" class="rrq-empty">No candidates.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = candidates
+      .map((row) => {
+        const rid = row.recruitmentId || row.recruitment_id || (row.kind === "recruitment" ? row.id : "");
+        return `<tr>
+          <td>${escapeHtml(row.kind || "—")}</td>
+          <td>${escapeHtml(row.id ?? "—")}</td>
+          <td>${escapeHtml(row.title || "—")}</td>
+          <td>${escapeHtml(row.level || row.matchLevel || "—")}</td>
+          <td>${escapeHtml(row.score ?? "—")}</td>
+          <td>${
+            rid
+              ? `<button type="button" class="header-action-btn header-action-btn--ghost" data-pick-recruitment="${escapeHtml(
+                  rid
+                )}">Use</button>`
+              : "—"
+          }</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
   function renderDetail(item) {
     selectedItem = item;
     selectedId = item ? item.id : null;
@@ -258,12 +396,14 @@
         <span>Status: <span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></span>
         <span>Decision: <strong>${escapeHtml(item.decision || "—")}</strong></span>
         <span>Recruitment: <strong>${escapeHtml(item.recruitment_id ?? "—")}</strong></span>
+        <span>Update: <strong>${escapeHtml(item.update_id ?? "—")}</strong></span>
         <span>Created: <strong>${escapeHtml(formatDate(item.created_at))}</strong></span>
       `;
     }
 
     renderDecisionAssist(assist);
     renderComparison(assist);
+    renderNeedsMatching(item);
     renderHistory(assist, item);
 
     const notesEl = document.getElementById("rrqNotes");
@@ -277,16 +417,50 @@
     if (saveNotesBtn) saveNotesBtn.disabled = frozen;
     if (notesEl) notesEl.disabled = frozen;
 
-    setField("title", item.title);
-    setField("event_type", item.event_type);
-    setField("confidence", item.confidence);
-    setField("matchedSignals", matchResult.matchedSignals || []);
-    setField("conflictingSignals", matchResult.conflictingSignals || []);
-    setField("raw_notice", item.raw_notice);
-    setField("normalized_notice", item.normalized_notice);
-    setField("processor_output", item.processor_output);
-    setField("match_result", item.match_result);
-    setField("notes", item.notes);
+    const fields = {
+      title: item.title,
+      event_type: item.event_type,
+      confidence: item.confidence,
+      matchedSignals: matchResult.matchedSignals,
+      conflictingSignals: matchResult.conflictingSignals,
+      source_url: item.source_url,
+      match_result: item.match_result,
+      raw_notice: item.raw_notice,
+      processor_output: item.processor_output
+    };
+    Object.keys(fields).forEach((key) => {
+      const el = document.querySelector(`[data-field="${key}"]`);
+      if (el) el.textContent = prettyJson(fields[key]);
+    });
+  }
+
+  async function resolveMatching(action, recruitmentId) {
+    if (!selectedId) return;
+    const detailMessage = document.getElementById("rrqDetailMessage");
+    setMessage(detailMessage, "");
+    const body = {
+      action,
+      notes: document.getElementById("rrqNotes")?.value || undefined
+    };
+    if (recruitmentId) body.recruitment_id = recruitmentId;
+    if (selectedItem && selectedItem.event_type) body.event_type = selectedItem.event_type;
+
+    const result = await apiRequest(`${API_BASE}/${selectedId}/resolve-matching`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (!result.ok || !result.body || result.body.success !== true) {
+      setMessage(
+        detailMessage,
+        (result.body && result.body.message) || "Could not resolve matching.",
+        "error"
+      );
+      return;
+    }
+    renderDetail(result.body.data);
+    setMessage(detailMessage, `Resolved: ${action}`, "success");
+    await loadList();
   }
 
   async function loadList() {
@@ -441,6 +615,25 @@
     const btn = event.target.closest("[data-action]");
     if (!btn || btn.disabled) return;
     await runAction(btn.getAttribute("data-action"));
+  });
+
+  document.getElementById("rrqNeedsMatchingActions")?.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-match-action]");
+    if (!btn || btn.disabled) return;
+    const action = btn.getAttribute("data-match-action");
+    let recruitmentId = document.getElementById("rrqAttachRecruitmentId")?.value || "";
+    if (action === "attach" && !recruitmentId) {
+      setMessage(document.getElementById("rrqDetailMessage"), "Enter a recruitment ID to attach.", "error");
+      return;
+    }
+    await resolveMatching(action, recruitmentId || undefined);
+  });
+
+  document.getElementById("rrqCandidateBody")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-pick-recruitment]");
+    if (!btn) return;
+    const input = document.getElementById("rrqAttachRecruitmentId");
+    if (input) input.value = btn.getAttribute("data-pick-recruitment") || "";
   });
 
   document.getElementById("rrqSaveNotes")?.addEventListener("click", saveNotes);

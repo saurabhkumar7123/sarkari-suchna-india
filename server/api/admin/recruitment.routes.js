@@ -7,14 +7,16 @@ const { adminSensitiveLimiter } = require("../../config/rateLimits");
 const {
   recruitmentCreateSchema,
   recruitmentUpdateSchema,
-  recruitmentListQuerySchema
+  recruitmentListQuerySchema,
+  recruitmentManualUpdateSchema
 } = require("../../validations/admin.validation");
 const {
   listRecruitmentsHandler,
   getRecruitmentHandler,
   getRecruitmentDetailHandler,
   createRecruitmentHandler,
-  updateRecruitmentHandler
+  updateRecruitmentHandler,
+  createManualRecruitmentUpdateHandler
 } = require("../../controllers/admin/recruitment.controller");
 
 const router = express.Router();
@@ -37,6 +39,12 @@ router.put(
   adminSensitiveLimiter,
   validateJoi(recruitmentUpdateSchema, "body"),
   asyncHandler(updateRecruitmentHandler)
+);
+router.post(
+  "/recruitments/:id/manual-update",
+  adminSensitiveLimiter,
+  validateJoi(recruitmentManualUpdateSchema, "body"),
+  asyncHandler(createManualRecruitmentUpdateHandler)
 );
 
 module.exports = router;

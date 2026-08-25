@@ -507,6 +507,33 @@ const recruitmentReviewQueueNotesSchema = Joi.object({
   .required()
   .unknown(false);
 
+const recruitmentReviewQueueResolveSchema = Joi.object({
+  action: Joi.string().trim().lowercase().valid("attach", "create_parent", "standalone", "reject").required(),
+  recruitment_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""), Joi.valid(null))
+    .optional(),
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...VALID_EVENT_TYPES)
+    .optional(),
+  notes: Joi.string().trim().max(5000).allow("", null).optional()
+})
+  .required()
+  .unknown(false);
+
+const recruitmentManualUpdateSchema = Joi.object({
+  event_type: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(...VALID_EVENT_TYPES)
+    .required(),
+  title: Joi.string().trim().max(500).required(),
+  payload: Joi.object().unknown(true).optional()
+})
+  .required()
+  .unknown(false);
+
 const recruitmentRuntimePreviewListQuerySchema = Joi.object({
   page: Joi.alternatives().try(Joi.number().integer().min(1), Joi.string().trim()).optional(),
   limit: Joi.alternatives().try(Joi.number().integer().min(1).max(50), Joi.string().trim()).optional(),
@@ -727,6 +754,8 @@ module.exports = {
   recruitmentReviewQueueListQuerySchema,
   recruitmentReviewQueueActionSchema,
   recruitmentReviewQueueNotesSchema,
+  recruitmentReviewQueueResolveSchema,
+  recruitmentManualUpdateSchema,
   recruitmentRuntimePreviewListQuerySchema,
   recruitmentDraftAttachSchema,
   recruitmentDraftDetachSchema,

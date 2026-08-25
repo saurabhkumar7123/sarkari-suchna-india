@@ -10,7 +10,8 @@ const REVIEW_STATUS = Object.freeze({
   UNDER_REVIEW: "under_review",
   APPROVED: "approved",
   REJECTED: "rejected",
-  FROZEN: "frozen"
+  FROZEN: "frozen",
+  NEEDS_MATCHING: "needs_matching"
 });
 
 const REVIEW_DECISIONS = Object.freeze({

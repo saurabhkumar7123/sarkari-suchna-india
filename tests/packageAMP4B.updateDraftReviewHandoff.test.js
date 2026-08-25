@@ -96,7 +96,7 @@ function mockHandoffRuntime({ convertAccepted = true } = {}) {
   const saveReviewItem = jest.fn(async (input) => {
     const row = {
       id: nextReviewId++,
-      status: "pending",
+      status: input.status || "pending",
       update_id: input.updateId ?? null,
       recruitment_id: (input.reviewItem && input.reviewItem.recruitmentId) || null,
       title: input.reviewItem && input.reviewItem.title,
@@ -128,6 +128,18 @@ function mockHandoffRuntime({ convertAccepted = true } = {}) {
   }));
   jest.doMock("../server/services/recruitment.service", () => ({
     createRecruitment
+  }));
+  jest.doMock("../server/services/recruitmentLifecycle.service", () => ({
+    createAnnouncementRecruitment: jest.fn(async () => ({ created: false, recruitment: null })),
+    persistStrongMatchLinkage: jest.fn(async () => ({ recruitmentEventId: null, updateLinked: false })),
+    lookupPageCandidatesForRuntime: jest.fn(async () => ({ candidates: [] }))
+  }));
+  jest.doMock("../server/services/pageCandidateLookup.service", () => ({
+    lookupPageCandidatesForRuntime: jest.fn(async () => ({ candidates: [], lookupSummary: { status: "ok", candidateCount: 0 } }))
+  }));
+  jest.doMock("../server/services/updates/updates.repository", () => ({
+    storeDocumentHash: jest.fn().mockResolvedValue(true),
+    insertDetectedUpdate: jest.fn().mockResolvedValue(999)
   }));
   jest.doMock("../server/lib/recruitment/runRecruitmentPipeline", () => ({
     runRecruitmentPipeline: jest.fn(() => ({
@@ -303,6 +315,50 @@ describe("update → draft + review handoff", () => {
     expect(outcome.telegram && outcome.telegram.delivered).not.toBe(true);
     expect(outcome.publishingBlocked).toBe(true);
     expect(ctx.saveDraft.mock.calls[0][0].payload.updateId).toBe(464);
+  });
+
+  test("H/I: two updates for same recruitment create two drafts", async () => {
+    const ctx = mockHandoffRuntime();
+    const first = await ctx.runtime.persistDraft({
+      flags: { AUTO_DRAFT_ENABLED: true },
+      workflowResult: {},
+      recruitmentId: 10,
+      notice: { title: "SSC CGL Notification", url: PDF_URL },
+      updateId: 100
+    });
+    const second = await ctx.runtime.persistDraft({
+      flags: { AUTO_DRAFT_ENABLED: true },
+      workflowResult: {},
+      recruitmentId: 10,
+      notice: { title: "SSC CGL Admit Card", url: PDF_URL },
+      updateId: 101
+    });
+    expect(first.draftId).not.toBe(second.draftId);
+    expect(ctx.drafts).toHaveLength(2);
+    expect(Number(ctx.drafts[0].recruitment_id)).toBe(10);
+    expect(Number(ctx.drafts[1].recruitment_id)).toBe(10);
+  });
+
+  test("J: two updates for same recruitment create two reviews", async () => {
+    const ctx = mockHandoffRuntime();
+    const r1 = await ctx.runtime.persistReviewQueue({
+      pipelineOutcome: { skipped: false, failed: false, result: { eventType: "notification" } },
+      workflowResult: {},
+      recruitmentId: 10,
+      notice: { title: "Notification", url: PDF_URL },
+      updateId: 100,
+      draftId: 1
+    });
+    const r2 = await ctx.runtime.persistReviewQueue({
+      pipelineOutcome: { skipped: false, failed: false, result: { eventType: "admit_card" } },
+      workflowResult: {},
+      recruitmentId: 10,
+      notice: { title: "Admit Card", url: PDF_URL },
+      updateId: 101,
+      draftId: 2
+    });
+    expect(r1.id).not.toBe(r2.id);
+    expect(ctx.reviews).toHaveLength(2);
   });
 
   test("AI/convert failure does not create a draft, review, or Telegram", async () => {

@@ -1029,6 +1029,90 @@ async function findAdminPageBySlug(slug, executor = db) {
   return rows[0] || null;
 }
 
+/**
+ * Read-only lifecycle candidate search. Uses only existing page columns.
+ * Never attaches; callers must evaluate HIGH vs MEDIUM vs AMBIGUOUS.
+ *
+ * @param {{
+ *   advertisementNo?: string|null,
+ *   department?: string|null,
+ *   postName?: string|null,
+ *   postTokens?: string[],
+ *   title?: string|null,
+ *   slug?: string|null,
+ *   limit?: number
+ * }} filters
+ */
+async function findLifecycleCandidates(filters = {}) {
+  const limit = Math.min(20, Math.max(1, parseInt(String(filters.limit || 20), 10) || 20));
+  const params = [];
+  const clauses = ["deleted = 0"];
+
+  if (filters.advertisementNo) {
+    const advt = String(filters.advertisementNo).trim();
+    if (advt) {
+      clauses.push("LOWER(TRIM(advertisement_no)) = LOWER(?)");
+      params.push(advt);
+    }
+  }
+
+  if (filters.department) {
+    const dept = String(filters.department).trim();
+    if (dept) {
+      clauses.push("LOWER(TRIM(department)) = LOWER(?)");
+      params.push(dept);
+    }
+  }
+
+  if (filters.slug) {
+    const slug = String(filters.slug)
+      .trim()
+      .replace(/^\/+|\.html$/gi, "");
+    if (slug) {
+      clauses.push("slug = ?");
+      params.push(slug);
+    }
+  }
+
+  if (filters.postName) {
+    const post = String(filters.postName).trim();
+    if (post) {
+      clauses.push(
+        "(LOWER(TRIM(post_name)) = LOWER(?) OR LOWER(TRIM(post_name)) LIKE LOWER(?) OR LOWER(title) LIKE LOWER(?))"
+      );
+      params.push(post, `%${post}%`, `%${post}%`);
+    }
+  } else if (Array.isArray(filters.postTokens) && filters.postTokens.length > 0) {
+    const tokenClauses = [];
+    for (const token of filters.postTokens) {
+      const trimmed = String(token || "").trim();
+      if (!trimmed) continue;
+      tokenClauses.push(
+        "(LOWER(TRIM(post_name)) LIKE LOWER(?) OR LOWER(title) LIKE LOWER(?))"
+      );
+      params.push(`%${trimmed}%`, `%${trimmed}%`);
+    }
+    if (tokenClauses.length > 0) {
+      clauses.push(`(${tokenClauses.join(" OR ")})`);
+    }
+  }
+
+  if (params.length === 0 && !filters.advertisementNo && !filters.department && !filters.slug && !filters.postName) {
+    return [];
+  }
+
+  const [rows] = await db.query(
+    `SELECT id, title, slug, status, department, post_name, advertisement_no, recruitment_id, recruitment_event_id
+     FROM pages
+     WHERE ${clauses.join(" AND ")}
+     ORDER BY id DESC
+     LIMIT ?`,
+    [...params, limit]
+  );
+
+  return Array.isArray(rows) ? rows : [];
+}
+
 // --- Generator (transaction connection) ---
 
 async function findActiveIdBySlug(slug, conn) {
@@ -1555,5 +1639,6 @@ module.exports = {
   getUniqueSlug,
   insertPage,
   updatePageBySlug,
-  selectIdBySlug
+  selectIdBySlug,
+  findLifecycleCandidates
 };

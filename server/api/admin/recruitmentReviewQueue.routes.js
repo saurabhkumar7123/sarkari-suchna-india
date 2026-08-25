@@ -8,7 +8,8 @@ const { adminSensitiveLimiter } = require("../../config/rateLimits");
 const {
   recruitmentReviewQueueListQuerySchema,
   recruitmentReviewQueueNotesSchema,
-  recruitmentReviewQueueActionSchema
+  recruitmentReviewQueueActionSchema,
+  recruitmentReviewQueueResolveSchema
 } = require("../../validations/admin.validation");
 const {
   listRecruitmentReviewQueueHandler,
@@ -17,7 +18,8 @@ const {
   rejectRecruitmentReviewHandler,
   markUnderReviewRecruitmentReviewHandler,
   freezeRecruitmentReviewHandler,
-  updateRecruitmentReviewNotesHandler
+  updateRecruitmentReviewNotesHandler,
+  resolveNeedsMatchingHandler
 } = require("../../controllers/admin/recruitmentReviewQueue.controller");
 
 router.get(
@@ -61,6 +63,13 @@ router.patch(
   adminSensitiveLimiter,
   validateJoi(recruitmentReviewQueueNotesSchema, "body"),
   asyncHandler(updateRecruitmentReviewNotesHandler)
+);
+
+router.post(
+  "/recruitment-review-queue/:id/resolve-matching",
+  adminSensitiveLimiter,
+  validateJoi(recruitmentReviewQueueResolveSchema, "body"),
+  asyncHandler(resolveNeedsMatchingHandler)
 );
 
 module.exports = router;

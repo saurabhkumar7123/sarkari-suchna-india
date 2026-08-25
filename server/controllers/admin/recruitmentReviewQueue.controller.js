@@ -8,6 +8,9 @@
 const recruitmentReviewService = require("../../services/recruitmentReview.service");
 const { REVIEW_DECISIONS } = require("../../lib/recruitment/reviewQueue");
 const { buildReviewAssistView } = require("../../lib/recruitment/reviewComparison");
+const {
+  resolveNeedsMatchingCandidates
+} = require("../../lib/recruitment/normalizeNeedsMatchingCandidates");
 
 function sendServiceError(res, err) {
   const statusCode = err && err.statusCode ? err.statusCode : 500;
@@ -22,7 +25,8 @@ function withAssistView(row) {
   if (!row || typeof row !== "object") return row;
   return {
     ...row,
-    assist: buildReviewAssistView(row)
+    assist: buildReviewAssistView(row),
+    needs_matching_candidates: resolveNeedsMatchingCandidates(row)
   };
 }
 
@@ -117,6 +121,23 @@ const updateRecruitmentReviewNotesHandler = async (req, res) => {
   }
 };
 
+const resolveNeedsMatchingHandler = async (req, res) => {
+  try {
+    const recruitmentLifecycleService = require("../../services/recruitmentLifecycle.service");
+    const result = await recruitmentLifecycleService.resolveNeedsMatching({
+      reviewId: req.params.id,
+      action: req.body && req.body.action,
+      recruitmentId: req.body && req.body.recruitment_id,
+      eventType: req.body && req.body.event_type,
+      notes: req.body && req.body.notes
+    });
+    const row = await recruitmentReviewService.getReviewItemById(req.params.id);
+    res.json({ success: true, data: withAssistView(row), resolution: result });
+  } catch (err) {
+    return sendServiceError(res, err);
+  }
+};
+
 module.exports = {
   listRecruitmentReviewQueueHandler,
   getRecruitmentReviewQueueHandler,
@@ -124,5 +145,6 @@ module.exports = {
   rejectRecruitmentReviewHandler,
   markUnderReviewRecruitmentReviewHandler,
   freezeRecruitmentReviewHandler,
-  updateRecruitmentReviewNotesHandler
+  updateRecruitmentReviewNotesHandler,
+  resolveNeedsMatchingHandler
 };

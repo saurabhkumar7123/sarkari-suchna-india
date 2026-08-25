@@ -13,6 +13,10 @@ const { isRecruitmentEditorialAttachmentEnabled } = require("../../config/recrui
 const generatorDraftService = require("../../services/generatorDraft.service");
 const recruitmentPageLinkService = require("../../services/recruitmentPageLink.service");
 const { runPostPublishRecruitmentLink } = require("../../lib/postPublishRecruitmentLink");
+const { snapshotPublishedPage } = require("../../lib/recruitment/pageSnapshot");
+const recruitmentLifecycleService = require("../../services/recruitmentLifecycle.service");
+const { hasHighIdentity } = require("../../lib/recruitment/lifecycleSafety");
+const { extractRecruitmentAttributes } = require("../../lib/recruitment/recruitmentMatcher");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
@@ -388,6 +392,20 @@ const generatePage = async (req, res) => {
     const sanitizedBadges = Array.isArray(req.body.badges) ? req.body.badges : [];
 
     if (oldSlug) {
+      if (previousRow && previousRow.id) {
+        try {
+          await snapshotPublishedPage(previousRow, {
+            author: req.user && req.user.username ? req.user.username : "generator",
+            reason: "manual_publish_overwrite",
+            connection: conn
+          });
+        } catch (snapErr) {
+          logger.warn("generator: page snapshot failed; continuing overwrite", {
+            slug,
+            message: snapErr && snapErr.message ? snapErr.message : String(snapErr)
+          });
+        }
+      }
       const result = await pageRepository.updatePageBySlug(
         {
           title,
@@ -501,6 +519,56 @@ const generatePage = async (req, res) => {
         pageId: savedPageId,
         recruitmentId: linkResult.recruitment_id
       });
+    }
+
+    const confirmIdentity =
+      req.body &&
+      (req.body.confirmRecruitmentIdentity === true ||
+        String(req.body.confirmRecruitmentIdentity || "").toLowerCase() === "true");
+    if (
+      confirmIdentity &&
+      !oldSlugNormalized &&
+      !(linkResult && linkResult.recruitment_id) &&
+      isRecruitmentEditorialAttachmentEnabled()
+    ) {
+      try {
+        const notice = {
+          title,
+          content: text,
+          organization: normalizedDepartment || null,
+          advertisementNo: normalizedAdvertisementNo || null,
+          postName: normalizedPostName || null
+        };
+        const identity = extractRecruitmentAttributes(notice);
+        if (hasHighIdentity(identity)) {
+          const created = await recruitmentLifecycleService.createHumanApprovedRecruitment({
+            notice: {
+              ...notice,
+              advertisementNo: identity.advertisementNo || normalizedAdvertisementNo,
+              organization: identity.organization || normalizedDepartment,
+              examName: identity.examName || normalizedPostName,
+              recruitmentYear: identity.recruitmentYear
+            },
+            eventType: "notification"
+          });
+          if (created && created.recruitment && created.recruitment.id) {
+            await recruitmentPageLinkService.linkPage({
+              page_id: savedPageId,
+              recruitment_id: created.recruitment.id,
+              recruitment_event_id: null
+            });
+            logger.info("generator: human-confirmed recruitment created and linked", {
+              slug,
+              pageId: savedPageId,
+              recruitmentId: created.recruitment.id
+            });
+          }
+        }
+      } catch (createErr) {
+        logger.warn("generator: confirmRecruitmentIdentity create skipped", {
+          message: createErr && createErr.message ? createErr.message : String(createErr)
+        });
+      }
     }
 
     const pageTarget = formatPageTarget(slug, title);

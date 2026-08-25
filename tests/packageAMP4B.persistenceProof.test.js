@@ -94,14 +94,24 @@ function mockPersistenceRuntime({ convertAccepted = true, extractOk = true, conv
   jest.doMock("../server/services/generatorDraft.service", () => ({
     saveDraft,
     listDraftsByRecruitmentId,
-    getDraftById: jest.fn(async (id) => drafts.find((d) => d.id === id) || null)
+    getDraftById: jest.fn(async (id) => drafts.find((d) => d.id === id) || null),
+    findUnpublishedDraftByUpdateId: jest.fn(async (updateId) =>
+      drafts.find(
+        (d) =>
+          String(d.status) === "draft" &&
+          Number(d.payload && (d.payload.updateId || d.payload.update_id)) === Number(updateId)
+      ) || null
+    )
   }));
   jest.doMock("../server/repositories/generatorDraft.repository", () => ({
     updateDraftLinkage: jest.fn().mockResolvedValue(true)
   }));
   jest.doMock("../server/services/recruitmentReview.service", () => ({
     saveReviewItem,
-    listReviewItems
+    listReviewItems,
+    getReviewItemByUpdateId: jest.fn(async (updateId) =>
+      reviews.find((r) => Number(r.update_id) === Number(updateId)) || null
+    )
   }));
   jest.doMock("../server/lib/enterprise/notificationGateway", () => ({
     sendNotification,
@@ -234,6 +244,7 @@ describe("AMP-4B structured output persistence proof", () => {
       flags: { AUTO_DRAFT_ENABLED: true },
       workflowResult: { generatorPayload: { ...SPARSE } },
       recruitmentId: 102,
+      updateId: 9002,
       notice: { title: TITLE, url: PDF_URL }
     };
 
@@ -265,6 +276,21 @@ describe("AMP-4B structured output persistence proof", () => {
     expect(secondReview.reused).toBe(true);
     expect(ctx.saveReviewItem).toHaveBeenCalledTimes(1);
     expect(ctx.saveDraft.mock.calls[1][0].id).toBe(firstDraft.draftId);
+  });
+
+  test("9b. different updateId on same recruitment creates separate drafts", async () => {
+    const ctx = mockPersistenceRuntime({ convertAccepted: true });
+    const base = {
+      flags: { AUTO_DRAFT_ENABLED: true },
+      workflowResult: { generatorPayload: { ...SPARSE } },
+      recruitmentId: 102,
+      notice: { title: TITLE, url: PDF_URL }
+    };
+    const first = await ctx.persistDraft({ ...base, updateId: 9002 });
+    const second = await ctx.persistDraft({ ...base, updateId: 9003 });
+    expect(ctx.drafts).toHaveLength(2);
+    expect(second.draftId).not.toBe(first.draftId);
+    expect(second.reused).toBe(false);
   });
 
   test("10. weak conversion keeps sparse draft", async () => {

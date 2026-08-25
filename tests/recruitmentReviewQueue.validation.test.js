@@ -28,6 +28,25 @@ describe("recruitment review queue validation", () => {
     expect(error).toBeTruthy();
   });
 
+  test("accepts needs_matching status filter", () => {
+    const { error, value } = recruitmentReviewQueueListQuerySchema.validate({
+      status: "needs_matching"
+    });
+    expect(error).toBeUndefined();
+    expect(value.status).toBe("needs_matching");
+  });
+
+  test("accepts resolve-matching body", () => {
+    const { recruitmentReviewQueueResolveSchema } = require("../server/validations/admin.validation");
+    const { error, value } = recruitmentReviewQueueResolveSchema.validate({
+      action: "attach",
+      recruitment_id: 10,
+      notes: "Matched to SSC CGL"
+    });
+    expect(error).toBeUndefined();
+    expect(value.action).toBe("attach");
+  });
+
   test("rejects invalid event type filter", () => {
     const { error } = recruitmentReviewQueueListQuerySchema.validate({
       event_type: "not_an_event"

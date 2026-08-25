@@ -12,6 +12,7 @@ const {
   saveSiteBaseline,
   markSiteChecked,
   hasRecentDuplicate,
+  findDuplicateUpdate,
   markAlertSent,
   isInCooldown,
   incrementSiteFailure,
@@ -47,6 +48,93 @@ function isImportantUpdate(title) {
     .replace(/\s+/g, " ")
     .trim();
   return /\bresult(?:s)?\b|\badmit(?:\s+card)?\b|\banswer\s+key\b|\brecruit(?:ment)?\b/i.test(t);
+}
+
+async function runAmp4bForNotice({
+  site,
+  siteId,
+  notice,
+  updateId,
+  revisionCheck = false,
+  existingDocumentHash = null
+}) {
+  let candidateRecruitments = [];
+  let lookupSummary = {
+    status: "skipped",
+    strategy: "insufficient_criteria",
+    candidateCount: 0
+  };
+  try {
+    const lookup = await lookupRecruitmentCandidatesForRuntime({ notice });
+    candidateRecruitments = Array.isArray(lookup.candidates) ? lookup.candidates : [];
+    lookupSummary = lookup.lookupSummary || lookupSummary;
+    if (lookupSummary.status === "failed") {
+      logger.warn("updates-worker: recruitment candidate lookup failed", {
+        siteId,
+        strategy: lookupSummary.strategy,
+        message: lookupSummary.message
+      });
+    }
+  } catch (lookupErr) {
+    candidateRecruitments = [];
+    lookupSummary = {
+      status: "failed",
+      strategy: "lookup_error",
+      candidateCount: 0,
+      message: lookupErr && lookupErr.message ? lookupErr.message : String(lookupErr)
+    };
+    logger.warn("updates-worker: recruitment candidate lookup failed", {
+      siteId,
+      message: lookupSummary.message
+    });
+  }
+
+  if (!isProductionRuntimeEnabled()) {
+    logger.info("updates-worker: recruitment pipeline skipped — production runtime flags off", {
+      siteId,
+      updateId,
+      flags: getAutomationFlags()
+    });
+    return null;
+  }
+
+  try {
+    const productionOutcome = await runProductionDetectionPipeline({
+      notice,
+      updateId,
+      candidateRecruitments,
+      lookupSummary,
+      monitoredSite: {
+        id: siteId,
+        name: site && site.name ? site.name : null,
+        url: site && site.url ? site.url : null
+      },
+      revisionCheck,
+      existingDocumentHash,
+      existingSiteId: siteId
+    });
+    logger.info("updates-worker: production runtime completed", {
+      siteId,
+      updateId,
+      revisionCheck,
+      success: productionOutcome.success === true,
+      skipped: productionOutcome.skipped === true,
+      duplicate: productionOutcome.duplicate === true,
+      recruitmentId: productionOutcome.recruitmentId || null
+    });
+    return productionOutcome;
+  } catch (runtimeErr) {
+    logger.error("updates-worker: production runtime failed", {
+      siteId,
+      updateId,
+      message: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
+    });
+    return {
+      skipped: false,
+      failed: true,
+      error: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
+    };
+  }
 }
 
 async function processSiteJob(job) {
@@ -181,55 +269,77 @@ async function processSiteJob(job) {
 
     const newItems = Array.isArray(result.items) ? result.items : [];
     const pendingBatch = [];
+    const revisionCandidates = [];
     let savedCount = 0;
+    const recruitmentPipelineEnabled = isRecruitmentPipelineEnabled();
+    const runtimeOn = isProductionRuntimeEnabled();
+
     for (const item of newItems) {
-      const duplicate = await hasRecentDuplicate({
-        siteId,
-        title: item.title || "New update",
-        link: item.link || ""
-      });
-      if (duplicate) {
-        logger.info("updates-worker: duplicate suppressed", { siteId, title: item.title });
+      const title = item.title || "New update";
+      const link = item.link || "";
+      let existing = null;
+      if (typeof findDuplicateUpdate === "function") {
+        existing = await findDuplicateUpdate({
+          siteId,
+          title,
+          link
+        });
+      } else if (await hasRecentDuplicate({ siteId, title, link })) {
+        existing = { skipRevision: true };
+      }
+
+      if (existing) {
+        if (!existing.skipRevision && existing.id && recruitmentPipelineEnabled && runtimeOn) {
+          revisionCandidates.push({
+            title,
+            link,
+            existing
+          });
+        } else {
+          logger.info("updates-worker: duplicate suppressed", { siteId, title });
+        }
         continue;
       }
 
       pendingBatch.push({
         siteName: site.name,
-        title: item.title,
-        link: item.link,
-        important: isImportantUpdate(item.title)
+        title,
+        link,
+        important: isImportantUpdate(title)
       });
       savedCount += 1;
     }
 
-    if (!savedCount) {
+    if (!savedCount && revisionCandidates.length === 0) {
       logger.info("updates-worker: no savable items", { siteId });
       return { changed: false, duplicatesOnly: true };
     }
 
     // Best-effort update alert. Telegram failure/skip must NOT discard detected
     // updates or skip AMP-4B productionRuntime (AMP-4B staging activation).
-    let telegramResult;
-    try {
-      if (pendingBatch.length === 1) {
-        telegramResult = await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
-      } else {
-        telegramResult = await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
+    let telegramResult = { sent: false, skipped: true, reason: "no_new_listing" };
+    if (savedCount > 0) {
+      try {
+        if (pendingBatch.length === 1) {
+          telegramResult = await sendTelegramMessage(buildUpdateMessage(pendingBatch[0]));
+        } else {
+          telegramResult = await sendTelegramMessage(buildBatchUpdateMessage(pendingBatch));
+        }
+      } catch (telegramErr) {
+        telegramResult = {
+          sent: false,
+          error: telegramErr,
+          reason: telegramErr && telegramErr.message ? telegramErr.message : String(telegramErr)
+        };
+        logger.warn("updates-worker: telegram alert threw; continuing pipeline", {
+          siteId,
+          message: telegramResult.reason
+        });
       }
-    } catch (telegramErr) {
-      telegramResult = {
-        sent: false,
-        error: telegramErr,
-        reason: telegramErr && telegramErr.message ? telegramErr.message : String(telegramErr)
-      };
-      logger.warn("updates-worker: telegram alert threw; continuing pipeline", {
-        siteId,
-        message: telegramResult.reason
-      });
     }
 
     const telegramSent = Boolean(telegramResult && telegramResult.sent === true);
-    if (!telegramSent) {
+    if (savedCount > 0 && !telegramSent) {
       logger.warn("updates-worker: telegram alert failed/skipped; persisting update and continuing runtime", {
         siteId,
         skipped: Boolean(telegramResult && telegramResult.skipped),
@@ -237,7 +347,6 @@ async function processSiteJob(job) {
       });
     }
 
-    const recruitmentPipelineEnabled = isRecruitmentPipelineEnabled();
     const productionOutcomes = [];
 
     for (const item of pendingBatch) {
@@ -253,79 +362,32 @@ async function processSiteJob(job) {
           content: item.title || "New update",
           url: item.link || ""
         };
+        const productionOutcome = await runAmp4bForNotice({
+          site,
+          siteId,
+          notice,
+          updateId
+        });
+        if (productionOutcome) productionOutcomes.push(productionOutcome);
+      }
+    }
 
-        let candidateRecruitments = [];
-        let lookupSummary = {
-          status: "skipped",
-          strategy: "insufficient_criteria",
-          candidateCount: 0
+    if (recruitmentPipelineEnabled && runtimeOn) {
+      for (const item of revisionCandidates) {
+        const notice = {
+          title: item.title || "New update",
+          content: item.title || "New update",
+          url: item.link || ""
         };
-        try {
-          const lookup = await lookupRecruitmentCandidatesForRuntime({ notice });
-          candidateRecruitments = Array.isArray(lookup.candidates) ? lookup.candidates : [];
-          lookupSummary = lookup.lookupSummary || lookupSummary;
-          if (lookupSummary.status === "failed") {
-            logger.warn("updates-worker: recruitment candidate lookup failed", {
-              siteId,
-              strategy: lookupSummary.strategy,
-              message: lookupSummary.message
-            });
-          }
-        } catch (lookupErr) {
-          candidateRecruitments = [];
-          lookupSummary = {
-            status: "failed",
-            strategy: "lookup_error",
-            candidateCount: 0,
-            message:
-              lookupErr && lookupErr.message ? lookupErr.message : String(lookupErr)
-          };
-          logger.warn("updates-worker: recruitment candidate lookup failed", {
-            siteId,
-            message: lookupSummary.message
-          });
-        }
-
-        if (isProductionRuntimeEnabled()) {
-          try {
-            const productionOutcome = await runProductionDetectionPipeline({
-              notice,
-              updateId,
-              candidateRecruitments,
-              lookupSummary,
-              monitoredSite: {
-                id: siteId,
-                name: site && site.name ? site.name : null,
-                url: site && site.url ? site.url : null
-              }
-            });
-            productionOutcomes.push(productionOutcome);
-            logger.info("updates-worker: production runtime completed", {
-              siteId,
-              updateId,
-              success: productionOutcome.success === true,
-              skipped: productionOutcome.skipped === true,
-              recruitmentId: productionOutcome.recruitmentId || null
-            });
-          } catch (runtimeErr) {
-            logger.error("updates-worker: production runtime failed", {
-              siteId,
-              updateId,
-              message: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
-            });
-            productionOutcomes.push({
-              skipped: false,
-              failed: true,
-              error: runtimeErr && runtimeErr.message ? runtimeErr.message : String(runtimeErr)
-            });
-          }
-        } else {
-          logger.info("updates-worker: recruitment pipeline skipped — production runtime flags off", {
-            siteId,
-            updateId,
-            flags: getAutomationFlags()
-          });
-        }
+        const productionOutcome = await runAmp4bForNotice({
+          site,
+          siteId,
+          notice,
+          updateId: item.existing.id,
+          revisionCheck: true,
+          existingDocumentHash: item.existing.documentHash || item.existing.document_hash || null
+        });
+        if (productionOutcome) productionOutcomes.push(productionOutcome);
       }
     }
 

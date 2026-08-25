@@ -73,20 +73,29 @@ async function saveReviewItem(input = {}) {
     update_id: input.updateId ?? input.update_id ?? null,
     recruitment_event_id: input.recruitmentEventId ?? input.recruitment_event_id ?? null,
     event_type: reviewItem.eventType,
-    match_result: reviewItem.matchResult,
+    // Needs Matching may persist an extended lifecycle match payload (candidates,
+    // matchLevel, recommendedAction) that is broader than Phase-22 ReviewMatchResult.
+    match_result:
+      input.matchResult ??
+      input.match_result ??
+      reviewItem.matchResult ??
+      reviewItem.match_result ??
+      null,
     confidence: reviewItem.confidence,
     source_url: reviewItem.sourceUrl,
     title: reviewItem.title,
     raw_notice: input.rawNotice ?? input.raw_notice ?? null,
     normalized_notice: input.normalizedNotice ?? input.normalized_notice ?? null,
     processor_output: input.processorOutput ?? input.processor_output ?? null,
-    status: reviewItem.status || REVIEW_STATUS.PENDING,
+    status: input.status || input.reviewStatus || reviewItem.status || REVIEW_STATUS.PENDING,
     decision: reviewItem.decision || REVIEW_DECISIONS.NONE,
     notes: reviewItem.notes,
     payload: {
       reviewItem,
       finalStatus: input.finalStatus ?? input.final_status ?? null,
-      warnings: input.warnings ?? null
+      warnings: input.warnings ?? null,
+      needsMatching: input.needsMatching || null,
+      lifecycle: input.lifecycle || null
     }
   });
 
@@ -266,7 +275,7 @@ async function updateReviewNotes(id, input = {}) {
   });
 }
 
-async function bindReviewItemRecruitment(id, recruitmentId) {
+async function bindReviewItemRecruitment(id, recruitmentId, recruitmentEventId = undefined) {
   await assertTable();
   const reviewId = parseInt(String(id), 10);
   const rid = parseInt(String(recruitmentId), 10);
@@ -280,13 +289,30 @@ async function bindReviewItemRecruitment(id, recruitmentId) {
     err.statusCode = 400;
     throw err;
   }
+  let eventId = undefined;
+  if (recruitmentEventId !== undefined) {
+    if (recruitmentEventId === null || recruitmentEventId === "") {
+      eventId = null;
+    } else {
+      eventId = parseInt(String(recruitmentEventId), 10);
+      if (!Number.isInteger(eventId) || eventId <= 0) {
+        const err = new Error("Invalid recruitment event id");
+        err.statusCode = 400;
+        throw err;
+      }
+    }
+  }
   const existing = await recruitmentReviewRepository.findById(reviewId);
   if (!existing) {
     const err = new Error("Review item not found");
     err.statusCode = 404;
     throw err;
   }
-  const updated = await recruitmentReviewRepository.bindRecruitmentId(reviewId, rid);
+  const updated = await recruitmentReviewRepository.bindRecruitmentId(
+    reviewId,
+    rid,
+    eventId
+  );
   if (!updated) {
     const err = new Error("Review item could not be bound");
     err.statusCode = 409;

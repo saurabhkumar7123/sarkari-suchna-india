@@ -276,7 +276,17 @@ function canonicalizeAdvertisementNumberCore(value) {
 function normalizeAdvertisementNumber(value) {
   const raw = collapseWhitespace(value);
   if (!raw) return null;
-  return canonicalizeAdvertisementNumberCore(raw);
+  const canonical = canonicalizeAdvertisementNumberCore(raw);
+  if (canonical) return canonical;
+  // Explicit field values may use short tokens (e.g. AAA-1) without a year slash form.
+  const stripped = stripAdvertisementLabels(raw).toLowerCase();
+  const cleaned = collapseWhitespace(
+    stripped
+      .replace(/[^\w/\\-\s]+/g, " ")
+      .replace(/\\/g, "/")
+      .replace(/\s+/g, "")
+  );
+  return cleaned || null;
 }
 
 function parseRecruitmentYear(value) {
@@ -388,7 +398,7 @@ function resolveOrganization(input, normalizedText, rawExtractionText = normaliz
 }
 
 function resolveExamName(input, normalizedText) {
-  const raw = pickFieldValue(input, ["exam_name"]);
+  const raw = pickFieldValue(input, ["exam_name", "examName"]);
   if (raw) {
     return { value: normalizeExamName(raw), source: "field" };
   }
@@ -400,7 +410,7 @@ function resolveExamName(input, normalizedText) {
 }
 
 function resolvePostName(input, normalizedText) {
-  const raw = pickFieldValue(input, ["post_name"]);
+  const raw = pickFieldValue(input, ["post_name", "postName"]);
   if (raw) {
     return { value: normalizePostName(raw), source: "field" };
   }
@@ -408,7 +418,7 @@ function resolvePostName(input, normalizedText) {
 }
 
 function resolveAdvertisementNumber(input, normalizedText) {
-  const raw = pickFieldValue(input, ["advertisement_no"]);
+  const raw = pickFieldValue(input, ["advertisement_no", "advertisementNo"]);
   if (raw) {
     return { value: normalizeAdvertisementNumber(raw), source: "field" };
   }
@@ -420,7 +430,12 @@ function resolveAdvertisementNumber(input, normalizedText) {
 }
 
 function resolveRecruitmentYear(input, normalizedText) {
-  const rawYear = pickFieldValue(input, ["recruitment_year", "cycle_year"]);
+  const rawYear = pickFieldValue(input, [
+    "recruitment_year",
+    "cycle_year",
+    "recruitmentYear",
+    "cycleYear"
+  ]);
   if (rawYear) {
     return { value: parseRecruitmentYear(rawYear), source: "field" };
   }

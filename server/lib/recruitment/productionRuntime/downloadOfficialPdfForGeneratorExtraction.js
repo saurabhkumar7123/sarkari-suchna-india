@@ -416,7 +416,12 @@ async function downloadOfficialPdfForGeneratorExtraction(input = {}) {
   try {
     const extracted = await extractGeneratorPdfText(buffer);
     const text = String(extracted && extracted.text ? extracted.text : "");
-    const result = { text, sourceUrl: parsed.href };
+    const result = {
+      text,
+      sourceUrl: parsed.href,
+      documentHash: require("crypto").createHash("sha256").update(buffer).digest("hex"),
+      byteLength: buffer.length
+    };
     if (extracted && extracted.extractionNote) result.extractionNote = extracted.extractionNote;
     return result;
   } catch (err) {

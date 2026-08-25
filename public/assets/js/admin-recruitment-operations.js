@@ -12,6 +12,8 @@
   let selected = null;
   let events = [];
   let linkedPages = [];
+  let linkedUpdates = [];
+  let linkedReviews = [];
   let draftBinding = null;
   const selectedIds = new Set();
 
@@ -484,16 +486,58 @@
     updateWorkflow();
   }
 
+  function renderLifecycleLinks() {
+    const updateRows = byId("lifecycleUpdateRows");
+    const reviewRows = byId("lifecycleReviewRows");
+    if (updateRows) {
+      if (!linkedUpdates.length) {
+        updateRows.innerHTML = '<tr><td colspan="4" class="rom-empty">No linked updates.</td></tr>';
+      } else {
+        updateRows.innerHTML = linkedUpdates
+          .map(
+            (row) => `<tr>
+            <td>#${escapeHtml(row.id)}</td>
+            <td>${escapeHtml(row.title || "—")}</td>
+            <td>${escapeHtml(row.recruitmentEventType || row.recruitment_event_type || "—")}</td>
+            <td>${escapeHtml(row.siteName || row.site_id || "—")}</td>
+          </tr>`
+          )
+          .join("");
+      }
+    }
+    if (reviewRows) {
+      if (!linkedReviews.length) {
+        reviewRows.innerHTML = '<tr><td colspan="4" class="rom-empty">No linked reviews.</td></tr>';
+      } else {
+        reviewRows.innerHTML = linkedReviews
+          .map(
+            (row) => `<tr>
+            <td><a href="/admin/recruitment-review-queue">#${escapeHtml(row.id)}</a></td>
+            <td><span class="rrq-status is-${escapeHtml(String(row.status || "").toLowerCase())}">${escapeHtml(
+              row.status || "—"
+            )}</span></td>
+            <td>${escapeHtml(row.event_type || "—")}</td>
+            <td>${escapeHtml(row.update_id ?? "—")}</td>
+          </tr>`
+          )
+          .join("");
+      }
+    }
+  }
+
   async function selectRecruitment(id) {
     try {
       const body = await api(`/api/admin/recruitments/${id}/detail?limit=50`);
       selected = body.data.recruitment;
       events = body.data.events || [];
       linkedPages = body.data.pages || [];
+      linkedUpdates = body.data.updates || [];
+      linkedReviews = body.data.reviews || [];
       setEditorVisible(true);
       fillRecruitmentForm(selected);
       renderEvents();
       renderLinks();
+      renderLifecycleLinks();
       await loadDraftBinding();
       await loadAvailableDrafts();
       await loadRecruitments();
@@ -508,11 +552,14 @@
     selected = null;
     events = [];
     linkedPages = [];
+    linkedUpdates = [];
+    linkedReviews = [];
     draftBinding = null;
     setEditorVisible(true);
     fillRecruitmentForm(null);
     renderEvents();
     renderLinks();
+    renderLifecycleLinks();
     renderDraftBinding();
     if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
     byId("recruitmentTitle").focus();
@@ -648,6 +695,25 @@
     }
   }
 
+  async function createManualUpdate(event) {
+    event.preventDefault();
+    if (!selected?.id) return;
+    try {
+      await api(`/api/admin/recruitments/${selected.id}/manual-update`, {
+        method: "POST",
+        body: {
+          event_type: byId("manualUpdateEventType").value,
+          title: byId("manualUpdateTitle").value.trim()
+        }
+      });
+      byId("manualUpdateForm").reset();
+      message("Manual update draft + review created. Not published.");
+      await selectRecruitment(selected.id);
+    } catch (err) {
+      message(err.message, true);
+    }
+  }
+
   byId("eventType").innerHTML = EVENT_TYPES.map((type) => `<option value="${type}">${escapeHtml(labelize(type))}</option>`).join("");
   byId("newRecruitmentBtn").addEventListener("click", newRecruitment);
   byId("recruitmentForm").addEventListener("submit", saveRecruitment);
@@ -658,6 +724,7 @@
   byId("eventForm").addEventListener("submit", saveEvent);
   byId("validatePageBtn").addEventListener("click", validatePage);
   byId("pageLinkForm").addEventListener("submit", attachPage);
+  byId("manualUpdateForm")?.addEventListener("submit", createManualUpdate);
   byId("draftBindForm").addEventListener("submit", attachDraft);
   byId("replaceDraftBtn").addEventListener("click", replaceDraft);
   byId("refreshDraftsBtn").addEventListener("click", loadAvailableDrafts);

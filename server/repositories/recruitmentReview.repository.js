@@ -32,6 +32,7 @@ const LEAN_STATUS_MAP = Object.freeze({
   approved: "resolved",
   rejected: "dismissed",
   frozen: "pending",
+  needs_matching: "pending",
   resolved: "resolved",
   dismissed: "dismissed"
 });
@@ -78,6 +79,7 @@ function parseJsonColumn(value) {
 }
 
 function toJsonValue(value) {
+  // Bind JSON columns as strings (or SQL NULL). Avoid CAST(? AS JSON) — MariaDB rejects it.
   if (value === undefined || value === null) return null;
   return typeof value === "string" ? value : JSON.stringify(value);
 }
@@ -254,45 +256,89 @@ async function create(row) {
   };
 
   if (schema.rich) {
-    const [result] = await db.query(
-      `INSERT INTO recruitment_review_queue (
-         update_id,
-         recruitment_id,
-         recruitment_event_id,
-         event_type,
-         match_result_json,
-         confidence,
-         confidence_level,
-         source_url,
-         title,
-         raw_notice_json,
-         normalized_notice_json,
-         processor_output_json,
-         payload_json,
-         review_status,
-         decision,
-         notes
-       ) VALUES (?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, ?, CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), CAST(? AS JSON), ?, ?, ?)`,
-      [
-        row.update_id ?? null,
-        row.recruitment_id ?? null,
-        row.recruitment_event_id ?? null,
-        row.event_type,
-        toJsonValue(row.match_result),
-        confidence,
-        confidenceToLevel(confidence),
-        row.source_url ?? null,
-        row.title,
-        toJsonValue(row.raw_notice),
-        toJsonValue(payloadObject.normalized_notice),
-        toJsonValue(row.processor_output),
-        toJsonValue(payloadObject),
-        storageStatus,
-        decision,
-        row.notes ?? null
-      ]
-    );
-    return findById(result.insertId);
+    try {
+      const [result] = await db.query(
+        `INSERT INTO recruitment_review_queue (
+           update_id,
+           recruitment_id,
+           recruitment_event_id,
+           event_type,
+           match_result_json,
+           confidence,
+           confidence_level,
+           source_url,
+           title,
+           raw_notice_json,
+           normalized_notice_json,
+           processor_output_json,
+           payload_json,
+           review_status,
+           decision,
+           notes
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          row.update_id ?? null,
+          row.recruitment_id ?? null,
+          row.recruitment_event_id ?? null,
+          row.event_type,
+          toJsonValue(row.match_result),
+          confidence,
+          confidenceToLevel(confidence),
+          row.source_url ?? null,
+          row.title,
+          toJsonValue(row.raw_notice),
+          toJsonValue(payloadObject.normalized_notice),
+          toJsonValue(row.processor_output),
+          toJsonValue(payloadObject),
+          storageStatus,
+          decision,
+          row.notes ?? null
+        ]
+      );
+      return findById(result.insertId);
+    } catch (err) {
+      if (logicalStatus !== "needs_matching") throw err;
+      payloadObject.logical_status = "needs_matching";
+      const [result] = await db.query(
+        `INSERT INTO recruitment_review_queue (
+           update_id,
+           recruitment_id,
+           recruitment_event_id,
+           event_type,
+           match_result_json,
+           confidence,
+           confidence_level,
+           source_url,
+           title,
+           raw_notice_json,
+           normalized_notice_json,
+           processor_output_json,
+           payload_json,
+           review_status,
+           decision,
+           notes
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          row.update_id ?? null,
+          row.recruitment_id ?? null,
+          row.recruitment_event_id ?? null,
+          row.event_type,
+          toJsonValue(row.match_result),
+          confidence,
+          confidenceToLevel(confidence),
+          row.source_url ?? null,
+          row.title,
+          toJsonValue(row.raw_notice),
+          toJsonValue(payloadObject.normalized_notice),
+          toJsonValue(row.processor_output),
+          toJsonValue(payloadObject),
+          "pending",
+          decision,
+          row.notes ?? null
+        ]
+      );
+      return findById(result.insertId);
+    }
   }
 
   const [result] = await db.query(
@@ -375,6 +421,9 @@ async function list(opts = {}) {
     if (schema.rich) {
       where += " AND review_status = ?";
       params.push(logical);
+    } else if (logical === "needs_matching") {
+      where += " AND JSON_UNQUOTE(JSON_EXTRACT(payload_json, '$.logical_status')) = ?";
+      params.push("needs_matching");
     } else {
       const storage = toStorageStatus(logical, false);
       where += " AND review_status = ?";
@@ -504,14 +553,35 @@ async function updateDecision(id, patch = {}) {
   return findById(id);
 }
 
-async function bindRecruitmentId(id, recruitmentId) {
+async function bindRecruitmentId(id, recruitmentId, recruitmentEventId = undefined) {
   const rid = parseInt(String(recruitmentId), 10);
   if (!Number.isInteger(rid) || rid <= 0) {
     return null;
   }
+
+  // Keep event linkage optional so older callers remain valid.
+  if (recruitmentEventId === undefined) {
+    const [result] = await db.query(
+      `UPDATE recruitment_review_queue SET recruitment_id = ? WHERE id = ?`,
+      [rid, id]
+    );
+    if (result.affectedRows === 0) return null;
+    return findById(id);
+  }
+
+  const eventId =
+    recruitmentEventId === null || recruitmentEventId === ""
+      ? null
+      : parseInt(String(recruitmentEventId), 10);
+  if (eventId !== null && (!Number.isInteger(eventId) || eventId <= 0)) {
+    return null;
+  }
+
   const [result] = await db.query(
-    `UPDATE recruitment_review_queue SET recruitment_id = ? WHERE id = ?`,
-    [rid, id]
+    `UPDATE recruitment_review_queue
+     SET recruitment_id = ?, recruitment_event_id = ?
+     WHERE id = ?`,
+    [rid, eventId, id]
   );
   if (result.affectedRows === 0) return null;
   return findById(id);
