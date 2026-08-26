@@ -388,6 +388,9 @@
     const href = linkEl.getAttribute("href") || "";
     if (linkEl.classList.contains("sidebar-view-site") || linkEl.classList.contains("sidebar-account-link") || href === "/") return false;
     const parts = splitHref(href);
+    // Query-string deep-links (e.g. ?status=needs_matching) are shortcuts, not canonical active destinations.
+    // Needs Matching is selected via in-page filters; only Review Center stays active on RRQ.
+    if (parts.path.includes("?")) return false;
     const h = normalizeNavPath(parts.path);
     const p = normalizeNavPath(path);
     if (!h || h === "#") return false;

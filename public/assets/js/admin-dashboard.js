@@ -266,26 +266,53 @@ async function checkServerHealth() {
   setEl("healthApi", apiOk, apiOk ? "Working" : "Error");
 }
 
+/** Safe Chart.js teardown — avoids named-element globals (canvas#statusChart) and non-Chart values. */
+function destroyDashboardChart(canvasOrChart) {
+  if (!canvasOrChart) return;
+  try {
+    if (typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
+      const canvas =
+        canvasOrChart instanceof HTMLCanvasElement
+          ? canvasOrChart
+          : canvasOrChart.canvas instanceof HTMLCanvasElement
+            ? canvasOrChart.canvas
+            : null;
+      if (canvas) {
+        const existing = Chart.getChart(canvas);
+        if (existing && typeof existing.destroy === "function") {
+          existing.destroy();
+          return;
+        }
+      }
+    }
+    if (typeof canvasOrChart.destroy === "function") {
+      canvasOrChart.destroy();
+    }
+  } catch (_) {
+    /* already destroyed or incompatible instance */
+  }
+}
+
 function renderChartsFromPages(pages) {
   const counts = {};
   pages.forEach((p) => {
     const st = String(p.status || "unknown").trim().toLowerCase() || "unknown";
     counts[st] = (counts[st] || 0) + 1;
   });
-  if (window.statusChart) window.statusChart.destroy();
   const statusEl = document.getElementById("statusChart");
+  destroyDashboardChart(statusEl || window.__dashboardStatusChart);
   if (statusEl && typeof Chart !== "undefined") {
-    window.statusChart = new Chart(statusEl, {
+    window.__dashboardStatusChart = new Chart(statusEl, {
       type: "bar",
       data: { labels: Object.keys(counts), datasets: [{ label: "Pages by status", data: Object.values(counts), backgroundColor: "rgba(37,99,235,0.6)" }] },
       options: { responsive: true, plugins: { legend: { display: false } } }
     });
   }
   const top = [...pages].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8);
-  if (window.viewsChart) window.viewsChart.destroy();
   const viewsEl = document.getElementById("viewsChart");
+  destroyDashboardChart(viewsEl || window.__dashboardViewsChart);
   if (viewsEl && typeof Chart !== "undefined") {
-    window.viewsChart = new Chart(viewsEl, {
+    window.__dashboardViewsChart = new Chart(viewsEl, {
       type: "bar",
       data: { labels: top.map((p) => (p.title || p.slug || "").slice(0, 22)), datasets: [{ label: "Views", data: top.map((p) => p.views || 0), backgroundColor: "rgba(16,185,129,0.6)" }] },
       options: { indexAxis: "y", responsive: true, plugins: { legend: { display: false } } }

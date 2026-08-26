@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "25";
+  const ADMIN_NAV_VERSION = "26";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -274,7 +274,7 @@ Sources -> /admin/monitoring
 Detected Updates -> /admin/monitoring#recentUpdates
 Monitoring Activity -> /admin/monitoring#monitoringActivity
 Drafts -> /generator#drafts
-Review Center -> /admin/recruitment-review-queue
+Review Center -> /admin/recruitment-review-queue (canonical active nav for RRQ)
 Editorial Review / Review Queue -> /admin/editorial-review
 Published Pages -> /admin/page-manager
 Automation Overview -> /admin/automation-control-center
@@ -283,7 +283,7 @@ Notifications -> /admin/automation-control-center#accPublishingControls
 Automation Activity -> /admin/automation-control-center#accAudit
 Safety / Control Center -> /admin/automation-control-center#accSettings
 All Recruitments -> /admin/recruitments
-Recruitment Review -> /admin/recruitment-review-queue
+Recruitment Review -> /admin/recruitment-review-queue?status=needs_matching (filter shortcut; not a second active destination)
 Recruitment Timeline -> /admin/recruitments#eventTimeline
 Audit (Runtime Preview) -> /admin/recruitment-runtime-preview
 Sessions -> /admin/sessions
