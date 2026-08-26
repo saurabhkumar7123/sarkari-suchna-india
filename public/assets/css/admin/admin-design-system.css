@@ -1672,11 +1672,6 @@ body.dark.admin-saas-v2 .admin-attention-card.is-blue {
   background: color-mix(in srgb, var(--admin-info) 12%, var(--admin-surface));
 }
 
-body[data-admin-hash="accAudit"] .acc-hero,
-body[data-admin-hash="accAudit"] .acc-publishing {
-  display: none;
-}
-
 body[data-admin-hash="eventTimeline"] [data-workspace="recruitments"],
 body:not([data-admin-hash="eventTimeline"]) [data-workspace="events"] {
   display: none;

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Automation Health | Automation Control Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=9">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Automation Health" data-acc-page="health">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Automation Control Center</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main acc-main">
+  <header class="acc-workspace-head" aria-label="Health snapshot">
+    <div class="acc-workspace-head__copy">
+      <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
+      <h1 class="acc-workspace-head__title">Health snapshot</h1>
+      <p class="acc-workspace-head__sub">Automation and source health posture. Full monitoring remains on the Monitoring workspace.</p>
+    </div>
+    <div class="acc-workspace-head__actions">
+      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
+      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
+      
+      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
+    <div class="acc-switcher__bar">
+      <div class="acc-switcher__current">
+        <span class="acc-switcher__eyebrow">Current section</span>
+        <strong class="acc-switcher__value">Health snapshot</strong>
+      </div>
+      <button type="button" class="acc-switcher__trigger header-action-btn" id="accSwitcherTrigger" aria-expanded="false" aria-controls="accSwitcherMenu" aria-haspopup="listbox">
+        Switch section
+        <span class="acc-switcher__chevron" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox" hidden>
+      <a class="acc-switcher__option" href="/admin/automation-control-center">Control overview</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/sources">Official sources</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Review snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/insights">Insights</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/health" aria-current="page">Health snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+    </div>
+  </nav>
+  <div class="acc-content" id="accContent">
+
+  <section class="acc-kpi-strip" aria-label="Health summary">
+    <article class="acc-kpi"><span>System health</span><strong id="accPageKpiHealth">Unknown</strong></article>
+    <article class="acc-kpi"><span>Healthy sources</span><strong id="accPageKpiHealthy">0</strong></article>
+    <article class="acc-kpi"><span>Offline sources</span><strong id="accPageKpiOffline">0</strong></article>
+    <article class="acc-kpi"><span>Automation</span><strong id="accPageKpiAutomation">Dormant</strong></article>
+  </section>
+
+  <section class="acc-section is-acc-tab-active" id="accMonitoring" data-acc-searchable="monitoring dashboard online offline slow healthy warnings response time health score">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Observability</p>
+        <h2>Health cards</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
+      </div>
+    </div>
+    <div class="acc-monitor-grid" id="accMonitorGrid"></div>
+  </section>
+  </div>
+</div>
+
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=28"></script>
+<script src="/js/admin-shell.js?v=13"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js?v=3"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-automation-control-center.js?v=7"></script>
+</body>
+</html>

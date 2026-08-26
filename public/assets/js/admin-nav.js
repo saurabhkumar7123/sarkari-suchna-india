@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "26";
+  const ADMIN_NAV_VERSION = "28";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -106,11 +106,7 @@
   <div class="nav-group is-open" id="nav-group-automation" data-nav-group="automation" data-default-open="1">
     <p class="nav-group-label">Automation</p>
     <div class="nav-group-body">
-      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Overview", 'title="Automation Control Center"')}
-      ${navLink("/admin/automation-control-center#accDrafts", "/admin/automation-control-center", I.ai, "AI / Conversion", 'data-nav-alias="acc-drafts"')}
-      ${navLink("/admin/automation-control-center#accPublishingControls", "/admin/automation-control-center", I.notify, "Notifications", 'data-nav-alias="acc-notify"')}
-      ${navLink("/admin/automation-control-center#accAudit", "/admin/automation-control-center", I.activity, "Automation Activity", 'data-nav-alias="acc-audit"')}
-      ${navLink("/admin/automation-control-center#accSettings", "/admin/automation-control-center", I.safety, "Safety / Control Center", 'data-nav-alias="acc-safety"')}
+      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Control Center", 'data-nav-alias="acc" title="Automation Control Center workspace"')}
     </div>
   </div>
 
@@ -277,15 +273,21 @@ Drafts -> /generator#drafts
 Review Center -> /admin/recruitment-review-queue (canonical active nav for RRQ)
 Editorial Review / Review Queue -> /admin/editorial-review
 Published Pages -> /admin/page-manager
-Automation Overview -> /admin/automation-control-center
-AI / Conversion -> /admin/automation-control-center#accDrafts
-Notifications -> /admin/automation-control-center#accPublishingControls
-Automation Activity -> /admin/automation-control-center#accAudit
-Safety / Control Center -> /admin/automation-control-center#accSettings
+Automation Control Center -> /admin/automation-control-center
+ACC child pages are internal ACC navigation only (not global sidebar items):
+  /admin/automation-control-center/sources
+  /admin/automation-control-center/recruitments
+  /admin/automation-control-center/reviews
+  /admin/automation-control-center/drafts
+  /admin/automation-control-center/queue
+  /admin/automation-control-center/insights
+  /admin/automation-control-center/health
+  /admin/automation-control-center/logs
+  /admin/automation-control-center/controls
+Legacy ACC hashes on the overview page redirect to the dedicated nested routes.
 All Recruitments -> /admin/recruitments
 Recruitment Review -> /admin/recruitment-review-queue?status=needs_matching (filter shortcut; not a second active destination)
 Recruitment Timeline -> /admin/recruitments#eventTimeline
 Audit (Runtime Preview) -> /admin/recruitment-runtime-preview
 Sessions -> /admin/sessions
-ACC subsection deep-links: accSources, accInsights, accSettings, accWorkflow, accDrafts, accReview, accAudit
 */

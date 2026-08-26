@@ -58,18 +58,37 @@ describe("Part 37 Automation + Manual Workflow Control UI", () => {
     jest.clearAllMocks();
   });
 
-  test("1. UI loads with publishing controls on the existing ACC page", () => {
-    const html = read("private/admin-automation-control-center.html");
+  test("1. UI loads with publishing controls on the dedicated controls page", () => {
+    const overview = read("private/admin-automation-control-center.html");
+    expect(overview).toContain("Automation Control Center");
+    expect(overview).toContain("AUTOMATION STATUS");
+    expect(overview).toContain("admin-design-system.css");
+    expect(overview).toContain("admin-sidebar.css");
+    expect(overview).toContain("automation-control-center.css");
+    expect(overview).not.toContain("id=\"accSchedulerToggle\"");
+
+    const html = read("private/admin-automation-controls.html");
     expect(html).toContain("Automation Control Center");
     expect(html).toContain("Automation &amp; Publishing");
-    expect(html).toContain("AUTOMATION STATUS");
+    expect(html).toContain("SCHEDULER");
+    expect(html).toContain("NOTIFICATIONS");
+    expect(html).toContain("PUBLISHING");
+    expect(html).toContain("id=\"accSchedulerToggle\"");
     expect(html).toContain("admin-design-system.css");
     expect(html).toContain("admin-sidebar.css");
     expect(html).toContain("automation-control-center.css");
   });
 
   test("2-4. Scheduler OFF, Telegram OFF, AUTO_PUBLISH LOCKED OFF", () => {
-    const html = read("private/admin-automation-control-center.html");
+    const overview = read("private/admin-automation-control-center.html");
+    expect(overview).toContain("id=\"accSchedulerStatusBadge\">OFF<");
+    expect(overview).toContain("id=\"accTelegramStatusBadge\">OFF<");
+    expect(overview).toContain("LOCKED OFF");
+    expect(overview).toContain("MANUAL REVIEW ONLY");
+    expect(overview).not.toMatch(/id=["']accAutoPublishToggle["']/);
+    expect(overview).not.toMatch(/AUTO_PUBLISH[\s\S]{0,80}role=["']switch["']/);
+
+    const html = read("private/admin-automation-controls.html");
     expect(html).toContain("id=\"accSchedulerStatusBadge\">OFF<");
     expect(html).toContain("id=\"accTelegramStatusBadge\">OFF<");
     expect(html).toContain("LOCKED OFF");
@@ -247,5 +266,7 @@ describe("Part 37 Automation + Manual Workflow Control UI", () => {
     expect(patchRes.status).toBe(401);
     const pageRes = await request(app).get("/admin/automation-control-center");
     expect(pageRes.status).toBe(302);
+    const controlsPageRes = await request(app).get("/admin/automation-control-center/controls");
+    expect(controlsPageRes.status).toBe(302);
   });
 });

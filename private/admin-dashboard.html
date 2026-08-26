@@ -91,7 +91,7 @@
       <article class="admin-attention-card is-red" id="attnFailedCard">
         <div class="admin-attention-card__head">
           <strong class="admin-attention-card__count" id="opsFailedJobs">â€”</strong>
-          <span class="admin-status admin-status--danger"><span class="admin-status__ico" aria-hidden="true">×</span>Failed</span>
+          <span class="admin-status admin-status--danger"><span class="admin-status__ico" aria-hidden="true">ï¿½</span>Failed</span>
         </div>
         <h3 class="admin-attention-card__title">Failed checks</h3>
         <p class="admin-attention-card__desc">Monitoring / conversion failures that need investigation</p>
@@ -179,7 +179,7 @@
     </article>
     <article class="admin-auto-status__item is-locked" id="autoStatusPublish">
       <span>Auto Publish</span>
-      <strong class="admin-auto-status__state">MANUAL ONLY · DISABLED</strong>
+      <strong class="admin-auto-status__state">MANUAL ONLY ï¿½ DISABLED</strong>
     </article>
     <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
       <span>Crawler</span>
@@ -255,16 +255,16 @@
       <div class="admin-collapse-section__body">
     <h2 class="section-heading">Overview</h2>
     <div class="cards stats-cards">
-      <div class="card card-blue"><h3><span class="card-icon">•</span> Total Pages</h3><p id="totalPages">0</p></div>
-      <div class="card card-purple"><h3><span class="card-icon">•</span> Small Pages</h3><p id="smallPages">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">•</span> Trash</h3><p id="trashPages">0</p></div>
-      <div class="card card-green"><h3><span class="card-icon">•</span> Total Views</h3><p id="totalViews">0</p></div>
-      <div class="card card-orange" title="Counts real visitor page views recorded today (bots and admin traffic excluded)."><h3><span class="card-icon">•</span> Today Views</h3><p id="todayViews">0</p></div>
-      <div class="card card-indigo"><h3><span class="card-icon">•</span> Total Categories</h3><p id="totalCategories">0</p></div>
-      <div class="card card-teal" title="Active recruitments that are not archived."><h3><span class="card-icon">•</span> Active Recruitments</h3><p id="kpiActiveRecruitments">0</p></div>
-      <div class="card card-blue"><h3><span class="card-icon">•</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
-      <div class="card card-red"><h3><span class="card-icon">•</span> Failed Actions</h3><p id="failedActions">0</p></div>
-      <div class="card card-purple"><h3><span class="card-icon">•</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">ï¿½</span> Total Pages</h3><p id="totalPages">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">ï¿½</span> Small Pages</h3><p id="smallPages">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">ï¿½</span> Trash</h3><p id="trashPages">0</p></div>
+      <div class="card card-green"><h3><span class="card-icon">ï¿½</span> Total Views</h3><p id="totalViews">0</p></div>
+      <div class="card card-orange" title="Counts real visitor page views recorded today (bots and admin traffic excluded)."><h3><span class="card-icon">ï¿½</span> Today Views</h3><p id="todayViews">0</p></div>
+      <div class="card card-indigo"><h3><span class="card-icon">ï¿½</span> Total Categories</h3><p id="totalCategories">0</p></div>
+      <div class="card card-teal" title="Active recruitments that are not archived."><h3><span class="card-icon">ï¿½</span> Active Recruitments</h3><p id="kpiActiveRecruitments">0</p></div>
+      <div class="card card-blue"><h3><span class="card-icon">ï¿½</span> Successful Publishes</h3><p id="successfulPublishes">0</p></div>
+      <div class="card card-red"><h3><span class="card-icon">ï¿½</span> Failed Actions</h3><p id="failedActions">0</p></div>
+      <div class="card card-purple"><h3><span class="card-icon">ï¿½</span> Pending Drafts</h3><p id="pendingDrafts">0</p></div>
     </div>
   <section class="charts-section" aria-label="Charts">
     <div class="chart-card"><h3 class="chart-block-title">Pages by status</h3><div class="chart-wrap"><canvas id="statusChart" height="100"></canvas></div></div>
@@ -277,9 +277,9 @@
   <div class="widgets-grid">
     <div class="recent">
       <h3>Server Status</h3>
-      <div class="page-item"><span>Server</span><strong id="healthServer">…</strong></div>
-      <div class="page-item"><span>Database</span><strong id="healthDb">…</strong></div>
-      <div class="page-item"><span>API</span><strong id="healthApi">…</strong></div>
+      <div class="page-item"><span>Server</span><strong id="healthServer">ï¿½</strong></div>
+      <div class="page-item"><span>Database</span><strong id="healthDb">ï¿½</strong></div>
+      <div class="page-item"><span>API</span><strong id="healthApi">ï¿½</strong></div>
     </div>
     <div class="recent"><h3>Most Viewed Page</h3><div id="topPage"></div></div>
     <div class="recent"><h3>?? Trending Pages</h3><div id="trendingPages"></div></div>
@@ -290,15 +290,15 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=26"></script>
-<script src="/js/admin-shell.js?v=12"></script>
+<script src="/js/admin-nav.js?v=28"></script>
+<script src="/js/admin-shell.js?v=13"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js"></script>
-<script src="/js/admin-command-palette.js?v=4"></script>
+<script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-dashboard.js?v=10"></script>
 </body>

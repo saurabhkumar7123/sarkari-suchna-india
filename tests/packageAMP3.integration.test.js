@@ -19,19 +19,34 @@ describe("Package AMP-3 Automation Control Center", () => {
     expect(alias.headers.location).toMatch(/^\/login/);
   });
 
-  test("ACC page exposes all major runtime modules", () => {
+  test("ACC overview is a control dashboard, not a mega-page of every module", () => {
     const html = read("private/admin-automation-control-center.html");
     expect(html).toContain("Automation Control Center");
-    expect(html).toContain("Official Source Manager");
-    expect(html).toContain("Recruitment Explorer");
-    expect(html).toContain("Review Center");
-    expect(html).toContain("Workflow Queue");
-    expect(html).toContain("AI Insights");
-    expect(html).toContain("Audit Center");
-    expect(html).toContain("Feature Flags");
+    expect(html).toContain("Control overview");
     expect(html).toContain("accPipelineFlagLabel");
     expect(html).toContain("accWorkerStatusPill");
+    expect(html).toContain("View details");
     expect(html).not.toMatch(/Advisory only/i);
+    expect(html).not.toContain("id=\"accAddSourceBtn\"");
+    expect(html).not.toContain("id=\"accSourceRows\"");
+    expect(html).not.toContain("id=\"accRecruitmentRows\"");
+    expect(html).not.toContain("id=\"accAuditRows\"");
+    expect(html).not.toContain("id=\"accSchedulerToggle\"");
+    expect(html).not.toContain("id=\"accSettingsForm\"");
+  });
+
+  test("dedicated ACC pages expose their modules", () => {
+    expect(read("private/admin-automation-sources.html")).toContain("Official Source Manager");
+    expect(read("private/admin-automation-recruitments.html")).toContain("Recruitment Explorer");
+    expect(read("private/admin-automation-reviews.html")).toContain("Review Center");
+    expect(read("private/admin-automation-drafts.html")).toContain("Draft Viewer");
+    expect(read("private/admin-automation-queue.html")).toContain("Workflow Queue");
+    expect(read("private/admin-automation-insights.html")).toContain("AI Insights");
+    expect(read("private/admin-automation-health.html")).toContain("Health cards");
+    expect(read("private/admin-automation-health.html")).toContain("Open Monitoring");
+    expect(read("private/admin-automation-logs.html")).toContain("Audit Center");
+    expect(read("private/admin-automation-controls.html")).toContain("Feature Flags");
+    expect(read("private/admin-automation-controls.html")).toContain("accSchedulerToggle");
   });
 
   test("ACC assets and navigation are wired", () => {
@@ -53,6 +68,8 @@ describe("Package AMP-3 Automation Control Center", () => {
     const source = read("server/app.js");
     expect(source).toContain("/admin/automation-control-center");
     expect(source).toContain("admin-automation-control-center.html");
+    expect(source).toContain("ACC_SECTION_PAGES");
+    expect(source).toContain("admin-automation-drafts.html");
   });
 
   test("recruitment pipeline config remains fail-safe off", () => {

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Official Sources | Automation Control Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=9">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Official Sources" data-acc-page="sources">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Automation Control Center</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main acc-main">
+  <header class="acc-workspace-head" aria-label="Official sources">
+    <div class="acc-workspace-head__copy">
+      <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
+      <h1 class="acc-workspace-head__title">Official sources</h1>
+      <p class="acc-workspace-head__sub">Official source registry used by automation. Full monitoring operations remain on the Monitoring workspace.</p>
+    </div>
+    <div class="acc-workspace-head__actions">
+      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
+      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
+      
+      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
+    <div class="acc-switcher__bar">
+      <div class="acc-switcher__current">
+        <span class="acc-switcher__eyebrow">Current section</span>
+        <strong class="acc-switcher__value">Official sources</strong>
+      </div>
+      <button type="button" class="acc-switcher__trigger header-action-btn" id="accSwitcherTrigger" aria-expanded="false" aria-controls="accSwitcherMenu" aria-haspopup="listbox">
+        Switch section
+        <span class="acc-switcher__chevron" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox" hidden>
+      <a class="acc-switcher__option" href="/admin/automation-control-center">Control overview</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/sources" aria-current="page">Official sources</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Review snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/insights">Insights</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+    </div>
+  </nav>
+  <div class="acc-content" id="accContent">
+
+  <section class="acc-kpi-strip" aria-label="Source summary">
+    <article class="acc-kpi"><span>Total sources</span><strong id="accPageKpiTotal">0</strong></article>
+    <article class="acc-kpi"><span>Healthy</span><strong id="accPageKpiHealthy">0</strong></article>
+    <article class="acc-kpi"><span>Warning / slow</span><strong id="accPageKpiWarning">0</strong></article>
+    <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
+  </section>
+
+  <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager domains crawl priority retry health validation">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Governance</p>
+        <h2>Official Source Manager</h2>
+      </div>
+      <div class="acc-section__actions">
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
+        <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Source</button>
+      </div>
+    </div>
+    <div class="acc-toolbar">
+      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Department, domain, status"></label>
+      <label><span>Department</span><select id="accSourceDepartmentFilter"><option value="">All</option></select></label>
+      <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option><option value="slow">Slow</option></select></label>
+      <label><span>Grouping</span><select id="accSourceGrouping"><option value="none">No grouping</option><option value="department">Department</option><option value="health">Health</option></select></label>
+    </div>
+    <div class="acc-data-table">
+      <table aria-label="Official source registry">
+        <thead>
+          <tr>
+            <th>Source</th>
+            <th>Department</th>
+            <th>Priority</th>
+            <th>Domain</th>
+            <th>Crawl Interval</th>
+            <th>Retry Policy</th>
+            <th>Health</th>
+            <th>Last Visit</th>
+            <th>Response</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="accSourceRows"></tbody>
+      </table>
+    </div>
+    <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
+  </section>
+  </div>
+</div>
+<dialog id="accSourceDialog" class="acc-dialog">
+  <form method="dialog" class="acc-dialog__surface" id="accSourceForm">
+    <div class="acc-dialog__head">
+      <h3 id="accSourceDialogTitle">Add Source</h3>
+      <button type="button" class="acc-dialog__close" id="accCloseSourceDialog" aria-label="Close">×</button>
+    </div>
+    <input id="accSourceId" type="hidden">
+    <div class="acc-dialog__grid">
+      <label><span>Source Name</span><input id="accFormSourceName" required maxlength="160"></label>
+      <label><span>Department</span><input id="accFormSourceDepartment" required maxlength="120"></label>
+      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select></label>
+      <label><span>Official Domain</span><input id="accFormSourceDomain" required maxlength="240"></label>
+      <label><span>Notification URL</span><input id="accFormNotificationUrl" maxlength="500"></label>
+      <label><span>PDF URL</span><input id="accFormPdfUrl" maxlength="500"></label>
+      <label><span>Archive URL</span><input id="accFormArchiveUrl" maxlength="500"></label>
+      <label><span>Allowed Domains</span><input id="accFormAllowedDomains" maxlength="500"></label>
+      <label><span>Crawl Interval</span><input id="accFormCrawlInterval" required maxlength="80"></label>
+      <label><span>Retry Policy</span><input id="accFormRetryPolicy" required maxlength="120"></label>
+      <label><span>Health Status</span><select id="accFormHealthStatus"><option>healthy</option><option>warning</option><option>slow</option><option>offline</option></select></label>
+      <label><span>Response Time (ms)</span><input id="accFormResponseTime" type="number" min="0" max="99999"></label>
+    </div>
+    <div class="acc-dialog__checks">
+      <label><input id="accFormEnabled" type="checkbox" checked> Enabled</label>
+      <label><input id="accFormDomainVerified" type="checkbox" checked> Domain Verified</label>
+      <label><input id="accFormSourceValidated" type="checkbox" checked> Source Validation Passed</label>
+    </div>
+    <div class="acc-dialog__actions">
+      <button type="submit" class="header-action-btn">Save Source</button>
+      <button type="button" class="header-action-btn" id="accDeleteSourceBtn">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=28"></script>
+<script src="/js/admin-shell.js?v=13"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js?v=3"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-automation-control-center.js?v=7"></script>
+</body>
+</html>

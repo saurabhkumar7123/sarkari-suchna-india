@@ -31,7 +31,7 @@ describe("Package AMP-4B Production Runtime Integration", () => {
       path.join(__dirname, "../private/admin-automation-control-center.html"),
       "utf8"
     );
-    expect(html).toContain("AMP-4B / ACC");
+    expect(html).toContain("Control overview");
     expect(html).toContain("accWorkerStatusPill");
     expect(html).toContain("accTelegramStatusPill");
     expect(html).not.toContain("Advisory only");

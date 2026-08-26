@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Automation Insights | Automation Control Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=9">
+</head>
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Automation Insights" data-acc-page="insights">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top">
+    <h2>Automation Control Center</h2>
+    <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar">⟨⟩</button>
+  </div>
+</div>
+<div class="main acc-main">
+  <header class="acc-workspace-head" aria-label="Insights">
+    <div class="acc-workspace-head__copy">
+      <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
+      <h1 class="acc-workspace-head__title">Insights</h1>
+      <p class="acc-workspace-head__sub">Existing confidence, recovery, and recommendation signals. No invented analytics.</p>
+    </div>
+    <div class="acc-workspace-head__actions">
+      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
+      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
+      
+      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+    </div>
+  </header>
+
+  <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
+    <div class="acc-switcher__bar">
+      <div class="acc-switcher__current">
+        <span class="acc-switcher__eyebrow">Current section</span>
+        <strong class="acc-switcher__value">Insights</strong>
+      </div>
+      <button type="button" class="acc-switcher__trigger header-action-btn" id="accSwitcherTrigger" aria-expanded="false" aria-controls="accSwitcherMenu" aria-haspopup="listbox">
+        Switch section
+        <span class="acc-switcher__chevron" aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox" hidden>
+      <a class="acc-switcher__option" href="/admin/automation-control-center">Control overview</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/sources">Official sources</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Review snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/insights" aria-current="page">Insights</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+    </div>
+  </nav>
+  <div class="acc-content" id="accContent">
+
+  <section class="acc-kpi-strip" aria-label="Insight summary">
+    <article class="acc-kpi"><span>Avg confidence</span><strong id="accPageKpiConfidence">0%</strong></article>
+    <article class="acc-kpi"><span>Active flags</span><strong id="accPageKpiFlags">0</strong></article>
+  </section>
+
+  <section class="acc-section is-acc-tab-active" id="accInsights" data-acc-searchable="ai insights confidence analytics failure categories duplicate recovery validation recommendation">
+    <div class="acc-section__head">
+      <div>
+        <p class="acc-section__eyebrow">Intelligence</p>
+        <h2>AI Insights</h2>
+      </div>
+    </div>
+    <div class="acc-panels-grid">
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Confidence Analytics</h3><span>Existing signal</span></div>
+        <div class="acc-chart-wrap"><canvas id="accInsightsConfidenceChart" height="130"></canvas></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Department Accuracy</h3><span>Review outcome aligned</span></div>
+        <div class="acc-bars" id="accDepartmentAccuracyBars"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Failure Categories</h3><span>Top advisory reasons</span></div>
+        <div class="acc-bars" id="accFailureCategoryBars"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Recovery Analytics</h3><span>History recovery summary</span></div>
+        <div class="acc-metric-list" id="accRecoveryAnalytics"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Validation Analytics</h3><span>Most common rule flags</span></div>
+        <div class="acc-metric-list" id="accValidationAnalytics"></div>
+      </section>
+      <section class="acc-panel">
+        <div class="acc-panel__head"><h3>Recommendation Analytics</h3><span>Human review posture</span></div>
+        <div class="acc-metric-list" id="accRecommendationAnalytics"></div>
+      </section>
+    </div>
+  </section>
+  </div>
+</div>
+
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=28"></script>
+<script src="/js/admin-shell.js?v=13"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js?v=3"></script>
+<script src="/js/admin-notifications.js"></script>
+<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-ui.js"></script>
+<script src="/js/admin-automation-control-center.js?v=7"></script>
+</body>
+</html>

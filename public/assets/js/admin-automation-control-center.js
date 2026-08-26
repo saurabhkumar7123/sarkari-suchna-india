@@ -26,6 +26,33 @@
     workflowSelected: new Set()
   };
 
+  const LEGACY_HASH_REDIRECTS = {
+    accDrafts: "/admin/automation-control-center/drafts",
+    accPublishingControls: "/admin/automation-control-center/controls",
+    accAudit: "/admin/automation-control-center/logs",
+    accSettings: "/admin/automation-control-center/controls",
+    accSources: "/admin/automation-control-center/sources",
+    accInsights: "/admin/automation-control-center/insights",
+    accWorkflow: "/admin/automation-control-center/queue",
+    accReview: "/admin/automation-control-center/reviews",
+    accRecruitments: "/admin/automation-control-center/recruitments",
+    accMonitoring: "/admin/automation-control-center/health",
+    accDashboard: "/admin/automation-control-center"
+  };
+
+  function getAccPageId() {
+    return document.body.getAttribute("data-acc-page") || "overview";
+  }
+
+  function redirectLegacyAccHash() {
+    if (getAccPageId() !== "overview") return false;
+    const hashId = (window.location.hash || "").replace(/^#/, "");
+    const dest = LEGACY_HASH_REDIRECTS[hashId];
+    if (!dest) return false;
+    window.location.replace(dest);
+    return true;
+  }
+
   function qs(id) {
     return document.getElementById(id);
   }
@@ -135,6 +162,20 @@
     renderManualWorkflow();
     renderActiveSources();
     renderRecentPipelineActivity();
+    renderOverviewCards();
+  }
+
+  function renderOverviewCards() {
+    setText("accOverviewSourcesMeta", `${state.sources.length} sources`);
+    setText("accOverviewRecruitmentsMeta", `${state.recruitments.length} tracked`);
+    setText("accOverviewReviewsMeta", `${state.reviews.length} pending`);
+    setText("accOverviewDraftsMeta", `${state.drafts.length} drafts`);
+    setText("accOverviewQueueMeta", `${state.workflow.length} items`);
+    const health = qs("accSystemHealth")?.textContent || (state.dashboard ? "Integrated" : "Unknown");
+    setText("accOverviewHealthMeta", health);
+    const flags = state.settings?.runtimeFlags || state.dashboard?.flags || {};
+    const onCount = Object.values(flags).filter(Boolean).length;
+    setText("accOverviewFlagsMeta", onCount ? `${onCount} flags ON` : "Flags OFF");
   }
 
   function stateClass(status) {
@@ -463,6 +504,9 @@
   }
 
   function renderRecruitmentDetail(id) {
+    const empty = qs("accRecruitmentDetailEmpty");
+    const detail = qs("accRecruitmentDetail");
+    if (!empty || !detail) return;
     const item = state.recruitments.find((row) => Number(row.id) === Number(id));
     if (!item) return;
     state.selectedRecruitmentId = item.id;
@@ -483,6 +527,10 @@
     const host = qs("accReviewList");
     if (!host) return;
     setText("accReviewCountMeta", `${state.reviews.length} items`);
+    if (!state.reviews.length) {
+      host.innerHTML = `<p class="acc-empty">No pending review items in the current snapshot.</p>`;
+      return;
+    }
     host.innerHTML = state.reviews.map((item) => `
       <button type="button" class="acc-list-item" data-review-id="${escapeHtml(item.id)}">
         <span class="acc-pill">${escapeHtml(item.status || "pending")}</span>
@@ -493,6 +541,9 @@
   }
 
   function renderReviewDetail(id) {
+    const empty = qs("accReviewEmpty");
+    const detail = qs("accReviewDetail");
+    if (!empty || !detail) return;
     const item = state.reviews.find((row) => String(row.id) === String(id));
     if (!item) return;
     state.selectedReviewId = item.id;
@@ -514,6 +565,11 @@
     const nav = qs("accDraftNav");
     const preview = qs("accDraftPreview");
     if (!nav || !preview) return;
+    if (!state.drafts.length) {
+      nav.innerHTML = `<p class="acc-empty">No automation drafts in the current snapshot.</p>`;
+      preview.innerHTML = `<p class="acc-empty">Open Generator Drafts to create or edit drafts. Publishing remains manual-only.</p>`;
+      return;
+    }
     nav.innerHTML = state.drafts.map((draft, index) => `
       <details ${index === 0 ? "open" : ""}>
         <summary>${escapeHtml(draft.title || `Draft ${draft.id}`)}</summary>
@@ -532,6 +588,10 @@
   function renderWorkflow() {
     const body = qs("accWorkflowRows");
     if (!body) return;
+    if (!state.workflow.length) {
+      body.innerHTML = `<tr><td colspan="8"><div class="acc-empty">No workflow queue items in the current snapshot.</div></td></tr>`;
+      return;
+    }
     body.innerHTML = state.workflow.map((item) => `
       <tr>
         <td><input type="checkbox" data-workflow-id="${escapeHtml(item.id)}" ${state.workflowSelected.has(item.id) ? "checked" : ""}></td>
@@ -568,6 +628,10 @@
   function renderAudit() {
     const body = qs("accAuditRows");
     if (!body) return;
+    if (!state.audit.length) {
+      body.innerHTML = `<tr><td colspan="5"><div class="acc-empty">No automation audit events in the current snapshot.</div></td></tr>`;
+      return;
+    }
     body.innerHTML = state.audit.map((item) => `
       <tr>
         <td>${escapeHtml(item.time || "-")}</td>
@@ -607,14 +671,22 @@
   }
 
   function renderSettings() {
-    qs("accSettingConfidenceThreshold").value = state.settings.thresholds?.confidenceThreshold ?? 82;
-    qs("accSettingRiskThreshold").value = state.settings.thresholds?.riskThreshold ?? 58;
-    qs("accSettingReviewRules").value = state.settings.rules?.reviewRules ?? "";
-    qs("accSettingDraftRules").value = state.settings.rules?.draftRules ?? "";
-    qs("accSettingRecoveryRules").value = state.settings.rules?.recoveryRules ?? "";
-    qs("accSettingDepartmentRules").value = state.settings.rules?.departmentRules ?? "";
+    const conf = qs("accSettingConfidenceThreshold");
+    const risk = qs("accSettingRiskThreshold");
+    if (conf) conf.value = state.settings.thresholds?.confidenceThreshold ?? 82;
+    if (risk) risk.value = state.settings.thresholds?.riskThreshold ?? 58;
+    const review = qs("accSettingReviewRules");
+    const draft = qs("accSettingDraftRules");
+    const recovery = qs("accSettingRecoveryRules");
+    const department = qs("accSettingDepartmentRules");
+    if (review) review.value = state.settings.rules?.reviewRules ?? "";
+    if (draft) draft.value = state.settings.rules?.draftRules ?? "";
+    if (recovery) recovery.value = state.settings.rules?.recoveryRules ?? "";
+    if (department) department.value = state.settings.rules?.departmentRules ?? "";
     const flags = state.settings.runtimeFlags || {};
-    qs("accFlagList").innerHTML = Object.keys(flags).map((key) => `
+    const flagList = qs("accFlagList");
+    if (!flagList) return;
+    flagList.innerHTML = Object.keys(flags).map((key) => `
       <div class="acc-flag ${flags[key] ? "is-locked" : "is-off"}">
         <div><strong>${escapeHtml(key.replace(/_/g, " "))}</strong><br><small>${escapeHtml(key)}</small></div>
         <span>${flags[key] ? "ON" : "OFF"}</span>
@@ -641,165 +713,83 @@
     toastSuccess("ACC settings saved on the server.");
   }
 
-  const ACC_SECTION_IDS = [
-    "accDashboard",
-    "accSources",
-    "accRecruitments",
-    "accReview",
-    "accDrafts",
-    "accWorkflow",
-    "accInsights",
-    "accMonitoring",
-    "accAudit",
-    "accSettings"
-  ];
+  function renderPageKpis() {
+    const page = getAccPageId();
+    const sourcesOnline = state.sources.filter((item) => item.healthStatus === "healthy").length;
+    const sourcesOffline = state.sources.filter((item) => item.healthStatus === "offline").length;
+    const sourcesWarning = state.sources.filter((item) => ["warning", "slow"].includes(String(item.healthStatus || ""))).length;
+    const processing = state.workflow.filter((item) => !["approved", "rejected"].includes(String(item.status || "").toLowerCase())).length;
+    const done = state.workflow.filter((item) => ["approved", "rejected"].includes(String(item.status || "").toLowerCase())).length;
+    const avgConfidence = state.recruitments.length
+      ? Math.round(state.recruitments.reduce((sum, item) => sum + Number(item.confidence || 0), 0) / state.recruitments.length)
+      : 0;
+    const flags = state.settings?.runtimeFlags || state.dashboard?.flags || {};
+    const onFlags = Object.values(flags).filter(Boolean).length;
+    const runtime = state.dashboard?.runtime || {};
 
-  function getAccTabs() {
-    return [...document.querySelectorAll(".acc-tab[data-acc-tab]")];
-  }
-
-  function getAccSections() {
-    return ACC_SECTION_IDS.map((id) => qs(id)).filter(Boolean);
-  }
-
-  function activateAccTab(sectionId, options) {
-    const opts = options || {};
-    const targetId = ACC_SECTION_IDS.includes(sectionId) ? sectionId : "accDashboard";
-    const tabs = getAccTabs();
-    const sections = getAccSections();
-    const searching = Boolean((qs("accGlobalSearch")?.value || "").trim());
-
-    tabs.forEach((tab) => {
-      const isActive = tab.getAttribute("data-acc-tab") === targetId;
-      tab.classList.toggle("is-active", isActive);
-      tab.setAttribute("aria-selected", isActive ? "true" : "false");
-      tab.tabIndex = isActive ? 0 : -1;
-    });
-
-    sections.forEach((section) => {
-      const isActive = section.id === targetId;
-      section.classList.toggle("is-acc-tab-active", isActive);
-      if (!searching) {
-        if (isActive) section.removeAttribute("hidden");
-        else section.setAttribute("hidden", "");
-      }
-    });
-
-    if (opts.focusTab) {
-      const activeTab = tabs.find((tab) => tab.getAttribute("data-acc-tab") === targetId);
-      activeTab?.focus();
+    if (page === "sources") {
+      setText("accPageKpiTotal", state.sources.length);
+      setText("accPageKpiHealthy", sourcesOnline);
+      setText("accPageKpiWarning", sourcesWarning);
+      setText("accPageKpiOffline", sourcesOffline);
     }
-
-    if (opts.scrollIntoView) {
-      const panel = qs(targetId);
-      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (page === "recruitments") {
+      setText("accPageKpiTotal", state.recruitments.length);
+      setText("accPageKpiConfidence", `${avgConfidence}%`);
+      setText("accPageKpiProcessing", processing);
     }
-
-    // Presentation-only: charts created while a panel was hidden need a resize pass.
-    if (typeof Chart !== "undefined" && typeof Chart.getChart === "function") {
-      requestAnimationFrame(() => {
-        document.querySelectorAll(".acc-section.is-acc-tab-active canvas").forEach((canvas) => {
-          Chart.getChart(canvas)?.resize();
-        });
-      });
+    if (page === "reviews") setText("accPageKpiTotal", state.reviews.length);
+    if (page === "drafts") setText("accPageKpiTotal", state.drafts.length);
+    if (page === "queue") {
+      setText("accPageKpiTotal", state.workflow.length);
+      setText("accPageKpiPending", processing);
+      setText("accPageKpiDone", done);
     }
-  }
-
-  function resolveInitialAccTab() {
-    const hashId = (window.location.hash || "").replace(/^#/, "");
-    if (ACC_SECTION_IDS.includes(hashId)) return hashId;
-    return "accDashboard";
-  }
-
-  function bindAccTabNavigation() {
-    const tablist = document.querySelector(".acc-section-nav[role='tablist']");
-    if (!tablist) return;
-
-    tablist.addEventListener("click", (event) => {
-      const tab = event.target.closest(".acc-tab[data-acc-tab]");
-      if (!tab || !tablist.contains(tab)) return;
-      activateAccTab(tab.getAttribute("data-acc-tab"));
-    });
-
-    tablist.addEventListener("keydown", (event) => {
-      const tabs = getAccTabs();
-      if (!tabs.length) return;
-      const current = event.target.closest(".acc-tab[data-acc-tab]");
-      if (!current || !tablist.contains(current)) return;
-
-      const index = tabs.indexOf(current);
-      if (index < 0) return;
-
-      let nextIndex = null;
-      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        nextIndex = (index + 1) % tabs.length;
-      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        nextIndex = (index - 1 + tabs.length) % tabs.length;
-      } else if (event.key === "Home") {
-        nextIndex = 0;
-      } else if (event.key === "End") {
-        nextIndex = tabs.length - 1;
-      } else if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        activateAccTab(current.getAttribute("data-acc-tab"));
-        return;
-      }
-
-      if (nextIndex === null) return;
-      event.preventDefault();
-      activateAccTab(tabs[nextIndex].getAttribute("data-acc-tab"), { focusTab: true });
-    });
-
-    window.addEventListener("hashchange", () => {
-      const hashId = (window.location.hash || "").replace(/^#/, "");
-      if (ACC_SECTION_IDS.includes(hashId)) {
-        activateAccTab(hashId, { scrollIntoView: true });
-      }
-    });
-  }
-
-  function filterSections() {
-    const query = (qs("accGlobalSearch")?.value || "").trim().toLowerCase();
-    const main = document.querySelector(".acc-main");
-    const sections = document.querySelectorAll("[data-acc-searchable]");
-    main?.classList.toggle("acc-is-searching", Boolean(query));
-
-    sections.forEach((section) => {
-      const hay = `${section.getAttribute("data-acc-searchable") || ""} ${section.textContent || ""}`.toLowerCase();
-      section.classList.toggle("acc-hidden-by-search", Boolean(query) && !hay.includes(query));
-    });
-
-    if (!query) {
-      const activeTab = document.querySelector(".acc-tab.is-active[data-acc-tab]");
-      activateAccTab(activeTab?.getAttribute("data-acc-tab") || "accDashboard");
+    if (page === "insights") {
+      setText("accPageKpiConfidence", `${avgConfidence}%`);
+      setText("accPageKpiFlags", onFlags);
     }
+    if (page === "health") {
+      setText("accPageKpiHealth", state.dashboard ? "Integrated" : "Unavailable");
+      setText("accPageKpiHealthy", sourcesOnline);
+      setText("accPageKpiOffline", sourcesOffline);
+      setText(
+        "accPageKpiAutomation",
+        runtime.activationReady ? "Ready" : state.dashboard?.isDormant ? "Dormant" : "Restricted"
+      );
+    }
+    if (page === "logs") setText("accPageKpiTotal", state.audit.length);
   }
 
   function renderAll() {
+    const page = getAccPageId();
     renderDashboard();
-    renderSources();
-    renderRecruitments();
-    renderReviewList();
-    renderDraftViewer();
-    renderWorkflow();
-    renderInsights();
-    renderMonitoring();
-    renderAudit();
-    renderSettings();
-    renderCharts();
-    if (state.recruitments[0]) renderRecruitmentDetail(state.recruitments[0].id);
-    if (state.reviews[0]) renderReviewDetail(state.reviews[0].id);
+    renderPageKpis();
+    if (page === "sources") renderSources();
+    if (page === "recruitments") {
+      renderRecruitments();
+      if (state.recruitments[0]) renderRecruitmentDetail(state.recruitments[0].id);
+    }
+    if (page === "reviews") {
+      renderReviewList();
+      if (state.reviews[0]) renderReviewDetail(state.reviews[0].id);
+    }
+    if (page === "drafts") renderDraftViewer();
+    if (page === "queue") renderWorkflow();
+    if (page === "insights") renderInsights();
+    if (page === "health") renderMonitoring();
+    if (page === "logs") renderAudit();
+    if (page === "controls") renderSettings();
+    if (page === "overview" || page === "insights") renderCharts();
   }
 
   function bindEvents() {
-    bindAccTabNavigation();
     qs("accRefreshBtn")?.addEventListener("click", async () => {
       await loadSnapshot();
       renderAll();
       toastSuccess("ACC refreshed.");
     });
     qs("accOpenPaletteBtn")?.addEventListener("click", () => window.AdminCommandPalette?.open?.());
-    qs("accGlobalSearch")?.addEventListener("input", filterSections);
     qs("accSourceSearch")?.addEventListener("input", renderSources);
     qs("accSourceDepartmentFilter")?.addEventListener("change", renderSources);
     qs("accSourceHealthFilter")?.addEventListener("change", renderSources);
@@ -849,9 +839,81 @@
     });
   }
 
+  function bindAccSwitcher() {
+    const root = document.querySelector("[data-acc-switcher]");
+    const trigger = qs("accSwitcherTrigger");
+    const menu = qs("accSwitcherMenu");
+    if (!root || !trigger || !menu) return;
+
+    function setOpen(open) {
+      menu.hidden = !open;
+      trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      root.classList.toggle("is-open", open);
+    }
+
+    trigger.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpen(menu.hidden);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!root.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpen(false);
+    });
+
+    root.querySelectorAll("a.acc-switcher__option").forEach((link) => {
+      link.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem("accContentEnter", "1");
+        } catch (_) {
+          /* ignore */
+        }
+      });
+    });
+  }
+
+  function bindAccInternalNavHints() {
+    document.querySelectorAll(".acc-main a[href*='/admin/automation-control-center']").forEach((link) => {
+      link.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem("accContentEnter", "1");
+        } catch (_) {
+          /* ignore */
+        }
+      });
+    });
+  }
+
+  function playAccContentEnter() {
+    const content = qs("accContent");
+    if (!content) return;
+    let shouldEnter = false;
+    try {
+      shouldEnter = sessionStorage.getItem("accContentEnter") === "1";
+      sessionStorage.removeItem("accContentEnter");
+    } catch (_) {
+      shouldEnter = false;
+    }
+    if (!shouldEnter) return;
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+    content.classList.remove("is-entering");
+    // Force reflow so animation restarts reliably after navigation.
+    void content.offsetWidth;
+    content.classList.add("is-entering");
+    window.setTimeout(() => content.classList.remove("is-entering"), 220);
+  }
+
   async function init() {
+    if (redirectLegacyAccHash()) return;
+    bindAccSwitcher();
+    bindAccInternalNavHints();
+    playAccContentEnter();
     bindEvents();
-    activateAccTab(resolveInitialAccTab());
     await loadSnapshot();
     renderAll();
   }

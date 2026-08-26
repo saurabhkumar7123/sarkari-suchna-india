@@ -1526,6 +1526,18 @@ app.get(
     return sendPrivatePage(res, "admin-dashboard.html");
   }
 );
+const ACC_SECTION_PAGES = Object.freeze({
+  sources: "admin-automation-sources.html",
+  recruitments: "admin-automation-recruitments.html",
+  reviews: "admin-automation-reviews.html",
+  drafts: "admin-automation-drafts.html",
+  queue: "admin-automation-queue.html",
+  insights: "admin-automation-insights.html",
+  health: "admin-automation-health.html",
+  logs: "admin-automation-logs.html",
+  controls: "admin-automation-controls.html"
+});
+
 app.get(
   [
     "/admin/automation-control-center",
@@ -1535,6 +1547,18 @@ app.get(
   verifyToken,
   (req, res) => {
     return sendPrivatePage(res, "admin-automation-control-center.html");
+  }
+);
+app.get(
+  [
+    "/admin/automation-control-center/:section",
+    "/admin/automation-control-center/:section/"
+  ],
+  verifyToken,
+  (req, res, next) => {
+    const file = ACC_SECTION_PAGES[String(req.params.section || "")];
+    if (!file) return next();
+    return sendPrivatePage(res, file);
   }
 );
 app.get(["/admin/page-manager", "/admin/page-manager/", "/admin/page-manager.html"], verifyToken, (req, res) => {
