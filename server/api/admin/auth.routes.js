@@ -5,7 +5,7 @@ const csrf = require("csurf");
 const asyncHandler = require("../../utils/asyncHandler");
 const authController = require("../../controllers/admin/auth.controller");
 const { validateLogin } = require("../../validations/auth.validation");
-const { adminLoginLimiter } = require("../../config/rateLimits");
+const { adminLoginLimiter, adminRefreshLimiter } = require("../../config/rateLimits");
 const validateJoi = require("../../middleware/validateJoi.middleware");
 const { adminLoginSchema } = require("../../validations/admin.validation");
 const logger = require("../../utils/logger");
@@ -104,7 +104,7 @@ router.get("/csrf-token", enforceOriginConsistency, logCsrfPair, csrfProtection,
   res.json({ csrfToken: req.csrfToken() });
 });
 
-router.post("/refresh", enforceOriginConsistency, logCsrfPair, adminLoginLimiter, csrfProtection, asyncHandler(authController.refresh));
+router.post("/refresh", enforceOriginConsistency, logCsrfPair, adminRefreshLimiter, csrfProtection, asyncHandler(authController.refresh));
 
 // Logout is registered in protected.routes.js (requires CSRF on POST).
 

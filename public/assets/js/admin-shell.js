@@ -53,10 +53,16 @@
     const url = opts && opts.url ? String(opts.url) : "";
     let msg =
       "Could not reach the server. Check your connection and try again.";
-    if (status === 401 || status === 403) {
+    if (status === 429) {
+      msg = "Too many requests. Please wait a moment and try again.";
+    } else if (status === 401 || status === 403) {
       msg = "Session may have expired. Please log in again, then retry.";
+    } else if (status === 404) {
+      msg = "Requested resource was not found.";
     } else if (status >= 500) {
       msg = "Server error. Try again in a moment or check logs.";
+    } else if (status > 0) {
+      msg = `Request failed (${status}). Please try again.`;
     }
     const banner = ensureErrorBanner();
     const msgEl = document.getElementById("adminGlobalErrorMsg");
@@ -85,8 +91,11 @@
   }
 
   async function adminSafeFetch(url, options = {}, _retried) {
+    const quiet = Boolean(options && options.quiet);
+    const fetchOptions = { ...(options || {}) };
+    delete fetchOptions.quiet;
     try {
-      const headers = { ...(options.headers || {}) };
+      const headers = { ...(fetchOptions.headers || {}) };
       if (String(url).includes("/api/admin") && typeof window.getAdminCsrfToken === "function") {
         try {
           headers["X-CSRF-Token"] = await window.getAdminCsrfToken();
@@ -94,26 +103,27 @@
           console.error("[CSRF]", err);
         }
       }
-      if (typeof options.body === "string" && !headers["Content-Type"]) {
+      if (typeof fetchOptions.body === "string" && !headers["Content-Type"]) {
         headers["Content-Type"] = "application/json";
       }
       const res = await fetch(url, {
         credentials: "include",
-        ...options,
+        ...fetchOptions,
         headers
       });
       if (res.status === 401 && !_retried && String(url).includes("/api/admin")) {
         const refreshed = await tryRefreshSession();
         if (refreshed) return adminSafeFetch(url, options, true);
-        window.location.href = "/login?reason=expired";
+        if (!quiet) window.location.href = "/login?reason=expired";
         return null;
       }
       if (!res.ok) {
         lastFetchFailure = { url, status: res.status, retry: null };
-        showGlobalErrorBanner({ status: res.status, url });
-        return null;
+        if (!quiet) showGlobalErrorBanner({ status: res.status, url });
+        else console.warn("[admin] quiet request failed", { status: res.status, url });
+        return { __httpError: true, status: res.status, url };
       }
-      hideGlobalErrorBanner();
+      if (!quiet) hideGlobalErrorBanner();
       window.AdminIdleSession?.touch?.();
       const ct = res.headers.get("content-type") || "";
       if (ct.includes("application/json")) return await res.json();
@@ -121,8 +131,8 @@
     } catch (err) {
       console.error("fetch failed", url, err);
       lastFetchFailure = { url, status: 0, retry: null };
-      showGlobalErrorBanner({ status: 0, url });
-      return null;
+      if (!quiet) showGlobalErrorBanner({ status: 0, url });
+      return quiet ? { __httpError: true, status: 0, url } : null;
     }
   }
 

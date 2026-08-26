@@ -497,10 +497,18 @@ function ensureLiveRefreshUi() {
     if (!dashboardLivePaused) tickLive();
   });
 
-  const INTERVAL_MS = 45000;
+  const INTERVAL_MS = 90000;
   async function tickLive() {
     if (dashboardLivePaused) return;
-    await initAdminDashboard();
+    // Lightweight live tick only — full initAdminDashboard re-fetched charts,
+    // activity, pages, and health every 45s and exhausted adminApiLimiter.
+    await Promise.all([
+      loadStatsCards(),
+      loadProductivityWidgets(),
+      loadNeedsMatchingCount(),
+      loadAutomationSafetyStatus()
+    ]);
+    updateLiveStripLabel();
   }
 
   dashboardLiveTimer = window.setInterval(tickLive, INTERVAL_MS);

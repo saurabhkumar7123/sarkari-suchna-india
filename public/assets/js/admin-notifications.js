@@ -1,12 +1,17 @@
 /**
  * Notification bell — polls existing admin APIs (no contract changes).
+ * Background polls use quiet fetch so 429/transient errors do not spam the
+ * global "Could not reach the server" banner. Backs off on 429.
  */
 (function () {
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const POLL_MS = 60000;
+  const POLL_MAX_MS = 5 * 60 * 1000;
   let pollTimer = null;
+  let currentPollMs = POLL_MS;
   let lastUnread = 0;
+  let inFlight = false;
 
   function esc(s) {
     return String(s || "")
@@ -15,8 +20,23 @@
       .replace(/"/g, "&quot;");
   }
 
+  function isHttpError(res) {
+    return Boolean(res && res.__httpError);
+  }
+
+  function scheduleNextPoll() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    // Use timeout chain so backoff interval can change after 429.
+    pollTimer = window.setTimeout(async () => {
+      await refresh();
+      scheduleNextPoll();
+    }, currentPollMs);
+  }
+
   async function fetchAlerts() {
     const items = [];
+    let hit429 = false;
 
     if (window.AdminOpsNotifications) {
       window.AdminOpsNotifications.list({ limit: 8 }).forEach((n) => {
@@ -29,11 +49,23 @@
       });
     }
 
+    const quiet = { quiet: true };
     const [queueRes, sitesRes, activityRes] = await Promise.all([
-      window.adminSafeFetch("/api/admin/queue/status"),
-      window.adminSafeFetch("/api/admin/sites"),
-      window.adminSafeFetch("/api/admin/activity?limit=5&page=1")
+      window.adminSafeFetch("/api/admin/queue/status", quiet),
+      window.adminSafeFetch("/api/admin/sites", quiet),
+      window.adminSafeFetch("/api/admin/activity?limit=5&page=1", quiet)
     ]);
+
+    [queueRes, sitesRes, activityRes].forEach((res) => {
+      if (isHttpError(res) && Number(res.status) === 429) hit429 = true;
+    });
+
+    if (hit429) {
+      currentPollMs = Math.min(Math.max(currentPollMs * 2, POLL_MS * 2), POLL_MAX_MS);
+      return { items, hit429: true };
+    }
+
+    currentPollMs = POLL_MS;
 
     const failed = Number(
       queueRes && queueRes.success && queueRes.data && queueRes.data.failed != null ? queueRes.data.failed : 0
@@ -65,7 +97,7 @@
       });
     });
 
-    return items;
+    return { items, hit429: false };
   }
 
   function renderPanel(panel, items) {
@@ -92,6 +124,27 @@
     }
   }
 
+  async function refresh() {
+    if (inFlight) return;
+    if (typeof window.adminSafeFetch !== "function") return;
+    inFlight = true;
+    try {
+      const result = await fetchAlerts();
+      const items = result.items || [];
+      const localUnread = window.AdminOpsNotifications ? window.AdminOpsNotifications.unreadCount() : 0;
+      const count =
+        localUnread + items.filter((i) => i.type === "queue" || i.type === "site").length;
+      lastUnread = count;
+      const badge = document.getElementById("adminNotifyBadge");
+      updateBadge(badge, count);
+      const panel = document.getElementById("adminNotifyPanel");
+      if (panel && panel.classList.contains("is-open")) renderPanel(panel, items);
+      return result;
+    } finally {
+      inFlight = false;
+    }
+  }
+
   function mount(host) {
     if (!host || host.querySelector(".admin-notify-wrap")) return;
 
@@ -109,16 +162,6 @@
     const panel = wrap.querySelector("#adminNotifyPanel");
     const badge = wrap.querySelector("#adminNotifyBadge");
 
-    async function refresh() {
-      const items = await fetchAlerts();
-      const localUnread = window.AdminOpsNotifications ? window.AdminOpsNotifications.unreadCount() : 0;
-      const count =
-        localUnread + items.filter((i) => i.type === "queue" || i.type === "site").length;
-      lastUnread = count;
-      updateBadge(badge, count);
-      if (panel.classList.contains("is-open")) renderPanel(panel, items);
-    }
-
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       const open = !panel.classList.contains("is-open");
@@ -126,8 +169,8 @@
       btn.setAttribute("aria-expanded", open ? "true" : "false");
       if (open) {
         panel.innerHTML = '<p class="admin-notify-empty">Loading…</p>';
-        const items = await fetchAlerts();
-        renderPanel(panel, items);
+        const result = await fetchAlerts();
+        renderPanel(panel, result.items || []);
         window.AdminOpsNotifications?.markAllRead();
         updateBadge(badge, 0);
       }
@@ -140,18 +183,23 @@
       }
     });
 
-    refresh();
-    pollTimer = window.setInterval(refresh, POLL_MS);
+    refresh().finally(() => scheduleNextPoll());
 
     window.AdminNotifications = window.AdminNotifications || {};
     window.AdminNotifications.refresh = refresh;
     window.AdminNotifications.getUnreadCount = () => lastUnread;
   }
 
-  window.AdminNotifications = { mount, stop: () => clearInterval(pollTimer) };
+  window.AdminNotifications = {
+    mount,
+    stop: () => {
+      if (pollTimer) clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+  };
 
   window.addEventListener("pagehide", () => {
-    if (pollTimer) clearInterval(pollTimer);
+    if (pollTimer) clearTimeout(pollTimer);
     pollTimer = null;
   });
 

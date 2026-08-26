@@ -37,6 +37,12 @@ function getClientIp(req) {
   return ip || "unknown";
 }
 
+function getAdminIdentity(req) {
+  const user = req && req.user ? req.user : null;
+  const username = user && (user.username || user.sub || user.id);
+  return username ? String(username) : "anon";
+}
+
 function apiRouteMax(req) {
   const pathOnly = String(req.path || "").split("?")[0];
   // Read-heavy public endpoints support higher burst traffic.
@@ -79,18 +85,24 @@ const apiLimiter = rateLimit({
   keyGenerator: (req) => `${getClientIp(req)}:${String(req.path || "").split("?")[0]}`
 });
 
-/** Admin protected APIs — medium strict */
+/**
+ * Admin protected APIs — authenticated SPA budget.
+ * Default 200/15m was too low for dashboard live refresh + notification polling
+ * + multi-page navigation (all share one IP key). Keep abuse protection; do not
+ * disable. Env RATE_LIMIT_ADMIN_API_MAX still overrides.
+ */
 const adminApiLimiter = rateLimit({
   windowMs,
-  max: parseInt(process.env.RATE_LIMIT_ADMIN_API_MAX || "200", 10),
+  max: parseInt(process.env.RATE_LIMIT_ADMIN_API_MAX || "900", 10),
   standardHeaders: true,
   legacyHeaders: false,
   store: buildStore("admin-api"),
   skip: skipHealth,
-  keyGenerator: (req) => getClientIp(req)
+  keyGenerator: (req) => `admin-api:${getAdminIdentity(req)}:${getClientIp(req)}`,
+  message: { success: false, message: "Too many requests. Please wait a moment and try again." }
 });
 
-/** Admin login brute-force guard */
+/** Admin login brute-force guard (login only — do not reuse for refresh) */
 const adminLoginLimiter = rateLimit({
   windowMs: loginWindowMs,
   max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || "10", 10),
@@ -104,6 +116,17 @@ const adminLoginLimiter = rateLimit({
     const host = String((req.headers && req.headers.host) || "").split(":")[0].toLowerCase();
     return host === "localhost" || host === "127.0.0.1";
   }
+});
+
+/** Session refresh — separate from login brute-force (shared key caused false 429s) */
+const adminRefreshLimiter = rateLimit({
+  windowMs: loginWindowMs,
+  max: parseInt(process.env.RATE_LIMIT_ADMIN_REFRESH_MAX || "60", 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: buildStore("admin-refresh"),
+  keyGenerator: (req) => `${getClientIp(req)}:admin-refresh`,
+  message: { success: false, message: "Too many session refresh attempts. Please wait a moment and try again." }
 });
 
 /** Admin sensitive actions — strict */
@@ -147,6 +170,7 @@ module.exports = {
   globalLimiter,
   apiLimiter,
   adminLoginLimiter,
+  adminRefreshLimiter,
   adminApiLimiter,
   adminSensitiveLimiter,
   aiParseLimiter,
