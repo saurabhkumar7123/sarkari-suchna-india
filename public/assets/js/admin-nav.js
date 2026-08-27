@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "28";
+  const ADMIN_NAV_VERSION = "29";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -77,9 +77,7 @@
   <div class="nav-group is-open" id="nav-group-monitoring" data-nav-group="monitoring" data-default-open="1">
     <p class="nav-group-label">Monitoring</p>
     <div class="nav-group-body">
-      ${navLink("/admin/monitoring", "/admin/monitoring", I.sources, "Sources", 'data-nav-alias="sources"')}
-      ${navLink("/admin/monitoring#recentUpdates", "/admin/monitoring", I.detect, "Detected Updates", 'data-nav-alias="detections"')}
-      ${navLink("/admin/monitoring#monitoringActivity", "/admin/monitoring", I.activity, "Monitoring Activity", 'data-nav-alias="monitoring-activity"')}
+      ${navLink("/admin/monitoring", "/admin/monitoring", I.monitor, "Monitoring", 'data-nav-alias="monitoring" title="Source health, detections, and activity"')}
     </div>
   </div>
 
@@ -266,9 +264,14 @@ Shared Preview
 Automation Control Center
 Review Queue
 Canonical destinations (existing routes only):
-Sources -> /admin/monitoring
-Detected Updates -> /admin/monitoring#recentUpdates
-Monitoring Activity -> /admin/monitoring#monitoringActivity
+Monitoring -> /admin/monitoring (single global sidebar item)
+Monitoring child pages are internal Monitoring navigation only (not global sidebar items):
+  /admin/monitoring
+  /admin/monitoring/updates
+  /admin/monitoring/activity
+Legacy Monitoring hashes on /admin/monitoring redirect to nested routes:
+  #recentUpdates -> /admin/monitoring/updates
+  #monitoringActivity -> /admin/monitoring/activity
 Drafts -> /generator#drafts
 Review Center -> /admin/recruitment-review-queue (canonical active nav for RRQ)
 Editorial Review / Review Queue -> /admin/editorial-review

@@ -1567,6 +1567,19 @@ app.get(["/admin/page-manager", "/admin/page-manager/", "/admin/page-manager.htm
 app.get(["/admin/monitoring", "/admin/monitoring/", "/admin/monitoring.html"], verifyToken, (req, res) => {
   return sendPrivatePage(res, "admin-monitoring.html");
 });
+const MONITORING_SECTION_PAGES = Object.freeze({
+  updates: "admin-monitoring-updates.html",
+  activity: "admin-monitoring-activity.html"
+});
+app.get(
+  ["/admin/monitoring/:section", "/admin/monitoring/:section/"],
+  verifyToken,
+  (req, res, next) => {
+    const file = MONITORING_SECTION_PAGES[String(req.params.section || "")];
+    if (!file) return next();
+    return sendPrivatePage(res, file);
+  }
+);
 app.get(["/admin/alerts", "/admin/alerts/", "/admin/alerts.html"], verifyToken, (req, res) => {
   return sendPrivatePage(res, "admin-alerts.html");
 });

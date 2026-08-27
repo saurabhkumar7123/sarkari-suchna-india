@@ -1413,43 +1413,190 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
   border-radius: var(--admin-radius-lg);
 }
 
-/* Monitoring workspaces: Sources (default) | Detected Updates | Activity */
-body[data-admin-hash="recentUpdates"] [data-workspace="monitoring"],
-body[data-admin-hash="monitoringActivity"] [data-workspace="monitoring"],
-body:not([data-admin-hash="recentUpdates"]) [data-workspace="detections"] {
-  display: none;
+/* Monitoring workspaces: nested URLs replace hash show/hide.
+ * Legacy hash CSS kept inert; section pages render only their content.
+ */
+body[data-mon-page] .mon-content.is-entering {
+  animation: monContentEnter 180ms var(--admin-ease-out, ease-out);
 }
 
-body:not([data-admin-hash="monitoringActivity"]) [data-workspace="activity"] {
-  display: none;
+@keyframes monContentEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-body[data-admin-hash="recentUpdates"] .monitoring-sources-block,
-body[data-admin-hash="monitoringActivity"] .monitoring-sources-block {
-  display: none;
+@media (prefers-reduced-motion: reduce) {
+  body[data-mon-page] .mon-content.is-entering {
+    animation: none;
+  }
 }
 
-body[data-admin-hash="recentUpdates"] .monitoring-failed-block,
-body:not([data-admin-hash="monitoringActivity"]) .monitoring-failed-block {
-  display: none;
+/* ===== Monitoring compact section switcher (ACC-style) ===== */
+.mon-workspace-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 0 14px;
 }
 
-body[data-admin-hash="monitoringActivity"] #recentUpdates {
-  display: none;
+.mon-workspace-head__eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-brand);
 }
 
-body:not([data-admin-hash="recentUpdates"]) #recentUpdates {
-  display: none;
+.mon-workspace-head__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--admin-text);
+  line-height: 1.25;
 }
 
-body[data-admin-hash="recentUpdates"] #recentUpdates {
+.mon-workspace-head__sub {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  color: var(--admin-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mon-workspace-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.mon-switcher {
+  position: relative;
+  top: auto;
+  z-index: 4;
+  margin-bottom: 16px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mon-switcher__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mon-switcher__current {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mon-switcher__eyebrow {
   display: block;
-  margin-top: 0;
+  margin: 0 0 2px;
+  color: var(--admin-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-body[data-admin-hash="monitoringActivity"] .monitoring-failed-block {
+.mon-switcher__value {
   display: block;
-  margin-top: 0;
+  color: var(--admin-text);
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.mon-switcher__trigger {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.mon-switcher__chevron {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.mon-switcher__menu {
+  position: relative;
+  z-index: 5;
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow);
+  display: grid;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.mon-switcher__menu[hidden] {
+  display: none !important;
+}
+
+.mon-switcher__option {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mon-switcher__option:hover {
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+}
+
+.mon-switcher__option.is-active,
+.mon-switcher__option[aria-current="page"] {
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand);
+}
+
+.mon-failed-filters {
+  margin-bottom: 10px;
+}
+
+@media (max-width: 640px) {
+  .mon-switcher__bar {
+    flex-wrap: wrap;
+  }
+}
+
+body.dark.admin-saas-v2 .mon-switcher__bar,
+body.dark.admin-saas-v2 .mon-switcher__menu {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
 }
 
 /* ===== Feature-first attention cards ===== */

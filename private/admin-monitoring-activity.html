@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Source Health | Monitoring</title>
+<title>Activity | Monitoring</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
@@ -15,28 +15,18 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=15">
-<script>
-(function () {
-  var map = {
-    recentUpdates: "/admin/monitoring/updates",
-    monitoringActivity: "/admin/monitoring/activity"
-  };
-  var hash = String(location.hash || "").replace(/^#/, "");
-  if (map[hash]) location.replace(map[hash]);
-})();
-</script>
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Source Health" data-mon-page="sources">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Activity" data-mon-page="activity">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top"></div>
 </div>
 <div class="main">
-  <header class="mon-workspace-head" aria-label="Source Health">
+  <header class="mon-workspace-head" aria-label="Monitoring Activity">
     <div class="mon-workspace-head__copy">
       <p class="mon-workspace-head__eyebrow">Monitoring</p>
-      <h1 class="mon-workspace-head__title">Source Health</h1>
-      <p class="mon-workspace-head__sub">Official government sources and their health. Detected notices live under Detected Updates.</p>
+      <h1 class="mon-workspace-head__title">Activity</h1>
+      <p class="mon-workspace-head__sub">Failed queue jobs and retry history for source checks.</p>
     </div>
     <div class="mon-workspace-head__actions">
       <button type="button" class="header-action-btn" id="refreshSitesBtn">Refresh</button>
@@ -47,7 +37,7 @@
     <div class="mon-switcher__bar">
       <div class="mon-switcher__current">
         <span class="mon-switcher__eyebrow">Current section</span>
-        <strong class="mon-switcher__value">Source Health</strong>
+        <strong class="mon-switcher__value">Activity</strong>
       </div>
       <button type="button" class="mon-switcher__trigger header-action-btn" id="monSwitcherTrigger" aria-expanded="false" aria-controls="monSwitcherMenu" aria-haspopup="listbox">
         Switch section
@@ -55,9 +45,9 @@
       </button>
     </div>
     <div class="mon-switcher__menu" id="monSwitcherMenu" role="listbox" hidden>
-      <a class="mon-switcher__option is-active" href="/admin/monitoring" aria-current="page">Source Health</a>
+      <a class="mon-switcher__option" href="/admin/monitoring">Source Health</a>
       <a class="mon-switcher__option" href="/admin/monitoring/updates">Detected Updates</a>
-      <a class="mon-switcher__option" href="/admin/monitoring/activity">Activity</a>
+      <a class="mon-switcher__option is-active" href="/admin/monitoring/activity" aria-current="page">Activity</a>
     </div>
   </nav>
 
@@ -76,48 +66,23 @@
       <span class="admin-ops-flow__step">Published</span>
     </nav>
 
-    <div class="saas-stats-bar" id="monitoringStats" hidden aria-live="polite"></div>
-    <div class="monitoring-sources-block">
-      <div class="monitoring-grid">
-        <div class="card card-indigo"><h3><span class="card-icon">•</span> Total Sites</h3><p id="totalSites">0</p></div>
-        <div class="card card-green"><h3><span class="card-icon">✓</span> Active Sites</h3><p id="activeSites">0</p></div>
-        <div class="card card-red"><h3><span class="card-icon">!</span> Broken Sites</h3><p id="brokenSites">0</p></div>
-      </div>
-      <div class="monitoring-grid">
-        <div class="card card-blue"><h3><span class="card-icon">○</span> Queue Waiting</h3><p id="queueWaiting">0</p></div>
-        <div class="card card-teal"><h3><span class="card-icon">●</span> Queue Active</h3><p id="queueActive">0</p></div>
-        <div class="card card-red"><h3><span class="card-icon">×</span> Queue Failed</h3><p id="queueFailed">0</p></div>
-      </div>
-      <section class="admin-health-panel" aria-label="System health">
-        <div class="saas-toolbar">
-          <div class="saas-toolbar__title"><h3>System health</h3></div>
-        </div>
-        <div class="admin-health-grid" id="systemHealthGrid">
-          <div class="admin-health-item"><strong>Database</strong><span id="healthDbStatus">Checking…</span></div>
-          <div class="admin-health-item"><strong>Redis / Queue</strong><span id="healthRedisStatus">Checking…</span></div>
-          <div class="admin-health-item"><strong>Storage</strong><span id="healthDiskStatus">Checking…</span></div>
-          <div class="admin-health-item"><strong>Telegram</strong><span id="healthTelegramStatus">Checking…</span></div>
-        </div>
-      </section>
-      <div class="monitor-actions">
-        <button type="button" id="runCheckBtn">Run Check</button>
-        <button type="button" id="retryFailedBtn">Retry Failed</button>
-        <button type="button" id="clearQueueBtn">Clear Queue</button>
-      </div>
-      <div class="saas-toolbar">
-        <div class="saas-toolbar__title">
-          <h3>Monitored Sites</h3>
-        </div>
-        <div class="saas-toolbar__controls">
-          <label class="saas-search">
-            <span class="search-icon" aria-hidden="true">🔍</span>
-            <input type="search" id="sitesSearch" placeholder="Search sites..." autocomplete="off">
-            <button type="button" id="sitesSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
-          </label>
+    <div class="recent monitoring-failed-block" id="monitoringActivity">
+      <div class="admin-page-head">
+        <div>
+          <h2>Queue Failed Jobs</h2>
+          <p class="manager-hint">Errors from source checks. Retry is safe and manual.</p>
         </div>
       </div>
-      <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
-      <div id="sitesTable" class="sites-table-host"></div>
+      <div class="filters-toolbar mon-failed-filters">
+        <div class="filter-group">
+          <label for="failedSort">Sort</label>
+          <select id="failedSort">
+            <option value="latest">Latest failure</option>
+            <option value="frequent">Most frequent failures</option>
+          </select>
+        </div>
+      </div>
+      <div id="queueFailedList"></div>
     </div>
   </div>
 </div>

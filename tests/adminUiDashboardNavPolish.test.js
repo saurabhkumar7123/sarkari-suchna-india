@@ -45,7 +45,7 @@ describe("Admin UI polish — dashboard chart + RRQ nav active state", () => {
     expect(nav).toContain(
       'navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Recruitment Review"'
     );
-    expect(nav).toContain('ADMIN_NAV_VERSION = "28"');
+    expect(nav).toContain('ADMIN_NAV_VERSION = "29"');
     expect(nav).toMatch(/filter shortcut; not a second active destination/);
   });
 });

@@ -370,28 +370,119 @@ function renderDetectedUpdates(rows) {
     .join("");
 }
 
+function getMonPageId() {
+  const raw = document.body && document.body.getAttribute("data-mon-page");
+  return String(raw || "sources").trim() || "sources";
+}
+
+const LEGACY_MONITORING_HASH_REDIRECTS = {
+  recentUpdates: "/admin/monitoring/updates",
+  monitoringActivity: "/admin/monitoring/activity"
+};
+
+function redirectLegacyMonitoringHash() {
+  if (getMonPageId() !== "sources") return false;
+  const path = String(window.location.pathname || "");
+  if (!/^\/admin\/monitoring\/?$/.test(path)) return false;
+  const hashId = String(window.location.hash || "").replace(/^#/, "");
+  const dest = LEGACY_MONITORING_HASH_REDIRECTS[hashId];
+  if (!dest) return false;
+  window.location.replace(dest);
+  return true;
+}
+
 function syncMonitoringWorkspaceTabs() {
-  const hash = String(window.location.hash || "").replace(/^#/, "");
-  const tab =
-    hash === "recentUpdates" ? "detections" : hash === "monitoringActivity" ? "activity" : "sources";
-  document.querySelectorAll(".admin-workspace-tabs [data-mon-tab]").forEach((el) => {
-    const active = el.getAttribute("data-mon-tab") === tab;
+  const page = getMonPageId();
+  const tab = page === "updates" ? "detections" : page === "activity" ? "activity" : "sources";
+  document.querySelectorAll(".admin-workspace-tabs [data-mon-tab], .mon-switcher__option").forEach((el) => {
+    const monTab = el.getAttribute("data-mon-tab");
+    let active = false;
+    if (monTab) {
+      active = monTab === tab;
+    } else {
+      const href = el.getAttribute("href") || "";
+      active =
+        (page === "sources" && /\/admin\/monitoring\/?$/.test(href)) ||
+        (page === "updates" && href.includes("/admin/monitoring/updates")) ||
+        (page === "activity" && href.includes("/admin/monitoring/activity"));
+    }
     el.classList.toggle("is-active", active);
     if (active) el.setAttribute("aria-current", "page");
     else el.removeAttribute("aria-current");
   });
-  const title = document.querySelector(".admin-header .admin-title");
-  if (title) {
-    title.textContent =
-      tab === "detections" ? "Detected Updates" : tab === "activity" ? "Monitoring Activity" : "Monitoring";
+}
+
+function bindMonSwitcher() {
+  const root = document.querySelector("[data-mon-switcher]");
+  const trigger = document.getElementById("monSwitcherTrigger");
+  const menu = document.getElementById("monSwitcherMenu");
+  if (!root || !trigger || !menu) return;
+
+  function setOpen(open) {
+    menu.hidden = !open;
+    trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    root.classList.toggle("is-open", open);
   }
+
+  trigger.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(menu.hidden);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!root.contains(event.target)) setOpen(false);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setOpen(false);
+  });
+
+  root.querySelectorAll("a.mon-switcher__option").forEach((link) => {
+    link.addEventListener("click", () => {
+      try {
+        sessionStorage.setItem("monContentEnter", "1");
+      } catch (_) {
+        /* ignore */
+      }
+    });
+  });
+}
+
+function playMonContentEnter() {
+  const content = document.getElementById("monContent");
+  if (!content) return;
+  let shouldEnter = false;
+  try {
+    shouldEnter = sessionStorage.getItem("monContentEnter") === "1";
+    sessionStorage.removeItem("monContentEnter");
+  } catch (_) {
+    shouldEnter = false;
+  }
+  if (!shouldEnter) return;
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduced) return;
+  content.classList.remove("is-entering");
+  void content.offsetWidth;
+  content.classList.add("is-entering");
+  window.setTimeout(() => content.classList.remove("is-entering"), 220);
 }
 
 async function refreshMonitoringAll(triggerBtn) {
-  const run = () =>
-    Promise.all([loadSites(), loadQueueStatus(), loadQueueFailedJobs(), loadSystemHealth(), loadRecentUpdates()]).then(
-      () => window.AdminPageToolbar?.markUpdated?.()
-    );
+  const page = getMonPageId();
+  const run = () => {
+    const tasks = [];
+    if (page === "sources") {
+      tasks.push(loadSites(), loadQueueStatus(), loadSystemHealth());
+    } else if (page === "updates") {
+      tasks.push(loadRecentUpdates());
+    } else if (page === "activity") {
+      tasks.push(loadQueueFailedJobs(), loadQueueStatus());
+    } else {
+      tasks.push(loadSites(), loadQueueStatus(), loadSystemHealth());
+    }
+    return Promise.all(tasks).then(() => window.AdminPageToolbar?.markUpdated?.());
+  };
   if (window.AdminUI && window.AdminUI.withLoading && triggerBtn) {
     return window.AdminUI.withLoading(triggerBtn, run, "Refreshing...");
   }
@@ -561,9 +652,6 @@ document.querySelectorAll("[data-update-filter]").forEach((btn) => {
   });
 });
 
-syncMonitoringWorkspaceTabs();
-window.addEventListener("hashchange", syncMonitoringWorkspaceTabs);
-
 let sitesSearchDebounce = null;
 document.getElementById("sitesSearch")?.addEventListener("input", (e) => {
   sitesSearchQuery = e.target.value;
@@ -580,4 +668,11 @@ document.getElementById("sitesSearchClear")?.addEventListener("click", () => {
   renderSitesTable(getFilteredMonitoringSites());
 });
 
-refreshMonitoringAll();
+if (redirectLegacyMonitoringHash()) {
+  /* navigation in progress */
+} else {
+  bindMonSwitcher();
+  playMonContentEnter();
+  syncMonitoringWorkspaceTabs();
+  refreshMonitoringAll();
+}

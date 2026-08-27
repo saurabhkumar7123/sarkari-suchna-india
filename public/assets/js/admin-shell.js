@@ -408,6 +408,8 @@
     if (h === "/admin/alerts" && p === "/notification") return true;
     // Single ACC sidebar entry stays active across dedicated ACC child URLs.
     if (h === "/admin/automation-control-center" && (p === h || p.startsWith(`${h}/`))) return true;
+    // Single Monitoring sidebar entry stays active across dedicated Monitoring child URLs.
+    if (h === "/admin/monitoring" && (p === h || p.startsWith(`${h}/`))) return true;
     if (h !== p) return false;
     const hash = currentLocationHash();
     if (parts.hash) return hash === parts.hash;

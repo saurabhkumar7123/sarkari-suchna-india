@@ -74,7 +74,7 @@
       items.push({
         type: "queue",
         text: `${failed} failed queue job(s)`,
-        href: "/admin/monitoring"
+        href: "/admin/monitoring/activity"
       });
     }
 

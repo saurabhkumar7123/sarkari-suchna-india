@@ -52,7 +52,7 @@
       <a href="/admin/recruitments#eventTimeline">Open Events</a>
       <a href="/admin/recruitment-runtime-preview">Shared Preview</a>
       <a href="/admin/editorial-review">Editorial Review</a>
-      <a href="/admin/monitoring#recentUpdates">Detected updates</a>
+      <a href="/admin/monitoring/updates">Detected updates</a>
       <a href="/admin/automation-control-center">Automation Control</a>
     </nav>
   </section>
@@ -95,7 +95,7 @@
         </div>
         <h3 class="admin-attention-card__title">Failed checks</h3>
         <p class="admin-attention-card__desc">Monitoring / conversion failures that need investigation</p>
-        <a class="header-action-btn" href="/admin/monitoring#monitoringActivity">Open Monitoring Activity</a>
+        <a class="header-action-btn" href="/admin/monitoring/activity">Open Monitoring Activity</a>
       </article>
       <article class="admin-attention-card" id="attnValidationCard">
         <div class="admin-attention-card__head">
@@ -132,7 +132,7 @@
       <a class="dashboard-today-card" href="/admin/page-manager"><strong id="kpiRecentPublishes">—</strong><span>Published</span></a>
       <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsActiveRecruitments">—</strong><span>Active recruitments</span></a>
       <a class="dashboard-today-card" href="/admin/recruitments"><strong id="opsBrokenPageLinks">—</strong><span>Broken page links</span></a>
-      <a class="dashboard-today-card" href="/admin/monitoring#recentUpdates"><strong id="opsDetectedUpdates">—</strong><span>Recent detections</span></a>
+      <a class="dashboard-today-card" href="/admin/monitoring/updates"><strong id="opsDetectedUpdates">—</strong><span>Recent detections</span></a>
       <a class="dashboard-today-card" href="/admin/monitoring"><strong id="kpiFailedJobs">—</strong><span>Failed jobs</span></a>
       <a class="dashboard-today-card" href="/admin/monitoring"><strong id="kpiSuccessRate">—</strong><span>Success rate</span></a>
     </div>
@@ -235,14 +235,14 @@
       <div class="page-item"><span>Failed jobs</span><strong id="attentionFailedJobs">0</strong></div>
       <div class="page-item"><span>Manual actions</span><strong id="attentionManualItems">0</strong></div>
       <div class="row-actions" style="margin-top:10px;">
-        <a href="/admin/monitoring#monitoringActivity">View Failed Jobs</a>
+        <a href="/admin/monitoring/activity">View Failed Jobs</a>
       </div>
     </div>
     <div class="recent">
       <h3>Quick Actions</h3>
       <div class="row-actions">
         <a href="/admin/monitoring" id="quickRunCheckBtn">Run Check</a>
-        <a href="/admin/monitoring#monitoringActivity" id="quickRetryFailedBtn">Retry Failed Jobs</a>
+        <a href="/admin/monitoring/activity" id="quickRetryFailedBtn">Retry Failed Jobs</a>
         <a href="/admin/csv-upload">Import CSV</a>
       </div>
       <div class="page-item" style="margin-top:8px;"><span>Average Processing Time</span><strong id="avgProcessingTime">N/A</strong></div>
