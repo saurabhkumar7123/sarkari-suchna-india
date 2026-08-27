@@ -158,12 +158,18 @@ describe("Part 41 official-source monitoring gates", () => {
 
   test("change detection reports no_change when the top item matches the baseline", async () => {
     const { checkSite, buildSignature } = require("../server/services/updates/siteChecker");
+    const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
+    clearRobotsPolicyCache();
     const title = "UPSC Latest Official Notice Title";
     const link = "https://upsc.gov.in/notice/example.pdf";
     const fingerprint = buildSignature(`${title} ${link}`);
     const axios = require("axios");
-    jest.spyOn(axios, "get").mockResolvedValue({
-      data: `<html><body><a href="/notice/example.pdf">${title}</a></body></html>`
+    const pageHtml = `<html><body><a href="/notice/example.pdf">${title}</a></body></html>`;
+    jest.spyOn(axios, "get").mockImplementation(async (url) => {
+      if (String(url).includes("robots.txt")) {
+        return { status: 200, data: "User-agent: *\nAllow: /\n" };
+      }
+      return { status: 200, data: pageHtml };
     });
 
     const result = await checkSite({
@@ -176,5 +182,6 @@ describe("Part 41 official-source monitoring gates", () => {
     expect(result.changed).toBe(false);
     expect(result.reason).toBe("no_change");
     axios.get.mockRestore();
+    clearRobotsPolicyCache();
   });
 });

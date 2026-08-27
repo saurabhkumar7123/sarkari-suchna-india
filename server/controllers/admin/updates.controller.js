@@ -9,6 +9,7 @@ const {
   restoreSite,
   disableSite
 } = require("../../services/updates/updates.repository");
+const { assertMonitoringSiteWritable } = require("../../services/updates/monitoringSiteWriteGuard");
 const { triggerManualUpdateCheck } = require("../../services/updates/updateScheduler");
 const { sendTelegramMessage, canSendTelegram } = require("../../services/updates/telegramNotifier");
 const { siteCheckQueue } = require("../../services/queue/siteQueue");
@@ -34,7 +35,7 @@ function normalizePriority(v) {
 
 function validateSiteInput(body) {
   const name = String((body && body.name) || "").trim();
-  const url = String((body && body.url) || "").trim();
+  const url = String((body && (body.url || body.monitoringUrl || body.notificationUrl)) || "").trim();
   const selector = String((body && body.selector) || "").trim();
   const priority = normalizePriority(body && body.priority);
 
@@ -52,6 +53,15 @@ const listSites = asyncHandler(async (req, res) => {
 const createSiteHandler = asyncHandler(async (req, res) => {
   const parsed = validateSiteInput(req.body || {});
   if (!parsed.ok) return res.status(400).json({ success: false, message: parsed.message });
+  try {
+    await assertMonitoringSiteWritable({
+      url: parsed.value.url,
+      requireRobotsAllow: true
+    });
+  } catch (err) {
+    const status = err && err.statusCode ? err.statusCode : 400;
+    return res.status(status).json({ success: false, message: err.message, code: err.code || null });
+  }
   const id = await createSite(parsed.value);
   const row = await getSiteById(id);
   res.status(201).json({ success: true, data: row });
@@ -66,6 +76,16 @@ const updateSiteHandler = asyncHandler(async (req, res) => {
   if (!exists) return res.status(404).json({ success: false, message: "site not found" });
   const parsed = validateSiteInput(req.body || {});
   if (!parsed.ok) return res.status(400).json({ success: false, message: parsed.message });
+  try {
+    await assertMonitoringSiteWritable({
+      url: parsed.value.url,
+      excludeId: siteId,
+      requireRobotsAllow: Number(exists.active) === 1
+    });
+  } catch (err) {
+    const status = err && err.statusCode ? err.statusCode : 400;
+    return res.status(status).json({ success: false, message: err.message, code: err.code || null });
+  }
   await updateSite(siteId, parsed.value);
   const row = await getSiteById(siteId);
   res.json({ success: true, data: row });
@@ -97,6 +117,17 @@ const restoreSiteHandler = asyncHandler(async (req, res) => {
   }
   const exists = await getSiteById(siteId);
   if (!exists) return res.status(404).json({ success: false, message: "site not found" });
+  try {
+    await assertMonitoringSiteWritable({
+      url: exists.url,
+      excludeId: siteId,
+      requireRobotsAllow: true,
+      checkDuplicates: true
+    });
+  } catch (err) {
+    const status = err && err.statusCode ? err.statusCode : 400;
+    return res.status(status).json({ success: false, message: err.message, code: err.code || null });
+  }
   await restoreSite(siteId);
   logger.info("updates: restore API action", { siteId, by: req.user && req.user.username ? req.user.username : "admin" });
   const row = await getSiteById(siteId);

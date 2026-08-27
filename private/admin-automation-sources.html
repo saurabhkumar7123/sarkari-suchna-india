@@ -73,11 +73,12 @@
     <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
   </section>
 
-  <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager domains crawl priority retry health validation">
+  <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health">
     <div class="acc-section__head">
       <div>
-        <p class="acc-section__eyebrow">Governance</p>
-        <h2>Official Source Manager</h2>
+        <p class="acc-section__eyebrow">Registry</p>
+        <h2 id="acc-sources-title">Official Source Manager</h2>
+        <p class="acc-section__sub">Exact-URL registry only. Misleading config fields removed — Active state uses the same enable/disable path as Monitoring.</p>
       </div>
       <div class="acc-section__actions">
         <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
@@ -85,24 +86,21 @@
       </div>
     </div>
     <div class="acc-toolbar">
-      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Department, domain, status"></label>
-      <label><span>Department</span><select id="accSourceDepartmentFilter"><option value="">All</option></select></label>
-      <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option><option value="slow">Slow</option></select></label>
-      <label><span>Grouping</span><select id="accSourceGrouping"><option value="none">No grouping</option><option value="department">Department</option><option value="health">Health</option></select></label>
+      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Name, domain, URL, selector"></label>
+      <label><span>Status</span><select id="accSourceEnabledFilter"><option value="">All</option><option value="true">Active</option><option value="false">Disabled</option></select></label>
+      <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option></select></label>
     </div>
     <div class="acc-data-table">
       <table aria-label="Official source registry">
         <thead>
           <tr>
             <th>Source</th>
-            <th>Department</th>
             <th>Priority</th>
-            <th>Domain</th>
-            <th>Crawl Interval</th>
-            <th>Retry Policy</th>
-            <th>Health</th>
+            <th>Domain <small>(derived)</small></th>
+            <th>Monitoring URL</th>
+            <th>CSS Selector</th>
+            <th>Health <small>(derived)</small></th>
             <th>Last Visit</th>
-            <th>Response</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -110,6 +108,11 @@
       </table>
     </div>
     <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
+    <div class="acc-toolbar" style="margin-top:0.75rem;">
+      <button type="button" class="header-action-btn" id="accSourcesPrevBtn">Previous</button>
+      <span id="accSourcesPageLabel">Page 1</span>
+      <button type="button" class="header-action-btn" id="accSourcesNextBtn">Next</button>
+    </div>
   </section>
   </div>
 </div>
@@ -122,23 +125,16 @@
     <input id="accSourceId" type="hidden">
     <div class="acc-dialog__grid">
       <label><span>Source Name</span><input id="accFormSourceName" required maxlength="160"></label>
-      <label><span>Department</span><input id="accFormSourceDepartment" required maxlength="120"></label>
-      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select></label>
-      <label><span>Official Domain</span><input id="accFormSourceDomain" required maxlength="240"></label>
-      <label><span>Notification URL</span><input id="accFormNotificationUrl" maxlength="500"></label>
-      <label><span>PDF URL</span><input id="accFormPdfUrl" maxlength="500"></label>
-      <label><span>Archive URL</span><input id="accFormArchiveUrl" maxlength="500"></label>
-      <label><span>Allowed Domains</span><input id="accFormAllowedDomains" maxlength="500"></label>
-      <label><span>Crawl Interval</span><input id="accFormCrawlInterval" required maxlength="80"></label>
-      <label><span>Retry Policy</span><input id="accFormRetryPolicy" required maxlength="120"></label>
-      <label><span>Health Status</span><select id="accFormHealthStatus"><option>healthy</option><option>warning</option><option>slow</option><option>offline</option></select></label>
-      <label><span>Response Time (ms)</span><input id="accFormResponseTime" type="number" min="0" max="99999"></label>
+      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option selected>P1</option><option>P2</option><option>P3</option></select></label>
+      <label class="acc-dialog__span-2"><span>Monitoring URL (exact page the bot GETs)</span><input id="accFormMonitoringUrl" required maxlength="2000" placeholder="https://agency.gov.in/path"></label>
+      <label class="acc-dialog__span-2"><span>CSS Selector</span><input id="accFormSelector" required maxlength="255" placeholder="a.notice-link" value="body"></label>
+      <label><span>Official Domain</span><input id="accFormSourceDomain" maxlength="240" readonly title="Derived from Monitoring URL"></label>
+      <label><span>Health</span><input id="accFormHealthStatus" maxlength="40" readonly title="Derived from broken/active state"></label>
     </div>
     <div class="acc-dialog__checks">
-      <label><input id="accFormEnabled" type="checkbox" checked> Enabled</label>
-      <label><input id="accFormDomainVerified" type="checkbox" checked> Domain Verified</label>
-      <label><input id="accFormSourceValidated" type="checkbox" checked> Source Validation Passed</label>
+      <label><input id="accFormEnabled" type="checkbox" checked> Active (persists via Monitoring enable/disable)</label>
     </div>
+    <p class="acc-section__sub" style="margin:0.5rem 0 0;">Official-host and robots policy are enforced server-side. Inactive sources skip robots until activated.</p>
     <div class="acc-dialog__actions">
       <button type="submit" class="header-action-btn">Save Source</button>
       <button type="button" class="header-action-btn" id="accDeleteSourceBtn">Delete</button>
@@ -155,6 +151,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=7"></script>
+<script src="/js/admin-automation-control-center.js?v=8"></script>
 </body>
 </html>

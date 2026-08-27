@@ -203,6 +203,40 @@ async function processSiteJob(job) {
 
     if (result && result.invalid) {
       await markSiteChecked(siteId).catch(() => null);
+
+      // Policy / access restriction: fail closed for this cycle without thrashing fail_count.
+      if (result.policySkip) {
+        logger.warn("updates-worker: policy skip (no page fetch)", {
+          siteId,
+          siteName: site.name,
+          reason: result.reason
+        });
+        return {
+          changed: false,
+          invalid: true,
+          skipped: true,
+          reason: result.reason,
+          policySkip: true
+        };
+      }
+
+      // 429 / rate limit: apply site backoff, do not emit selector-broken alerts.
+      if (result.rateLimited) {
+        const failure = await incrementSiteFailure(siteId);
+        logger.warn("updates-worker: rate limited", {
+          siteId,
+          siteName: site.name,
+          failCount: failure && failure.next,
+          backoffMinutes: failure && failure.expMinutes
+        });
+        return {
+          changed: false,
+          invalid: true,
+          reason: "rate_limited",
+          rateLimited: true
+        };
+      }
+
       const failure = await incrementSiteFailure(siteId);
       if (failure.shouldWarn && !(await isInCooldown(siteId, COOLDOWN_MINUTES))) {
         const tg = await sendTelegramMessage(
@@ -216,7 +250,11 @@ async function processSiteJob(job) {
           await markAlertSent(siteId);
         }
       }
-      if (!(await isInCooldown(siteId, COOLDOWN_MINUTES))) {
+      // Selector issues only — not HTTP classification noise
+      if (
+        (result.reason === "selector_miss" || result.reason === "empty_text") &&
+        !(await isInCooldown(siteId, COOLDOWN_MINUTES))
+      ) {
         const tg = await sendTelegramMessage(
           buildSelectorIssueMessage({
             siteName: site.name,
@@ -229,7 +267,11 @@ async function processSiteJob(job) {
           await markAlertSent(siteId);
         }
       }
-      logger.info("updates-worker: check failed", { siteId, reason: result.reason });
+      logger.info("updates-worker: check failed", {
+        siteId,
+        reason: result.reason,
+        httpStatus: result.httpStatus || null
+      });
       return { changed: false, invalid: true, reason: result.reason };
     }
 

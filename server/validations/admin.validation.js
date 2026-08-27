@@ -679,14 +679,14 @@ const automationSourceListQuerySchema = Joi.object({
 
 const automationSourceUpsertSchema = Joi.object({
   name: Joi.string().trim().min(1).max(160).required(),
-  department: Joi.string().trim().max(120).allow("", null).optional(),
-  notificationUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).required(),
+  monitoringUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
+  notificationUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
+  url: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
   selector: Joi.string().trim().max(255).allow("", null).optional(),
   priority: Joi.string().trim().uppercase().valid("P0", "P1", "P2", "P3").optional(),
-  healthStatus: Joi.string().trim().lowercase().valid("healthy", "warning", "slow", "offline").optional(),
-  responseTime: Joi.alternatives().try(Joi.number().integer().min(0), Joi.string().trim().allow("")).optional(),
   enabled: Joi.boolean().optional()
 })
+  .or("monitoringUrl", "notificationUrl", "url")
   .required()
   .unknown(false);
 

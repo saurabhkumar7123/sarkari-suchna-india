@@ -6,8 +6,11 @@ const {
   createSite,
   updateSite,
   deleteSite,
-  fetchRecentUpdates
+  fetchRecentUpdates,
+  restoreSite,
+  disableSite
 } = require("./updates/updates.repository");
+const { assertMonitoringSiteWritable } = require("./updates/monitoringSiteWriteGuard");
 const recruitmentService = require("./recruitment.service");
 const generatorDraftService = require("./generatorDraft.service");
 const recruitmentReviewService = require("./recruitmentReview.service");
@@ -247,27 +250,33 @@ function paginate(rows, page, limit) {
 }
 
 function normalizeSourceRow(site) {
+  let officialDomain = String(site.officialDomain || "");
+  if (!officialDomain) {
+    try {
+      officialDomain = new URL(String(site.url || "")).hostname;
+    } catch {
+      officialDomain = "";
+    }
+  }
+  const broken = Number(site.broken) === 1;
+  const active = Number(site.active) === 1 || site.enabled === true;
+  const healthStatus = broken ? "offline" : active ? "healthy" : "warning";
+  const selector = String(site.selector || "body");
+  const monitoringUrl = String(site.url || "");
   return {
     id: Number(site.id),
     name: String(site.name || ""),
-    department: String(site.department || "General"),
     priority: `P${Math.max(0, Math.min(3, Number(site.priority || 1) - 1))}`,
-    officialDomain: String(site.officialDomain || ""),
-    notificationUrl: String(site.url || ""),
-    pdfUrl: String(site.pdfUrl || ""),
-    archiveUrl: String(site.archiveUrl || ""),
-    allowedDomains: String(site.allowedDomains || site.officialDomain || ""),
-    crawlInterval: String(site.crawlInterval || "Manual only"),
-    retryPolicy: String(site.retryPolicy || "Manual only"),
-    healthStatus: String(site.healthStatus || (Number(site.broken) === 1 ? "offline" : "healthy")),
-    responseTime: Number(site.responseTime || 0),
-    enabled: Number(site.active) === 1 || site.enabled === true,
-    domainVerified: site.domainVerified !== false,
-    sourceValidated: site.sourceValidated !== false,
+    officialDomain,
+    monitoringUrl,
+    notificationUrl: monitoringUrl,
+    selector,
+    healthStatus,
+    healthStatusSource: "derived",
+    enabled: active,
+    failCount: Number(site.failCount || 0),
+    broken,
     lastVisit: site.lastCheckedAt || null,
-    lastSuccess: site.lastSuccess || null,
-    lastFailure: site.lastFailure || null,
-    deletedAt: site.deletedAt || null,
     version: Number(site.version || 1)
   };
 }
@@ -290,24 +299,16 @@ function enrichSiteRows(rows = []) {
 async function listSources(query = {}) {
   const all = enrichSiteRows(await fetchSites());
   const search = normalizeString(query.search || query.q || "", 200).toLowerCase();
-  const department = normalizeString(query.department, 120);
   const health = normalizeString(query.health, 40).toLowerCase();
   const enabledFilter = query.enabled === undefined || query.enabled === "" ? "" : String(query.enabled).toLowerCase();
   const filtered = all.filter((row) => {
-    if (department && row.department !== department) return false;
     if (health && row.healthStatus !== health) return false;
     if (enabledFilter) {
       const expected = enabledFilter === "true" || enabledFilter === "1";
       if (row.enabled !== expected) return false;
     }
     if (!search) return true;
-    return [
-      row.name,
-      row.department,
-      row.officialDomain,
-      row.notificationUrl,
-      row.healthStatus
-    ]
+    return [row.name, row.officialDomain, row.monitoringUrl || row.notificationUrl, row.selector, row.healthStatus]
       .join(" ")
       .toLowerCase()
       .includes(search);
@@ -336,7 +337,10 @@ async function getSourceById(id) {
 
 function normalizeSourceInput(input = {}) {
   const name = normalizeString(input.name, 160);
-  const notificationUrl = normalizeString(input.notificationUrl, 2000);
+  const notificationUrl = normalizeString(
+    input.monitoringUrl || input.notificationUrl || input.url,
+    2000
+  );
   const selector = normalizeString(input.selector, 255) || "body";
   if (!name) {
     const err = new Error("name is required");
@@ -344,24 +348,25 @@ function normalizeSourceInput(input = {}) {
     throw err;
   }
   if (!notificationUrl) {
-    const err = new Error("notificationUrl is required");
+    const err = new Error("Monitoring URL is required.");
     err.statusCode = 400;
     throw err;
   }
   return {
     name,
-    department: normalizeString(input.department, 120) || "General",
     notificationUrl,
     selector,
     priorityNumber: Math.max(1, Math.min(4, Number(String(input.priority || "P1").replace(/^P/i, "")) + 1 || 2)),
-    healthStatus: normalizeString(input.healthStatus, 40).toLowerCase() || "healthy",
-    responseTime: Math.max(0, Number(input.responseTime || 0) || 0),
     enabled: input.enabled !== false
   };
 }
 
 async function createSource(input = {}) {
   const normalized = normalizeSourceInput(input);
+  await assertMonitoringSiteWritable({
+    url: normalized.notificationUrl,
+    requireRobotsAllow: normalized.enabled === true
+  });
   const id = await createSite({
     name: normalized.name,
     url: normalized.notificationUrl,
@@ -369,12 +374,7 @@ async function createSource(input = {}) {
     priority: normalized.priorityNumber
   });
   if (!normalized.enabled) {
-    await updateSite(id, {
-      name: normalized.name,
-      url: normalized.notificationUrl,
-      selector: normalized.selector,
-      priority: normalized.priorityNumber
-    });
+    await disableSite(id);
   }
   return getSourceById(id);
 }
@@ -394,13 +394,25 @@ async function updateSource(id, input = {}) {
   }
   const merged = normalizeSourceInput({
     name: input.name !== undefined ? input.name : existing.name,
-    department: input.department,
-    notificationUrl: input.notificationUrl !== undefined ? input.notificationUrl : existing.url,
+    notificationUrl:
+      input.monitoringUrl !== undefined
+        ? input.monitoringUrl
+        : input.notificationUrl !== undefined
+          ? input.notificationUrl
+          : input.url !== undefined
+            ? input.url
+            : existing.url,
     selector: input.selector !== undefined ? input.selector : existing.selector,
     priority: input.priority !== undefined ? input.priority : `P${Math.max(0, Number(existing.priority || 1) - 1)}`,
-    healthStatus: input.healthStatus,
-    responseTime: input.responseTime,
-    enabled: input.enabled
+    enabled: input.enabled !== undefined ? input.enabled : Number(existing.active) === 1
+  });
+  const wasActive = Number(existing.active) === 1;
+  const willEnable = merged.enabled === true;
+  await assertMonitoringSiteWritable({
+    url: merged.notificationUrl,
+    excludeId: sourceId,
+    // Fail-closed robots when enabling or changing URL while active
+    requireRobotsAllow: willEnable
   });
   await updateSite(sourceId, {
     name: merged.name,
@@ -408,6 +420,11 @@ async function updateSource(id, input = {}) {
     selector: merged.selector,
     priority: merged.priorityNumber
   });
+  if (willEnable && !wasActive) {
+    await restoreSite(sourceId);
+  } else if (!willEnable && wasActive) {
+    await disableSite(sourceId);
+  }
   return getSourceById(sourceId);
 }
 

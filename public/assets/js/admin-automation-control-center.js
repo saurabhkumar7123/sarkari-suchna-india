@@ -15,6 +15,7 @@
   const state = {
     dashboard: null,
     sources: [],
+    sourcesPagination: { page: 1, limit: 50, total: 0 },
     recruitments: [],
     reviews: [],
     drafts: [],
@@ -109,15 +110,52 @@
       const snapshot = await apiFetch("/api/admin/automation-control-center");
       state.dashboard = snapshot.dashboard || null;
       state.sources = Array.isArray(snapshot.sources) ? snapshot.sources : [];
+      state.sourcesPagination = {
+        page: 1,
+        limit: 50,
+        total: state.sources.length
+      };
       state.recruitments = Array.isArray(snapshot.recruitments) ? snapshot.recruitments : [];
       state.reviews = Array.isArray(snapshot.reviews) ? snapshot.reviews : [];
       state.drafts = Array.isArray(snapshot.drafts) ? snapshot.drafts : [];
       state.workflow = Array.isArray(snapshot.workflow) ? snapshot.workflow : [];
       state.audit = Array.isArray(snapshot.audit) ? snapshot.audit : [];
       state.settings = snapshot.settings || FALLBACK_SETTINGS;
+      if (getAccPageId() === "sources") {
+        await loadSourcesPage(state.sourcesPagination.page);
+      }
     } catch (err) {
       toastError(err.message || "ACC APIs are unavailable");
     }
+  }
+
+  async function loadSourcesPage(page) {
+    const search = (qs("accSourceSearch")?.value || "").trim();
+    const health = qs("accSourceHealthFilter")?.value || "";
+    const enabled = qs("accSourceEnabledFilter")?.value || "";
+    const limit = state.sourcesPagination.limit || 50;
+    const params = new URLSearchParams({
+      page: String(Math.max(1, Number(page) || 1)),
+      limit: String(limit)
+    });
+    if (search) params.set("search", search);
+    if (health) params.set("health", health);
+    if (enabled) params.set("enabled", enabled);
+    const response = await (async () => {
+      if (typeof window.adminSafeFetch !== "function") {
+        throw new Error("Authenticated admin fetch is unavailable");
+      }
+      return window.adminSafeFetch(`/api/admin/automation-control-center/sources?${params.toString()}`);
+    })();
+    if (!response || response.success !== true) {
+      throw new Error((response && response.message) || "Failed to load sources");
+    }
+    state.sources = Array.isArray(response.data) ? response.data : [];
+    state.sourcesPagination = {
+      page: Number(response.pagination?.page || page || 1),
+      limit: Number(response.pagination?.limit || limit),
+      total: Number(response.pagination?.total || state.sources.length)
+    };
   }
 
   function renderDashboard() {
@@ -376,37 +414,45 @@
   }
 
   function renderSources() {
-    buildDepartmentOptions("accSourceDepartmentFilter", state.sources, (row) => row.department);
-    const search = (qs("accSourceSearch")?.value || "").trim().toLowerCase();
-    const department = qs("accSourceDepartmentFilter")?.value || "";
-    const health = qs("accSourceHealthFilter")?.value || "";
-    const rows = state.sources.filter((source) => {
-      if (department && source.department !== department) return false;
-      if (health && source.healthStatus !== health) return false;
-      if (!search) return true;
-      return [source.name, source.department, source.officialDomain, source.notificationUrl].join(" ").toLowerCase().includes(search);
-    });
+    const rows = state.sources || [];
     const body = qs("accSourceRows");
     const empty = qs("accSourceEmpty");
     if (!body || !empty) return;
     empty.hidden = rows.length > 0;
-    body.innerHTML = rows.map((source) => `
+    body.innerHTML = rows.map((source) => {
+      const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
+      return `
       <tr>
-        <td><strong>${escapeHtml(source.name)}</strong><br><small>${source.enabled ? "Enabled" : "Disabled"}</small></td>
-        <td>${escapeHtml(source.department || "-")}</td>
+        <td><strong>${escapeHtml(source.name)}</strong><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
         <td><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
         <td>${escapeHtml(source.officialDomain || "-")}</td>
-        <td>${escapeHtml(source.crawlInterval || "Manual only")}</td>
-        <td>${escapeHtml(source.retryPolicy || "Manual only")}</td>
+        <td><small>${escapeHtml(monitoringUrl || "-")}</small></td>
+        <td><code>${escapeHtml(source.selector || "body")}</code></td>
         <td><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
         <td>${escapeHtml(source.lastVisit || "-")}</td>
-        <td>${source.responseTime ? `${escapeHtml(source.responseTime)} ms` : "N/A"}</td>
         <td>
           <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
           <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="delete">Delete</button>
         </td>
-      </tr>
-    `).join("");
+      </tr>`;
+    }).join("");
+    const total = Number(state.sourcesPagination.total || 0);
+    const page = Number(state.sourcesPagination.page || 1);
+    const limit = Number(state.sourcesPagination.limit || 50);
+    const maxPage = Math.max(1, Math.ceil(total / limit) || 1);
+    setText("accSourcesPageLabel", `Page ${page} / ${maxPage} (${total} sources)`);
+    const prev = qs("accSourcesPrevBtn");
+    const next = qs("accSourcesNextBtn");
+    if (prev) prev.disabled = page <= 1;
+    if (next) next.disabled = page >= maxPage;
+  }
+
+  function deriveDomainFromUrl(url) {
+    try {
+      return new URL(String(url || "")).hostname;
+    } catch {
+      return "";
+    }
   }
 
   function openSourceDialog(id) {
@@ -414,18 +460,13 @@
     setText("accSourceDialogTitle", source ? "Edit Source" : "Add Source");
     qs("accSourceId").value = source?.id || "";
     qs("accFormSourceName").value = source?.name || "";
-    qs("accFormSourceDepartment").value = source?.department || "";
     qs("accFormSourcePriority").value = source?.priority || "P1";
-    qs("accFormSourceDomain").value = source?.officialDomain || "";
-    qs("accFormNotificationUrl").value = source?.notificationUrl || "";
-    qs("accFormPdfUrl").value = source?.pdfUrl || "";
-    qs("accFormArchiveUrl").value = source?.archiveUrl || "";
-    qs("accFormAllowedDomains").value = source?.allowedDomains || "body";
-    qs("accFormCrawlInterval").value = source?.crawlInterval || "Manual only";
-    qs("accFormRetryPolicy").value = source?.retryPolicy || "Manual only";
-    qs("accFormHealthStatus").value = source?.healthStatus || "healthy";
-    qs("accFormResponseTime").value = source?.responseTime || 0;
-    qs("accFormEnabled").checked = source?.enabled !== false;
+    const monitoringUrl = source?.monitoringUrl || source?.notificationUrl || "";
+    qs("accFormMonitoringUrl").value = monitoringUrl;
+    qs("accFormSelector").value = source?.selector || "body";
+    qs("accFormSourceDomain").value = source?.officialDomain || deriveDomainFromUrl(monitoringUrl);
+    qs("accFormHealthStatus").value = source?.healthStatus || (source ? "healthy" : "n/a until saved");
+    qs("accFormEnabled").checked = source ? source.enabled !== false : true;
     qs("accDeleteSourceBtn").hidden = !source;
     qs("accSourceDialog")?.showModal();
   }
@@ -437,28 +478,31 @@
   async function saveSourceFromDialog(event) {
     event.preventDefault();
     const id = qs("accSourceId").value;
+    const monitoringUrl = qs("accFormMonitoringUrl").value.trim();
     const payload = {
       name: qs("accFormSourceName").value.trim(),
-      department: qs("accFormSourceDepartment").value.trim(),
       priority: qs("accFormSourcePriority").value,
-      notificationUrl: qs("accFormNotificationUrl").value.trim(),
-      selector: qs("accFormAllowedDomains").value.trim() || "body",
-      healthStatus: qs("accFormHealthStatus").value,
-      responseTime: Number(qs("accFormResponseTime").value || 0),
+      monitoringUrl,
+      notificationUrl: monitoringUrl,
+      selector: qs("accFormSelector").value.trim() || "body",
       enabled: qs("accFormEnabled").checked
     };
-    await apiFetch(
-      id ? `/api/admin/automation-control-center/sources/${encodeURIComponent(id)}` : "/api/admin/automation-control-center/sources",
-      {
-        method: id ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }
-    );
-    await loadSnapshot();
-    renderAll();
-    closeSourceDialog();
-    toastSuccess("Source saved to server-backed ACC.");
+    try {
+      await apiFetch(
+        id ? `/api/admin/automation-control-center/sources/${encodeURIComponent(id)}` : "/api/admin/automation-control-center/sources",
+        {
+          method: id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }
+      );
+      await loadSnapshot();
+      renderAll();
+      closeSourceDialog();
+      toastSuccess("Source saved.");
+    } catch (err) {
+      toastError(err.message || "Save failed");
+    }
   }
 
   async function deleteCurrentSource() {
@@ -468,7 +512,7 @@
     await loadSnapshot();
     renderAll();
     closeSourceDialog();
-    toastSuccess("Source removed from ACC.");
+    toastSuccess("Source removed.");
   }
 
   function renderRecruitments() {
@@ -790,13 +834,36 @@
       toastSuccess("ACC refreshed.");
     });
     qs("accOpenPaletteBtn")?.addEventListener("click", () => window.AdminCommandPalette?.open?.());
-    qs("accSourceSearch")?.addEventListener("input", renderSources);
-    qs("accSourceDepartmentFilter")?.addEventListener("change", renderSources);
-    qs("accSourceHealthFilter")?.addEventListener("change", renderSources);
+    qs("accSourceSearch")?.addEventListener("input", () => {
+      loadSourcesPage(1).then(renderSources).catch((err) => toastError(err.message || "Filter failed"));
+    });
+    qs("accSourceEnabledFilter")?.addEventListener("change", () => {
+      loadSourcesPage(1).then(renderSources).catch((err) => toastError(err.message || "Filter failed"));
+    });
+    qs("accSourceHealthFilter")?.addEventListener("change", () => {
+      loadSourcesPage(1).then(renderSources).catch((err) => toastError(err.message || "Filter failed"));
+    });
+    qs("accSourcesPrevBtn")?.addEventListener("click", () => {
+      const page = Math.max(1, Number(state.sourcesPagination.page || 1) - 1);
+      loadSourcesPage(page).then(renderSources).catch((err) => toastError(err.message || "Page failed"));
+    });
+    qs("accSourcesNextBtn")?.addEventListener("click", () => {
+      const page = Number(state.sourcesPagination.page || 1) + 1;
+      loadSourcesPage(page).then(renderSources).catch((err) => toastError(err.message || "Page failed"));
+    });
+    qs("accFormMonitoringUrl")?.addEventListener("input", (event) => {
+      if (qs("accFormSourceDomain")) {
+        qs("accFormSourceDomain").value = deriveDomainFromUrl(event.target.value);
+      }
+    });
     qs("accAddSourceBtn")?.addEventListener("click", () => openSourceDialog());
     qs("accCloseSourceDialog")?.addEventListener("click", closeSourceDialog);
-    qs("accSourceForm")?.addEventListener("submit", saveSourceFromDialog);
-    qs("accDeleteSourceBtn")?.addEventListener("click", deleteCurrentSource);
+    qs("accSourceForm")?.addEventListener("submit", (event) => {
+      saveSourceFromDialog(event).catch((err) => toastError(err.message || "Save failed"));
+    });
+    qs("accDeleteSourceBtn")?.addEventListener("click", () => {
+      deleteCurrentSource().catch((err) => toastError(err.message || "Delete failed"));
+    });
     qs("accSourceRows")?.addEventListener("click", (event) => {
       const button = event.target.closest("button[data-source-id]");
       if (!button) return;

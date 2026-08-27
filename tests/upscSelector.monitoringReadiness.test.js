@@ -165,19 +165,34 @@ describe("UPSC/SSC change detection", () => {
     const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
     const top = extracted.items[0];
     const axios = require("axios");
-    jest.spyOn(axios, "get").mockResolvedValue({ data: UPSC_HTML });
+    const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
+    clearRobotsPolicyCache();
+    jest.spyOn(axios, "get").mockImplementation(async (url) => {
+      if (String(url).includes("robots.txt")) {
+        return { status: 200, data: "User-agent: *\nAllow: /\n" };
+      }
+      return { status: 200, data: UPSC_HTML };
+    });
 
     const first = await checkSite({ ...UPSC_SITE, lastContent: top.fingerprint });
     const second = await checkSite({ ...UPSC_SITE, lastContent: top.fingerprint });
     expect(first).toMatchObject({ changed: false, reason: "no_change", items: [] });
     expect(second).toEqual(first);
     axios.get.mockRestore();
+    clearRobotsPolicyCache();
   });
 
   test("changed official Notice content yields exactly one changed item set", async () => {
     const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
     const axios = require("axios");
-    jest.spyOn(axios, "get").mockResolvedValue({ data: UPSC_HTML });
+    const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
+    clearRobotsPolicyCache();
+    jest.spyOn(axios, "get").mockImplementation(async (url) => {
+      if (String(url).includes("robots.txt")) {
+        return { status: 200, data: "User-agent: *\nAllow: /\n" };
+      }
+      return { status: 200, data: UPSC_HTML };
+    });
 
     const result = await checkSite({
       ...UPSC_SITE,
@@ -187,6 +202,7 @@ describe("UPSC/SSC change detection", () => {
     expect(result.reason).toBe("ok");
     expect(result.items).toHaveLength(extracted.items.length);
     axios.get.mockRestore();
+    clearRobotsPolicyCache();
   });
 });
 

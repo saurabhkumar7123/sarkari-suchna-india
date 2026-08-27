@@ -1,3 +1,5 @@
+"use strict";
+
 const axios = require("axios");
 const cheerio = require("cheerio");
 const crypto = require("crypto");
@@ -8,10 +10,26 @@ const {
   isSscApiSite,
   extractSscNoticeItems
 } = require("./sscNoticeChecker");
+const { evaluateRobotsAccessPolicy, MONITORING_BOT_UA } = require("./robotsAccessPolicy");
+const {
+  withHostPoliteness,
+  noteHostRateLimited,
+  noteHostCrawlDelay
+} = require("./hostPoliteness");
+const {
+  classifyMonitoringHttpError,
+  createMonitoringFetchError
+} = require("./monitoringFetchErrors");
 
 const SOURCE_METHODS = Object.freeze({
   HTML_SELECTOR: "HTML_SELECTOR",
   SSC_JSON: "SSC_JSON"
+});
+
+const FETCH_TIMEOUT_MS = 25000;
+const FETCH_HEADERS = Object.freeze({
+  "User-Agent": MONITORING_BOT_UA,
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 });
 
 function resolveSourceMethod(site) {
@@ -111,15 +129,44 @@ function absolutizeLink(siteUrl, href) {
   }
 }
 
-async function fetchHtml(url) {
-  const { data } = await axios.get(url, {
-    timeout: 25000,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+async function axiosGetReadOnly(url, axiosConfig = {}) {
+  try {
+    const response = await axios.get(url, {
+      timeout: FETCH_TIMEOUT_MS,
+      maxRedirects: 5,
+      headers: { ...FETCH_HEADERS, ...(axiosConfig.headers || {}) },
+      ...axiosConfig,
+      method: "GET"
+    });
+    return response;
+  } catch (err) {
+    const classification = classifyMonitoringHttpError(err);
+    if (classification.rateLimited) {
+      noteHostRateLimited(
+        url,
+        classification.retryAfter ||
+          (err.response && err.response.headers && err.response.headers["retry-after"])
+      );
     }
-  });
-  return typeof data === "string" ? data : String(data || "");
+    throw createMonitoringFetchError(classification, err);
+  }
+}
+
+async function fetchHtml(url, options = {}) {
+  const crawlDelayMs = Number(options.crawlDelayMs) || 0;
+  return withHostPoliteness(
+    url,
+    async () => {
+      const response = await axiosGetReadOnly(url, {
+        responseType: "text",
+        transformResponse: [(data) => data],
+        validateStatus: (status) => status >= 200 && status < 300
+      });
+      const data = response.data;
+      return typeof data === "string" ? data : String(data || "");
+    },
+    { crawlDelayMs }
+  );
 }
 
 function extractLatestItems(html, site) {
@@ -160,11 +207,45 @@ async function extractSourceItems(site) {
   const method = resolveSourceMethod(site);
   if (method === SOURCE_METHODS.SSC_JSON) {
     logger.info("updates: using SSC API handler", { siteId: site.id, name: site.name, method });
-    const extracted = await extractSscNoticeItems(site, { buildSignature, normalizeText });
-    return extracted ? { method, ...extracted } : { method, invalid: true, reason: "selector_miss" };
+    const robots = await evaluateRobotsAccessPolicy(site.url);
+    if (!robots.allowed) {
+      return {
+        method,
+        invalid: true,
+        reason: "robots_denied",
+        policySkip: true,
+        robots
+      };
+    }
+    noteHostCrawlDelay(site.url, robots.crawlDelayMs || 0);
+    const extracted = await withHostPoliteness(
+      site.url,
+      async () => extractSscNoticeItems(site, { buildSignature, normalizeText }),
+      { crawlDelayMs: robots.crawlDelayMs || 0 }
+    );
+    return extracted
+      ? { method, ...extracted }
+      : { method, invalid: true, reason: "selector_miss" };
   }
 
-  const html = await fetchHtml(site.url);
+  const robots = await evaluateRobotsAccessPolicy(site.url);
+  if (!robots.allowed) {
+    logger.warn("updates: skip fetch; robots/policy denied", {
+      siteId: site.id,
+      url: site.url,
+      reason: robots.reason
+    });
+    return {
+      method,
+      invalid: true,
+      reason: "robots_denied",
+      policySkip: true,
+      robots
+    };
+  }
+  noteHostCrawlDelay(site.url, robots.crawlDelayMs || 0);
+
+  const html = await fetchHtml(site.url, { crawlDelayMs: robots.crawlDelayMs || 0 });
   logger.info("updates: fetched html", { siteId: site.id, bytes: html.length, method });
   const extracted = extractLatestItems(html, site);
   return extracted ? { method, ...extracted } : { method, invalid: true, reason: "selector_miss" };
@@ -180,52 +261,80 @@ async function checkSite(site) {
     hasBaseline: Boolean(String(site.lastContent || "").trim())
   });
 
-  const extracted = await extractSourceItems(site);
-  if (!extracted) {
-    return { changed: false, reason: "selector_miss", invalid: true };
-  }
-  if (extracted.invalid) {
-    return { changed: false, invalid: true, reason: extracted.reason };
-  }
+  try {
+    const extracted = await extractSourceItems(site);
+    if (!extracted) {
+      return { changed: false, reason: "selector_miss", invalid: true };
+    }
+    if (extracted.invalid) {
+      return {
+        changed: false,
+        invalid: true,
+        reason: extracted.reason,
+        policySkip: Boolean(extracted.policySkip),
+        robots: extracted.robots || null
+      };
+    }
 
-  const items = extracted.items || [];
-  const baseline = normalizeStoredBaseline(site.lastContent);
-  const minTitleLen = parseInt(process.env.UPDATE_MIN_TITLE_LENGTH || "8", 10);
+    const items = extracted.items || [];
+    const baseline = normalizeStoredBaseline(site.lastContent);
+    const minTitleLen = parseInt(process.env.UPDATE_MIN_TITLE_LENGTH || "8", 10);
 
-  if (!baseline.hasBaseline) {
-    const top = items[0];
+    if (!baseline.hasBaseline) {
+      const top = items[0];
+      return {
+        changed: false,
+        shouldNotify: false,
+        establishBaseline: true,
+        baselineFingerprint: top.fingerprint,
+        reason: "baseline_established",
+        items: []
+      };
+    }
+
+    const topItem = items[0];
+    if (itemMatchesBaseline(topItem.fingerprint, baseline)) {
+      return {
+        changed: false,
+        shouldNotify: false,
+        reason: "no_change",
+        baselineFingerprint: baseline.fingerprint,
+        items: []
+      };
+    }
+
+    const changedItems = items.filter((item) => !itemMatchesBaseline(item.fingerprint, baseline));
+    const filteredItems = changedItems.filter((item) => normalizeText(item.title).length >= minTitleLen);
+    const shouldNotify = filteredItems.length > 0;
+
     return {
-      changed: false,
-      shouldNotify: false,
-      establishBaseline: true,
-      baselineFingerprint: top.fingerprint,
-      reason: "baseline_established",
-      items: []
+      changed: true,
+      shouldNotify,
+      reason: !filteredItems.length ? "title_too_short" : "ok",
+      baselineFingerprint: topItem.fingerprint,
+      items: filteredItems
     };
+  } catch (err) {
+    if (err && err.code === "MONITORING_FETCH_ERROR" && err.classification) {
+      const classification = err.classification;
+      logger.warn("updates: classified fetch failure", {
+        siteId: site && site.id,
+        kind: classification.kind,
+        status: classification.status,
+        rateLimited: classification.rateLimited
+      });
+      return {
+        changed: false,
+        invalid: true,
+        reason: classification.kind,
+        httpStatus: classification.status,
+        rateLimited: classification.rateLimited === true,
+        retryable: classification.retryable === true,
+        policySkip: classification.kind === "access_denied"
+      };
+    }
+    throw err;
   }
-
-  const topItem = items[0];
-  if (itemMatchesBaseline(topItem.fingerprint, baseline)) {
-    return {
-      changed: false,
-      shouldNotify: false,
-      reason: "no_change",
-      baselineFingerprint: baseline.fingerprint,
-      items: []
-    };
-  }
-
-  const changedItems = items.filter((item) => !itemMatchesBaseline(item.fingerprint, baseline));
-  const filteredItems = changedItems.filter((item) => normalizeText(item.title).length >= minTitleLen);
-  const shouldNotify = filteredItems.length > 0;
-
-  return {
-    changed: true,
-    shouldNotify,
-    reason: !filteredItems.length ? "title_too_short" : "ok",
-    baselineFingerprint: topItem.fingerprint,
-    items: filteredItems
-  };
 }
 
 module.exports = {
@@ -238,5 +347,7 @@ module.exports = {
   resolveSourceMethod,
   extractLatestItems,
   extractSourceItems,
-  isUpscOfficialSite
+  isUpscOfficialSite,
+  fetchHtml,
+  axiosGetReadOnly
 };
