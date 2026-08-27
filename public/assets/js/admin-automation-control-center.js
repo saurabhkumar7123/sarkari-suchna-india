@@ -24,7 +24,9 @@
     settings: FALLBACK_SETTINGS,
     selectedRecruitmentId: null,
     selectedReviewId: null,
-    workflowSelected: new Set()
+    workflowSelected: new Set(),
+    lastVerifyReport: null,
+    detailSourceId: null
   };
 
   const LEGACY_HASH_REDIRECTS = {
@@ -421,18 +423,30 @@
     empty.hidden = rows.length > 0;
     body.innerHTML = rows.map((source) => {
       const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
+      const stateLabel = source.operationalState || (source.enabled ? "ACTIVE" : "DISABLED");
       return `
       <tr>
-        <td><strong>${escapeHtml(source.name)}</strong><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
-        <td><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
-        <td>${escapeHtml(source.officialDomain || "-")}</td>
-        <td><small>${escapeHtml(monitoringUrl || "-")}</small></td>
-        <td><code>${escapeHtml(source.selector || "body")}</code></td>
-        <td><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
-        <td>${escapeHtml(source.lastVisit || "-")}</td>
         <td>
+          <strong>${escapeHtml(source.name)}</strong><br>
+          <small>${escapeHtml(source.officialDomain || "-")}</small>
+        </td>
+        <td class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></td>
+        <td>${escapeHtml(source.purposeLabel || source.purpose || "—")}</td>
+        <td><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
+        <td><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
+        <td><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
+        <td>
+          <small>Checked: ${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</small><br>
+          <small>OK: ${escapeHtml(source.lastSuccessfulCheck || "-")}</small><br>
+          <small>Change: ${escapeHtml(source.lastDetectedChange || "-")}</small>
+        </td>
+        <td>${escapeHtml(source.failCount ?? 0)}</td>
+        <td class="acc-source-actions">
+          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="view">View</button>
           <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="delete">Delete</button>
+          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="verify">Verify</button>
+          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="${source.enabled ? "disable" : "enable"}">${source.enabled ? "Disable" : "Enable"}</button>
+          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="run-check">Run Check</button>
         </td>
       </tr>`;
     }).join("");
@@ -455,19 +469,59 @@
     }
   }
 
+  function updateExactUrlPreview() {
+    const url = (qs("accFormMonitoringUrl")?.value || "").trim();
+    const el = qs("accExactUrlPreview");
+    if (!el) return;
+    el.textContent = url ? `Exact URL preview: ${url}` : "Exact URL preview: —";
+  }
+
+  function renderVerifyReport(report) {
+    const host = qs("accVerifyReport");
+    if (!host) return;
+    state.lastVerifyReport = report || null;
+    if (!report) {
+      host.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    const checks = report.checks || {};
+    const rows = Object.keys(checks).map((key) => {
+      const item = checks[key] || {};
+      const mark = item.status === "PASS" ? "✓" : item.status === "BLOCKED" ? "✕" : "✕";
+      return `<li><strong>${mark} ${escapeHtml(key)}</strong>: ${escapeHtml(item.status || "-")} — ${escapeHtml(item.detail || "")}</li>`;
+    }).join("");
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="acc-verify-report__head ${report.safeToActivate ? "is-pass" : "is-fail"}">
+        <strong>Safe to activate: ${report.safeToActivate ? "YES" : "NO"}</strong>
+        <span>${escapeHtml(report.message || "")}</span>
+      </div>
+      <p><strong>Exact URL:</strong> ${escapeHtml(report.exactUrl || "")}</p>
+      <ul>${rows}</ul>
+      ${report.preview ? `<p><strong>Extracted preview:</strong> ${escapeHtml(report.preview)}</p>` : ""}
+      ${Array.isArray(report.reasons) && report.reasons.length ? `<p><strong>Block reasons:</strong> ${escapeHtml(report.reasons.join(" · "))}</p>` : ""}
+    `;
+  }
+
   function openSourceDialog(id) {
     const source = state.sources.find((item) => String(item.id) === String(id));
-    setText("accSourceDialogTitle", source ? "Edit Source" : "Add Source");
+    setText("accSourceDialogTitle", source ? "Edit Official Monitoring Source" : "Add Official Monitoring Source");
     qs("accSourceId").value = source?.id || "";
     qs("accFormSourceName").value = source?.name || "";
     qs("accFormSourcePriority").value = source?.priority || "P1";
     const monitoringUrl = source?.monitoringUrl || source?.notificationUrl || "";
     qs("accFormMonitoringUrl").value = monitoringUrl;
     qs("accFormSelector").value = source?.selector || "body";
+    if (qs("accFormPurpose")) qs("accFormPurpose").value = source?.purpose || "";
     qs("accFormSourceDomain").value = source?.officialDomain || deriveDomainFromUrl(monitoringUrl);
     qs("accFormHealthStatus").value = source?.healthStatus || (source ? "healthy" : "n/a until saved");
-    qs("accFormEnabled").checked = source ? source.enabled !== false : true;
+    if (qs("accFormEnabled")) {
+      qs("accFormEnabled").value = source ? (source.enabled ? "true" : "false") : "false";
+    }
     qs("accDeleteSourceBtn").hidden = !source;
+    renderVerifyReport(null);
+    updateExactUrlPreview();
     qs("accSourceDialog")?.showModal();
   }
 
@@ -475,17 +529,121 @@
     qs("accSourceDialog")?.close();
   }
 
+  function openSourceDetail(id) {
+    const source = state.sources.find((item) => String(item.id) === String(id));
+    if (!source) return;
+    state.detailSourceId = source.id;
+    const body = qs("accSourceDetailBody");
+    const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
+    if (body) {
+      body.innerHTML = `
+        <section>
+          <h4>Source</h4>
+          <dl class="acc-detail-dl">
+            <div><dt>Name</dt><dd>${escapeHtml(source.name || "-")}</dd></div>
+            <div><dt>Official host</dt><dd>${escapeHtml(source.officialDomain || "-")}</dd></div>
+            <div><dt>Exact URL</dt><dd class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></dd></div>
+            <div><dt>Purpose</dt><dd>${escapeHtml(source.purposeLabel || source.purpose || "—")}</dd></div>
+            <div><dt>Priority</dt><dd>${escapeHtml(source.priority || "P1")}</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h4>Monitoring</h4>
+          <dl class="acc-detail-dl">
+            <div><dt>CSS selector</dt><dd><code>${escapeHtml(source.selector || "body")}</code></dd></div>
+            <div><dt>Active</dt><dd>${source.enabled ? "On" : "Off"}</dd></div>
+            <div><dt>State</dt><dd>${escapeHtml(source.operationalState || "-")}</dd></div>
+            <div><dt>Last check</dt><dd>${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</dd></div>
+            <div><dt>Last successful check</dt><dd>${escapeHtml(source.lastSuccessfulCheck || "-")}</dd></div>
+            <div><dt>Next eligible check</dt><dd>${escapeHtml(source.nextEligibleCheck || "-")}</dd></div>
+            <div><dt>Health</dt><dd>${escapeHtml(formatHealthLabel(source.healthStatus))}</dd></div>
+            <div><dt>Failure count</dt><dd>${escapeHtml(source.failCount ?? 0)}</dd></div>
+            <div><dt>Selector status</dt><dd>${escapeHtml(source.selectorStatus || "configured")}</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h4>Policy</h4>
+          <p class="acc-section__sub">Policy is evaluated on Verify / Enable. There is no force-activate or robots bypass.</p>
+          <dl class="acc-detail-dl">
+            <div><dt>Official host validation</dt><dd>Enforced on save/activate</dd></div>
+            <div><dt>robots / access</dt><dd>Fail-closed (use Verify for live status)</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h4>Activity</h4>
+          <dl class="acc-detail-dl">
+            <div><dt>Latest check</dt><dd>${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</dd></div>
+            <div><dt>Latest detection</dt><dd>${escapeHtml(source.lastDetectedChange || "-")}</dd></div>
+            <div><dt>Latest error signal</dt><dd>${source.broken ? `Broken / fail count ${escapeHtml(source.failCount ?? 0)}` : "None recorded"}</dd></div>
+          </dl>
+        </section>
+      `;
+    }
+    const toggle = qs("accDetailToggleBtn");
+    if (toggle) toggle.textContent = source.enabled ? "Disable" : "Enable";
+    qs("accSourceDetailDialog")?.showModal();
+  }
+
+  function closeSourceDetail() {
+    state.detailSourceId = null;
+    qs("accSourceDetailDialog")?.close();
+  }
+
+  async function verifyFromDialog() {
+    const monitoringUrl = (qs("accFormMonitoringUrl")?.value || "").trim();
+    const selector = (qs("accFormSelector")?.value || "").trim() || "body";
+    const id = qs("accSourceId")?.value;
+    const report = await apiFetch("/api/admin/automation-control-center/sources/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        monitoringUrl,
+        selector,
+        excludeId: id || undefined,
+        checkDuplicates: true
+      })
+    });
+    renderVerifyReport(report);
+    if (report.safeToActivate) toastSuccess("Verification passed.");
+    else toastError(report.message || "Verification failed.");
+    return report;
+  }
+
+  async function openOfficialSiteFromDialog() {
+    const url = (qs("accFormMonitoringUrl")?.value || "").trim();
+    const domain = deriveDomainFromUrl(url) || (qs("accFormSourceDomain")?.value || "").trim();
+    if (!domain) {
+      toastError("Enter a monitoring URL first so the official domain can be derived.");
+      return;
+    }
+    const protocol = url.startsWith("http://") ? "http:" : "https:";
+    window.open(`${protocol}//${domain}/`, "_blank", "noopener,noreferrer");
+  }
+
   async function saveSourceFromDialog(event) {
     event.preventDefault();
     const id = qs("accSourceId").value;
     const monitoringUrl = qs("accFormMonitoringUrl").value.trim();
+    const enabled = qs("accFormEnabled")?.value === "true";
+    if (enabled) {
+      const report = state.lastVerifyReport;
+      const sameUrl = report && report.exactUrl === monitoringUrl;
+      if (!report || !report.safeToActivate || !sameUrl) {
+        const fresh = await verifyFromDialog();
+        if (!fresh.safeToActivate) {
+          toastError(fresh.message || "Cannot activate: verification failed.");
+          return;
+        }
+      }
+    }
     const payload = {
       name: qs("accFormSourceName").value.trim(),
       priority: qs("accFormSourcePriority").value,
       monitoringUrl,
       notificationUrl: monitoringUrl,
       selector: qs("accFormSelector").value.trim() || "body",
-      enabled: qs("accFormEnabled").checked
+      purpose: qs("accFormPurpose")?.value || "",
+      enabled
     };
     try {
       await apiFetch(
@@ -513,6 +671,41 @@
     renderAll();
     closeSourceDialog();
     toastSuccess("Source removed.");
+  }
+
+  async function verifySourceById(id) {
+    const report = await apiFetch(
+      `/api/admin/automation-control-center/sources/${encodeURIComponent(id)}/verify`,
+      { method: "POST" }
+    );
+    openSourceDialog(id);
+    renderVerifyReport(report);
+    if (report.safeToActivate) toastSuccess("Verification passed.");
+    else toastError(report.message || "Verification failed.");
+  }
+
+  async function toggleSourceEnabled(id, enable) {
+    const path = enable ? "enable" : "disable";
+    await apiFetch(`/api/admin/automation-control-center/sources/${encodeURIComponent(id)}/${path}`, {
+      method: "POST"
+    });
+    await loadSnapshot();
+    renderAll();
+    if (state.detailSourceId && String(state.detailSourceId) === String(id)) {
+      openSourceDetail(id);
+    }
+    toastSuccess(enable ? "Source enabled." : "Source disabled.");
+  }
+
+  async function runSourceCheck(id) {
+    const data = await apiFetch(
+      `/api/admin/automation-control-center/sources/${encodeURIComponent(id)}/run-check`,
+      { method: "POST" }
+    );
+    await loadSnapshot();
+    renderAll();
+    const reason = data?.result?.reason || "ok";
+    toastSuccess(`Run check finished (${reason}). Exact URL: ${data?.exactUrlUsed || ""}`);
   }
 
   function renderRecruitments() {
@@ -855,21 +1048,65 @@
       if (qs("accFormSourceDomain")) {
         qs("accFormSourceDomain").value = deriveDomainFromUrl(event.target.value);
       }
+      updateExactUrlPreview();
     });
     qs("accAddSourceBtn")?.addEventListener("click", () => openSourceDialog());
     qs("accCloseSourceDialog")?.addEventListener("click", closeSourceDialog);
+    qs("accCloseSourceDetailDialog")?.addEventListener("click", closeSourceDetail);
+    qs("accOpenOfficialSiteBtn")?.addEventListener("click", () => {
+      openOfficialSiteFromDialog().catch((err) => toastError(err.message || "Open site failed"));
+    });
+    qs("accVerifySourceBtn")?.addEventListener("click", () => {
+      verifyFromDialog().catch((err) => toastError(err.message || "Verify failed"));
+    });
     qs("accSourceForm")?.addEventListener("submit", (event) => {
       saveSourceFromDialog(event).catch((err) => toastError(err.message || "Save failed"));
     });
     qs("accDeleteSourceBtn")?.addEventListener("click", () => {
       deleteCurrentSource().catch((err) => toastError(err.message || "Delete failed"));
     });
+    qs("accDetailEditBtn")?.addEventListener("click", () => {
+      const id = state.detailSourceId;
+      closeSourceDetail();
+      if (id) openSourceDialog(id);
+    });
+    qs("accDetailVerifyBtn")?.addEventListener("click", () => {
+      const id = state.detailSourceId;
+      if (!id) return;
+      verifySourceById(id).catch((err) => toastError(err.message || "Verify failed"));
+    });
+    qs("accDetailRunCheckBtn")?.addEventListener("click", () => {
+      const id = state.detailSourceId;
+      if (!id) return;
+      runSourceCheck(id).catch((err) => toastError(err.message || "Run check failed"));
+    });
+    qs("accDetailToggleBtn")?.addEventListener("click", () => {
+      const id = state.detailSourceId;
+      const source = state.sources.find((item) => String(item.id) === String(id));
+      if (!id || !source) return;
+      toggleSourceEnabled(id, !source.enabled).catch((err) => toastError(err.message || "Toggle failed"));
+    });
     qs("accSourceRows")?.addEventListener("click", (event) => {
       const button = event.target.closest("button[data-source-id]");
       if (!button) return;
-      if (button.getAttribute("data-action") === "edit") openSourceDialog(button.getAttribute("data-source-id"));
-      if (button.getAttribute("data-action") === "delete") {
-        qs("accSourceId").value = button.getAttribute("data-source-id");
+      const id = button.getAttribute("data-source-id");
+      const action = button.getAttribute("data-action");
+      if (action === "view") openSourceDetail(id);
+      if (action === "edit") openSourceDialog(id);
+      if (action === "verify") {
+        verifySourceById(id).catch((err) => toastError(err.message || "Verify failed"));
+      }
+      if (action === "enable") {
+        toggleSourceEnabled(id, true).catch((err) => toastError(err.message || "Enable failed"));
+      }
+      if (action === "disable") {
+        toggleSourceEnabled(id, false).catch((err) => toastError(err.message || "Disable failed"));
+      }
+      if (action === "run-check") {
+        runSourceCheck(id).catch((err) => toastError(err.message || "Run check failed"));
+      }
+      if (action === "delete") {
+        qs("accSourceId").value = id;
         deleteCurrentSource().catch((err) => toastError(err.message || "Delete failed"));
       }
     });

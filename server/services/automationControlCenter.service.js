@@ -8,9 +8,21 @@ const {
   deleteSite,
   fetchRecentUpdates,
   restoreSite,
-  disableSite
+  disableSite,
+  markSiteChecked,
+  saveSiteBaseline
 } = require("./updates/updates.repository");
 const { assertMonitoringSiteWritable } = require("./updates/monitoringSiteWriteGuard");
+const {
+  verifyMonitoringSource,
+  assertSafeToActivateMonitoringSource,
+  normalizePurpose,
+  purposeLabel
+} = require("./updates/monitoringSourceVerify");
+const { checkSite } = require("./updates/siteChecker");
+const { isApprovedOfficialMonitoringUrl } = require(
+  "../lib/contentIntelligence/sourceIntelligence/officialDomains"
+);
 const recruitmentService = require("./recruitment.service");
 const generatorDraftService = require("./generatorDraft.service");
 const recruitmentReviewService = require("./recruitmentReview.service");
@@ -263,6 +275,19 @@ function normalizeSourceRow(site) {
   const healthStatus = broken ? "offline" : active ? "healthy" : "warning";
   const selector = String(site.selector || "body");
   const monitoringUrl = String(site.url || "");
+  const purpose = normalizePurpose(site.purpose);
+  const failCount = Number(site.failCount || 0);
+  let operationalState = "DRAFT";
+  if (broken) {
+    operationalState = failCount > 0 ? "ERROR" : "BLOCKED";
+  } else if (active) {
+    operationalState = "ACTIVE";
+  } else if (site.lastCheckedAt) {
+    operationalState = "DISABLED";
+  } else {
+    operationalState = "DRAFT";
+  }
+
   return {
     id: Number(site.id),
     name: String(site.name || ""),
@@ -271,12 +296,20 @@ function normalizeSourceRow(site) {
     monitoringUrl,
     notificationUrl: monitoringUrl,
     selector,
+    purpose,
+    purposeLabel: purposeLabel(purpose) || "",
     healthStatus,
     healthStatusSource: "derived",
+    operationalState,
     enabled: active,
-    failCount: Number(site.failCount || 0),
+    failCount,
     broken,
     lastVisit: site.lastCheckedAt || null,
+    lastCheckedAt: site.lastCheckedAt || null,
+    lastSuccessfulCheck: broken ? null : site.lastCheckedAt || null,
+    lastDetectedChange: site.lastAlertAt || null,
+    nextEligibleCheck: site.nextRetryAt || null,
+    selectorStatus: selector ? "configured" : "missing",
     version: Number(site.version || 1)
   };
 }
@@ -308,7 +341,16 @@ async function listSources(query = {}) {
       if (row.enabled !== expected) return false;
     }
     if (!search) return true;
-    return [row.name, row.officialDomain, row.monitoringUrl || row.notificationUrl, row.selector, row.healthStatus]
+    return [
+      row.name,
+      row.officialDomain,
+      row.monitoringUrl || row.notificationUrl,
+      row.selector,
+      row.purpose,
+      row.purposeLabel,
+      row.healthStatus,
+      row.operationalState
+    ]
       .join(" ")
       .toLowerCase()
       .includes(search);
@@ -342,6 +384,7 @@ function normalizeSourceInput(input = {}) {
     2000
   );
   const selector = normalizeString(input.selector, 255) || "body";
+  const purpose = normalizePurpose(input.purpose);
   if (!name) {
     const err = new Error("name is required");
     err.statusCode = 400;
@@ -352,12 +395,19 @@ function normalizeSourceInput(input = {}) {
     err.statusCode = 400;
     throw err;
   }
+  if (input.purpose != null && String(input.purpose).trim() && !purpose) {
+    const err = new Error("Invalid monitoring purpose.");
+    err.statusCode = 400;
+    throw err;
+  }
   return {
     name,
     notificationUrl,
     selector,
+    purpose: purpose || null,
     priorityNumber: Math.max(1, Math.min(4, Number(String(input.priority || "P1").replace(/^P/i, "")) + 1 || 2)),
-    enabled: input.enabled !== false
+    // Opt-in activation: new sources stay inactive until admin verifies + enables.
+    enabled: input.enabled === true
   };
 }
 
@@ -367,11 +417,19 @@ async function createSource(input = {}) {
     url: normalized.notificationUrl,
     requireRobotsAllow: normalized.enabled === true
   });
+  if (normalized.enabled) {
+    await assertSafeToActivateMonitoringSource({
+      url: normalized.notificationUrl,
+      selector: normalized.selector,
+      checkDuplicates: false
+    });
+  }
   const id = await createSite({
     name: normalized.name,
     url: normalized.notificationUrl,
     selector: normalized.selector,
-    priority: normalized.priorityNumber
+    priority: normalized.priorityNumber,
+    purpose: normalized.purpose
   });
   if (!normalized.enabled) {
     await disableSite(id);
@@ -403,22 +461,34 @@ async function updateSource(id, input = {}) {
             ? input.url
             : existing.url,
     selector: input.selector !== undefined ? input.selector : existing.selector,
+    purpose: input.purpose !== undefined ? input.purpose : existing.purpose,
     priority: input.priority !== undefined ? input.priority : `P${Math.max(0, Number(existing.priority || 1) - 1)}`,
-    enabled: input.enabled !== undefined ? input.enabled : Number(existing.active) === 1
+    enabled: input.enabled !== undefined ? input.enabled === true : Number(existing.active) === 1
   });
   const wasActive = Number(existing.active) === 1;
   const willEnable = merged.enabled === true;
+  const urlChanged = String(merged.notificationUrl) !== String(existing.url || "");
+  const selectorChanged = String(merged.selector) !== String(existing.selector || "body");
   await assertMonitoringSiteWritable({
     url: merged.notificationUrl,
     excludeId: sourceId,
     // Fail-closed robots when enabling or changing URL while active
     requireRobotsAllow: willEnable
   });
+  if (willEnable && (!wasActive || urlChanged || selectorChanged)) {
+    await assertSafeToActivateMonitoringSource({
+      url: merged.notificationUrl,
+      selector: merged.selector,
+      excludeId: sourceId,
+      checkDuplicates: false
+    });
+  }
   await updateSite(sourceId, {
     name: merged.name,
     url: merged.notificationUrl,
     selector: merged.selector,
-    priority: merged.priorityNumber
+    priority: merged.priorityNumber,
+    purpose: merged.purpose
   });
   if (willEnable && !wasActive) {
     await restoreSite(sourceId);
@@ -426,6 +496,95 @@ async function updateSource(id, input = {}) {
     await disableSite(sourceId);
   }
   return getSourceById(sourceId);
+}
+
+async function verifySourceInput(input = {}) {
+  return verifyMonitoringSource({
+    url: input.monitoringUrl || input.notificationUrl || input.url,
+    selector: input.selector || "body",
+    excludeId: input.excludeId != null ? Number(input.excludeId) : null,
+    checkDuplicates: input.checkDuplicates !== false
+  });
+}
+
+async function verifySourceById(id) {
+  const source = await getSourceById(id);
+  return verifyMonitoringSource({
+    url: source.monitoringUrl,
+    selector: source.selector,
+    excludeId: source.id,
+    checkDuplicates: true
+  });
+}
+
+async function setSourceEnabled(id, enabled) {
+  return updateSource(id, { enabled: enabled === true });
+}
+
+/**
+ * Manual single-source check: GET exact configured URL only.
+ * Does not crawl, discover, or activate continuous monitoring flags.
+ */
+async function runSourceCheck(id) {
+  const sourceId = parseInt(String(id), 10);
+  if (!Number.isInteger(sourceId) || sourceId <= 0) {
+    const err = new Error("Invalid source id");
+    err.statusCode = 400;
+    throw err;
+  }
+  const row = await getSiteById(sourceId);
+  if (!row) {
+    const err = new Error("Source not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  if (Number(row.active) !== 1) {
+    const err = new Error("Disabled source is not eligible for monitoring.");
+    err.statusCode = 400;
+    err.code = "MONITORING_SOURCE_DISABLED";
+    throw err;
+  }
+  if (!isApprovedOfficialMonitoringUrl(row.url)) {
+    const err = new Error("Monitoring URL host is not an approved official source.");
+    err.statusCode = 400;
+    err.code = "MONITORING_URL_NOT_OFFICIAL";
+    throw err;
+  }
+
+  const site = {
+    id: row.id,
+    name: row.name,
+    url: row.url,
+    selector: row.selector,
+    lastContent: row.lastContent,
+    lastAlertAt: row.lastAlertAt,
+    failCount: row.failCount,
+    broken: row.broken,
+    priority: row.priority,
+    active: row.active
+  };
+
+  const result = await checkSite(site);
+  if (result && result.establishBaseline) {
+    await saveSiteBaseline(sourceId, result.baselineFingerprint || "");
+  } else {
+    await markSiteChecked(sourceId);
+  }
+
+  return {
+    sourceId,
+    monitoringUrl: row.url,
+    exactUrlUsed: row.url,
+    result: {
+      changed: Boolean(result && result.changed),
+      invalid: Boolean(result && result.invalid),
+      reason: (result && result.reason) || null,
+      policySkip: Boolean(result && result.policySkip),
+      httpStatus: (result && result.httpStatus) || null,
+      establishBaseline: Boolean(result && result.establishBaseline),
+      shouldNotify: Boolean(result && result.shouldNotify)
+    }
+  };
 }
 
 async function deleteSourceById(id) {
@@ -615,6 +774,10 @@ module.exports = {
   createSource,
   updateSource,
   deleteSourceById,
+  verifySourceInput,
+  verifySourceById,
+  setSourceEnabled,
+  runSourceCheck,
   getSettings,
   saveSettings,
   getDashboardSummary,

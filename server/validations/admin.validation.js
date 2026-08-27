@@ -683,8 +683,37 @@ const automationSourceUpsertSchema = Joi.object({
   notificationUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
   url: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
   selector: Joi.string().trim().max(255).allow("", null).optional(),
+  purpose: Joi.string()
+    .trim()
+    .lowercase()
+    .valid(
+      "recruitment",
+      "notice",
+      "admit_card",
+      "result",
+      "answer_key",
+      "examination",
+      "other",
+      ""
+    )
+    .allow(null)
+    .optional(),
   priority: Joi.string().trim().uppercase().valid("P0", "P1", "P2", "P3").optional(),
   enabled: Joi.boolean().optional()
+})
+  .or("monitoringUrl", "notificationUrl", "url")
+  .required()
+  .unknown(false);
+
+const automationSourceVerifySchema = Joi.object({
+  monitoringUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
+  notificationUrl: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
+  url: Joi.string().trim().uri({ scheme: ["http", "https"] }).optional(),
+  selector: Joi.string().trim().max(255).allow("", null).optional(),
+  excludeId: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim())
+    .optional(),
+  checkDuplicates: Joi.boolean().optional()
 })
   .or("monitoringUrl", "notificationUrl", "url")
   .required()
@@ -767,6 +796,7 @@ module.exports = {
   pageBulkRegenerateSchema,
   automationSourceListQuerySchema,
   automationSourceUpsertSchema,
+  automationSourceVerifySchema,
   automationSettingsUpdateSchema,
   automationWorkflowListQuerySchema,
   automationAuditListQuerySchema,

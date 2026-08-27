@@ -8,6 +8,7 @@ const controller = require("../../controllers/admin/automationControlCenter.cont
 const {
   automationSourceListQuerySchema,
   automationSourceUpsertSchema,
+  automationSourceVerifySchema,
   automationSettingsUpdateSchema,
   automationWorkflowListQuerySchema,
   automationAuditListQuerySchema,
@@ -26,6 +27,12 @@ router.get(
   validateJoi(automationSourceListQuerySchema, "query"),
   asyncHandler(controller.listSourcesHandler)
 );
+router.post(
+  "/automation-control-center/sources/verify",
+  adminSensitiveLimiter,
+  validateJoi(automationSourceVerifySchema, "body"),
+  asyncHandler(controller.verifySourceHandler)
+);
 router.get("/automation-control-center/sources/:id", asyncHandler(controller.getSourceHandler));
 router.post(
   "/automation-control-center/sources",
@@ -38,6 +45,26 @@ router.put(
   adminSensitiveLimiter,
   validateJoi(automationSourceUpsertSchema, "body"),
   asyncHandler(controller.updateSourceHandler)
+);
+router.post(
+  "/automation-control-center/sources/:id/verify",
+  adminSensitiveLimiter,
+  asyncHandler(controller.verifySourceByIdHandler)
+);
+router.post(
+  "/automation-control-center/sources/:id/enable",
+  adminSensitiveLimiter,
+  asyncHandler(controller.enableSourceHandler)
+);
+router.post(
+  "/automation-control-center/sources/:id/disable",
+  adminSensitiveLimiter,
+  asyncHandler(controller.disableSourceHandler)
+);
+router.post(
+  "/automation-control-center/sources/:id/run-check",
+  adminSensitiveLimiter,
+  asyncHandler(controller.runSourceCheckHandler)
 );
 router.delete(
   "/automation-control-center/sources/:id",

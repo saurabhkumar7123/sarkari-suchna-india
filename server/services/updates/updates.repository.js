@@ -51,6 +51,7 @@ async function ensureTables() {
   await ensureColumn("next_retry_at", "DATETIME NULL");
   await ensureColumn("pre_disable_warned", "TINYINT(1) NOT NULL DEFAULT 0");
   await ensureColumn("restored_at", "DATETIME NULL");
+  await ensureColumn("purpose", "VARCHAR(64) NULL");
   await ensureLastCheckedAtColumn();
 }
 
@@ -84,14 +85,20 @@ async function ensureLastCheckedAtColumn() {
   }
 }
 
+async function ensurePurposeColumn() {
+  await ensureColumn("purpose", "VARCHAR(64) NULL");
+}
+
 async function fetchSites() {
   await ensureLastCheckedAtColumn();
+  await ensurePurposeColumn();
   const [rows] = await db.query(
     `SELECT
       id,
       name,
       url,
       selector,
+      purpose,
       last_content AS lastContent,
       last_alert_at AS lastAlertAt,
       fail_count AS failCount,
@@ -279,18 +286,20 @@ async function cleanupOldUpdates(days = 30) {
   return result && result.affectedRows ? result.affectedRows : 0;
 }
 
-async function createSite({ name, url, selector, priority = 1 }) {
+async function createSite({ name, url, selector, priority = 1, purpose = null }) {
+  await ensurePurposeColumn();
   const [result] = await db.query(
-    "INSERT INTO monitored_sites (name, url, selector, priority, is_active) VALUES (?, ?, ?, ?, 1)",
-    [name, url, selector, priority]
+    "INSERT INTO monitored_sites (name, url, selector, priority, purpose, is_active) VALUES (?, ?, ?, ?, ?, 1)",
+    [name, url, selector, priority, purpose || null]
   );
   return result.insertId;
 }
 
 async function getSiteById(siteId) {
   await ensureLastCheckedAtColumn();
+  await ensurePurposeColumn();
   const [rows] = await db.query(
-    `SELECT id, name, url, selector, last_content AS lastContent, last_alert_at AS lastAlertAt,
+    `SELECT id, name, url, selector, purpose, last_content AS lastContent, last_alert_at AS lastAlertAt,
             fail_count AS failCount, broken, priority, is_active AS active, next_retry_at AS nextRetryAt,
             pre_disable_warned AS preDisableWarned, restored_at AS restoredAt,
             last_checked_at AS lastCheckedAt
@@ -300,7 +309,15 @@ async function getSiteById(siteId) {
   return rows[0] || null;
 }
 
-async function updateSite(siteId, { name, url, selector, priority }) {
+async function updateSite(siteId, { name, url, selector, priority, purpose }) {
+  await ensurePurposeColumn();
+  if (purpose !== undefined) {
+    await db.query(
+      "UPDATE monitored_sites SET name=?, url=?, selector=?, priority=?, purpose=? WHERE id=?",
+      [name, url, selector, priority, purpose || null, siteId]
+    );
+    return;
+  }
   await db.query(
     "UPDATE monitored_sites SET name=?, url=?, selector=?, priority=? WHERE id=?",
     [name, url, selector, priority, siteId]

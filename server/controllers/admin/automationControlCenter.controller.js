@@ -52,6 +52,36 @@ async function deleteSourceHandler(req, res) {
   res.json({ success: true, data });
 }
 
+async function verifySourceHandler(req, res) {
+  const data = await automationControlCenterService.verifySourceInput(req.body || {});
+  await logAction(req, "automation_source_verify", data.exactUrl || "");
+  res.json({ success: true, data });
+}
+
+async function verifySourceByIdHandler(req, res) {
+  const data = await automationControlCenterService.verifySourceById(req.params.id);
+  await logAction(req, "automation_source_verify", req.params.id);
+  res.json({ success: true, data });
+}
+
+async function enableSourceHandler(req, res) {
+  const data = await automationControlCenterService.setSourceEnabled(req.params.id, true);
+  await logAction(req, "automation_source_enable", req.params.id);
+  res.json({ success: true, data });
+}
+
+async function disableSourceHandler(req, res) {
+  const data = await automationControlCenterService.setSourceEnabled(req.params.id, false);
+  await logAction(req, "automation_source_disable", req.params.id);
+  res.json({ success: true, data });
+}
+
+async function runSourceCheckHandler(req, res) {
+  const data = await automationControlCenterService.runSourceCheck(req.params.id);
+  await logAction(req, "automation_source_run_check", req.params.id);
+  res.json({ success: true, data });
+}
+
 async function getSettingsHandler(_req, res) {
   const data = automationControlCenterService.getSettings();
   res.json({ success: true, data });
@@ -97,6 +127,11 @@ module.exports = {
   createSourceHandler,
   updateSourceHandler,
   deleteSourceHandler,
+  verifySourceHandler,
+  verifySourceByIdHandler,
+  enableSourceHandler,
+  disableSourceHandler,
+  runSourceCheckHandler,
   getSettingsHandler,
   updateSettingsHandler,
   getDashboardHandler,

@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=9">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=10">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Official Sources" data-acc-page="sources">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -30,7 +30,7 @@
     <div class="acc-workspace-head__copy">
       <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
       <h1 class="acc-workspace-head__title">Official sources</h1>
-      <p class="acc-workspace-head__sub">Official source registry used by automation. Full monitoring operations remain on the Monitoring workspace.</p>
+      <p class="acc-workspace-head__sub">Admin chooses the exact public official page. The bot monitors only that approved URL — no crawling, no discovery.</p>
     </div>
     <div class="acc-workspace-head__actions">
       <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
@@ -73,34 +73,35 @@
     <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
   </section>
 
-  <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health">
+  <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health purpose verify">
     <div class="acc-section__head">
       <div>
         <p class="acc-section__eyebrow">Registry</p>
         <h2 id="acc-sources-title">Official Source Manager</h2>
-        <p class="acc-section__sub">Exact-URL registry only. Misleading config fields removed — Active state uses the same enable/disable path as Monitoring.</p>
+        <p class="acc-section__sub">Paste the exact public government page you selected. Verify before activating. No force-activate or robots bypass.</p>
       </div>
       <div class="acc-section__actions">
         <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
-        <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Source</button>
+        <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Official Monitoring Source</button>
       </div>
     </div>
     <div class="acc-toolbar">
-      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Name, domain, URL, selector"></label>
+      <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Name, domain, URL, purpose, selector"></label>
       <label><span>Status</span><select id="accSourceEnabledFilter"><option value="">All</option><option value="true">Active</option><option value="false">Disabled</option></select></label>
       <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option></select></label>
     </div>
-    <div class="acc-data-table">
-      <table aria-label="Official source registry">
+    <div class="acc-data-table acc-source-table-wrap">
+      <table aria-label="Official source registry" class="acc-source-table">
         <thead>
           <tr>
-            <th>Source</th>
+            <th>Organization</th>
+            <th>Exact monitoring URL</th>
+            <th>Purpose</th>
+            <th>State</th>
+            <th>Health</th>
             <th>Priority</th>
-            <th>Domain <small>(derived)</small></th>
-            <th>Monitoring URL</th>
-            <th>CSS Selector</th>
-            <th>Health <small>(derived)</small></th>
-            <th>Last Visit</th>
+            <th>Last checked</th>
+            <th>Failures</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -116,30 +117,71 @@
   </section>
   </div>
 </div>
+
 <dialog id="accSourceDialog" class="acc-dialog">
   <form method="dialog" class="acc-dialog__surface" id="accSourceForm">
     <div class="acc-dialog__head">
-      <h3 id="accSourceDialogTitle">Add Source</h3>
+      <h3 id="accSourceDialogTitle">Add Official Monitoring Source</h3>
       <button type="button" class="acc-dialog__close" id="accCloseSourceDialog" aria-label="Close">×</button>
     </div>
     <input id="accSourceId" type="hidden">
+    <p class="acc-source-workflow-hint">
+      Open the official site → navigate to the exact public page → copy that URL here → Verify → save. Homepage is not assumed.
+    </p>
     <div class="acc-dialog__grid">
-      <label><span>Source Name</span><input id="accFormSourceName" required maxlength="160"></label>
-      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option selected>P1</option><option>P2</option><option>P3</option></select></label>
-      <label class="acc-dialog__span-2"><span>Monitoring URL (exact page the bot GETs)</span><input id="accFormMonitoringUrl" required maxlength="2000" placeholder="https://agency.gov.in/path"></label>
+      <label><span>Organization / source name</span><input id="accFormSourceName" required maxlength="160" placeholder="e.g. UPPSC"></label>
+      <label><span>Monitoring purpose</span>
+        <select id="accFormPurpose">
+          <option value="">Select purpose</option>
+          <option value="recruitment">Recruitment / Vacancy</option>
+          <option value="notice">Notification / Notice</option>
+          <option value="admit_card">Admit Card</option>
+          <option value="result">Result</option>
+          <option value="answer_key">Answer Key</option>
+          <option value="examination">Examination</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="acc-dialog__span-2"><span>Exact Monitoring URL (page the bot will GET)</span>
+        <input id="accFormMonitoringUrl" required maxlength="2000" placeholder="https://agency.gov.in/recruitment/notifications">
+      </label>
+      <div class="acc-dialog__span-2 acc-exact-url-preview" id="accExactUrlPreview" aria-live="polite">Exact URL preview: —</div>
       <label class="acc-dialog__span-2"><span>CSS Selector</span><input id="accFormSelector" required maxlength="255" placeholder="a.notice-link" value="body"></label>
-      <label><span>Official Domain</span><input id="accFormSourceDomain" maxlength="240" readonly title="Derived from Monitoring URL"></label>
-      <label><span>Health</span><input id="accFormHealthStatus" maxlength="40" readonly title="Derived from broken/active state"></label>
+      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option selected>P1</option><option>P2</option><option>P3</option></select></label>
+      <label><span>Official Domain <small>(derived)</small></span><input id="accFormSourceDomain" maxlength="240" readonly title="Derived from Monitoring URL"></label>
+      <label><span>Health <small>(derived)</small></span><input id="accFormHealthStatus" maxlength="40" readonly title="Derived from broken/active state"></label>
+      <label><span>Active</span>
+        <select id="accFormEnabled">
+          <option value="false" selected>Off — save as draft / disabled</option>
+          <option value="true">On — only after Verify passes</option>
+        </select>
+      </label>
     </div>
-    <div class="acc-dialog__checks">
-      <label><input id="accFormEnabled" type="checkbox" checked> Active (persists via Monitoring enable/disable)</label>
-    </div>
-    <p class="acc-section__sub" style="margin:0.5rem 0 0;">Official-host and robots policy are enforced server-side. Inactive sources skip robots until activated.</p>
-    <div class="acc-dialog__actions">
+    <div class="acc-dialog__actions acc-source-form-actions">
+      <button type="button" class="header-action-btn" id="accOpenOfficialSiteBtn">Open official site</button>
+      <button type="button" class="header-action-btn" id="accVerifySourceBtn">Verify URL</button>
       <button type="submit" class="header-action-btn">Save Source</button>
       <button type="button" class="header-action-btn" id="accDeleteSourceBtn">Delete</button>
     </div>
+    <div id="accVerifyReport" class="acc-verify-report" hidden></div>
+    <p class="acc-section__sub" style="margin:0.5rem 0 0;">Official-host, private-host, duplicate, robots/policy, and redirect checks are fail-closed. There is no bypass control.</p>
   </form>
+</dialog>
+
+<dialog id="accSourceDetailDialog" class="acc-dialog">
+  <div class="acc-dialog__surface">
+    <div class="acc-dialog__head">
+      <h3>Source details</h3>
+      <button type="button" class="acc-dialog__close" id="accCloseSourceDetailDialog" aria-label="Close">×</button>
+    </div>
+    <div id="accSourceDetailBody" class="acc-source-detail"></div>
+    <div class="acc-dialog__actions">
+      <button type="button" class="header-action-btn" id="accDetailEditBtn">Edit</button>
+      <button type="button" class="header-action-btn" id="accDetailVerifyBtn">Verify</button>
+      <button type="button" class="header-action-btn" id="accDetailRunCheckBtn">Run Check</button>
+      <button type="button" class="header-action-btn" id="accDetailToggleBtn">Disable</button>
+    </div>
+  </div>
 </dialog>
 
 <script src="/js/admin-csrf.js"></script>
@@ -151,6 +193,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=8"></script>
+<script src="/js/admin-automation-control-center.js?v=9"></script>
 </body>
 </html>

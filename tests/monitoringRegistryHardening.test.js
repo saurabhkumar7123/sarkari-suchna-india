@@ -8,7 +8,9 @@ jest.mock("../server/services/updates/updates.repository", () => ({
   deleteSite: jest.fn(),
   restoreSite: jest.fn(),
   disableSite: jest.fn(),
-  fetchRecentUpdates: jest.fn()
+  fetchRecentUpdates: jest.fn(),
+  markSiteChecked: jest.fn(),
+  saveSiteBaseline: jest.fn()
 }));
 
 jest.mock("../server/services/updates/robotsAccessPolicy", () => {
@@ -17,6 +19,15 @@ jest.mock("../server/services/updates/robotsAccessPolicy", () => {
     ...actual,
     evaluateRobotsAccessPolicy: jest.fn(),
     assertRobotsAllowsMonitoring: jest.fn()
+  };
+});
+
+jest.mock("../server/services/updates/monitoringSourceVerify", () => {
+  const actual = jest.requireActual("../server/services/updates/monitoringSourceVerify");
+  return {
+    ...actual,
+    verifyMonitoringSource: jest.fn(),
+    assertSafeToActivateMonitoringSource: jest.fn()
   };
 });
 
@@ -34,6 +45,10 @@ const {
   assertRobotsAllowsMonitoring,
   clearRobotsPolicyCache
 } = require("../server/services/updates/robotsAccessPolicy");
+const {
+  verifyMonitoringSource,
+  assertSafeToActivateMonitoringSource
+} = require("../server/services/updates/monitoringSourceVerify");
 const {
   withHostPoliteness,
   noteHostRateLimited,
@@ -326,6 +341,14 @@ describe("ACC createSource / updateSource Enabled persistence", () => {
       status: 200,
       crawlDelayMs: 0
     });
+    assertSafeToActivateMonitoringSource.mockResolvedValue({
+      safeToActivate: true,
+      message: "Verification passed. Safe to activate."
+    });
+    verifyMonitoringSource.mockResolvedValue({
+      safeToActivate: true,
+      message: "Verification passed. Safe to activate."
+    });
     createSite.mockResolvedValue(42);
     updateSite.mockResolvedValue(undefined);
     disableSite.mockResolvedValue(undefined);
@@ -335,6 +358,7 @@ describe("ACC createSource / updateSource Enabled persistence", () => {
       name: "SSC",
       url: "https://ssc.gov.in/Portal/LatestNews",
       selector: "a",
+      purpose: "notice",
       priority: 2,
       active: 1,
       broken: 0,
@@ -349,18 +373,36 @@ describe("ACC createSource / updateSource Enabled persistence", () => {
       monitoringUrl: "https://ssc.gov.in/Portal/LatestNews",
       selector: "a",
       priority: "P1",
+      purpose: "notice",
       enabled: false
     });
-    expect(createSite).toHaveBeenCalled();
+    expect(createSite).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://ssc.gov.in/Portal/LatestNews",
+        purpose: "notice"
+      })
+    );
+    expect(disableSite).toHaveBeenCalledWith(42);
+    expect(assertSafeToActivateMonitoringSource).not.toHaveBeenCalled();
+  });
+
+  test("create defaults to inactive when enabled omitted", async () => {
+    await automationControlCenterService.createSource({
+      name: "SSC",
+      monitoringUrl: "https://ssc.gov.in/Portal/LatestNews",
+      selector: "a",
+      priority: "P1"
+    });
     expect(disableSite).toHaveBeenCalledWith(42);
   });
 
-  test("update enabled false→true uses restoreSite", async () => {
+  test("update enabled false→true uses restoreSite after verify", async () => {
     getSiteById.mockResolvedValueOnce({
       id: 7,
       name: "SSC",
       url: "https://ssc.gov.in/Portal/LatestNews",
       selector: "a",
+      purpose: "notice",
       priority: 2,
       active: 0,
       broken: 0
@@ -370,6 +412,7 @@ describe("ACC createSource / updateSource Enabled persistence", () => {
       name: "SSC",
       url: "https://ssc.gov.in/Portal/LatestNews",
       selector: "a",
+      purpose: "notice",
       priority: 2,
       active: 1,
       broken: 0
@@ -381,7 +424,35 @@ describe("ACC createSource / updateSource Enabled persistence", () => {
       priority: "P1",
       enabled: true
     });
+    expect(assertSafeToActivateMonitoringSource).toHaveBeenCalled();
     expect(restoreSite).toHaveBeenCalledWith(7);
+  });
+
+  test("blocked verify prevents activation", async () => {
+    assertSafeToActivateMonitoringSource.mockRejectedValue(
+      Object.assign(new Error("robots policy blocks automated monitoring."), {
+        statusCode: 400,
+        code: "MONITORING_VERIFY_FAILED"
+      })
+    );
+    getSiteById.mockResolvedValueOnce({
+      id: 7,
+      name: "SSC",
+      url: "https://ssc.gov.in/Portal/LatestNews",
+      selector: "a",
+      priority: 2,
+      active: 0,
+      broken: 0
+    });
+    await expect(
+      automationControlCenterService.updateSource(7, {
+        name: "SSC",
+        monitoringUrl: "https://ssc.gov.in/Portal/LatestNews",
+        selector: "a",
+        enabled: true
+      })
+    ).rejects.toThrow(/robots policy blocks/i);
+    expect(restoreSite).not.toHaveBeenCalled();
   });
 
   test("rejects non-official on create", async () => {
