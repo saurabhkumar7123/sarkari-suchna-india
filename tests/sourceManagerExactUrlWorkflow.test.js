@@ -80,9 +80,11 @@ describe("Official Source Manager verify workflow", () => {
       selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(true);
+    expect(report.qualityGrade).toBe("GREEN");
     expect(report.exactUrl).toBe("https://ssc.gov.in/Portal/LatestNews");
     expect(report.checks.officialHost.status).toBe("PASS");
     expect(report.checks.selector.status).toBe("PASS");
+    expect(report.checks.relevantContent.status).toBe("PASS");
     expect(report.preview).toMatch(/Recruitment Notice One/i);
     expect(axios.get).toHaveBeenCalledWith(
       "https://ssc.gov.in/Portal/LatestNews",
@@ -90,10 +92,20 @@ describe("Official Source Manager verify workflow", () => {
     );
   });
 
+  test("body selector cannot activate (YELLOW)", async () => {
+    const report = await verifyMonitoringSource({
+      url: "https://ssc.gov.in/Portal/LatestNews",
+      selector: "body"
+    });
+    expect(report.safeToActivate).toBe(false);
+    expect(report.qualityGrade).toBe("YELLOW");
+    expect(report.message).toMatch(/body/i);
+  });
+
   test("non-official URL rejected", async () => {
     const report = await verifyMonitoringSource({
       url: "https://example.com/jobs",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.checks.officialHost.status).toBe("FAIL");
@@ -103,7 +115,7 @@ describe("Official Source Manager verify workflow", () => {
   test("private/internal URL rejected", async () => {
     const report = await verifyMonitoringSource({
       url: "http://127.0.0.1/admin",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.checks.privateHost.status).toBe("FAIL");
@@ -115,7 +127,7 @@ describe("Official Source Manager verify workflow", () => {
     ]);
     const report = await verifyMonitoringSource({
       url: "https://ssc.gov.in/Portal/LatestNews/",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.checks.duplicate.status).toBe("FAIL");
@@ -128,11 +140,11 @@ describe("Official Source Manager verify workflow", () => {
     jest.spyOn(axios, "get").mockResolvedValue({
       status: 200,
       headers: {},
-      data: "<html><body>Notice board content here</body></html>"
+      data: "<html><body><a class='notice'>Recruitment Notice Board</a></body></html>"
     });
     const report = await verifyMonitoringSource({
       url: "https://ssc.gov.in/Portal/Notice",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.checks.duplicate.status).toBe("PASS");
     expect(report.safeToActivate).toBe(true);
@@ -149,7 +161,7 @@ describe("Official Source Manager verify workflow", () => {
     });
     const report = await verifyMonitoringSource({
       url: "https://ssc.gov.in/secret",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.checks.robots.status).toBe("BLOCKED");
@@ -164,7 +176,7 @@ describe("Official Source Manager verify workflow", () => {
     });
     const report = await verifyMonitoringSource({
       url: "https://ssc.gov.in/Portal/LatestNews",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.message).toMatch(/403/);
@@ -178,7 +190,7 @@ describe("Official Source Manager verify workflow", () => {
     });
     const report = await verifyMonitoringSource({
       url: "https://ssc.gov.in/Portal/LatestNews",
-      selector: "body"
+      selector: "a.notice"
     });
     expect(report.safeToActivate).toBe(false);
     expect(report.message).toMatch(/unapproved host/i);

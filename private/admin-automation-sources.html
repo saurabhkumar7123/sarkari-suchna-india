@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=10">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=11">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Official Sources" data-acc-page="sources">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -78,7 +78,7 @@
       <div>
         <p class="acc-section__eyebrow">Registry</p>
         <h2 id="acc-sources-title">Official Source Manager</h2>
-        <p class="acc-section__sub">Paste the exact public government page you selected. Verify before activating. No force-activate or robots bypass.</p>
+        <p class="acc-section__sub">Choose the exact government page you want the bot to monitor. Verify before activating. No crawl / discover / force-activate controls.</p>
       </div>
       <div class="acc-section__actions">
         <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
@@ -126,7 +126,8 @@
     </div>
     <input id="accSourceId" type="hidden">
     <p class="acc-source-workflow-hint">
-      Open the official site → navigate to the exact public page → copy that URL here → Verify → save. Homepage is not assumed.
+      <strong>Human-curated onboarding:</strong> You choose the exact official page. The bot monitors only that URL — it does not crawl or discover pages.
+      <br>1) Open official site → 2) Find Recruitment / Notices / Admit Card / Results / Answer Key page → 3) Copy exact URL → 4) Verify → 5) Activate only if GREEN.
     </p>
     <div class="acc-dialog__grid">
       <label><span>Organization / source name</span><input id="accFormSourceName" required maxlength="160" placeholder="e.g. UPPSC"></label>
@@ -146,7 +147,10 @@
         <input id="accFormMonitoringUrl" required maxlength="2000" placeholder="https://agency.gov.in/recruitment/notifications">
       </label>
       <div class="acc-dialog__span-2 acc-exact-url-preview" id="accExactUrlPreview" aria-live="polite">Exact URL preview: —</div>
-      <label class="acc-dialog__span-2"><span>CSS Selector</span><input id="accFormSelector" required maxlength="255" placeholder="a.notice-link" value="body"></label>
+      <label class="acc-dialog__span-2"><span>CSS Selector (stable notice/list target — not navigation, footer, or body)</span>
+        <input id="accFormSelector" required maxlength="255" placeholder="e.g. marquee a  or  table.notice a" value="">
+      </label>
+      <p class="acc-dialog__span-2 acc-section__sub" style="margin:0;">Prefer an exact list page over a homepage. Do not use <code>body</code> just to pass verification.</p>
       <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option selected>P1</option><option>P2</option><option>P3</option></select></label>
       <label><span>Official Domain <small>(derived)</small></span><input id="accFormSourceDomain" maxlength="240" readonly title="Derived from Monitoring URL"></label>
       <label><span>Health <small>(derived)</small></span><input id="accFormHealthStatus" maxlength="40" readonly title="Derived from broken/active state"></label>
@@ -193,6 +197,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=9"></script>
+<script src="/js/admin-automation-control-center.js?v=10"></script>
 </body>
 </html>

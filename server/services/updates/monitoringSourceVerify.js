@@ -193,27 +193,81 @@ async function fetchWithSafeRedirects(url) {
 }
 
 function extractSelectorPreview(html, selector, pageUrl) {
-  const sel = String(selector || "body").trim() || "body";
+  const sel = String(selector || "").trim();
+  if (!sel) {
+    return { ok: false, reason: "CSS selector is required.", preview: "", count: 0, quality: "YELLOW" };
+  }
+  if (/^body$/i.test(sel)) {
+    return {
+      ok: false,
+      reason: "Selector 'body' is too broad for GREEN activation. Choose a stable notice/list selector.",
+      preview: "",
+      count: 0,
+      quality: "YELLOW"
+    };
+  }
   const $ = cheerio.load(String(html || ""));
   const roots = $(sel);
   if (!roots.length) {
-    return { ok: false, reason: "Selector returned no useful content.", preview: "", count: 0 };
+    return { ok: false, reason: "Selector returned no useful content.", preview: "", count: 0, quality: "YELLOW" };
   }
   const chunks = [];
-  roots.slice(0, 3).each((_, node) => {
+  roots.slice(0, 5).each((_, node) => {
     const text = String($(node).text() || "")
       .replace(/\s+/g, " ")
       .trim();
     if (text) chunks.push(text.slice(0, 180));
   });
   if (!chunks.length) {
-    return { ok: false, reason: "Selector returned no useful content.", preview: "", count: roots.length };
+    return {
+      ok: false,
+      reason: "Selector returned no useful content.",
+      preview: "",
+      count: roots.length,
+      quality: "YELLOW"
+    };
   }
+
+  const RELEVANT_RE =
+    /recruit|vacanc|notif|notice|admit|result|answer\s*key|exam|interview|advertisement|circular|corrigendum|appointment|selection|merit|advt|employment|notification/i;
+  const NAV_NOISE_RE =
+    /skip to|screen reader|main content|vision|mission|how to reach|footer|menu|login|register|home page/i;
+  const relevant = chunks.filter((t) => RELEVANT_RE.test(t) && !NAV_NOISE_RE.test(t));
+  const preview = chunks.join(" · ").slice(0, 500);
+
+  if (!relevant.length) {
+    return {
+      ok: false,
+      reason: "Selector extraction is not clearly recruitment/notice relevant. Leave inactive (YELLOW).",
+      preview,
+      count: roots.length,
+      quality: "YELLOW"
+    };
+  }
+
+  let pathname = "/";
+  try {
+    pathname = new URL(String(pageUrl || "")).pathname || "/";
+  } catch {
+    pathname = "/";
+  }
+  const isHomepage = pathname === "/" || pathname === "";
+  if (isHomepage && /^a$/i.test(sel)) {
+    return {
+      ok: false,
+      reason: "Homepage with generic 'a' selector is too noisy. Prefer an exact notices/list page.",
+      preview,
+      count: roots.length,
+      quality: "YELLOW"
+    };
+  }
+
   return {
     ok: true,
-    reason: `Matched ${roots.length} node(s).`,
-    preview: chunks.join(" · ").slice(0, 500),
+    reason: `Matched ${roots.length} node(s); ${relevant.length} relevant preview chunk(s).`,
+    preview,
     count: roots.length,
+    quality: "GREEN",
     pageUrl
   };
 }
@@ -233,7 +287,8 @@ async function verifyMonitoringSource(input = {}) {
     reachable: fail("Not checked"),
     httpStatus: fail("Not checked"),
     redirect: pass("Not checked"),
-    selector: fail("Not checked")
+    selector: fail("Not checked"),
+    relevantContent: fail("Not checked")
   };
 
   let exactUrl = String(input.url || "").trim();
@@ -242,6 +297,9 @@ async function verifyMonitoringSource(input = {}) {
   let httpStatus = null;
   let robots = null;
   let redirectChain = [];
+  let qualityGrade = "YELLOW";
+  const verifiedAt = new Date().toISOString();
+  const requestedSelector = String(input.selector || "").trim();
 
   try {
     const validated = assertSafeOfficialMonitoringUrl(exactUrl);
@@ -277,7 +335,9 @@ async function verifyMonitoringSource(input = {}) {
       robots,
       httpStatus,
       preview,
-      redirectChain
+      redirectChain,
+      qualityGrade,
+      verifiedAt
     });
   }
 
@@ -310,7 +370,19 @@ async function verifyMonitoringSource(input = {}) {
     checks.robots = pass(robots.reason || "Robots allowed.");
   }
 
+  // Selector quality gate after host/robots hard checks (human-curation GREEN requirement).
+  if (!requestedSelector) {
+    checks.selector = fail("CSS selector is required.");
+    checks.relevantContent = fail("No selector to evaluate.");
+    reasons.push("CSS selector is required.");
+  } else if (/^body$/i.test(requestedSelector)) {
+    checks.selector = fail("Selector 'body' is too broad for GREEN activation.");
+    checks.relevantContent = fail("body selector skipped for quality gate.");
+    reasons.push("Selector 'body' is too broad for GREEN activation. Choose a stable notice/list selector.");
+  }
+
   if (reasons.length) {
+    if (robots && robots.allowed === false) qualityGrade = "BLOCKED";
     return finalizeReport({
       exactUrl,
       hostname,
@@ -319,7 +391,9 @@ async function verifyMonitoringSource(input = {}) {
       robots,
       httpStatus,
       preview,
-      redirectChain
+      redirectChain,
+      qualityGrade,
+      verifiedAt
     });
   }
 
@@ -340,28 +414,32 @@ async function verifyMonitoringSource(input = {}) {
     if (fetched.status === 403) {
       checks.reachable = blocked("URL returned 403.");
       reasons.push("URL returned 403.");
+      qualityGrade = "BLOCKED";
     } else if (fetched.status < 200 || fetched.status >= 300) {
       checks.reachable = fail(`URL returned ${fetched.status}.`);
       reasons.push(`URL returned ${fetched.status}.`);
+      qualityGrade = "BLOCKED";
     } else {
       checks.reachable = pass("URL reachable.");
-      const extracted = extractSelectorPreview(
-        fetched.html,
-        input.selector || "body",
-        fetched.finalUrl
-      );
+      const extracted = extractSelectorPreview(fetched.html, requestedSelector, fetched.finalUrl);
       if (!extracted.ok) {
         checks.selector = fail(extracted.reason);
+        checks.relevantContent = fail(extracted.reason);
         reasons.push(extracted.reason);
+        qualityGrade = extracted.quality || "YELLOW";
+        preview = extracted.preview || "";
       } else {
         checks.selector = pass(extracted.reason);
+        checks.relevantContent = pass("Relevant recruitment/notice content detected in preview.");
         preview = extracted.preview;
+        qualityGrade = "GREEN";
       }
     }
   } catch (err) {
     const code = err && err.code;
     httpStatus = err.httpStatus || null;
     redirectChain = err.redirectChain || redirectChain;
+    qualityGrade = "BLOCKED";
     if (code === "MONITORING_REDIRECT_NOT_OFFICIAL") {
       checks.redirect = fail("Redirect leads to an unapproved host.");
       checks.reachable = fail("Redirect not approved.");
@@ -386,14 +464,19 @@ async function verifyMonitoringSource(input = {}) {
     robots,
     httpStatus,
     preview,
-    redirectChain
+    redirectChain,
+    qualityGrade,
+    verifiedAt
   });
 }
 
 function finalizeReport(parts) {
   const safeToActivate = parts.reasons.length === 0;
+  const qualityGrade = safeToActivate ? "GREEN" : parts.qualityGrade || "YELLOW";
   return {
     safeToActivate,
+    qualityGrade,
+    verifiedAt: parts.verifiedAt || new Date().toISOString(),
     exactUrl: parts.exactUrl,
     hostname: parts.hostname || extractHostname(parts.exactUrl) || "",
     httpStatus: parts.httpStatus,
@@ -410,7 +493,7 @@ function finalizeReport(parts) {
     redirectChain: parts.redirectChain || [],
     reasons: parts.reasons,
     message: safeToActivate
-      ? "Verification passed. Safe to activate."
+      ? "Verification passed. GREEN — safe to activate."
       : parts.reasons[0] || "Verification failed."
   };
 }

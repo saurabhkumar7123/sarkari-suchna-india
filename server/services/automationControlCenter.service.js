@@ -273,7 +273,7 @@ function normalizeSourceRow(site) {
   const broken = Number(site.broken) === 1;
   const active = Number(site.active) === 1 || site.enabled === true;
   const healthStatus = broken ? "offline" : active ? "healthy" : "warning";
-  const selector = String(site.selector || "body");
+  const selector = String(site.selector || "").trim();
   const monitoringUrl = String(site.url || "");
   const purpose = normalizePurpose(site.purpose);
   const failCount = Number(site.failCount || 0);
@@ -286,6 +286,23 @@ function normalizeSourceRow(site) {
     operationalState = "DISABLED";
   } else {
     operationalState = "DRAFT";
+  }
+
+  // Human-curation quality hint (derived; no schema change).
+  // Homepage + bare/generic `a` selectors stay YELLOW even if enabled (not auto-promoted GREEN).
+  let qualityGrade = "YELLOW";
+  if (broken) {
+    qualityGrade = "BLOCKED";
+  } else if (active && selector && !/^body$/i.test(selector)) {
+    let pathname = "/";
+    try {
+      pathname = new URL(monitoringUrl).pathname || "/";
+    } catch {
+      pathname = "/";
+    }
+    const isHomepage = pathname === "/" || pathname === "";
+    if (isHomepage && /^a(\[|$)/i.test(selector)) qualityGrade = "YELLOW";
+    else qualityGrade = "GREEN";
   }
 
   return {
@@ -301,6 +318,7 @@ function normalizeSourceRow(site) {
     healthStatus,
     healthStatusSource: "derived",
     operationalState,
+    qualityGrade,
     enabled: active,
     failCount,
     broken,
@@ -309,7 +327,7 @@ function normalizeSourceRow(site) {
     lastSuccessfulCheck: broken ? null : site.lastCheckedAt || null,
     lastDetectedChange: site.lastAlertAt || null,
     nextEligibleCheck: site.nextRetryAt || null,
-    selectorStatus: selector ? "configured" : "missing",
+    selectorStatus: !selector ? "missing" : /^body$/i.test(selector) ? "too_broad" : "configured",
     version: Number(site.version || 1)
   };
 }
@@ -383,7 +401,7 @@ function normalizeSourceInput(input = {}) {
     input.monitoringUrl || input.notificationUrl || input.url,
     2000
   );
-  const selector = normalizeString(input.selector, 255) || "body";
+  const selector = normalizeString(input.selector, 255);
   const purpose = normalizePurpose(input.purpose);
   if (!name) {
     const err = new Error("name is required");
@@ -392,6 +410,18 @@ function normalizeSourceInput(input = {}) {
   }
   if (!notificationUrl) {
     const err = new Error("Monitoring URL is required.");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (!selector) {
+    const err = new Error("CSS selector is required.");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (/^body$/i.test(selector) && input.enabled === true) {
+    const err = new Error(
+      "Selector 'body' is too broad for activation. Choose a stable notice/list selector."
+    );
     err.statusCode = 400;
     throw err;
   }
@@ -468,7 +498,7 @@ async function updateSource(id, input = {}) {
   const wasActive = Number(existing.active) === 1;
   const willEnable = merged.enabled === true;
   const urlChanged = String(merged.notificationUrl) !== String(existing.url || "");
-  const selectorChanged = String(merged.selector) !== String(existing.selector || "body");
+  const selectorChanged = String(merged.selector) !== String(existing.selector || "");
   await assertMonitoringSiteWritable({
     url: merged.notificationUrl,
     excludeId: sourceId,
@@ -501,7 +531,7 @@ async function updateSource(id, input = {}) {
 async function verifySourceInput(input = {}) {
   return verifyMonitoringSource({
     url: input.monitoringUrl || input.notificationUrl || input.url,
-    selector: input.selector || "body",
+    selector: input.selector,
     excludeId: input.excludeId != null ? Number(input.excludeId) : null,
     checkDuplicates: input.checkDuplicates !== false
   });

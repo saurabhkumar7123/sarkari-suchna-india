@@ -424,6 +424,7 @@
     body.innerHTML = rows.map((source) => {
       const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
       const stateLabel = source.operationalState || (source.enabled ? "ACTIVE" : "DISABLED");
+      const quality = source.qualityGrade || (source.enabled ? "GREEN" : "YELLOW");
       return `
       <tr>
         <td>
@@ -432,7 +433,7 @@
         </td>
         <td class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></td>
         <td>${escapeHtml(source.purposeLabel || source.purpose || "—")}</td>
-        <td><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
+        <td><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>Quality: ${escapeHtml(quality)}</small><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
         <td><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
         <td><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
         <td>
@@ -495,12 +496,15 @@
     host.innerHTML = `
       <div class="acc-verify-report__head ${report.safeToActivate ? "is-pass" : "is-fail"}">
         <strong>Safe to activate: ${report.safeToActivate ? "YES" : "NO"}</strong>
+        <span>Quality: ${escapeHtml(report.qualityGrade || (report.safeToActivate ? "GREEN" : "YELLOW"))}</span>
         <span>${escapeHtml(report.message || "")}</span>
       </div>
       <p><strong>Exact URL:</strong> ${escapeHtml(report.exactUrl || "")}</p>
+      <p><strong>Verified at:</strong> ${escapeHtml(report.verifiedAt || "-")}</p>
       <ul>${rows}</ul>
       ${report.preview ? `<p><strong>Extracted preview:</strong> ${escapeHtml(report.preview)}</p>` : ""}
       ${Array.isArray(report.reasons) && report.reasons.length ? `<p><strong>Block reasons:</strong> ${escapeHtml(report.reasons.join(" · "))}</p>` : ""}
+      <p class="acc-section__sub">No force-activate / ignore-robots control. If YELLOW, save inactive and refine the exact page or selector.</p>
     `;
   }
 
@@ -512,7 +516,7 @@
     qs("accFormSourcePriority").value = source?.priority || "P1";
     const monitoringUrl = source?.monitoringUrl || source?.notificationUrl || "";
     qs("accFormMonitoringUrl").value = monitoringUrl;
-    qs("accFormSelector").value = source?.selector || "body";
+    qs("accFormSelector").value = source?.selector || "";
     if (qs("accFormPurpose")) qs("accFormPurpose").value = source?.purpose || "";
     qs("accFormSourceDomain").value = source?.officialDomain || deriveDomainFromUrl(monitoringUrl);
     qs("accFormHealthStatus").value = source?.healthStatus || (source ? "healthy" : "n/a until saved");
@@ -550,9 +554,10 @@
         <section>
           <h4>Monitoring</h4>
           <dl class="acc-detail-dl">
-            <div><dt>CSS selector</dt><dd><code>${escapeHtml(source.selector || "body")}</code></dd></div>
+            <div><dt>CSS selector</dt><dd><code>${escapeHtml(source.selector || "—")}</code></dd></div>
             <div><dt>Active</dt><dd>${source.enabled ? "On" : "Off"}</dd></div>
             <div><dt>State</dt><dd>${escapeHtml(source.operationalState || "-")}</dd></div>
+            <div><dt>Quality</dt><dd>${escapeHtml(source.qualityGrade || "-")}</dd></div>
             <div><dt>Last check</dt><dd>${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</dd></div>
             <div><dt>Last successful check</dt><dd>${escapeHtml(source.lastSuccessfulCheck || "-")}</dd></div>
             <div><dt>Next eligible check</dt><dd>${escapeHtml(source.nextEligibleCheck || "-")}</dd></div>
@@ -591,7 +596,11 @@
 
   async function verifyFromDialog() {
     const monitoringUrl = (qs("accFormMonitoringUrl")?.value || "").trim();
-    const selector = (qs("accFormSelector")?.value || "").trim() || "body";
+    const selector = (qs("accFormSelector")?.value || "").trim();
+    if (!selector) {
+      toastError("CSS selector is required before Verify.");
+      throw new Error("CSS selector is required before Verify.");
+    }
     const id = qs("accSourceId")?.value;
     const report = await apiFetch("/api/admin/automation-control-center/sources/verify", {
       method: "POST",
@@ -641,10 +650,18 @@
       priority: qs("accFormSourcePriority").value,
       monitoringUrl,
       notificationUrl: monitoringUrl,
-      selector: qs("accFormSelector").value.trim() || "body",
+      selector: qs("accFormSelector").value.trim(),
       purpose: qs("accFormPurpose")?.value || "",
       enabled
     };
+    if (!payload.selector) {
+      toastError("CSS selector is required.");
+      return;
+    }
+    if (/^body$/i.test(payload.selector) && enabled) {
+      toastError("Selector 'body' cannot be activated. Choose a stable notice/list selector.");
+      return;
+    }
     try {
       await apiFetch(
         id ? `/api/admin/automation-control-center/sources/${encodeURIComponent(id)}` : "/api/admin/automation-control-center/sources",
