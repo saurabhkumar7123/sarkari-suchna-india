@@ -22,14 +22,14 @@
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
   <link rel="stylesheet" href="/css/admin/generator.css?v=21">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=26">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=27">
   <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
   <link rel="stylesheet" href="/css/admin/generator-workspace.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
   <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
   <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css?v=6">
 </head>
 
@@ -37,7 +37,7 @@
   <div class="admin-header">
   <div class="admin-left">
     <h1>Generator</h1>
-    <p>Create and edit structured content. Parked drafts are a separate workspace.</p>
+    <p>Create and edit structured content. Final Manual Publish happens here. Parked drafts are a separate workspace.</p>
   </div>
   <div class="admin-right">
     <span class="admin-badge">Manual publish only</span>
@@ -45,6 +45,9 @@
 </div>
 
 <div class="main-container">
+
+<aside class="adm-wf" data-adm-wf="generator" data-adm-wf-for="generator" aria-label="Generator workflow context"></aside>
+<aside class="adm-wf" data-adm-wf="drafts" data-adm-wf-for="drafts" hidden aria-label="Drafts workflow context"></aside>
 
 <nav class="admin-ops-flow" aria-label="Generator workbench">
   <span class="admin-ops-flow__step is-current">Source / Input</span>
@@ -75,8 +78,9 @@
 
 <section id="drafts" class="admin-page-head" aria-label="Drafts workspace">
   <div>
+    <p class="admin-page-head__eyebrow">Generator</p>
     <h2>Drafts</h2>
-    <p class="page-subtitle">One update maps to one draft. Drafts never overwrite each other across different updates. Separate from Review Center and Published Pages.</p>
+    <p class="page-subtitle">Parked content only. Draft ≠ Published. Drafts can exist before a recruitment and bind later. Separate from Review Center and Published Pages.</p>
   </div>
 </section>
 
@@ -554,14 +558,15 @@
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
-<script src="/js/admin-generator-drafts.js?v=4"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
+<script src="/js/admin-generator-drafts.js?v=5"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-seo-checklist.js"></script>

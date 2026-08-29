@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "29";
+  const ADMIN_NAV_VERSION = "30";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -84,27 +84,27 @@
   <div class="nav-group is-open" id="nav-group-recruitment" data-nav-group="recruitment" data-default-open="1">
     <p class="nav-group-label">Recruitments</p>
     <div class="nav-group-body">
-      ${navLink("/admin/recruitments", "/admin/recruitments", I.rec, "All Recruitments")}
-      ${navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Recruitment Timeline", 'data-nav-alias="events"')}
-      ${navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Recruitment Review", 'data-nav-alias="recruitment-review" title="Recruitment matching & review"')}
+      ${navLink("/admin/recruitments", "/admin/recruitments", I.rec, "All Recruitments", 'title="Create/manage recruitment records — start here for new vacancy"')}
+      ${navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Recruitment Timeline", 'data-nav-alias="events" title="Event history for the selected recruitment"')}
+      ${navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Needs Matching", 'data-nav-alias="recruitment-review" title="Needs Matching — link item to correct recruitment"')}
     </div>
   </div>
 
   <div class="nav-group is-open" id="nav-group-content" data-nav-group="content" data-default-open="1">
     <p class="nav-group-label">Content</p>
     <div class="nav-group-body">
-      ${navLink("/generator#drafts", "/generator", I.draft, "Drafts", 'id="navDraftsLink" data-nav-alias="drafts"')}
-      ${navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Review Center", 'data-nav-alias="review-center" title="Needs Matching + approval queue"')}
-      ${navLink("/admin/editorial-review", "/admin/editorial-review", I.review, "Editorial Review", 'title="Review Queue — draft approval"')}
-      ${navLink("/admin/page-manager", "/admin/page-manager", I.pages, "Published Pages", 'title="Page Manager"')}
-      ${navLink("/generator", "/generator", I.gen, "Generator")}
+      ${navLink("/generator#drafts", "/generator", I.draft, "Drafts", 'id="navDraftsLink" data-nav-alias="drafts" title="Parked drafts — Draft is not Published"')}
+      ${navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Review Center", 'data-nav-alias="review-center" title="Operational queue: matching + approve/reject (not publish)"')}
+      ${navLink("/admin/editorial-review", "/admin/editorial-review", I.review, "Editorial Review", 'title="Editorial check — Approve ≠ Publish"')}
+      ${navLink("/admin/page-manager", "/admin/page-manager", I.pages, "Published Pages", 'title="Manage live pages after Manual Publish"')}
+      ${navLink("/generator", "/generator", I.gen, "Generator", 'title="Prepare content and Manual Publish"')}
     </div>
   </div>
 
   <div class="nav-group is-open" id="nav-group-automation" data-nav-group="automation" data-default-open="1">
     <p class="nav-group-label">Automation</p>
     <div class="nav-group-body">
-      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Control Center", 'data-nav-alias="acc" title="Automation Control Center workspace"')}
+      ${navLink("/admin/automation-control-center", "/admin/automation-control-center", I.control, "Automation Control Center", 'data-nav-alias="acc" title="Ops overview and safety flags — not primary edit workspace"')}
     </div>
   </div>
 
@@ -289,7 +289,7 @@ ACC child pages are internal ACC navigation only (not global sidebar items):
   /admin/automation-control-center/controls
 Legacy ACC hashes on the overview page redirect to the dedicated nested routes.
 All Recruitments -> /admin/recruitments
-Recruitment Review -> /admin/recruitment-review-queue?status=needs_matching (filter shortcut; not a second active destination)
+Recruitment Review / Needs Matching -> /admin/recruitment-review-queue?status=needs_matching (filter shortcut; not a second active destination)
 Recruitment Timeline -> /admin/recruitments#eventTimeline
 Audit (Runtime Preview) -> /admin/recruitment-runtime-preview
 Sessions -> /admin/sessions

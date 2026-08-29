@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=15">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Detected Updates" data-mon-page="updates">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -26,7 +26,7 @@
     <div class="mon-workspace-head__copy">
       <p class="mon-workspace-head__eyebrow">Monitoring</p>
       <h1 class="mon-workspace-head__title">Detected Updates</h1>
-      <p class="mon-workspace-head__sub">Notices discovered by monitoring. Open a draft when a notice needs conversion.</p>
+      <p class="mon-workspace-head__sub">Notices discovered by monitoring. With automation off these still list stored detections — convert via Generator or Manual Update on the matching recruitment.</p>
     </div>
     <div class="mon-workspace-head__actions">
       <button type="button" class="header-action-btn" id="refreshSitesBtn">Refresh</button>
@@ -52,18 +52,19 @@
   </nav>
 
   <div class="mon-content" id="monContent">
+    <aside class="adm-wf" data-adm-wf="monitoringUpdates" aria-label="Workflow context"></aside>
     <nav class="admin-ops-flow" aria-label="Content pipeline" id="monitoringPipelineFlow">
       <span class="admin-ops-flow__step is-current">Detected</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Draft</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step">Matching</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Review</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step">Approve</span>
+      <span class="admin-ops-flow__step">Editorial</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step">Published</span>
     </nav>
 
     <div class="recent" id="recentUpdates">
@@ -85,7 +86,7 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=29"></script>
+<script src="/js/admin-nav.js?v=30"></script>
 <script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
@@ -93,6 +94,7 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-monitoring.js?v=3"></script>
 </body>
 </html>

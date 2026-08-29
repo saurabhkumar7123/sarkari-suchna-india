@@ -11,14 +11,14 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
-<link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
-<link rel="stylesheet" href="/css/admin/editorial-review.css?v=3">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
+<link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
+<link rel="stylesheet" href="/css/admin/editorial-review.css?v=4">
 <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
-<link rel="stylesheet" href="/css/admin/editorial-workspace.css?v=2">
+<link rel="stylesheet" href="/css/admin/editorial-workspace.css?v=3">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Queue">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Content,Editorial Review">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -28,36 +28,40 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Review Queue</div>
+    <div class="admin-left">
+      <p class="admin-page-head__eyebrow">Content</p>
+      <div class="admin-title">Editorial Review</div>
+    </div>
     <div class="admin-header-actions rom-header-links">
-      <a class="header-action-btn rom-secondary" href="/generator#drafts" style="text-decoration:none;">Drafts</a>
-      <a class="header-action-btn" href="/admin/recruitments" style="text-decoration:none;">Recruitments</a>
+      <a class="header-action-btn rom-secondary" href="/generator#drafts">Drafts</a>
+      <a class="header-action-btn" href="/admin/recruitments">Recruitments</a>
       <button type="button" class="header-action-btn" id="erRefreshBtn">Refresh</button>
     </div>
   </div>
 
   <div class="admin-page-head">
     <div>
-      <h1>Review Queue</h1>
+      <p class="admin-page-head__eyebrow">Editorial workspace</p>
+      <h1>Editorial Review</h1>
       <p class="er-help">
-        Editorial Review Workspace — human editorial review of generated content.
-        This is not Recruitment Review and not the drafts list.
-        Approve does not publish. Manual publish is a separate action.
+        Why here: human editorial check of generated content for a recruitment.
+        Not Review Center (matching) and not Drafts list.
+        Check accuracy, request changes, approve or reject.
+        APPROVE ≠ PUBLISH — final publish stays in Generator.
       </p>
     </div>
   </div>
+  <aside class="adm-wf" data-adm-wf="editorial" aria-label="Workflow context"></aside>
   <nav class="admin-ops-flow" aria-label="Review workflow">
-    <span class="admin-ops-flow__step is-done">Detected</span>
-    <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step is-done">Draft</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step is-current">Review</span>
+    <span class="admin-ops-flow__step is-current">Editorial</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step">Approve</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
     <span class="admin-ops-flow__step is-locked">Manual Publish</span>
     <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-    <span class="admin-ops-flow__step">Published</span>
+    <span class="admin-ops-flow__step">Published Pages</span>
   </nav>
   <p id="erMessage" class="er-message" hidden role="status"></p>
 
@@ -270,16 +274,17 @@
   </div>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
 <script src="/js/generator-workspace-core.js?v=1"></script>

@@ -13,9 +13,9 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
-<link rel="stylesheet" href="/css/admin/recruitment-module.css?v=1">
-<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=5">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
+<link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
+<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=6">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -24,20 +24,25 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Review Center</div>
+    <div class="admin-left">
+      <p class="admin-page-head__eyebrow">Content</p>
+      <div class="admin-title">Review Center</div>
+    </div>
     <div class="admin-header-actions">
       <span class="rrq-badge">Human decisions only — Approve is not publish</span>
     </div>
   </div>
 
   <section class="monitoring-section rrq">
+    <aside class="adm-wf" data-adm-wf="reviewCenter" id="admWfReviewCenter" aria-label="Workflow context"></aside>
+    <aside class="adm-wf" data-adm-wf="needsMatching" id="admWfNeedsMatching" hidden aria-label="Needs Matching context"></aside>
     <p class="rrq-help">
       Primary human-work queue: Needs Matching, pending review, and approval.
-      Attach / Create Parent / Standalone / Reject never run automatically.
+      Needs Matching means associate this item with the correct recruitment (Attach / Create Parent / Standalone / Reject).
       Approve and Manual Publish stay separate. Auto Publish is disabled.
     </p>
     <nav class="admin-ops-flow" aria-label="Review workflow">
-      <span class="admin-ops-flow__step">Detected</span>
+      <span class="admin-ops-flow__step">Detect / Update</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step is-alert is-current">Needs Matching</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
@@ -45,11 +50,9 @@
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step">Review</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step">Approve</span>
+      <span class="admin-ops-flow__step">Editorial</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-      <span class="admin-ops-flow__step">Published</span>
     </nav>
 
     <div class="admin-workspace-tabs" role="group" aria-label="Review Center filters" id="rrqStatusChips">
@@ -59,6 +62,7 @@
       <button type="button" data-rrq-status="approved">Approved</button>
       <button type="button" data-rrq-status="rejected">Rejected</button>
       <button type="button" data-rrq-status="under_review">Under Review</button>
+      <button type="button" data-rrq-status="frozen">Frozen</button>
     </div>
 
     <form id="rrqFilters" class="rrq-filters" autocomplete="off">
@@ -297,14 +301,15 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-recruitment-review-queue.js?v=4"></script>
 </body>
 </html>

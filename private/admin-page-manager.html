@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
 <link rel="stylesheet" href="/css/admin/admin-confirm.css?v=3">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Published Pages">
@@ -22,29 +22,30 @@
 </div>
 <div class="main">
   <div class="admin-header">
-    <div class="admin-title">Published Pages</div>
+    <div class="admin-left">
+      <p class="admin-page-head__eyebrow">Content</p>
+      <div class="admin-title">Published Pages</div>
+    </div>
     <div class="admin-header-actions">
       <button type="button" class="header-action-btn" id="managerRefreshBtn">Refresh Pages</button>
     </div>
   </div>
   <section class="page-manager" aria-label="Page list">
     <div class="manager-header">
-      <h1 class="manager-title">Published Pages</h1>
-      <p class="manager-hint">Live/public pages. Search, filter, and manage published content. This is not the review queue. Publish remains a separate manual action.</p>
-      <nav class="admin-ops-flow" aria-label="Content workflow">
-        <span class="admin-ops-flow__step">Detected Update</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Draft</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Review</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step">Approve</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step is-current is-locked">Manual Publish</span>
-        <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-        <span class="admin-ops-flow__step is-done">Published</span>
-      </nav>
+      <div>
+        <p class="admin-page-head__eyebrow">Published content</p>
+        <h1 class="manager-title">Published Pages</h1>
+        <p class="manager-hint">Live/public pages after Manual Publish. Not the review queue and not draft preparation. To publish a new page, use Generator.</p>
+      </div>
     </div>
+    <aside class="adm-wf" data-adm-wf="pageManager" aria-label="Workflow context"></aside>
+    <nav class="admin-ops-flow" aria-label="Content workflow">
+      <span class="admin-ops-flow__step is-done">Editorial</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-done is-locked">Manual Publish</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+      <span class="admin-ops-flow__step is-current is-done">Published</span>
+    </nav>
     <div class="saas-stats-bar" id="pageManagerStats" hidden aria-live="polite"></div>
     <div class="filters-toolbar">
       <div class="search-box">
@@ -98,14 +99,15 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js?v=5"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-page-manager.js?v=6"></script>
 </body>
 </html>

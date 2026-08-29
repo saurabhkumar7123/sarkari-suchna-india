@@ -37,15 +37,15 @@ describe("Admin UI polish — dashboard chart + RRQ nav active state", () => {
     expect(js).toMatch(/Query-string deep-links/);
   });
 
-  test("Recruitment Review remains a needs_matching shortcut; Review Center is canonical", () => {
+  test("Needs Matching remains a needs_matching shortcut; Review Center is canonical", () => {
     const nav = read("public/assets/js/admin-nav.js").toString("utf8");
     expect(nav).toContain(
       'navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Review Center"'
     );
     expect(nav).toContain(
-      'navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Recruitment Review"'
+      'navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Needs Matching"'
     );
-    expect(nav).toContain('ADMIN_NAV_VERSION = "29"');
+    expect(nav).toContain('ADMIN_NAV_VERSION = "30"');
     expect(nav).toMatch(/filter shortcut; not a second active destination/);
   });
 });

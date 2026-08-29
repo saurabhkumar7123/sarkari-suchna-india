@@ -1966,3 +1966,235 @@ body.dark.admin-saas-v2 .rom-filters {
   border-color: var(--admin-border);
   color: var(--admin-text);
 }
+
+/* ===== Workflow IA context (manual + automatic) ===== */
+.adm-wf {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.adm-wf__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 10px;
+}
+
+.adm-wf__eyebrow {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.adm-wf__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--admin-text);
+  line-height: 1.3;
+}
+
+.adm-wf__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.adm-wf-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface-2, var(--admin-surface));
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--admin-muted);
+  white-space: normal;
+  max-width: 100%;
+}
+
+.adm-wf-badge--path {
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+  border-color: transparent;
+}
+
+.adm-wf-badge--auto.is-off {
+  color: var(--admin-muted);
+}
+
+.adm-wf-badge--auto.is-partial {
+  color: var(--admin-warning);
+  background: var(--admin-warning-soft);
+  border-color: transparent;
+}
+
+.adm-wf-badge--publish {
+  color: var(--admin-warning);
+  background: var(--admin-warning-soft);
+  border-color: transparent;
+}
+
+.adm-wf__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin: 0 0 12px;
+}
+
+.adm-wf__meta > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-2, var(--admin-surface));
+}
+
+.adm-wf__meta dt {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.adm-wf__meta dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--admin-text);
+}
+
+.adm-wf-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px dashed var(--admin-border);
+  border-radius: var(--admin-radius);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--admin-muted);
+  max-width: 100%;
+}
+
+.adm-wf-steps__step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+
+.adm-wf-steps__step.is-current {
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+}
+
+.adm-wf-steps__step.is-done {
+  color: var(--admin-success);
+}
+
+.adm-wf-steps__step.is-locked {
+  color: var(--admin-warning);
+  background: var(--admin-warning-soft);
+}
+
+.adm-wf-steps__arrow {
+  opacity: 0.4;
+}
+
+.adm-wf__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.adm-wf-scenarios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.adm-wf-scenario {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+}
+
+.adm-wf-scenario h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.adm-wf-scenario p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--admin-muted);
+}
+
+.adm-wf-scenario__path {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-brand);
+}
+
+.adm-wf-scenario a {
+  align-self: flex-start;
+  margin-top: 4px;
+  text-decoration: none;
+}
+
+body.dark.admin-saas-v2 .adm-wf,
+body.dark.admin-saas-v2 .adm-wf-scenario,
+body.dark.admin-saas-v2 .adm-wf__meta > div {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+@media (max-width: 768px) {
+  .adm-wf__meta {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-wf-steps {
+    gap: 6px;
+  }
+
+  .adm-wf-steps__arrow {
+    display: none;
+  }
+
+  .adm-wf-scenarios {
+    grid-template-columns: 1fr;
+  }
+}

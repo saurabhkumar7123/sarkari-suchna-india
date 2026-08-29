@@ -15,8 +15,8 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=9">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=12">
 <script>
 (function () {
   var map = {
@@ -50,7 +50,7 @@
     <div class="acc-workspace-head__copy">
       <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
       <h1 class="acc-workspace-head__title">Control overview</h1>
-      <p class="acc-workspace-head__sub">Concise automation status and section summaries. Detailed operator workspaces stay on their dedicated pages. Publishing remains manual-only.</p>
+      <p class="acc-workspace-head__sub">Ops cockpit and safety flags — not the primary edit workspace. Deep work stays on Recruitments, Review Center, Drafts, Editorial, and Generator. Publishing remains manual-only.</p>
     </div>
     <div class="acc-workspace-head__actions">
       <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
@@ -85,6 +85,8 @@
     </div>
   </nav>
   <div class="acc-content" id="accContent">
+
+  <aside class="adm-wf" data-adm-wf="acc" aria-label="Workflow context"></aside>
 
   <section class="acc-status-strip-row" aria-label="Runtime posture">
     <div class="acc-status-pill is-safe" id="accWorkerStatusPill">Worker: Off</div>
@@ -285,14 +287,15 @@
 </div>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-automation-control-center.js?v=7"></script>
 </body>
 </html>

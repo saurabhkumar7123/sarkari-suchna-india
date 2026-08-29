@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=25">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=16">
 <link rel="stylesheet" href="/css/admin/admin-dashboard-welcome.css?v=3">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Admin,Dashboard">
@@ -109,20 +109,63 @@
     </div>
   </section>
 
+  <section class="content-section" aria-labelledby="wfScenariosTitle">
+    <h2 id="wfScenariosTitle">Start here by situation</h2>
+    <p class="manager-hint">Automation is off by default - use the Manual path. Both paths converge at Editorial Review, then Manual Publish in Generator. Approve never publishes.</p>
+    <div class="adm-wf-scenarios" id="admWfScenarios">
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Manual - New vacancy</span>
+        <h3>New vacancy</h3>
+        <p>Start at All Recruitments &rarr; create recruitment &rarr; prepare draft in Generator &rarr; Editorial Review &rarr; Manual Publish.</p>
+        <a class="header-action-btn" href="/admin/recruitments">Open Recruitments</a>
+      </article>
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Manual - Existing + update</span>
+        <h3>Admit card / result / answer key</h3>
+        <p>Do not create a second recruitment. Open the existing record &rarr; Create manual update (event + draft + review item).</p>
+        <a class="header-action-btn" href="/admin/recruitments">Open Recruitments</a>
+      </article>
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Both - Needs Matching</span>
+        <h3>Needs Matching</h3>
+        <p>Item must be linked to the correct recruitment. Attach / Create Parent / Standalone / Reject - then continue to editorial / publish.</p>
+        <a class="header-action-btn" href="/admin/recruitment-review-queue?status=needs_matching">Open Needs Matching</a>
+      </article>
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Both - Draft ready</span>
+        <h3>Draft ready</h3>
+        <p>Draft is not Published. Open Drafts, then Editorial Review. Final publish is Manual Publish in Generator.</p>
+        <a class="header-action-btn" href="/generator#drafts">Open Drafts</a>
+      </article>
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Both - Editorial</span>
+        <h3>Editorial Review</h3>
+        <p>Check content accuracy. Approve is not Publish. After approval, publish manually in Generator; manage live pages in Page Manager.</p>
+        <a class="header-action-btn" href="/admin/editorial-review">Open Editorial Review</a>
+      </article>
+      <article class="adm-wf-scenario">
+        <span class="adm-wf-scenario__path">Automatic - when flags on</span>
+        <h3>Automation path (dormant)</h3>
+        <p>Monitoring &rarr; Detect &rarr; Draft &rarr; Matching &rarr; Review Center &rarr; Editorial &rarr; Manual Publish. Flags stay off; ACC shows posture only.</p>
+        <a class="header-action-btn" href="/admin/automation-control-center">Open ACC</a>
+      </article>
+    </div>
+  </section>
+
   <section class="content-section">
     <h2>Workflow Overview</h2>
     <nav class="admin-ops-flow" aria-label="Content workflow">
-      <span class="admin-ops-flow__step is-done">Detected</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">?</span>
-      <span class="admin-ops-flow__step is-done">Draft</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">?</span>
-      <span class="admin-ops-flow__step is-current">Review</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">?</span>
-      <span class="admin-ops-flow__step">Approve</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">?</span>
+      <span class="admin-ops-flow__step">Recruitment / Detect</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
+      <span class="admin-ops-flow__step">Draft</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
+      <span class="admin-ops-flow__step">Matching</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
+      <span class="admin-ops-flow__step is-current">Review / Editorial</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-      <span class="admin-ops-flow__arrow" aria-hidden="true">?</span>
-      <span class="admin-ops-flow__step">Published</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
+      <span class="admin-ops-flow__step">Published Pages</span>
     </nav>
   </section>
 
@@ -179,7 +222,7 @@
     </article>
     <article class="admin-auto-status__item is-locked" id="autoStatusPublish">
       <span>Auto Publish</span>
-      <strong class="admin-auto-status__state">MANUAL ONLY � DISABLED</strong>
+      <strong class="admin-auto-status__state">MANUAL ONLY — DISABLED</strong>
     </article>
     <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
       <span>Crawler</span>
@@ -290,16 +333,17 @@
   </section>
 </div>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
 <script src="/js/admin-ops-notifications.js?v=1"></script>
 <script src="/js/admin-ops-search.js?v=1"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
+<script src="/js/admin-workflow-ia.js?v=1"></script>
 <script src="/js/admin-dashboard.js?v=11"></script>
 </body>
 </html>
