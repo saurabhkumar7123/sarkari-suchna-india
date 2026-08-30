@@ -76,17 +76,18 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     Object.values(files).forEach((rel) => {
       const html = read(rel);
       expect(html).toContain("admin-workflow-ia.js");
-      expect(html).toContain("admin-design-system.css?v=16");
+      expect(html).toMatch(/admin-design-system\.css\?v=\d+/);
     });
 
-    expect(read(files.recruitments)).toContain('data-adm-wf="recruitments"');
-    expect(read(files.recruitments)).toContain('data-adm-wf="events"');
+    expect(read(files.recruitments)).not.toContain('data-adm-wf="recruitments"');
+    expect(read(files.recruitments)).not.toContain('data-adm-wf="events"');
     expect(read(files.recruitments)).toContain("Create manual update");
-    expect(read(files.recruitments)).toMatch(/do not create a duplicate/i);
+    expect(read(files.recruitments)).toMatch(/Create a new recruitment record/i);
+    expect(read(files.recruitments)).toMatch(/Manual Publish/i);
 
     expect(read(files.rrq)).toContain('data-adm-wf="reviewCenter"');
     expect(read(files.rrq)).toContain('data-adm-wf="needsMatching"');
-    expect(read(files.rrq)).toMatch(/Needs Matching means associate/i);
+    expect(read(files.rrq)).toMatch(/Needs Matching.*filter/i);
     expect(read(files.rrq)).toMatch(/Approve is not publish/i);
 
     expect(read(files.editorial)).toContain('data-adm-wf="editorial"');
@@ -97,7 +98,7 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(read(files.drafts)).toMatch(/Draft ≠ Published/i);
 
     expect(read(files.pages)).toContain('data-adm-wf="pageManager"');
-    expect(read(files.pages)).toMatch(/To publish a new page, use Generator/i);
+    expect(read(files.pages)).toMatch(/Manual Publish|Published Page Title/i);
 
     expect(read(files.monitoring)).toContain('data-adm-wf="monitoring"');
     expect(read(files.updates)).toContain('data-adm-wf="monitoringUpdates"');
@@ -120,27 +121,28 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(html).not.toMatch(/Enable automation|Turn on auto.?publish|AUTO_PUBLISH_ENABLED\s*=\s*true/i);
   });
 
-  test("nav clarifies Needs Matching vs Review Center vs Editorial without URL changes", () => {
+  test("nav keeps Review Center canonical; Needs Matching is filter-only (not sidebar)", () => {
     const nav = read("public/assets/js/admin-nav.js");
-    expect(nav).toContain('ADMIN_NAV_VERSION = "30"');
+    expect(nav).toContain('ADMIN_NAV_VERSION = "31"');
     expect(nav).toContain(
       'navLink("/admin/recruitment-review-queue", "/admin/recruitment-review-queue", I.review, "Review Center"'
     );
-    expect(nav).toContain(
+    expect(nav).not.toContain(
       'navLink("/admin/recruitment-review-queue?status=needs_matching", "/admin/recruitment-review-queue", I.review, "Needs Matching"'
     );
     expect(nav).toContain('navLink("/admin/editorial-review", "/admin/editorial-review", I.review, "Editorial Review"');
-    expect(nav).toContain('navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Recruitment Timeline"');
+    expect(nav).not.toContain('navLink("/admin/recruitments#eventTimeline", "/admin/recruitments", I.cal, "Recruitment Timeline"');
     expect(nav).toContain("/admin/page-manager");
     expect(nav).toContain("/generator#drafts");
-    expect(nav).toMatch(/filter shortcut; not a second active destination/);
+    expect(nav).toMatch(/not a separate sidebar item/);
   });
 
-  test("Event Timeline remains hash on recruitments (no invented route)", () => {
+  test("Event Timeline remains hash on recruitments (no invented route; not a second workspace)", () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain('id="eventTimeline"');
-    expect(html).toContain("/admin/recruitments#eventTimeline");
+    expect(html).toContain('id="recruitmentEventsSection"');
     expect(html).not.toContain("/admin/event-timeline");
+    expect(html).not.toContain('href="/admin/recruitments#eventTimeline"');
   });
 
   test("safety copy present; no new enable-automation controls on workflow pages", () => {

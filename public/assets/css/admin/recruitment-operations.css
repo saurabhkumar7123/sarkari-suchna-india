@@ -309,3 +309,121 @@
     margin-top: 0.25rem;
   }
 }
+
+/* v4 polish — timeline & list spacing */
+.rom-workflow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.rom-workflow__step.is-current {
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+#eventTimeline.rom-timeline,
+.rom-timeline {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.admin-saas-v2 .rom-list-panel,
+body.admin-saas-v2 .rom-detail-panel {
+  min-width: 0;
+}
+
+.rom-section-purpose {
+  margin: 0.15rem 0 0;
+  color: var(--admin-text-muted, #64748b);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
+.rom-guide {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  list-style: none;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: var(--admin-radius-sm, 8px);
+  background: var(--admin-surface-2, #f8fafc);
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--admin-text, #0f172a);
+}
+
+.rom-guide li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rom-title-legend {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-left: 3px solid var(--admin-brand, #2563eb);
+  background: color-mix(in srgb, var(--admin-brand, #2563eb) 8%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.rom-bind,
+.gen-bind {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  border: 1px dashed var(--admin-border-strong, #cbd5e1);
+  background: var(--admin-surface, #fff);
+  font-size: 0.8125rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.rom-bind__node,
+.gen-bind__node {
+  font-weight: 700;
+}
+
+.rom-bind__mid,
+.gen-bind__mid {
+  color: var(--admin-text-muted, #64748b);
+  font-weight: 600;
+}
+
+.rom-bind__arrow,
+.gen-bind__arrow {
+  color: var(--admin-brand, #2563eb);
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .rom-form,
+  .rom-inline-form,
+  .rom-link-form {
+    grid-template-columns: 1fr;
+  }
+
+  .rom-guide {
+    padding: 0.55rem 0.7rem;
+  }
+}

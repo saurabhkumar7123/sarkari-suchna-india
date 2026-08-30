@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  const WF_VERSION = "1";
+  const WF_VERSION = "2";
 
   /** Factual page catalog aligned to existing backend capabilities. */
   const PAGES = Object.freeze({
@@ -35,9 +35,9 @@
     reviewCenter: {
       id: "reviewCenter",
       where: "Review Center",
-      purpose: "Operational queue: Needs Matching, pending review, approve/reject detection or manual-update items.",
+      purpose: "Operational review queue. Needs Matching is a status filter here — not a separate workspace.",
       before: "A draft/update exists that needs a recruitment decision (automation match or manual update package).",
-      here: "Needs Matching = associate the item with the correct recruitment (Attach / Create Parent / Standalone / Reject).",
+      here: "Filter by Needs Matching / pending / approved / rejected. Matching associates an item with the correct recruitment.",
       next: "After matching/approval: Editorial Review for content check, then Manual Publish in Generator. Approve ≠ Publish.",
       path: "both",
       currentStep: "matching",
@@ -45,11 +45,11 @@
     },
     needsMatching: {
       id: "needsMatching",
-      where: "Needs Matching",
-      purpose: "Items that must be linked to the correct existing recruitment (or create a new parent).",
-      before: "Detection or update could not auto-attach with high confidence.",
-      here: "Choose Attach, Create Parent, Standalone, or Reject — using existing resolve-matching actions only.",
-      next: "Item leaves Needs Matching; continue to draft/editorial work, then Manual Publish.",
+      where: "Review Center · Needs Matching",
+      purpose: "Filtered Review Center state: items that must be linked to the correct recruitment.",
+      before: "Same Review Center queue — status filter = needs_matching.",
+      here: "Associate the item with the correct recruitment (Attach / Create Parent / Standalone / Reject).",
+      next: "Item leaves Needs Matching; continue draft/editorial work, then Manual Publish.",
       path: "both",
       currentStep: "matching"
     },

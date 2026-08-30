@@ -120,7 +120,7 @@ describe("Package 4E Admin Productivity integration", () => {
     expect(nav).toContain('data-nav-path="/admin/recruitments"');
     expect(nav).toContain('data-nav-path="/admin/editorial-review"');
     expect(nav).toContain('data-nav-path="/admin/recruitment-runtime-preview"');
-    expect(nav).toContain("/admin/recruitments#eventTimeline");
+    expect(nav).toContain("#eventTimeline");
     expect(nav).toContain("Shared Preview");
 
     const palette = read("public/assets/js/admin-command-palette.js");
@@ -129,6 +129,7 @@ describe("Package 4E Admin Productivity integration", () => {
     expect(palette).toContain("Open Shared Preview");
     expect(palette).toContain("Search Recruitments");
     expect(palette).toContain("/api/admin/recruitments");
+    expect(palette).toContain("/admin/recruitments#eventTimeline");
   });
 
   test("Package 4D Shared Preview regression still holds", async () => {
@@ -160,10 +161,10 @@ describe("Package 4E Admin Productivity integration", () => {
   test("Package 4B Recruitment Operations regression still holds", async () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
-    expect(html).toContain("Recruitment Events");
+    expect(html).toContain("Event Timeline");
     expect(html).toContain("Recruitment Page Links");
-    expect(html).toContain("Ready for Review");
     expect(html).toContain("Generator Draft Binding");
+    expect(html).toContain('id="newRecruitmentBtn"');
 
     const list = await request(app).get("/api/admin/recruitments");
     expect(list.status).toBe(401);

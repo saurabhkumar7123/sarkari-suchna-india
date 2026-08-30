@@ -409,6 +409,24 @@
       btn.classList.toggle("is-active", active);
       btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    const legend = document.getElementById("rrqFilterLegend");
+    if (legend) {
+      if (status === "needs_matching") {
+        legend.textContent =
+          "Showing: Needs Matching (Review Center filter — associate item with the correct recruitment)";
+      } else if (status) {
+        legend.textContent = `Showing: ${String(status).replace(/_/g, " ")}`;
+      } else {
+        legend.textContent = "Showing: All review items";
+      }
+    }
+    const review = document.getElementById("admWfReviewCenter");
+    const needs = document.getElementById("admWfNeedsMatching");
+    if (review && needs) {
+      const isNeeds = status === "needs_matching";
+      review.hidden = isNeeds;
+      needs.hidden = !isNeeds;
+    }
   }
 
   function applyStatusFromUrl() {

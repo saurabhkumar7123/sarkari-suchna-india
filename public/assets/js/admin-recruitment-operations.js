@@ -142,16 +142,17 @@
   function renderRecruitments(rows) {
     const host = byId("recruitmentRows");
     if (!rows.length) {
-      host.innerHTML = '<tr><td colspan="5" class="rom-empty">No recruitments found.</td></tr>';
+      host.innerHTML = '<tr><td colspan="6" class="rom-empty">No recruitments found.</td></tr>';
       updateBulkBar();
       return;
     }
     host.innerHTML = rows.map((row) => {
       const checked = selectedIds.has(Number(row.id)) ? "checked" : "";
       return `<tr data-id="${row.id}" class="${selected?.id === row.id ? "is-selected" : ""}">
-      <td><input type="checkbox" class="rom-row-check" data-bulk-id="${row.id}" ${checked} aria-label="Select recruitment ${escapeHtml(row.title)}"></td>
-      <td><strong>${escapeHtml(row.title)}</strong><br><small>${escapeHtml(row.slug)}</small></td>
+      <td><input type="checkbox" class="rom-row-check" data-bulk-id="${row.id}" ${checked} aria-label="Select ${escapeHtml(row.title)}"></td>
+      <td><strong>${escapeHtml(row.title)}</strong><br><small>${escapeHtml(row.slug || "")}</small></td>
       <td>${escapeHtml(row.department || "—")}</td>
+      <td>${escapeHtml(row.post_name || "—")}</td>
       <td>${escapeHtml(row.cycle_year || "—")}</td>
       <td>${statusHtml(row.lifecycle_state)}</td>
     </tr>`;
@@ -315,12 +316,16 @@
     const workflowEl = byId("draftWorkflowLine");
     const rows = byId("draftBindingRows");
     const openReview = byId("openEditorialReviewBtn");
+    const bindVisual = byId("romBindingVisual");
     if (!selected?.id) {
       statusEl.textContent = "No Draft";
       statusEl.className = "rom-status";
       workflowEl.textContent = "Workflow: —";
       rows.innerHTML = '<tr><td colspan="4" class="rom-empty">Select a recruitment to manage draft binding.</td></tr>';
       openReview.href = "/admin/editorial-review";
+      if (bindVisual) {
+        bindVisual.innerHTML = `<span class="rom-bind__node">Draft</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
+      }
       return;
     }
     const binding = draftBinding || {};
@@ -331,13 +336,24 @@
     openReview.href = `/admin/editorial-review?recruitment_id=${encodeURIComponent(selected.id)}`;
 
     const drafts = binding.drafts || [];
+    const primary = drafts.find((d) => Number(d.id) === Number(binding.primaryDraftId)) || drafts[0];
+    if (bindVisual) {
+      if (primary) {
+        const draftLabel = escapeHtml(primary.title || "Untitled draft");
+        const recLabel = escapeHtml(selected.title || "Recruitment");
+        bindVisual.innerHTML = `<span class="rom-bind__node">${draftLabel}</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">linked to</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__node">${recLabel}</span>`;
+      } else {
+        bindVisual.innerHTML = `<span class="rom-bind__node">Draft</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
+      }
+    }
+
     if (!drafts.length) {
       rows.innerHTML = '<tr><td colspan="4" class="rom-empty">No drafts attached.</td></tr>';
     } else {
       rows.innerHTML = drafts.map((draft) => {
         const isPrimary = Number(draft.id) === Number(binding.primaryDraftId);
         return `<tr>
-          <td><strong>#${escapeHtml(draft.id)}</strong> ${escapeHtml(draft.title || "Untitled")}<br><small>${escapeHtml(draft.slugHint || "—")}</small></td>
+          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Status: ${escapeHtml(draft.status || "draft")}</small></td>
           <td>${escapeHtml(draft.updatedAt || "—")}</td>
           <td>${isPrimary ? statusHtml("primary") : "Linked"}</td>
           <td><button type="button" class="rom-row-btn is-danger" data-detach-draft="${draft.id}">Detach</button></td>
@@ -356,11 +372,15 @@
       const body = await api("/api/admin/draft-bindings/available-drafts?limit=30");
       const drafts = body.data || [];
       select.innerHTML = '<option value="">Select an unbound draft</option>' + drafts
-        .map((draft) => `<option value="${draft.id}">#${draft.id} — ${escapeHtml(draft.title || "Untitled")}</option>`)
+        .map((draft) => {
+          const title = escapeHtml(draft.title || "Untitled");
+          const status = escapeHtml(draft.status || "draft");
+          return `<option value="${draft.id}">${title} — ${status}</option>`;
+        })
         .join("");
     } catch (err) {
       select.innerHTML = '<option value="">Unable to load drafts</option>';
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -386,22 +406,24 @@
     if (!selected?.id) return;
     const draftId = byId("draftBindSelect").value;
     if (!draftId) return;
+    const draftLabel =
+      byId("draftBindSelect").selectedOptions?.[0]?.textContent?.trim() || "Draft";
     try {
       const body = await api(`/api/admin/recruitments/${selected.id}/draft-binding/attach`, {
         method: "POST",
         body: { draft_id: draftId }
       });
       draftBinding = body.data;
-      message("Draft attached.");
+      message(`Draft linked successfully — ${draftLabel} → ${selected.title || "recruitment"}`);
       notifyLocal(
         window.AdminOpsNotifications?.TYPES?.DRAFT_ATTACHED || "draft_attached",
-        `Draft #${draftId} attached to recruitment #${selected.id}`,
+        `Draft linked to ${selected.title || "recruitment"}`,
         `/admin/editorial-review?recruitment_id=${selected.id}`
       );
       renderDraftBinding();
       await loadAvailableDrafts();
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -409,7 +431,7 @@
     if (!selected?.id) return;
     const draftId = byId("draftBindSelect").value;
     if (!draftId) {
-      message("Select a draft to replace with.", true);
+      message("Failed: Select a draft to replace with.", true);
       return;
     }
     try {
@@ -421,11 +443,11 @@
         }
       });
       draftBinding = body.data;
-      message("Linked draft replaced.");
+      message("Draft linked successfully (replaced previous link).");
       renderDraftBinding();
       await loadAvailableDrafts();
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -437,11 +459,11 @@
         body: { draft_id: draftId }
       });
       draftBinding = body.data;
-      message("Draft detached.");
+      message("Draft detached successfully");
       renderDraftBinding();
       await loadAvailableDrafts();
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -449,7 +471,7 @@
     const host = byId("eventTimeline");
     const eventSelect = byId("pageLinkEvent");
     eventSelect.innerHTML = '<option value="">Recruitment-level link</option>' + events
-      .map((event) => `<option value="${event.id}">${escapeHtml(labelize(event.event_type))} (#${event.id})</option>`).join("");
+      .map((event) => `<option value="${event.id}">${escapeHtml(labelize(event.event_type))} · ${escapeHtml(event.status || "")}</option>`).join("");
     if (!events.length) {
       host.innerHTML = '<li class="rom-empty">No lifecycle events yet.</li>';
       updateWorkflow();
@@ -496,9 +518,9 @@
         updateRows.innerHTML = linkedUpdates
           .map(
             (row) => `<tr>
-            <td>#${escapeHtml(row.id)}</td>
-            <td>${escapeHtml(row.title || "—")}</td>
-            <td>${escapeHtml(row.recruitmentEventType || row.recruitment_event_type || "—")}</td>
+            <td>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "update"))}</td>
+            <td><strong>${escapeHtml(row.title || "—")}</strong></td>
+            <td>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "—"))}</td>
             <td>${escapeHtml(row.siteName || row.site_id || "—")}</td>
           </tr>`
           )
@@ -512,17 +534,33 @@
         reviewRows.innerHTML = linkedReviews
           .map(
             (row) => `<tr>
-            <td><a href="/admin/recruitment-review-queue">#${escapeHtml(row.id)}</a></td>
+            <td><a href="/admin/recruitment-review-queue">${escapeHtml(labelize(row.event_type || "Review"))}</a></td>
             <td><span class="rrq-status is-${escapeHtml(String(row.status || "").toLowerCase())}">${escapeHtml(
               row.status || "—"
             )}</span></td>
-            <td>${escapeHtml(row.event_type || "—")}</td>
-            <td>${escapeHtml(row.update_id ?? "—")}</td>
+            <td>${escapeHtml(labelize(row.event_type || "—"))}</td>
+            <td>${escapeHtml(row.title || row.update_title || "—")}</td>
           </tr>`
           )
           .join("");
       }
     }
+  }
+
+  function focusEventTimeline() {
+    const section = byId("recruitmentEventsSection") || byId("eventTimeline");
+    if (!section) return;
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleEventTimelineHash() {
+    const hash = String(window.location.hash || "").replace(/^#/, "");
+    if (hash !== "eventTimeline") return;
+    if (selected?.id) {
+      focusEventTimeline();
+      return;
+    }
+    message("Select a recruitment to view its Event Timeline.", false);
   }
 
   async function selectRecruitment(id) {
@@ -541,8 +579,10 @@
       await loadDraftBinding();
       await loadAvailableDrafts();
       await loadRecruitments();
-      // Package 4D — shared preview panel (same model as Editorial Review).
       if (window.AdminSharedPreview) await window.AdminSharedPreview.show(selected.id);
+      if (String(window.location.hash || "").replace(/^#/, "") === "eventTimeline") {
+        focusEventTimeline();
+      }
     } catch (err) {
       message(err.message, true);
     }
@@ -581,13 +621,21 @@
     event.preventDefault();
     try {
       const id = byId("recruitmentId").value;
+      const payload = recruitmentPayload();
       const body = await api(id ? `/api/admin/recruitments/${id}` : "/api/admin/recruitments", {
-        method: id ? "PUT" : "POST", body: recruitmentPayload()
+        method: id ? "PUT" : "POST", body: payload
       });
-      message(id ? "Recruitment updated." : "Recruitment created.");
+      const name = payload.title || body.data?.title || "Recruitment";
+      if (id) {
+        message(`Recruitment updated successfully — ${name}`);
+      } else {
+        message(
+          `Recruitment created successfully — ${name}. Next: add events, attach a page, or bind a parked draft.`
+        );
+      }
       await selectRecruitment(body.data.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -595,10 +643,10 @@
     if (!selected || !window.confirm(`Archive "${selected.title}"?`)) return;
     try {
       await api(`/api/admin/recruitments/${selected.id}`, { method: "PUT", body: { lifecycle_state: "closed" } });
-      message("Recruitment archived. Existing events and page links were retained.");
+      message("Recruitment archived successfully. Existing events and page links were retained.");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -623,10 +671,10 @@
         method: id ? "PUT" : "POST", body: payload
       });
       byId("eventForm").hidden = true;
-      message(id ? "Event updated." : "Event added.");
+      message(id ? "Event saved successfully" : "Event saved successfully");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -634,10 +682,10 @@
     if (!window.confirm("Delete this lifecycle event? Linked pages will remain attached to the recruitment.")) return;
     try {
       await api(`/api/admin/recruitment-events/${id}`, { method: "DELETE" });
-      message("Event deleted.");
+      message("Event deleted successfully");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -649,11 +697,11 @@
       const body = await api(`/api/admin/page-linkages/page?slug=${encodeURIComponent(slug)}`);
       const page = body.data;
       status.textContent = page.recruitment_id
-        ? `Page exists and is currently linked to recruitment #${page.recruitment_id}.`
+        ? `Page exists and is currently linked to another recruitment.`
         : "Page exists and is available to attach.";
       status.hidden = false;
     } catch (err) {
-      status.textContent = err.message;
+      status.textContent = `Failed: ${err.message}`;
       status.hidden = false;
       notifyLocal(
         window.AdminOpsNotifications?.TYPES?.BROKEN_PAGE_LINK || "broken_page_link",
@@ -677,10 +725,10 @@
       });
       byId("pageLinkForm").reset();
       byId("pageValidationStatus").hidden = true;
-      message("Page attached. No publishing action was performed.");
+      message("Page attached successfully. No publishing action was performed.");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -688,10 +736,10 @@
     if (!window.confirm("Detach this page from the recruitment?")) return;
     try {
       await api(`/api/admin/page-linkages?page_id=${encodeURIComponent(pageId)}`, { method: "DELETE" });
-      message("Page detached.");
+      message("Page detached successfully");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -707,10 +755,10 @@
         }
       });
       byId("manualUpdateForm").reset();
-      message("Manual update draft + review created. Not published.");
+      message("Update saved successfully — draft + review created (not published).");
       await selectRecruitment(selected.id);
     } catch (err) {
-      message(err.message, true);
+      message(`Failed: ${err.message}`, true);
     }
   }
 
@@ -767,5 +815,6 @@
   renderRecentSearches();
   renderDraftBinding();
   loadAvailableDrafts();
-  loadRecruitments();
+  loadRecruitments().then(() => handleEventTimelineHash());
+  window.addEventListener("hashchange", handleEventTimelineHash);
 })();

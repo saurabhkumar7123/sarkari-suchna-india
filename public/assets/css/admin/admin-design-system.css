@@ -1819,20 +1819,10 @@ body.dark.admin-saas-v2 .admin-attention-card.is-blue {
   background: color-mix(in srgb, var(--admin-info) 12%, var(--admin-surface));
 }
 
-body[data-admin-hash="eventTimeline"] [data-workspace="recruitments"],
-body:not([data-admin-hash="eventTimeline"]) [data-workspace="events"] {
-  display: none;
-}
-
-body[data-admin-hash="eventTimeline"] .rom-list-panel {
-  max-height: 320px;
-  overflow: auto;
-}
-
 body[data-admin-hash="eventTimeline"] .rom-events-card {
-  order: -1;
   outline: 2px solid var(--admin-brand-ring, rgba(37, 99, 235, 0.18));
   outline-offset: 4px;
+  scroll-margin-top: 5rem;
 }
 
 body[data-admin-hash="drafts"] .generator-hero,
