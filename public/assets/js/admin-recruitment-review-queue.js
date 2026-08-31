@@ -23,6 +23,31 @@
       .replace(/"/g, "&quot;");
   }
 
+  function resolveDraftId(item) {
+    const processor =
+      item && item.processor_output && typeof item.processor_output === "object"
+        ? item.processor_output
+        : {};
+    const raw =
+      item && (item.draft_id || item.draftId || item.generator_draft_id || processor.draftId);
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return String(n);
+    return null;
+  }
+
+  function syncManualPublishLink(item) {
+    const link = document.getElementById("rrqManualPublishLink");
+    if (!link) return;
+    const draftId = resolveDraftId(item);
+    if (draftId) {
+      link.href = "/generator?draftId=" + encodeURIComponent(draftId);
+      link.textContent = "Manual Publish (Generator)";
+      return;
+    }
+    link.href = "/generator#drafts";
+    link.textContent = "Manual Publish (Generator)";
+  }
+
   function setMessage(el, message, tone) {
     if (!el) return;
     if (!message) {
@@ -103,12 +128,66 @@
     return { ok: response.ok, status: response.status, body };
   }
 
+  function recruitmentLabel(item) {
+    if (!item) return "—";
+    const title =
+      item.recruitment_title ||
+      item.recruitmentTitle ||
+      (item.assist && (item.assist.recruitmentTitle || item.assist.recruitment_title)) ||
+      (item.payload && (item.payload.recruitmentTitle || item.payload.recruitment_title));
+    if (title) return String(title);
+    if (item.recruitment_id != null && item.recruitment_id !== "") {
+      return `Recruitment #${item.recruitment_id}`;
+    }
+    return "Unassigned";
+  }
+
+  function detectedContentSummary(item) {
+    if (!item) return "—";
+    const normalized = item.normalized_notice;
+    if (typeof normalized === "string" && normalized.trim()) return normalized.trim();
+    if (normalized && typeof normalized === "object") {
+      const text =
+        normalized.text ||
+        normalized.summary ||
+        normalized.content ||
+        normalized.title;
+      if (text) return String(text);
+      return prettyJson(normalized);
+    }
+    const raw = item.raw_notice;
+    if (typeof raw === "string" && raw.trim()) return raw.trim().slice(0, 2000);
+    if (raw && typeof raw === "object") {
+      const text = raw.text || raw.content || raw.title || raw.snippet;
+      if (text) return String(text).slice(0, 2000);
+    }
+    return item.title || "—";
+  }
+
+  function setAttachSelection(id, title) {
+    const idEl = document.getElementById("rrqAttachRecruitmentId");
+    const labelEl = document.getElementById("rrqAttachRecruitmentLabel");
+    const searchEl = document.getElementById("rrqAttachRecruitmentSearch");
+    const suggestions = document.getElementById("rrqAttachSuggestions");
+    if (idEl) idEl.value = id ? String(id) : "";
+    if (labelEl) {
+      labelEl.textContent = id
+        ? `Selected: ${title || `Recruitment #${id}`}`
+        : "No recruitment selected";
+    }
+    if (searchEl && title) searchEl.value = title;
+    if (suggestions) {
+      suggestions.hidden = true;
+      suggestions.innerHTML = "";
+    }
+  }
+
   function renderRows(items) {
     const tbody = document.getElementById("rrqTableBody");
     if (!tbody) return;
 
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="8" class="rrq-empty">No review items found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="rrq-empty">No review items found.</td></tr>`;
       return;
     }
 
@@ -119,11 +198,10 @@
           : "—";
         const selected = selectedId === item.id ? " is-selected" : "";
         return `<tr data-id="${item.id}" class="${selected}">
-          <td>${escapeHtml(item.id)}</td>
           <td>${escapeHtml(item.title || "—")}</td>
           <td><span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></td>
           <td>${escapeHtml(item.event_type || "—")}</td>
-          <td>${escapeHtml(item.recruitment_id ?? "—")}</td>
+          <td>${escapeHtml(recruitmentLabel(item))}</td>
           <td>${escapeHtml(item.confidence || "—")}</td>
           <td>${escapeHtml(formatDate(item.created_at))}</td>
           <td>${source}</td>
@@ -350,24 +428,24 @@
         );
 
     if (!candidates.length) {
-      body.innerHTML = '<tr><td colspan="6" class="rrq-empty">No candidates.</td></tr>';
+      body.innerHTML = '<tr><td colspan="4" class="rrq-empty">No candidates — search by name below to attach an existing Recruitment.</td></tr>';
       return;
     }
 
     body.innerHTML = candidates
       .map((row) => {
         const rid = row.recruitmentId || row.recruitment_id || (row.kind === "recruitment" ? row.id : "");
+        const title = row.title || (rid ? `Recruitment #${rid}` : "—");
+        const match = row.level || row.matchLevel || row.kind || "—";
         return `<tr>
-          <td>${escapeHtml(row.kind || "—")}</td>
-          <td>${escapeHtml(row.id ?? "—")}</td>
-          <td>${escapeHtml(row.title || "—")}</td>
-          <td>${escapeHtml(row.level || row.matchLevel || "—")}</td>
+          <td>${escapeHtml(title)}</td>
+          <td>${escapeHtml(match)}</td>
           <td>${escapeHtml(row.score ?? "—")}</td>
           <td>${
             rid
               ? `<button type="button" class="header-action-btn header-action-btn--ghost" data-pick-recruitment="${escapeHtml(
                   rid
-                )}">Use</button>`
+                )}" data-pick-title="${escapeHtml(title)}">Use</button>`
               : "—"
           }</td>
         </tr>`;
@@ -394,11 +472,11 @@
     const eventType = item.event_type || "—";
     const updateId = item.update_id || "—";
     meta.innerHTML = `
-      <div><dt>Recruitment</dt><dd>${escapeHtml(item.recruitment_id)}</dd></div>
+      <div><dt>Recruitment</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
       <div><dt>Update</dt><dd>${escapeHtml(updateId)}</dd></div>
       <div><dt>Event</dt><dd>${escapeHtml(eventType)}</dd></div>
       <div><dt>Draft</dt><dd>${escapeHtml(draftId)}</dd></div>
-      <div><dt>Review</dt><dd>#${escapeHtml(item.id)} · ${escapeHtml(item.status || "—")}</dd></div>
+      <div><dt>Review</dt><dd>${escapeHtml(item.title || `#${item.id}`)} · ${escapeHtml(item.status || "—")}</dd></div>
     `;
   }
 
@@ -455,6 +533,7 @@
 
     if (!item) {
       panel.hidden = true;
+      syncManualPublishLink(null);
       return;
     }
 
@@ -464,11 +543,11 @@
     const meta = document.getElementById("rrqDetailMeta");
     if (meta) {
       meta.innerHTML = `
-        <span>ID: <strong>${escapeHtml(item.id)}</strong></span>
+        <span>Title: <strong>${escapeHtml(item.title || "—")}</strong></span>
         <span>Status: <span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></span>
         <span>Decision: <strong>${escapeHtml(item.decision || "—")}</strong></span>
-        <span>Recruitment: <strong>${escapeHtml(item.recruitment_id ?? "—")}</strong></span>
-        <span>Update: <strong>${escapeHtml(item.update_id ?? "—")}</strong></span>
+        <span>Recruitment: <strong>${escapeHtml(recruitmentLabel(item))}</strong></span>
+        <span>Confidence: <strong>${escapeHtml(item.confidence || "—")}</strong></span>
         <span>Created: <strong>${escapeHtml(formatDate(item.created_at))}</strong></span>
       `;
     }
@@ -478,6 +557,8 @@
     renderNeedsMatching(item);
     renderLinkage(item);
     renderHistory(assist, item);
+    syncManualPublishLink(item);
+    setAttachSelection("", "");
 
     const notesEl = document.getElementById("rrqNotes");
     if (notesEl) notesEl.value = item.notes || "";
@@ -499,12 +580,27 @@
       source_url: item.source_url,
       match_result: item.match_result,
       raw_notice: item.raw_notice,
-      processor_output: item.processor_output
+      normalized_notice: item.normalized_notice,
+      processor_output: item.processor_output,
+      nm_title: item.title,
+      nm_status: `${item.event_type || "—"} · ${item.status || "—"} · confidence ${item.confidence || "—"}`,
+      nm_content: detectedContentSummary(item)
     };
     Object.keys(fields).forEach((key) => {
       const el = document.querySelector(`[data-field="${key}"]`);
       if (el) el.textContent = prettyJson(fields[key]);
     });
+  }
+
+  function nextStepMessage(action, item) {
+    const name = recruitmentLabel(item);
+    const messages = {
+      attach: `Attached to ${name}. Next: Generator → Preview → Manual Publish (same permanent page).`,
+      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Generator → Preview → Manual Publish.`,
+      standalone: `Standalone Recruitment created. Next: Generator → Preview → Manual Publish.`,
+      reject: "Rejected — no Recruitment or page change."
+    };
+    return messages[action] || `Resolved: ${action}`;
   }
 
   async function resolveMatching(action, recruitmentId) {
@@ -532,7 +628,7 @@
       return;
     }
     renderDetail(result.body.data);
-    setMessage(detailMessage, `Resolved: ${action}`, "success");
+    setMessage(detailMessage, nextStepMessage(action, result.body.data), "success");
     await loadList();
   }
 
@@ -544,7 +640,7 @@
     if (!result.ok || !result.body || result.body.success !== true) {
       const tbody = document.getElementById("rrqTableBody");
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="8" class="rrq-empty">Could not load review items.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="rrq-empty">Could not load review items.</td></tr>`;
       }
       setMessage(
         listMessage,
@@ -713,7 +809,11 @@
     const action = btn.getAttribute("data-match-action");
     let recruitmentId = document.getElementById("rrqAttachRecruitmentId")?.value || "";
     if (action === "attach" && !recruitmentId) {
-      setMessage(document.getElementById("rrqDetailMessage"), "Enter a recruitment ID to attach.", "error");
+      setMessage(
+        document.getElementById("rrqDetailMessage"),
+        "Select an existing Recruitment (Use a candidate or search by name).",
+        "error"
+      );
       return;
     }
     await resolveMatching(action, recruitmentId || undefined);
@@ -722,8 +822,58 @@
   document.getElementById("rrqCandidateBody")?.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-pick-recruitment]");
     if (!btn) return;
-    const input = document.getElementById("rrqAttachRecruitmentId");
-    if (input) input.value = btn.getAttribute("data-pick-recruitment") || "";
+    setAttachSelection(
+      btn.getAttribute("data-pick-recruitment") || "",
+      btn.getAttribute("data-pick-title") || ""
+    );
+  });
+
+  let attachSearchTimer = null;
+  async function searchRecruitmentsForAttach(query) {
+    const suggestions = document.getElementById("rrqAttachSuggestions");
+    if (!suggestions) return;
+    const q = String(query || "").trim();
+    if (q.length < 2) {
+      suggestions.hidden = true;
+      suggestions.innerHTML = "";
+      return;
+    }
+    const result = await apiRequest(
+      `/api/admin/recruitments?search=${encodeURIComponent(q)}&limit=8`
+    );
+    const rows =
+      result.ok && result.body && result.body.success === true && Array.isArray(result.body.data)
+        ? result.body.data
+        : [];
+    if (!rows.length) {
+      suggestions.innerHTML = `<div class="rrq-attach-empty">No matching recruitments</div>`;
+      suggestions.hidden = false;
+      return;
+    }
+    suggestions.innerHTML = rows
+      .map((row) => {
+        const title = row.title || `Recruitment #${row.id}`;
+        return `<button type="button" class="rrq-attach-option" data-pick-recruitment="${escapeHtml(
+          row.id
+        )}" data-pick-title="${escapeHtml(title)}">${escapeHtml(title)}</button>`;
+      })
+      .join("");
+    suggestions.hidden = false;
+  }
+
+  document.getElementById("rrqAttachRecruitmentSearch")?.addEventListener("input", (event) => {
+    const value = event.target.value;
+    if (attachSearchTimer) clearTimeout(attachSearchTimer);
+    attachSearchTimer = setTimeout(() => searchRecruitmentsForAttach(value), 250);
+  });
+
+  document.getElementById("rrqAttachSuggestions")?.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-pick-recruitment]");
+    if (!btn) return;
+    setAttachSelection(
+      btn.getAttribute("data-pick-recruitment") || "",
+      btn.getAttribute("data-pick-title") || ""
+    );
   });
 
   document.getElementById("rrqSaveNotes")?.addEventListener("click", saveNotes);

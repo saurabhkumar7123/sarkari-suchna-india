@@ -162,7 +162,7 @@ describe("Package 4E Admin Productivity integration", () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
     expect(html).toContain("Event Timeline");
-    expect(html).toContain("Recruitment Page Links");
+    expect(html).toContain("Recruitment Page");
     expect(html).toContain("Generator Draft Binding");
     expect(html).toContain('id="newRecruitmentBtn"');
 

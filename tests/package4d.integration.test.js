@@ -111,9 +111,8 @@ describe("Package 4D Shared Runtime Preview integration", () => {
   test("Package 4B Recruitment Operations regression still holds", async () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
-    expect(html).toContain("Recruitment Events");
-    expect(html).toContain("Recruitment Page Links");
-    expect(html).toContain("Ready for Review");
+    expect(html).toContain("Event Timeline");
+    expect(html).toContain("Recruitment Page");
     expect(html).toContain("Generator Draft Binding");
 
     const list = await request(app).get("/api/admin/recruitments");

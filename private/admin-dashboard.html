@@ -111,12 +111,12 @@
 
   <section class="content-section" aria-labelledby="wfScenariosTitle">
     <h2 id="wfScenariosTitle">Start here by situation</h2>
-    <p class="manager-hint">Automation is off by default - use the Manual path. Both paths converge at Editorial Review, then Manual Publish in Generator. Approve never publishes.</p>
+    <p class="manager-hint">Automation is off by default - use the Manual path. Review Center is only if matching is needed. Final Preview / Edit / Manual Publish is in Generator. Page Manager manages already-published pages. Approve never publishes.</p>
     <div class="adm-wf-scenarios" id="admWfScenarios">
       <article class="adm-wf-scenario">
         <span class="adm-wf-scenario__path">Manual - New vacancy</span>
         <h3>New vacancy</h3>
-        <p>Start at All Recruitments &rarr; create recruitment &rarr; prepare draft in Generator &rarr; Editorial Review &rarr; Manual Publish.</p>
+        <p>Start at All Recruitments &rarr; create recruitment &rarr; prepare in Generator &rarr; Preview / Edit &rarr; Manual Publish. Editorial Review is optional QA.</p>
         <a class="header-action-btn" href="/admin/recruitments">Open Recruitments</a>
       </article>
       <article class="adm-wf-scenario">
@@ -128,25 +128,25 @@
       <article class="adm-wf-scenario">
         <span class="adm-wf-scenario__path">Both - Needs Matching</span>
         <h3>Needs Matching</h3>
-        <p>Item must be linked to the correct recruitment. Attach / Create Parent / Standalone / Reject - then continue to editorial / publish.</p>
+        <p>Item must be linked to the correct recruitment. Attach / Create Parent / Standalone / Reject &rarr; Generator &rarr; Preview / Edit &rarr; Manual Publish.</p>
         <a class="header-action-btn" href="/admin/recruitment-review-queue?status=needs_matching">Open Needs Matching</a>
       </article>
       <article class="adm-wf-scenario">
         <span class="adm-wf-scenario__path">Both - Draft ready</span>
         <h3>Draft ready</h3>
-        <p>Draft is not Published. Open Drafts, then Editorial Review. Final publish is Manual Publish in Generator.</p>
+        <p>Draft is not Published. Open Drafts in Generator, Preview / Edit, then Save / Update (Manual Publish). Editorial Review is optional.</p>
         <a class="header-action-btn" href="/generator#drafts">Open Drafts</a>
       </article>
       <article class="adm-wf-scenario">
         <span class="adm-wf-scenario__path">Both - Editorial</span>
         <h3>Editorial Review</h3>
-        <p>Check content accuracy. Approve is not Publish. After approval, publish manually in Generator; manage live pages in Page Manager.</p>
+        <p>Optional content QA. Approve is not Publish. Final manual publishing is done from Generator; manage live pages in Page Manager.</p>
         <a class="header-action-btn" href="/admin/editorial-review">Open Editorial Review</a>
       </article>
       <article class="adm-wf-scenario">
         <span class="adm-wf-scenario__path">Automatic - when flags on</span>
         <h3>Automation path (dormant)</h3>
-        <p>Monitoring &rarr; Detect &rarr; Draft &rarr; Matching &rarr; Review Center &rarr; Editorial &rarr; Manual Publish. Flags stay off; ACC shows posture only.</p>
+        <p>Monitoring &rarr; Detect &rarr; Draft &rarr; Review Center (if needed) &rarr; Generator &rarr; Preview / Edit &rarr; Manual Publish &rarr; Page Manager. Flags stay off; ACC shows posture only.</p>
         <a class="header-action-btn" href="/admin/automation-control-center">Open ACC</a>
       </article>
     </div>
@@ -161,11 +161,13 @@
       <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
       <span class="admin-ops-flow__step">Matching</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
-      <span class="admin-ops-flow__step is-current">Review / Editorial</span>
+      <span class="admin-ops-flow__step">Review Center (if needed)</span>
+      <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
+      <span class="admin-ops-flow__step is-current">Generator</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
       <span class="admin-ops-flow__arrow" aria-hidden="true">&rarr;</span>
-      <span class="admin-ops-flow__step">Published Pages</span>
+      <span class="admin-ops-flow__step">Page Manager</span>
     </nav>
   </section>
 
@@ -343,7 +345,7 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-workflow-ia.js?v=1"></script>
+<script src="/js/admin-workflow-ia.js?v=3"></script>
 <script src="/js/admin-dashboard.js?v=11"></script>
 </body>
 </html>

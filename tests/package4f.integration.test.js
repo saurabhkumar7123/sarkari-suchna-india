@@ -127,8 +127,8 @@ describe("Package 4F SEO & Content Pipeline integration", () => {
   test("Package 4B Recruitment Operations regression still holds", async () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
-    expect(html).toContain("Recruitment Events");
-    expect(html).toContain("Ready for Review");
+    expect(html).toContain("Event Timeline");
+    expect(html).toContain("Generator Draft Binding");
 
     const list = await request(app).get("/api/admin/recruitments");
     expect(list.status).toBe(401);

@@ -44,10 +44,10 @@
       <p class="admin-page-head__eyebrow">Editorial workspace</p>
       <h1>Editorial Review</h1>
       <p class="er-help">
-        Why here: human editorial check of generated content for a recruitment.
+        Optional content QA — approval here does not publish the page.
+        Final manual publishing is done from Generator.
         Not Review Center (matching) and not Drafts list.
-        Check accuracy, request changes, approve or reject.
-        APPROVE ≠ PUBLISH — final publish stays in Generator.
+        APPROVE ≠ PUBLISH.
       </p>
     </div>
   </div>
@@ -233,11 +233,11 @@
           <div class="er-decisions" id="erDecisions"></div>
           <aside class="er-publish-gate" aria-label="Manual publish remains separate">
             <p class="er-publish-gate__title">Manual Publish</p>
-            <p><strong>Approval does not publish.</strong> Auto Publish is disabled. Preview or publish the page as a separate manual action.</p>
+            <p><strong>Approval does not publish.</strong> Auto Publish is disabled. Final manual publishing is done from Generator. Page Manager only manages already-published pages.</p>
             <div class="er-publish-gate__actions">
-              <a class="header-action-btn" href="/admin/recruitment-runtime-preview" style="text-decoration:none;">Preview</a>
-              <a class="header-action-btn" href="/admin/page-manager" style="text-decoration:none;">Publish Page</a>
-              <a class="header-action-btn er-secondary" href="/generator" style="text-decoration:none;">Edit Draft</a>
+              <a class="header-action-btn" href="/generator" style="text-decoration:none;">Preview / Edit in Generator</a>
+              <a class="header-action-btn" href="/generator" style="text-decoration:none;">Manual Publish (Generator)</a>
+              <a class="header-action-btn er-secondary" href="/admin/page-manager" style="text-decoration:none;">Manage published pages</a>
             </div>
           </aside>
           <label class="er-comment">Decision comment
@@ -284,7 +284,7 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-workflow-ia.js?v=1"></script>
+<script src="/js/admin-workflow-ia.js?v=3"></script>
 <script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
 <script src="/js/generator-workspace-core.js?v=1"></script>

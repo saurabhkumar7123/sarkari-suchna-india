@@ -727,6 +727,9 @@ body.generator-saas-v2 .editor-toolbar-hint{
   margin-left:auto;
   font-size:11px;
   color:var(--saas-muted);
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
 
 body.generator-saas-v2 .content-editor{
@@ -2480,6 +2483,91 @@ body.generator-saas-v2 .card-fields--recruitment-context{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:12px 16px;
+}
+
+body.generator-saas-v2 .gen-title-legend{
+  margin:0 0 12px;
+  padding:10px 12px;
+  border-radius:8px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  color:#475569;
+  font-size:0.8125rem;
+  line-height:1.45;
+}
+
+body.generator-saas-v2 .gen-context-card{
+  margin-top:14px;
+  padding:12px 14px;
+  border:1px solid #dbeafe;
+  border-radius:10px;
+  background:#eff6ff;
+}
+
+body.generator-saas-v2 .gen-context-card__title{
+  margin:0 0 8px;
+  font-size:0.75rem;
+  font-weight:700;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:#1e3a8a;
+}
+
+body.generator-saas-v2 .gen-context-card__grid{
+  margin:0;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:8px 12px;
+}
+
+body.generator-saas-v2 .gen-context-card__grid dt{
+  margin:0;
+  font-size:0.7rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.03em;
+  color:#64748b;
+}
+
+body.generator-saas-v2 .gen-context-card__grid dd{
+  margin:2px 0 0;
+  font-size:0.875rem;
+  font-weight:600;
+  color:#0f172a;
+  overflow-wrap:anywhere;
+}
+
+body.generator-saas-v2 .generator-save-state{
+  margin:0;
+  font-size:0.75rem;
+  font-weight:600;
+  color:#64748b;
+  max-width:min(280px,100%);
+  overflow-wrap:anywhere;
+  text-align:right;
+}
+
+body.generator-saas-v2 .generator-save-state.is-saving{color:#b45309;}
+body.generator-saas-v2 .generator-save-state.is-saved{color:#047857;}
+body.generator-saas-v2 .generator-save-state.is-error{color:#b91c1c;}
+
+body.generator-saas-v2 .action-group-primary{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+  min-width:0;
+}
+
+@media (max-width:768px){
+  body.generator-saas-v2 .generator-save-state{
+    text-align:left;
+    max-width:100%;
+  }
+  body.generator-saas-v2 .action-group-primary{
+    align-items:stretch;
+    width:100%;
+  }
 }
 
 body.generator-saas-v2 .sec-link-entry{

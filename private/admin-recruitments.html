@@ -37,7 +37,7 @@
     <div>
       <p class="admin-page-head__eyebrow">Recruitments</p>
       <h1>Recruitment Manager</h1>
-      <p class="manager-hint">View and manage existing recruitment records, or create a new recruitment. Creating a record does not publish a page — Manual Publish stays in Generator.</p>
+      <p class="manager-hint">One recruitment = one permanent public page. Create or manage recruitment records here; Manual Publish stays in Generator. Updates (Admit Card / Result / Answer Key) stay on the same page.</p>
     </div>
   </div>
 
@@ -84,7 +84,7 @@
         <label class="rom-bulk-select-all"><input type="checkbox" id="bulkSelectAll"> Select page</label>
         <span id="bulkSelectedCount">0 selected</span>
         <select id="bulkActionSelect" aria-label="Bulk action">
-          <option value="">Bulk actionâ¦</option>
+          <option value="">Bulk action…</option>
           <option value="archive">Bulk Archive</option>
           <option value="restore">Bulk Restore</option>
           <option value="status_update">Bulk Status Update</option>
@@ -118,7 +118,7 @@
           <div class="rom-card__head">
             <div>
               <h2 id="recruitmentFormTitle">New Recruitment</h2>
-              <p class="rom-section-purpose">Create a new recruitment record when this vacancy does not already have a recruitment record.</p>
+              <p class="rom-section-purpose" id="recruitmentFormPurpose">Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.</p>
             </div>
             <button type="button" class="header-action-btn rom-danger" id="archiveRecruitmentBtn">Archive</button>
           </div>
@@ -152,9 +152,9 @@
           <div class="rom-card__head">
             <div>
               <h2>Event Timeline</h2>
-              <p class="rom-section-purpose">Events for the selected recruitment only. Do not create another recruitment for an Admit Card / Result / Answer Key.</p>
+              <p class="rom-section-purpose">Milestones for the selected recruitment only. For Admit Card / Result / Answer Key with content, use Manual Update below — do not create another recruitment or page.</p>
             </div>
-            <button type="button" class="header-action-btn" id="addEventBtn">+ Add event</button>
+            <button type="button" class="header-action-btn" id="addEventBtn">+ Timeline event</button>
           </div>
           <form id="eventForm" class="rom-inline-form" hidden>
             <input id="eventId" type="hidden">
@@ -169,8 +169,8 @@
         <section class="rom-card">
           <div class="rom-card__head">
             <div>
-              <h2>Recruitment Page Links</h2>
-              <p class="rom-section-purpose">Use this only to attach an existing published CMS page. This does not publish or create a page.</p>
+              <h2>Recruitment Page</h2>
+              <p class="rom-section-purpose">Link the permanent published page for this recruitment (already published via Generator). Prefer one page per recruitment — lifecycle updates reuse that same page/slug.</p>
             </div>
           </div>
           <form id="pageLinkForm" class="rom-link-form">
@@ -219,7 +219,8 @@
             </table>
           </div>
           <div class="rom-form-actions" style="margin-top:.75rem;">
-            <a id="openEditorialReviewBtn" class="header-action-btn" href="/admin/editorial-review" style="text-decoration:none;">Open Review Workspace</a>
+            <a id="openEditorialReviewBtn" class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review (optional QA)</a>
+            <a class="header-action-btn" href="/generator" style="text-decoration:none;">Open Generator</a>
           </div>
         </section>
 
@@ -243,18 +244,18 @@
             </table>
           </div>
           <form id="manualUpdateForm" class="rom-link-form" style="margin-top:.75rem;">
-            <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Existing recruitment + new admit card / result / answer key: use this form. Creates event + draft + review item — does not create a second recruitment.</p>
+            <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Manual Update: Admit Card / Result / Answer Key on this recruitment. Creates event + draft — then Generator → Preview → Manual Publish. Same permanent page (not a second recruitment).</p>
             <label>Event type
               <select id="manualUpdateEventType" required>
-                <option value="correction">correction</option>
-                <option value="exam_date">exam_date</option>
-                <option value="admit_card">admit_card</option>
-                <option value="answer_key">answer_key</option>
-                <option value="result">result</option>
-                <option value="final_result">final_result</option>
+                <option value="admit_card">Admit Card</option>
+                <option value="answer_key">Answer Key</option>
+                <option value="result">Result</option>
+                <option value="final_result">Final Result</option>
+                <option value="exam_date">Exam Date</option>
+                <option value="correction">Correction</option>
               </select>
             </label>
-            <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Exam Date Changed"></label>
+            <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Admit Card Released"></label>
             <button type="submit" class="header-action-btn">Create manual update</button>
           </form>
         </section>
@@ -283,8 +284,8 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-workflow-ia.js?v=2"></script>
+<script src="/js/admin-workflow-ia.js?v=3"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
-<script src="/js/admin-recruitment-operations.js?v=6"></script>
+<script src="/js/admin-recruitment-operations.js?v=7"></script>
 </body>
 </html>

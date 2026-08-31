@@ -290,12 +290,20 @@
     byId("recruitmentAdvertisement").value = row?.advertisement_no || "";
     byId("recruitmentCycleYear").value = row?.cycle_year || "";
     byId("recruitmentLifecycle").value = row?.lifecycle_state || "announced";
-    byId("recruitmentFormTitle").textContent = row?.id ? row.title : "New recruitment";
+    byId("recruitmentFormTitle").textContent = row?.id ? row.title : "New Recruitment";
     byId("archiveRecruitmentBtn").hidden = !row?.id || row.lifecycle_state === "closed";
+    const purpose = byId("recruitmentFormPurpose");
+    if (purpose) {
+      purpose.textContent = row?.id
+        ? "Edit this recruitment identity. Lifecycle updates use Manual Update below — same permanent page/slug."
+        : "Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.";
+    }
   }
 
   function updateWorkflow() {
-    const steps = ["recruitment", "events", "links", "review"];
+    // Workflow step chrome was removed; keep a no-op so callers stay safe.
+    const steps = document.querySelectorAll("[data-workflow-step]");
+    if (!steps.length) return;
     let current = "recruitment";
     if (selected?.id) {
       if (!events.length) current = "events";
@@ -303,10 +311,12 @@
       else if (draftBinding && draftBinding.drafts && draftBinding.drafts.length) current = "review";
       else current = "links";
     }
-    const index = steps.indexOf(current);
-    steps.forEach((step, i) => {
-      const el = document.querySelector(`[data-workflow-step="${step}"]`);
-      el.classList.toggle("is-complete", i < index);
+    const order = ["recruitment", "events", "links", "review"];
+    const index = order.indexOf(current);
+    steps.forEach((el) => {
+      const step = el.getAttribute("data-workflow-step");
+      const i = order.indexOf(step);
+      el.classList.toggle("is-complete", i >= 0 && i < index);
       el.classList.toggle("is-current", i === index);
     });
   }
@@ -627,10 +637,10 @@
       });
       const name = payload.title || body.data?.title || "Recruitment";
       if (id) {
-        message(`Recruitment updated successfully — ${name}`);
+        message(`Recruitment updated successfully — ${name}.`);
       } else {
         message(
-          `Recruitment created successfully — ${name}. Next: add events, attach a page, or bind a parked draft.`
+          `Recruitment created successfully — ${name}. Next: open Generator to create content, Preview, then Manual Publish.`
         );
       }
       await selectRecruitment(body.data.id);
@@ -671,7 +681,7 @@
         method: id ? "PUT" : "POST", body: payload
       });
       byId("eventForm").hidden = true;
-      message(id ? "Event saved successfully" : "Event saved successfully");
+      message(id ? "Event updated successfully." : "Event added successfully.");
       await selectRecruitment(selected.id);
     } catch (err) {
       message(`Failed: ${err.message}`, true);
@@ -682,7 +692,7 @@
     if (!window.confirm("Delete this lifecycle event? Linked pages will remain attached to the recruitment.")) return;
     try {
       await api(`/api/admin/recruitment-events/${id}`, { method: "DELETE" });
-      message("Event deleted successfully");
+      message("Event deleted successfully.");
       await selectRecruitment(selected.id);
     } catch (err) {
       message(`Failed: ${err.message}`, true);
@@ -725,7 +735,7 @@
       });
       byId("pageLinkForm").reset();
       byId("pageValidationStatus").hidden = true;
-      message("Page attached successfully. No publishing action was performed.");
+      message("Page linked successfully. One recruitment should keep one permanent public page.");
       await selectRecruitment(selected.id);
     } catch (err) {
       message(`Failed: ${err.message}`, true);
@@ -736,7 +746,7 @@
     if (!window.confirm("Detach this page from the recruitment?")) return;
     try {
       await api(`/api/admin/page-linkages?page_id=${encodeURIComponent(pageId)}`, { method: "DELETE" });
-      message("Page detached successfully");
+      message("Page detached successfully.");
       await selectRecruitment(selected.id);
     } catch (err) {
       message(`Failed: ${err.message}`, true);
@@ -755,7 +765,9 @@
         }
       });
       byId("manualUpdateForm").reset();
-      message("Update saved successfully — draft + review created (not published).");
+      message(
+        "Manual update created successfully — event + draft ready. Next: Generator → Preview → Manual Publish (same permanent page)."
+      );
       await selectRecruitment(selected.id);
     } catch (err) {
       message(`Failed: ${err.message}`, true);

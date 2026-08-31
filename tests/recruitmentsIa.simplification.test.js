@@ -13,7 +13,7 @@ describe("Recruitments IA simplification", () => {
   test("/admin/recruitments is the primary recruitment workspace without workflow dump", () => {
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
-    expect(html).toMatch(/View and manage existing recruitment records/i);
+    expect(html).toMatch(/One recruitment = one permanent public page/i);
     expect(html).toContain('id="newRecruitmentBtn"');
     expect(html).toContain("+ New Recruitment");
     expect(html).not.toContain('data-adm-wf="recruitments"');
@@ -27,14 +27,16 @@ describe("Recruitments IA simplification", () => {
 
   test("New Recruitment copy and existing actions remain available", () => {
     const html = read("private/admin-recruitments.html");
-    expect(html).toMatch(/Create a new recruitment record when this vacancy does not/i);
+    expect(html).toMatch(/Create a recruitment record when this vacancy does not already exist/i);
     expect(html).toContain('id="recruitmentForm"');
+    expect(html).toContain('id="recruitmentFormPurpose"');
     expect(html).toContain('id="recruitmentSearch"');
     expect(html).toContain("Event Timeline");
     expect(html).toContain("Generator Draft Binding");
-    expect(html).toContain("Recruitment Page Links");
+    expect(html).toContain("Recruitment Page");
     expect(html).toContain("manualUpdateForm");
     expect(html).toContain("Shared Runtime Preview");
+    expect(html).toContain("Editorial Review (optional QA)");
   });
 
   test("Event Timeline does not duplicate the main Recruitment Manager", () => {
@@ -77,15 +79,19 @@ describe("Recruitments IA simplification", () => {
     const wf = read("public/assets/js/admin-workflow-ia.js");
     const rrq = read("public/assets/js/admin-recruitment-review-queue.js");
 
-    expect(html).toContain("Review Center is the operational review queue");
+    expect(html).toMatch(/Operational decisions/i);
     expect(html).toMatch(/Needs Matching.*filter/i);
     expect(html).toContain('data-rrq-status="needs_matching"');
     expect(html).toContain('id="rrqFilterLegend"');
+    expect(html).toContain("Attach to existing Recruitment");
+    expect(html).toContain('data-field="source_url"');
     expect(html).not.toContain('aria-label="Review workflow"');
     expect(wf).toMatch(/Needs Matching is a status filter/i);
     expect(wf).toContain("Review Center · Needs Matching");
     expect(rrq).toContain("Showing: Needs Matching (Review Center filter");
     expect(rrq).toContain('status === "needs_matching"');
+    expect(rrq).toContain("nextStepMessage");
+    expect(rrq).toContain("setAttachSelection");
   });
 
   test("list shows human-readable recruitment fields; create success includes name", () => {
@@ -96,6 +102,7 @@ describe("Recruitments IA simplification", () => {
     expect(html).toContain("Exam / post");
     expect(js).toContain("Recruitment created successfully —");
     expect(js).toContain("row.post_name");
+    expect(js).toContain("if (!steps.length) return");
   });
 
   test("safety flags unchanged", () => {

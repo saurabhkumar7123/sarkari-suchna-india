@@ -46,7 +46,10 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     const pages = (sandbox.__WF || sandbox.window.AdminWorkflowIA).PAGES;
     expect(pages.recruitments.currentStep).toBe("recruitment");
     expect(pages.needsMatching.currentStep).toBe("matching");
-    expect(pages.editorial.next).toMatch(/Manual Publish/i);
+    expect(pages.editorial.next).toMatch(/Manual Publish|Generator/i);
+    expect(pages.editorial.purpose).toMatch(/optional/i);
+    expect(pages.pageManager.purpose).toMatch(/already published/i);
+    expect(pages.needsMatching.next).toMatch(/Generator/i);
     expect(pages.drafts.purpose).toMatch(/not published/i);
     expect(pages.events.purpose).toMatch(/lifecycle events/i);
     expect(pages.acc.purpose).toMatch(/Ops overview/i);
@@ -82,23 +85,33 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(read(files.recruitments)).not.toContain('data-adm-wf="recruitments"');
     expect(read(files.recruitments)).not.toContain('data-adm-wf="events"');
     expect(read(files.recruitments)).toContain("Create manual update");
-    expect(read(files.recruitments)).toMatch(/Create a new recruitment record/i);
+    expect(read(files.recruitments)).toMatch(/Create a recruitment record when this vacancy does not already exist/i);
     expect(read(files.recruitments)).toMatch(/Manual Publish/i);
 
     expect(read(files.rrq)).toContain('data-adm-wf="reviewCenter"');
     expect(read(files.rrq)).toContain('data-adm-wf="needsMatching"');
     expect(read(files.rrq)).toMatch(/Needs Matching.*filter/i);
-    expect(read(files.rrq)).toMatch(/Approve is not publish/i);
+    expect(read(files.rrq)).toMatch(/Approve\s*[≠!=].*publish|Approve ≠ publish/i);
+    expect(read(files.rrq)).toContain('id="rrqManualPublishLink"');
+    expect(read(files.rrq)).toContain('href="/generator#drafts"');
+    expect(read(files.rrq)).not.toContain('id="rrqManualPublishLink" href="/admin/page-manager"');
+    expect(read(files.rrq)).toContain("Attach to existing Recruitment");
 
     expect(read(files.editorial)).toContain('data-adm-wf="editorial"');
     expect(read(files.editorial)).toMatch(/APPROVE ≠ PUBLISH|Approve ≠ Publish/i);
+    expect(read(files.editorial)).toMatch(/Optional content QA/i);
+    expect(read(files.editorial)).toContain("Final manual publishing is done from Generator");
+    expect(read(files.editorial)).not.toContain('href="/admin/page-manager" style="text-decoration:none;">Publish Page');
 
     expect(read(files.drafts)).toContain('data-adm-wf="drafts"');
     expect(read(files.drafts)).toContain('data-adm-wf="generator"');
     expect(read(files.drafts)).toMatch(/Draft ≠ Published/i);
+    expect(read(files.drafts)).toMatch(/Manual Publish/i);
+    expect(read(files.drafts)).toContain('data-label-desktop="Manual Publish"');
 
     expect(read(files.pages)).toContain('data-adm-wf="pageManager"');
-    expect(read(files.pages)).toMatch(/Manual Publish|Published Page Title/i);
+    expect(read(files.pages)).toMatch(/already published/i);
+    expect(read(files.pages)).toMatch(/First-time publishing is done from Generator/i);
 
     expect(read(files.monitoring)).toContain('data-adm-wf="monitoring"');
     expect(read(files.updates)).toContain('data-adm-wf="monitoringUpdates"');
@@ -162,6 +175,11 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     });
 
     const flags = read("server/config/automationFlags.js");
+    const rrqJs = read("public/assets/js/admin-recruitment-review-queue.js");
+    expect(rrqJs).toContain("/generator?draftId=");
+    expect(rrqJs).toContain("/generator#drafts");
+    expect(rrqJs).not.toMatch(/rrqManualPublishLink[\s\S]*\/admin\/page-manager/);
+
     expect(flags).toContain("AUTO_PUBLISH_ENABLED: false");
     expect(flags).toContain("LIVE_CRAWLER_ENABLED: false");
     expect(flags).toContain("PRODUCTION_MONITORING_ENABLED: false");

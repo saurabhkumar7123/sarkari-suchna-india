@@ -105,6 +105,76 @@ function setGeneratorFeedback(type, message, options = {}) {
   if (safeType === "error") bumpAdminMetric("actionsFailed");
 }
 
+let generatorLastSavedAt = null;
+let generatorSaveInFlight = false;
+
+function formatSaveClock(date) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    }).format(date);
+  } catch {
+    return date.toLocaleTimeString();
+  }
+}
+
+function setSaveState(state, reason) {
+  const el = document.getElementById("generatorSaveState");
+  if (!el) return;
+  el.classList.remove("is-saving", "is-saved", "is-error");
+  if (state === "saving") {
+    el.classList.add("is-saving");
+    el.textContent = "Saving…";
+    return;
+  }
+  if (state === "saved") {
+    generatorLastSavedAt = new Date();
+    el.classList.add("is-saved");
+    el.textContent = `Saved ✓ · Last saved: ${formatSaveClock(generatorLastSavedAt)}`;
+    return;
+  }
+  if (state === "error") {
+    el.classList.add("is-error");
+    const detail = String(reason || "").trim();
+    el.textContent = detail ? `Save failed — ${detail}` : "Save failed";
+    return;
+  }
+  if (generatorLastSavedAt) {
+    el.classList.add("is-saved");
+    el.textContent = `Last saved: ${formatSaveClock(generatorLastSavedAt)}`;
+  } else {
+    el.textContent = "Not saved yet — Manual Publish or Save draft when ready (no server autosave)";
+  }
+}
+
+async function confirmManualPublishSummary(payload) {
+  const recSelect = document.getElementById("draftRecruitmentId");
+  const evtSelect = document.getElementById("draftRecruitmentEventId");
+  const recruitment = selectedOptionLabel(recSelect, "None");
+  const eventLabel = selectedOptionLabel(evtSelect, "None");
+  const draftTitle = String(payload.title || "").trim() || "Untitled";
+  const lines = [
+    `Recruitment: ${recruitment}`,
+    `Draft / Public Page Title: ${draftTitle}`,
+    `Event: ${eventLabel}`,
+    "",
+    "This is Manual Publish. Auto Publish is disabled."
+  ];
+
+  if (window.AdminUI && typeof window.AdminUI.simpleConfirm === "function") {
+    return window.AdminUI.simpleConfirm({
+      title: "Confirm Manual Publish",
+      details: lines.filter(Boolean).join(" · "),
+      warnText: "Publishes the page now. Auto Publish stays disabled.",
+      confirmLabel: "Manual Publish",
+      variant: "default"
+    });
+  }
+  return window.confirm(`${lines.join("\n")}\n\nManual Publish now?`);
+}
+
 let allPages = [];
 let pagesLoaded = false;
 let recentPages = JSON.parse(localStorage.getItem("recentPages") || "[]");
@@ -493,11 +563,29 @@ function getGeneratorDraftId() {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+/**
+ * Build the optional generatorDraftId field for /api/admin/pages.
+ * Joi accepts number | string (incl. ""), but NOT null — omit when unset.
+ */
+function buildGeneratorDraftIdPayloadField(draftId) {
+  const id =
+    draftId == null || draftId === ""
+      ? null
+      : Number.isInteger(draftId)
+        ? draftId
+        : parseInt(String(draftId).trim(), 10);
+  if (Number.isInteger(id) && id > 0) {
+    return { generatorDraftId: id };
+  }
+  return {};
+}
+
 function setGeneratorDraftId(id) {
   const el = document.getElementById("generatorDraftId");
   if (!el) return;
   el.value = id != null && id !== "" ? String(id) : "";
   syncSaveDraftButtonState();
+  updateRecruitmentContextCard();
 }
 
 function isEditingLivePage() {
@@ -556,8 +644,51 @@ function formatRecruitmentOptionLabel(row) {
 
 function formatEventOptionLabel(row) {
   const type = String(row.event_type || "event").replace(/_/g, " ");
-  const order = row.sequence_order != null ? ` #${row.sequence_order}` : "";
-  return `${type}${order}`;
+  const status = row.status ? ` · ${row.status}` : "";
+  return `${type}${status}`;
+}
+
+function selectedOptionLabel(selectEl, emptyLabel) {
+  if (!selectEl || !selectEl.value) return emptyLabel;
+  const opt = selectEl.options[selectEl.selectedIndex];
+  return (opt && opt.textContent ? opt.textContent.trim() : selectEl.value) || emptyLabel;
+}
+
+function updateRecruitmentContextCard() {
+  const card = document.getElementById("generatorContextCard");
+  if (!card) return;
+  const recSelect = document.getElementById("draftRecruitmentId");
+  const evtSelect = document.getElementById("draftRecruitmentEventId");
+  const draftId = getGeneratorDraftId();
+  const draftTitle =
+    String(document.getElementById("title")?.value || "").trim() ||
+    (draftId ? `Parked draft` : "Untitled (not saved)");
+  const status = draftId
+    ? "Draft (parked)"
+    : isEditingLivePage()
+      ? "Live page"
+      : "New / unsaved";
+
+  const recName = selectedOptionLabel(recSelect, "None");
+  const eventName = selectedOptionLabel(evtSelect, "None");
+  const linked = Boolean(recSelect && recSelect.value);
+
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  setText("generatorContextRecruitment", recName);
+  setText("generatorContextEvent", eventName);
+  setText("generatorContextDraft", draftTitle);
+  setText("generatorContextStatus", status);
+
+  const bindEl = document.getElementById("generatorBindingVisual");
+  if (bindEl) {
+    bindEl.innerHTML = linked
+      ? `<span class="gen-bind__node">Draft</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">linked to</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__node">${escapeAttr(recName)}</span>`
+      : `<span class="gen-bind__node">Draft</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">Not linked</span>`;
+  }
+  card.hidden = !recruitmentContextEnabled;
 }
 
 async function loadRecruitmentOptions() {
@@ -609,6 +740,7 @@ function clearRecruitmentContextSelectors() {
     evt.value = "";
     evt.disabled = true;
   }
+  updateRecruitmentContextCard();
 }
 
 async function applyRecruitmentContextFromDraft(row) {
@@ -620,7 +752,7 @@ async function applyRecruitmentContextFromDraft(row) {
   if (recruitmentId && ![...recSelect.options].some((opt) => opt.value === recruitmentId)) {
     const opt = document.createElement("option");
     opt.value = recruitmentId;
-    opt.textContent = `Recruitment #${recruitmentId}`;
+    opt.textContent = `Linked recruitment (${recruitmentId})`;
     recSelect.appendChild(opt);
   }
   recSelect.value = recruitmentId;
@@ -630,25 +762,34 @@ async function applyRecruitmentContextFromDraft(row) {
   if (eventId && ![...evtSelect.options].some((opt) => opt.value === eventId)) {
     const opt = document.createElement("option");
     opt.value = eventId;
-    opt.textContent = `Event #${eventId}`;
+    opt.textContent = `Linked event (${eventId})`;
     evtSelect.appendChild(opt);
   }
   evtSelect.value = eventId;
+  updateRecruitmentContextCard();
 }
 
 function collectRecruitmentContextForDraftSave() {
   if (!recruitmentContextEnabled) return {};
   const recSelect = document.getElementById("draftRecruitmentId");
   const evtSelect = document.getElementById("draftRecruitmentEventId");
-  const recruitment_id = recSelect && recSelect.value ? recSelect.value : null;
-  const recruitment_event_id =
-    recruitment_id && evtSelect && evtSelect.value ? evtSelect.value : null;
-  return { recruitment_id, recruitment_event_id };
+  if (!recSelect || !recSelect.value) return {};
+  const rid = parseInt(recSelect.value, 10);
+  const out = {
+    recruitment_id: Number.isInteger(rid) && rid > 0 ? rid : String(recSelect.value).trim()
+  };
+  if (evtSelect && evtSelect.value) {
+    const eid = parseInt(evtSelect.value, 10);
+    out.recruitment_event_id =
+      Number.isInteger(eid) && eid > 0 ? eid : String(evtSelect.value).trim();
+  }
+  return out;
 }
 
 async function initRecruitmentContextSelector() {
   recruitmentContextEnabled = await probeEditorialAttachmentFlag();
   setRecruitmentContextSectionVisible(recruitmentContextEnabled);
+  updateRecruitmentContextCard();
   if (!recruitmentContextEnabled) return;
 
   const recSelect = document.getElementById("draftRecruitmentId");
@@ -660,10 +801,21 @@ async function initRecruitmentContextSelector() {
         const evtSelect = document.getElementById("draftRecruitmentEventId");
         if (evtSelect) evtSelect.value = "";
       }
+      updateRecruitmentContextCard();
+      if (id) {
+        setGeneratorFeedback("success", "Recruitment linked for this draft", {
+          detailsHtml: `Binding does not publish. Next: save draft or publish manually.`
+        });
+      }
     });
+  }
+  const evtSelect = document.getElementById("draftRecruitmentEventId");
+  if (evtSelect) {
+    evtSelect.addEventListener("change", () => updateRecruitmentContextCard());
   }
 
   await loadRecruitmentOptions();
+  updateRecruitmentContextCard();
 }
 
 function applyGeneratorDraftPayload(payload) {
@@ -757,16 +909,19 @@ async function saveGeneratorDraftToServer() {
     btn.disabled = true;
     setActionBtnLabel(btn, "Saving…");
   }
+  setSaveState("saving");
 
   try {
+    const body = {
+      payload,
+      ...collectRecruitmentContextForDraftSave()
+    };
+    if (draftId != null) body.id = draftId;
+
     const fetchRes = await safeFetch("/api/admin/generator-drafts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: draftId,
-        payload,
-        ...collectRecruitmentContextForDraftSave()
-      })
+      body: JSON.stringify(body)
     });
 
     if (!fetchRes.ok) {
@@ -774,6 +929,7 @@ async function saveGeneratorDraftToServer() {
         (fetchRes.body && (fetchRes.body.message || fetchRes.body.error)) ||
         fetchRes.networkError ||
         `Request failed (${fetchRes.status})`;
+      setSaveState("error", String(msg));
       setGeneratorFeedback("error", "Draft save failed", { detailsHtml: String(msg) });
       return;
     }
@@ -782,16 +938,21 @@ async function saveGeneratorDraftToServer() {
     clearDraftStorage();
     resetGeneratorForm();
     setGeneratorDraftId("");
+    setSaveState("saved");
     setGeneratorFeedback(
       "success",
-      `Draft saved${saved.title ? `: ${saved.title}` : ""}`,
-      { detailsHtml: "Form cleared. Open this draft anytime from the sidebar under <strong>Parked drafts</strong>." }
+      `Draft saved successfully${saved.title ? `: ${saved.title}` : ""}`,
+      {
+        detailsHtml:
+          "Form cleared. Open this draft anytime from the sidebar under <strong>Parked drafts</strong>."
+      }
     );
     if (typeof window.refreshGeneratorDraftsSidebar === "function") {
       window.refreshGeneratorDraftsSidebar();
     }
   } catch (err) {
     console.error("Draft save error:", err);
+    setSaveState("error", "Network error while saving draft.");
     setGeneratorFeedback("error", "Draft save failed", {
       detailsHtml: "Network error while saving draft."
     });
@@ -822,9 +983,10 @@ async function loadGeneratorDraftFromURL() {
     applyGeneratorDraftPayload(row.payload || {});
     await applyRecruitmentContextFromDraft(row);
     setGeneratorDraftId(row.id);
-    setGeneratorFeedback("info", `Draft #${row.id} loaded`, {
+    setGeneratorFeedback("info", `Draft loaded: ${row.title || "Untitled"}`, {
       detailsHtml: `${escapeAttr(row.title || "Untitled")} — edit and publish, or save draft again to park updates.`
     });
+    updateRecruitmentContextCard();
     return true;
   } catch (err) {
     console.error("Generator draft load error:", err);
@@ -1028,6 +1190,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     t.addEventListener("input", () => {
       updateSlugPreview();
       validateFieldNow("title");
+      updateRecruitmentContextCard();
     });
   }
   const pu = document.getElementById("pageUrl");
@@ -1064,6 +1227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   setupCategoryTagInput();
   setupBadgeCheckboxes();
   await initRecruitmentContextSelector();
+  setSaveState("idle");
 
   if (slug) {
     await loadPageFromURL();
@@ -1746,6 +1910,7 @@ function inputValueById(id) {
 
 // ================= GENERATE PAGE =================
 async function generatePage(){
+  if (generatorSaveInFlight) return;
   flushSectionEditorBeforeRead();
   const titleOk = validateFieldNow("title");
   const lastDateOk = validateFieldNow("lastDate");
@@ -1798,7 +1963,7 @@ async function generatePage(){
     badges: collectBadgesFromForm(),
     id: document.getElementById("pageId").value.trim(),
     oldSlug: document.getElementById("oldSlug").value.trim(),
-    generatorDraftId: getGeneratorDraftId(),
+    ...buildGeneratorDraftIdPayloadField(getGeneratorDraftId()),
     ...collectRecruitmentContextForDraftSave()
   };
 
@@ -1832,6 +1997,9 @@ async function generatePage(){
   const canSave = await checkDuplicateBeforeSave(payload);
   if (!canSave) return;
 
+  const confirmed = await confirmManualPublishSummary(payload);
+  if (!confirmed) return;
+
   console.log("FRONTEND PAYLOAD:", payload);
   console.warn("FRONTEND STATUS FLOW:", {
     selectedStatus: document.getElementById("status")?.value,
@@ -1850,6 +2018,8 @@ async function generatePage(){
   const btn = document.getElementById("savePageBtn");
   const aiBtn = document.getElementById("aiConvertBtn");
   const previewBtn = document.getElementById("previewBtn");
+  generatorSaveInFlight = true;
+  setSaveState("saving");
   if (btn) {
     btn.disabled = true;
     setActionBtnLabel(btn, "Saving…");
@@ -1867,16 +2037,20 @@ async function generatePage(){
     if (!fetchRes.ok) {
       const b = fetchRes.body && typeof fetchRes.body === "object" ? fetchRes.body : {};
       console.error("FULL ERROR:", b);
+      let reason = "";
       if (Array.isArray(b.errors) && b.errors.length) {
+        reason = b.errors.map((e) => `${e.field}: ${e.message}`).join("; ");
+        setSaveState("error", reason);
         setGeneratorFeedback("error", "Save failed", {
           detailsHtml: b.errors
             .map((e) => `${e.field}: ${e.message}`)
             .join("<br>")
         });
       } else {
-        const msg = String(b.message || b.error || fetchRes.networkError || "").trim();
+        reason = String(b.message || b.error || fetchRes.networkError || "").trim();
+        setSaveState("error", reason || `Request failed (${fetchRes.status})`);
         setGeneratorFeedback("error", "Save failed", {
-          detailsHtml: msg || `Request failed (${fetchRes.status})`
+          detailsHtml: reason || `Request failed (${fetchRes.status})`
         });
       }
       return;
@@ -1901,6 +2075,7 @@ async function generatePage(){
       if (dataRes && typeof dataRes === "object") {
         errMsg = String(dataRes.message || dataRes.error || "").trim();
       }
+      setSaveState("error", errMsg || "Invalid response");
       setGeneratorFeedback("error", "Save failed", {
         detailsHtml: errMsg || "Error: Invalid response"
       });
@@ -1910,6 +2085,7 @@ async function generatePage(){
     const isCreate = !payload.oldSlug;
     const openDraftId = getGeneratorDraftId();
     clearDraftStorage();
+    setSaveState("saved");
 
     if (openDraftId) {
       const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
@@ -1919,7 +2095,7 @@ async function generatePage(){
 
     if (isCreate) {
       bumpAdminMetric("publishesSuccess");
-      showSuccess(resolvedUrl, payload.status);
+      showSuccess(resolvedUrl, payload.status, payload.title);
       await loadSmallBoxSlotOccupancy();
       if (parserWarnings.length) {
         setGeneratorFeedback("info", "Saved with parsing warnings", {
@@ -1927,6 +2103,7 @@ async function generatePage(){
         });
       }
       resetGeneratorForm();
+      updateRecruitmentContextCard();
       return;
     }
 
@@ -1956,11 +2133,12 @@ async function generatePage(){
     setDeleteButtonVisible(true);
     setPageUrlLocked(true);
     updateSlugPreview();
+    updateRecruitmentContextCard();
 
-    showSuccess(resolvedUrl, payload.status);
+    showSuccess(resolvedUrl, payload.status, payload.title);
     await loadSmallBoxSlotOccupancy();
     if (window.AdminUI && window.AdminUI.toastSuccess) {
-      window.AdminUI.toastSuccess("Action completed successfully");
+      window.AdminUI.toastSuccess("Page published successfully");
     }
     bumpAdminMetric("publishesSuccess");
     if (parserWarnings.length) {
@@ -1973,10 +2151,12 @@ async function generatePage(){
     if (window.AdminUI && window.AdminUI.toastError) {
       window.AdminUI.toastError("Something went wrong");
     }
+    setSaveState("error", "Server error while saving page.");
     setGeneratorFeedback("error", "Save failed", {
       detailsHtml: "Server error while saving page."
     });
   } finally {
+    generatorSaveInFlight = false;
     if (btn) {
       btn.disabled = false;
       restoreActionBtnLabels(btn);
@@ -1987,10 +2167,13 @@ async function generatePage(){
 }
 
 // ================= SUCCESS MESSAGE =================  
-function showSuccess(url, status){
+function showSuccess(url, status, publicTitle){
   const color = getStatusColor(status);
-  setGeneratorFeedback("success", "Page saved successfully", {
+  const titleShown =
+    String(publicTitle || document.getElementById("title")?.value || "").trim() || "(see published page)";
+  setGeneratorFeedback("success", "Page published successfully", {
     detailsHtml: `
+      <b>Public page title:</b> ${escapeAttr(titleShown)}<br>
       <b>Status:</b>
       <span style="background:${color};color:#fff;padding:4px 10px;border-radius:6px;font-weight:bold;">
         ${(status || "N/A").toUpperCase()}

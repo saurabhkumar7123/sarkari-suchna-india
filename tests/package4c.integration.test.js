@@ -74,8 +74,8 @@ describe("Package 4C Human Review Workflow integration", () => {
     expect(read("public/assets/js/admin-nav.js")).toContain('data-nav-path="/admin/recruitments"');
     const html = read("private/admin-recruitments.html");
     expect(html).toContain("Recruitment Manager");
-    expect(html).toContain("Recruitment Events");
-    expect(html).toContain("Recruitment Page Links");
-    expect(html).toContain("Ready for Review");
+    expect(html).toContain("Event Timeline");
+    expect(html).toContain("Recruitment Page");
+    expect(html).toContain("Generator Draft Binding");
   });
 });

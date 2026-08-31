@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  const WF_VERSION = "2";
+  const WF_VERSION = "3";
 
   /** Factual page catalog aligned to existing backend capabilities. */
   const PAGES = Object.freeze({
@@ -16,7 +16,7 @@
       purpose: "Create and manage recruitment records (organization, exam, year, advertisement, lifecycle).",
       before: "Official vacancy or update discovered (manual), or a matching decision that creates/attaches a parent.",
       here: "New recruitment, edit record, Event Timeline, Manual Update, draft binding, page links.",
-      next: "Prepare content in Generator/Drafts, resolve Needs Matching in Review Center, or open Editorial Review.",
+      next: "Prepare content in Generator. Use Review Center only if matching is needed. Editorial Review is optional QA.",
       path: "manual",
       currentStep: "recruitment",
       primaryAction: { label: "New recruitment", href: null, targetId: "newRecruitmentBtn" },
@@ -28,7 +28,7 @@
       purpose: "Lifecycle events for one selected recruitment (notification → correction → admit card → answer key → result → …).",
       before: "A recruitment record must exist and be selected.",
       here: "View and add events from recruitment_events. This is history for the parent recruitment — not a second recruitment.",
-      next: "Create Manual Update or bind a draft for the event, then Review Center / Editorial / Manual Publish.",
+      next: "Create Manual Update or bind a draft, then Generator → Preview / Edit → Manual Publish. Review Center only if matching is needed.",
       path: "manual",
       currentStep: "events"
     },
@@ -38,7 +38,7 @@
       purpose: "Operational review queue. Needs Matching is a status filter here — not a separate workspace.",
       before: "A draft/update exists that needs a recruitment decision (automation match or manual update package).",
       here: "Filter by Needs Matching / pending / approved / rejected. Matching associates an item with the correct recruitment.",
-      next: "After matching/approval: Editorial Review for content check, then Manual Publish in Generator. Approve ≠ Publish.",
+      next: "Continue in Generator → Preview / Edit → Manual Publish. Editorial Review is optional QA. Approve ≠ Publish.",
       path: "both",
       currentStep: "matching",
       primaryAction: { label: "Needs Matching filter", href: "/admin/recruitment-review-queue?status=needs_matching" }
@@ -49,7 +49,7 @@
       purpose: "Filtered Review Center state: items that must be linked to the correct recruitment.",
       before: "Same Review Center queue — status filter = needs_matching.",
       here: "Associate the item with the correct recruitment (Attach / Create Parent / Standalone / Reject).",
-      next: "Item leaves Needs Matching; continue draft/editorial work, then Manual Publish.",
+      next: "Needs Matching decision → Generator → Preview / Edit → Manual Publish.",
       path: "both",
       currentStep: "matching"
     },
@@ -59,7 +59,7 @@
       purpose: "Parked content preparation. A draft is not published and never auto-publishes.",
       before: "Manual Generator save, Manual Update package, or (when automation is on) auto-draft from detection.",
       here: "Open, edit, and prepare structured content. Drafts may exist before a recruitment and can be bound later.",
-      next: "Review Center / Editorial Review, then Manual Publish from Generator. Draft ≠ Published.",
+      next: "Generator → Preview / Edit → Manual Publish. Review Center only if matching is needed. Editorial is optional. Draft ≠ Published.",
       path: "both",
       currentStep: "draft",
       primaryAction: { label: "Open Generator", href: "/generator" }
@@ -69,18 +69,18 @@
       where: "Page Generator",
       purpose: "Create/edit structured page content and perform the final Manual Publish (POST pages).",
       before: "Source input (PDF/text) or an existing draft.",
-      here: "Extract, structure, preview, park draft, and publish manually when ready.",
-      next: "Published page appears in Page Manager. Editorial Approve does not publish.",
+      here: "Preview → check/edit content → Save / Update (Manual Publish). Park a draft if not ready.",
+      next: "Published page appears in Page Manager (manage already-published pages). Editorial Approve does not publish.",
       path: "manual",
       currentStep: "publish"
     },
     editorial: {
       id: "editorial",
       where: "Editorial Review",
-      purpose: "Human editorial check of generated content for a recruitment. Separate from Review Center matching.",
-      before: "A draft is attached / ready for editorial workflow.",
-      here: "Check accuracy, request changes, approve or reject. Approve ≠ Publish.",
-      next: "Manual Publish in Generator, then manage the live page in Page Manager.",
+      purpose: "Optional content QA — approval here does not publish the page. Separate from Review Center matching.",
+      before: "A draft is attached / ready for optional editorial workflow.",
+      here: "Optional check: request changes, approve or reject. Approve ≠ Publish.",
+      next: "Final manual publishing is done from Generator, then manage the live page in Page Manager.",
       path: "both",
       currentStep: "editorial",
       primaryAction: { label: "Open Drafts", href: "/generator#drafts" }
@@ -88,7 +88,7 @@
     pageManager: {
       id: "pageManager",
       where: "Published Pages",
-      purpose: "Manage live/public pages already published. Search, filter, delete/restore — not the create/publish entry point.",
+      purpose: "Manage pages that are already published. First-time publishing is done from Generator.",
       before: "Manual Publish from Generator created a page row + HTML.",
       here: "Inspect and manage published content. Recruitment linkage is managed on All Recruitments.",
       next: "Return to Generator to publish another page, or Recruitments to attach page links.",
@@ -101,7 +101,7 @@
       purpose: "Official source registry and health. Entry for the automatic path when monitoring flags are on.",
       before: "Human-curated official sources configured in ACC Sources / Monitoring.",
       here: "Check source health. Live crawler is gated by safety flags (currently off by default).",
-      next: "Detected Updates → (when pipeline on) matching / draft → Review Center. Publishing stays manual.",
+      next: "Detected Updates → (when pipeline on) matching / draft → Review Center if needed → Generator. Publishing stays manual.",
       path: "automatic",
       currentStep: "detect"
     },
@@ -111,7 +111,7 @@
       purpose: "Notices discovered by monitoring. One update maps to one draft when converted.",
       before: "A monitored source check found a change (or a stored update while pipeline is dormant).",
       here: "Inspect detections. With automation off, use manual recruitment/draft paths for content.",
-      next: "Review Center (Needs Matching) or Generator Drafts → Editorial → Manual Publish.",
+      next: "Needs Matching (if uncertain) → Generator → Preview / Edit → Manual Publish → Page Manager.",
       path: "automatic",
       currentStep: "detect"
     },
@@ -129,20 +129,20 @@
 
   const STEPS_MANUAL = [
     { id: "recruitment", label: "1 Recruitment" },
-    { id: "draft", label: "2 Draft" },
-    { id: "matching", label: "3 Matching" },
-    { id: "review", label: "4 Review" },
-    { id: "editorial", label: "5 Editorial" },
-    { id: "publish", label: "6 Publish" }
+    { id: "matching", label: "2 Review (if needed)" },
+    { id: "draft", label: "3 Generator" },
+    { id: "editorial", label: "4 Editorial (optional)" },
+    { id: "publish", label: "5 Manual Publish" },
+    { id: "published", label: "6 Page Manager" }
   ];
 
   const STEPS_AUTO = [
     { id: "detect", label: "1 Detect" },
-    { id: "draft", label: "2 Draft" },
-    { id: "matching", label: "3 Matching" },
-    { id: "review", label: "4 Review" },
-    { id: "editorial", label: "5 Editorial" },
-    { id: "publish", label: "6 Publish" }
+    { id: "matching", label: "2 Review (if needed)" },
+    { id: "draft", label: "3 Generator" },
+    { id: "editorial", label: "4 Editorial (optional)" },
+    { id: "publish", label: "5 Manual Publish" },
+    { id: "published", label: "6 Page Manager" }
   ];
 
   function escapeHtml(value) {
