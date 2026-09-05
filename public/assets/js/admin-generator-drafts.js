@@ -14,6 +14,7 @@
     <div class="sidebar-drafts__head">
       <span class="sidebar-drafts__title">Parked drafts</span>
       <span class="sidebar-drafts__count" id="sidebarDraftCount">Total 0</span>
+      <span class="sidebar-drafts__capacity" id="sidebarDraftCapacity" title="Unpublished draft capacity">0 / 20</span>
     </div>
     <p class="sidebar-drafts__error" id="sidebarDraftsError" hidden></p>
     <div class="sidebar-drafts__section" data-draft-section="draft">
@@ -119,8 +120,9 @@
     bar.setAttribute("aria-label", "Drafts");
     bar.innerHTML = `
       <div class="generator-drafts-bar__head">
-        <strong class="generator-drafts-bar__title">Unpublished drafts</strong>
+        <strong class="generator-drafts-bar__title">Saved Draft Management</strong>
         <span class="generator-drafts-bar__count" id="generatorDraftsBarTotal">Total 0</span>
+        <span class="generator-drafts-bar__capacity" id="generatorDraftsBarCapacity" title="Unpublished draft capacity">0 / 20</span>
       </div>
       <div class="generator-drafts-bar__section" data-draft-section="draft">
         <button type="button" class="generator-drafts-bar__toggle" data-draft-toggle="draft" aria-expanded="false">
@@ -282,11 +284,12 @@
   function renderDraftRow(row, mode, ui) {
     const li = document.createElement("li");
     const title = truncate(row.title || "Untitled", 48);
-    const when = formatWhen(row.updated_at || row.created_at);
+    const when = formatWhen(row.updated_at || row.updatedAt || row.created_at || row.createdAt);
     const href = buildDraftLink(row, mode);
     const isBar = ui === "bar";
     const itemClass = isBar ? "generator-drafts-bar__item" : "sidebar-drafts__item";
     const actionsClass = isBar ? "generator-drafts-bar__actions" : "sidebar-drafts__actions";
+    const isPublished = mode === "published" || String(row.status || "").toLowerCase() === "published";
 
     li.className = itemClass;
 
@@ -300,8 +303,24 @@
 
     const meta = document.createElement("span");
     meta.className = isBar ? "generator-drafts-bar__row-meta" : "sidebar-drafts__link-meta";
-    const status = String(row.status || row.workflow_state || (mode === "published" ? "Published" : "Draft")).trim();
-    meta.textContent = [when, status].filter(Boolean).join(" · ");
+    const status = String(row.status || row.workflow_state || (isPublished ? "Published" : "Draft")).trim();
+    const recruitment = row.recruitmentTitle || (row.recruitmentId ? `Recruitment #${row.recruitmentId}` : "Not matched yet");
+    const eventName = row.eventLabel || "—";
+    const pageSlug =
+      row.publicPageSlug ||
+      row.publishedSlug ||
+      row.published_slug ||
+      (row.publicPageAmbiguous ? "(ambiguous)" : "—");
+    meta.innerHTML = [
+      `<span>Recruitment: ${escapeHtml(recruitment)}</span>`,
+      `<span>Event: ${escapeHtml(eventName)}</span>`,
+      `<span>Public Page: ${escapeHtml(pageSlug === "—" || pageSlug === "(ambiguous)" ? pageSlug : "/" + String(pageSlug).replace(/^\//, ""))}</span>`,
+      `<span>Status: ${escapeHtml(status)}</span>`,
+      when ? `<span>${escapeHtml(when)}</span>` : "",
+      `<span class="generator-drafts-bar__id">Draft #${escapeHtml(row.id)}</span>`
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
     main.appendChild(titleEl);
     main.appendChild(meta);
@@ -309,12 +328,51 @@
     const actions = document.createElement("div");
     actions.className = actionsClass;
 
-    const openBtn = document.createElement("a");
-    openBtn.className = isBar ? "generator-drafts-bar__btn generator-drafts-bar__btn--open" : "sidebar-drafts__btn sidebar-drafts__btn--open";
-    openBtn.href = href;
-    openBtn.textContent = isBar ? "Open Draft" : "Open";
+    if (!isPublished) {
+      const openBtn = document.createElement("a");
+      openBtn.className = isBar
+        ? "generator-drafts-bar__btn generator-drafts-bar__btn--open"
+        : "sidebar-drafts__btn sidebar-drafts__btn--open";
+      openBtn.href = href;
+      openBtn.textContent = isBar ? "Open Draft" : "Open";
+      actions.appendChild(openBtn);
 
-    actions.appendChild(openBtn);
+      const previewBtn = document.createElement("a");
+      previewBtn.className = isBar
+        ? "generator-drafts-bar__btn"
+        : "sidebar-drafts__btn";
+      previewBtn.href = `/generator?draftId=${encodeURIComponent(row.id)}#gen-step-preview`;
+      previewBtn.textContent = "Preview";
+      actions.appendChild(previewBtn);
+    } else if (row.published_slug || row.publishedSlug || row.publicPageSlug) {
+      const slug = row.published_slug || row.publishedSlug || row.publicPageSlug;
+      const openLive = document.createElement("a");
+      openLive.className = isBar
+        ? "generator-drafts-bar__btn generator-drafts-bar__btn--open"
+        : "sidebar-drafts__btn sidebar-drafts__btn--open";
+      openLive.href = `/generator?slug=${encodeURIComponent(slug)}`;
+      openLive.textContent = "Open Public Page";
+      actions.appendChild(openLive);
+    }
+
+    if (row.recruitmentId) {
+      const recBtn = document.createElement("a");
+      recBtn.className = isBar ? "generator-drafts-bar__btn" : "sidebar-drafts__btn";
+      recBtn.href = `/admin/recruitments?recruitment_id=${encodeURIComponent(row.recruitmentId)}`;
+      recBtn.textContent = "Open Recruitment";
+      actions.appendChild(recBtn);
+    }
+
+    if (!isPublished && (row.publicPageSlug || row.publishedSlug || row.published_slug)) {
+      const slug = row.publicPageSlug || row.publishedSlug || row.published_slug;
+      const pageBtn = document.createElement("a");
+      pageBtn.className = isBar ? "generator-drafts-bar__btn" : "sidebar-drafts__btn";
+      pageBtn.href = `/${encodeURIComponent(slug)}`;
+      pageBtn.target = "_blank";
+      pageBtn.rel = "noopener";
+      pageBtn.textContent = "Open Public Page";
+      actions.appendChild(pageBtn);
+    }
 
     if (mode === "draft") {
       const delBtn = document.createElement("button");
@@ -379,6 +437,15 @@
     const countEl = el("sidebarDraftCount");
     if (countEl) countEl.textContent = `Total ${total}`;
 
+    const capacityEl = el("sidebarDraftCapacity");
+    if (capacityEl) {
+      const used = Number.isFinite(draftCount) ? draftCount : drafts.length;
+      const max = Number.isFinite(maxDrafts) && maxDrafts > 0 ? maxDrafts : MAX_LABEL;
+      capacityEl.textContent = `${used} / ${max}`;
+      capacityEl.classList.toggle("is-near-limit", used >= Math.max(1, Math.floor(max * 0.8)));
+      capacityEl.title = `Unpublished drafts ${used} of ${max} capacity`;
+    }
+
     const navDrafts = document.getElementById("navDraftsLink");
     if (navDrafts) {
       let badge = document.getElementById("navDraftsBadge");
@@ -422,10 +489,21 @@
 
     const drafts = Array.isArray(data?.drafts) ? data.drafts : [];
     const published = Array.isArray(data?.published) ? data.published : [];
+    const draftCount = data?.draftCount != null ? Number(data.draftCount) : drafts.length;
+    const maxDrafts = data?.maxDrafts != null ? Number(data.maxDrafts) : MAX_LABEL;
     const total = drafts.length + published.length;
 
     const totalEl = el("generatorDraftsBarTotal");
     if (totalEl) totalEl.textContent = `Total ${total}`;
+
+    const capacityEl = el("generatorDraftsBarCapacity");
+    if (capacityEl) {
+      const used = Number.isFinite(draftCount) ? draftCount : drafts.length;
+      const max = Number.isFinite(maxDrafts) && maxDrafts > 0 ? maxDrafts : MAX_LABEL;
+      capacityEl.textContent = `${used} / ${max}`;
+      capacityEl.classList.toggle("is-near-limit", used >= Math.max(1, Math.floor(max * 0.8)));
+      capacityEl.title = `Unpublished drafts ${used} of ${max} capacity`;
+    }
 
     const badgeDraft = el("generatorDraftsBarBadgeDraft");
     if (badgeDraft) badgeDraft.textContent = String(drafts.length);

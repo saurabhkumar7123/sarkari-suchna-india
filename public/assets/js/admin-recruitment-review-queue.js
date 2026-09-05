@@ -151,7 +151,7 @@
   }
 
   function recruitmentLabel(item) {
-    if (!item) return "—";
+    if (!item) return "Not matched yet";
     const title =
       item.recruitment_title ||
       item.recruitmentTitle ||
@@ -161,7 +161,7 @@
     if (item.recruitment_id != null && item.recruitment_id !== "") {
       return `Recruitment #${item.recruitment_id}`;
     }
-    return "Unassigned";
+    return "Not matched yet";
   }
 
   function detectedContentSummary(item) {
@@ -414,6 +414,7 @@
     const panel = document.getElementById("rrqNeedsMatching");
     const body = document.getElementById("rrqCandidateBody");
     const reasonEl = document.getElementById("rrqNeedsMatchingReason");
+    const contextHost = document.getElementById("rrqNeedsMatchingContext");
     if (!panel || !body) return;
 
     const payload = item && item.payload && typeof item.payload === "object" ? item.payload : {};
@@ -436,7 +437,31 @@
       reasonEl.textContent =
         needs.reason ||
         processor.persistenceReason ||
-        "Human must choose the parent recruitment.";
+        "AI MATCH: Uncertain — choose how this update relates to a Recruitment.";
+    }
+
+    const draftId = resolveDraftId(item);
+    const linked = item && item.linked_draft;
+    const pageSlug =
+      (linked && linked.publishedSlug) ||
+      item.canonical_page_slug ||
+      item.public_page_slug ||
+      null;
+    if (contextHost) {
+      const summary = document.getElementById("rrqNeedsMatchingSummary");
+      if (summary) {
+        summary.innerHTML = `
+          <div><dt>Detected Update</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || item.title || "—")}</dd></div>
+          <div><dt>Source</dt><dd>${escapeHtml(item.source_url || "—")}</dd></div>
+          <div><dt>AI Match</dt><dd>Uncertain</dd></div>
+          <div><dt>Recruitment</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
+          <div><dt>Canonical Page</dt><dd>${escapeHtml(pageSlug ? "/" + String(pageSlug).replace(/^\//, "") : "Not linked yet")}</dd></div>
+          <div><dt>Draft</dt><dd>${
+            draftId
+              ? `<a href="/generator?draftId=${encodeURIComponent(draftId)}">Draft #${escapeHtml(draftId)}</a>`
+              : "—"
+          }</dd></div>`;
+      }
     }
 
     const candidates = Array.isArray(item.needs_matching_candidates)
@@ -459,8 +484,9 @@
         const rid = row.recruitmentId || row.recruitment_id || (row.kind === "recruitment" ? row.id : "");
         const title = row.title || (rid ? `Recruitment #${rid}` : "—");
         const match = row.level || row.matchLevel || row.kind || "—";
+        const slug = row.canonicalSlug || row.page_slug || row.slug || "";
         return `<tr>
-          <td>${escapeHtml(title)}</td>
+          <td>${escapeHtml(title)}${slug ? `<br><small>/${escapeHtml(slug)}</small>` : ""}</td>
           <td>${escapeHtml(match)}</td>
           <td>${escapeHtml(row.score ?? "—")}</td>
           <td>${
@@ -473,6 +499,12 @@
         </tr>`;
       })
       .join("");
+  }
+
+  function labelizeEvent(value) {
+    return String(value || "")
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
   function renderLinkage(item) {
@@ -490,14 +522,33 @@
       meta.innerHTML = "";
       return;
     }
-    const draftId = item.draft_id || item.draftId || item.generator_draft_id || "—";
+    const draftId =
+      (item.linked_draft && item.linked_draft.id) ||
+      item.draft_id ||
+      item.draftId ||
+      item.generator_draft_id ||
+      resolveDraftId(item) ||
+      "—";
     const eventType = item.event_type || "—";
     const updateId = item.update_id || "—";
+    const pageSlug =
+      (item.linked_draft && item.linked_draft.publishedSlug) ||
+      item.canonical_page_slug ||
+      null;
+    const draftHref =
+      draftId && draftId !== "—"
+        ? `/generator?draftId=${encodeURIComponent(draftId)}`
+        : null;
     meta.innerHTML = `
       <div><dt>Recruitment</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
       <div><dt>Update</dt><dd>${escapeHtml(updateId)}</dd></div>
-      <div><dt>Event</dt><dd>${escapeHtml(eventType)}</dd></div>
-      <div><dt>Draft</dt><dd>${escapeHtml(draftId)}</dd></div>
+      <div><dt>Event</dt><dd>${escapeHtml(labelizeEvent(eventType))}</dd></div>
+      <div><dt>Draft</dt><dd>${
+        draftHref
+          ? `<a href="${escapeHtml(draftHref)}">Draft #${escapeHtml(draftId)}</a> · <a href="${escapeHtml(draftHref)}">Open Draft</a>`
+          : escapeHtml(draftId)
+      }</dd></div>
+      <div><dt>Public Page</dt><dd>${escapeHtml(pageSlug ? "/" + String(pageSlug).replace(/^\//, "") : "Same permanent page after Manual Publish")}</dd></div>
       <div><dt>Review</dt><dd>${escapeHtml(item.title || `#${item.id}`)} · ${escapeHtml(item.status || "—")}</dd></div>
     `;
   }

@@ -684,37 +684,61 @@ function updateRecruitmentContextCard() {
   const evtSelect = document.getElementById("draftRecruitmentEventId");
   const draftId = getGeneratorDraftId();
   const meta = window.__generatorDraftMeta || {};
+  const linkedPage = window.__generatorLinkedPublicPage || null;
   const draftTitle =
     String(document.getElementById("title")?.value || "").trim() ||
     meta.title ||
     (draftId ? `Draft #${draftId}` : "Untitled (not saved)");
   const live = isEditingLivePage();
   const liveSlug = normalizeSlugKey(document.getElementById("oldSlug")?.value || "");
-  let status = "New / unbound content";
-  if (draftId && live) status = "Updating existing public page";
-  else if (draftId) status = `Draft: ${draftTitle}`;
-  else if (live) status = "Updating existing public page";
+  const linked = Boolean(recSelect && recSelect.value) || Boolean(meta.recruitmentTitle);
 
   const recName =
     meta.recruitmentTitle ||
     selectedOptionLabel(recSelect, "None (parent identity)");
   const eventName = meta.eventLabel || selectedOptionLabel(evtSelect, "None (lifecycle stage)");
-  const linked = Boolean(recSelect && recSelect.value) || Boolean(meta.recruitmentTitle);
+
+  let publicPageLabel = "No canonical page yet";
+  if (linkedPage && linkedPage.status === "unique" && linkedPage.page && linkedPage.page.slug) {
+    publicPageLabel = `/${linkedPage.page.slug}`;
+  } else if (linkedPage && linkedPage.status === "ambiguous") {
+    publicPageLabel = "Multiple linked pages — resolve canonical mapping";
+  } else if (live && liveSlug) {
+    publicPageLabel = `/${liveSlug}`;
+  }
+
+  let modeLabel = "CREATE NEW PUBLIC PAGE";
+  let modeTitle = "NEW RECRUITMENT CONTENT";
+  if (draftId && (live || (linkedPage && linkedPage.status === "unique"))) {
+    modeLabel = "UPDATE EXISTING PAGE";
+    modeTitle = "EDITING DRAFT";
+  } else if (draftId) {
+    modeLabel = live ? "UPDATE EXISTING PAGE" : "CREATE NEW PUBLIC PAGE";
+    modeTitle = "EDITING DRAFT";
+  } else if (live) {
+    modeLabel = "UPDATE EXISTING PAGE";
+    modeTitle = "EDITING LIVE PAGE";
+  } else if (linked) {
+    modeTitle = "NEW RECRUITMENT CONTENT";
+    modeLabel = "CREATE NEW PUBLIC PAGE";
+  }
 
   const setText = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
-  setText("generatorContextRecruitment", linked ? `Recruitment: ${recName}` : "None (parent identity)");
-  setText("generatorContextEvent", `Event: ${eventName}`);
+  setText("generatorContextModeTitle", modeTitle);
+  setText(
+    "generatorContextRecruitment",
+    linked ? recName : "Not matched yet"
+  );
+  setText("generatorContextEvent", eventName);
   setText(
     "generatorContextDraft",
-    draftId ? `Draft: ${draftTitle}` : "No parked draft (unsaved content)"
+    draftId ? `${draftTitle} (#${draftId})` : "No parked draft (unsaved content)"
   );
-  setText(
-    "generatorContextStatus",
-    live && liveSlug ? `${status} (/${liveSlug})` : status
-  );
+  setText("generatorContextPublicPage", publicPageLabel);
+  setText("generatorContextStatus", modeLabel);
 
   const bindEl = document.getElementById("generatorBindingVisual");
   if (bindEl) {
@@ -722,7 +746,6 @@ function updateRecruitmentContextCard() {
       ? `<span class="gen-bind__node">Draft (content)</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">linked to</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__node">${escapeAttr(recName)}</span>`
       : `<span class="gen-bind__node">Draft (content)</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">Not linked to Recruitment</span>`;
   }
-  // Always show context card on generator when we have useful state
   card.hidden = false;
 }
 
@@ -916,8 +939,8 @@ function syncSaveDraftButtonState() {
   btn.title = live
     ? "Draft save is only for new unpublished pages. This page is already live — use Save / Update."
     : getGeneratorDraftId()
-      ? "Update parked draft and start a fresh page"
-      : "Park this page on the server and clear the form (max 20 drafts)";
+      ? "Update this server draft (keeps your form open — not the same as browser backup)"
+      : "Save as a server draft (keeps your form open — not the same as browser backup)";
 }
 
 async function saveGeneratorDraftToServer() {
@@ -971,10 +994,16 @@ async function saveGeneratorDraftToServer() {
 
     const saved = fetchRes.body && fetchRes.body.data ? fetchRes.body.data : {};
     const savedId = saved.id != null ? saved.id : draftId;
+    if (savedId != null) setGeneratorDraftId(savedId);
+    window.__generatorDraftMeta = {
+      ...(window.__generatorDraftMeta || {}),
+      title: saved.title || payload.title || ""
+    };
+    // Keep form content — do not clear after save (browser backup ≠ server draft).
     clearDraftStorage();
-    resetGeneratorForm();
-    setGeneratorDraftId("");
+    saveDraftToStorage();
     setSaveState("saved");
+    updateRecruitmentContextCard();
     const openHref = savedId
       ? `/generator?draftId=${encodeURIComponent(savedId)}`
       : "/generator#drafts";
@@ -983,11 +1012,21 @@ async function saveGeneratorDraftToServer() {
       `Draft saved successfully${saved.title ? `: ${saved.title}` : ""}`,
       {
         detailsHtml:
-          `Form cleared after park. <a href="${escapeAttr(openHref)}"><strong>Open saved draft</strong></a> anytime from this link or the sidebar under <strong>Parked drafts</strong>.`
+          `Server draft kept open for editing. Browser backup is separate from the saved draft. <a href="${escapeAttr(openHref)}"><strong>Open saved draft</strong></a>${savedId ? ` (Draft #${escapeAttr(savedId)})` : ""}.`
       }
     );
     if (typeof window.refreshGeneratorDraftsSidebar === "function") {
       window.refreshGeneratorDraftsSidebar();
+    }
+    try {
+      const url = new URL(window.location.href);
+      if (savedId) {
+        url.searchParams.set("draftId", String(savedId));
+        url.searchParams.delete("generatorDraftId");
+        window.history.replaceState({}, "", url.toString());
+      }
+    } catch {
+      /* ignore history errors */
     }
   } catch (err) {
     console.error("Draft save error:", err);

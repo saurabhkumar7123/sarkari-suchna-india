@@ -219,12 +219,98 @@ async function listDrafts(query = {}) {
     limit: query.limit
   });
   const draftCount = await generatorDraftRepository.countByStatus("draft");
+  const drafts = await enrichDraftListRows(draftRows);
+  const published = await enrichDraftListRows(publishedRows);
   return {
-    drafts: draftRows,
-    published: publishedRows,
+    drafts,
+    published,
     draftCount,
     maxDrafts: MAX_GENERATOR_DRAFTS
   };
+}
+
+/**
+ * Attach human-readable Recruitment / Event / Public Page labels for draft lists.
+ * Best-effort; never fails the list endpoint.
+ */
+async function enrichDraftListRows(rows) {
+  const list = Array.isArray(rows) ? rows : [];
+  if (!list.length) return list;
+
+  const recruitmentCache = new Map();
+  const eventCache = new Map();
+  const pageCache = new Map();
+
+  async function recruitmentTitle(id) {
+    if (!id) return null;
+    if (recruitmentCache.has(id)) return recruitmentCache.get(id);
+    try {
+      const row = await recruitmentRepository.getRecruitmentById(id);
+      const title = row && row.title ? row.title : null;
+      recruitmentCache.set(id, title);
+      return title;
+    } catch {
+      recruitmentCache.set(id, null);
+      return null;
+    }
+  }
+
+  async function eventLabel(id) {
+    if (!id) return null;
+    if (eventCache.has(id)) return eventCache.get(id);
+    try {
+      const row = await recruitmentEventRepository.getRecruitmentEventById(id);
+      const label = row
+        ? String(row.event_type || "event").replace(/_/g, " ")
+        : null;
+      eventCache.set(id, label);
+      return label;
+    } catch {
+      eventCache.set(id, null);
+      return null;
+    }
+  }
+
+  async function publicPageSlug(recruitmentId) {
+    if (!recruitmentId) return null;
+    if (pageCache.has(recruitmentId)) return pageCache.get(recruitmentId);
+    try {
+      const recruitmentPageLinkService = require("./recruitmentPageLink.service");
+      const resolution = await recruitmentPageLinkService.resolveCanonicalPublicPage(
+        recruitmentId
+      );
+      let slug = null;
+      if (resolution && resolution.status === "unique" && resolution.page) {
+        slug = resolution.page.slug || null;
+      } else if (resolution && resolution.status === "ambiguous") {
+        slug = "__ambiguous__";
+      }
+      pageCache.set(recruitmentId, slug);
+      return slug;
+    } catch {
+      pageCache.set(recruitmentId, null);
+      return null;
+    }
+  }
+
+  const out = [];
+  for (const row of list) {
+    const recruitmentId =
+      row.recruitment_id != null ? Number(row.recruitment_id) : null;
+    const eventId =
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
+    const title = await recruitmentTitle(recruitmentId);
+    const label = await eventLabel(eventId);
+    const slug = await publicPageSlug(recruitmentId);
+    out.push({
+      ...row,
+      recruitmentTitle: title,
+      eventLabel: label,
+      publicPageSlug: slug && slug !== "__ambiguous__" ? slug : null,
+      publicPageAmbiguous: slug === "__ambiguous__"
+    });
+  }
+  return out;
 }
 
 async function findUnpublishedDraftByUpdateId(updateId) {

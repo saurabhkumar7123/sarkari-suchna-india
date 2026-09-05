@@ -84,7 +84,8 @@ describe("recruitment lifecycle same-page wiring (static)", () => {
 
   test("K: Save feedback offers Open saved draft link", () => {
     expect(generatorJs).toContain("Open saved draft");
-    expect(generatorJs).toContain("Form cleared after park");
+    expect(generatorJs).toContain("Server draft kept open for editing");
+    expect(generatorJs).toContain("Browser backup is separate");
   });
 
   test("publish confirmation distinguishes create vs update", () => {
@@ -102,8 +103,10 @@ describe("recruitment lifecycle same-page wiring (static)", () => {
   test("Generator context distinguishes Recruitment / Event / Draft / Public page", () => {
     expect(generatorHtml).toContain("Lifecycle context");
     expect(generatorHtml).toContain("Recruitment = permanent parent");
-    expect(generatorJs).toContain("Updating existing public page");
-    expect(generatorJs).toContain("New / unbound content");
+    expect(generatorJs).toContain("UPDATE EXISTING PAGE");
+    expect(generatorJs).toContain("CREATE NEW PUBLIC PAGE");
+    expect(generatorJs).toContain("EDITING DRAFT");
+    expect(generatorHtml).toContain("generatorContextPublicPage");
   });
 
   test("role copy keeps Editorial / Review / Page Manager distinct", () => {

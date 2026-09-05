@@ -239,9 +239,10 @@ body.generator-saas-v2 .generator-drafts-bar__item{
 
 body.generator-saas-v2 .generator-drafts-bar__row{
   display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:6px;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__row-title{
@@ -251,17 +252,22 @@ body.generator-saas-v2 .generator-drafts-bar__row-title{
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
+  max-width:100%;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__row-meta{
   font-size:11px;
   font-weight:600;
   color:#64748b;
-  flex:0 0 auto;
+  flex:1 1 auto;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+  white-space:normal;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__actions{
   display:flex;
+  flex-wrap:wrap;
   gap:6px;
 }
 

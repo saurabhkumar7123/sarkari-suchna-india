@@ -281,6 +281,164 @@
     byId("recruitmentEditor").hidden = !visible;
   }
 
+  function canonicalPageResolution() {
+    if (!linkedPages.length) {
+      return { status: "none", page: null, message: "Not linked" };
+    }
+    if (linkedPages.length === 1) {
+      return { status: "unique", page: linkedPages[0], message: "PUBLISHED" };
+    }
+    return {
+      status: "ambiguous",
+      page: linkedPages[0],
+      message: `${linkedPages.length} pages linked — resolve canonical mapping`
+    };
+  }
+
+  function currentStageLabel() {
+    const active = events.find((e) => String(e.status || "").toLowerCase() === "active");
+    if (active) return labelize(active.event_type);
+    if (events.length) {
+      const sorted = [...events].sort(
+        (a, b) => Number(b.sequence_order || 0) - Number(a.sequence_order || 0)
+      );
+      return labelize(sorted[0].event_type);
+    }
+    return labelize(selected?.lifecycle_state || "announced");
+  }
+
+  function renderLifecycleOverview() {
+    const host = byId("recruitmentLifecycleOverview");
+    if (!host) return;
+    if (!selected?.id) {
+      host.hidden = true;
+      return;
+    }
+    host.hidden = false;
+    const titleEl = byId("lifecycleOverviewTitle");
+    const metaEl = byId("lifecycleOverviewMeta");
+    const statusEl = byId("lifecycleOverviewStatus");
+    if (titleEl) titleEl.textContent = selected.title || "Recruitment";
+    if (metaEl) {
+      const org = selected.department || "—";
+      const year = selected.cycle_year || "—";
+      metaEl.textContent = `Organization: ${org} · Year: ${year} · ID #${selected.id}`;
+    }
+    if (statusEl) {
+      statusEl.textContent = labelize(selected.lifecycle_state || "announced");
+      statusEl.className = `rom-status is-${escapeHtml(selected.lifecycle_state || "announced")}`;
+    }
+
+    const canonical = canonicalPageResolution();
+    const pageEl = byId("lifecycleCanonicalPage");
+    const pageStatusEl = byId("lifecycleCanonicalStatus");
+    const actions = byId("lifecycleCanonicalActions");
+    const openPage = byId("lifecycleOpenPage");
+    const editPage = byId("lifecycleEditPage");
+    if (pageEl) {
+      pageEl.textContent =
+        canonical.status === "none"
+          ? "Not linked"
+          : `/${canonical.page.slug}`;
+    }
+    if (pageStatusEl) {
+      pageStatusEl.textContent =
+        canonical.status === "unique"
+          ? "Status: PUBLISHED"
+          : canonical.status === "ambiguous"
+            ? canonical.message
+            : "Status: —";
+      pageStatusEl.classList.toggle("is-warn", canonical.status === "ambiguous");
+    }
+    if (actions) actions.hidden = canonical.status === "none";
+    if (canonical.page && openPage && editPage) {
+      openPage.href = `/${encodeURIComponent(canonical.page.slug)}`;
+      editPage.href = `/generator?slug=${encodeURIComponent(canonical.page.slug)}`;
+    }
+
+    const stageEl = byId("lifecycleCurrentStage");
+    if (stageEl) stageEl.textContent = currentStageLabel();
+
+    const checklist = byId("lifecycleStageChecklist");
+    if (checklist) {
+      const milestoneTypes = ["notification", "admit_card", "answer_key", "result", "final_result"];
+      const present = new Map(
+        events.map((e) => [String(e.event_type || "").toLowerCase(), e])
+      );
+      const rows = milestoneTypes.map((type) => {
+        const ev = present.get(type);
+        const done = Boolean(ev);
+        const mark = done ? "✓" : "○";
+        const status = ev ? labelize(ev.status) : "not started";
+        return `<li class="${done ? "is-done" : "is-pending"}"><span class="rom-stage-mark">${mark}</span> ${escapeHtml(labelize(type))} <small>${escapeHtml(status)}</small></li>`;
+      });
+      const extras = events.filter(
+        (e) => !milestoneTypes.includes(String(e.event_type || "").toLowerCase())
+      );
+      extras.forEach((ev) => {
+        rows.push(
+          `<li class="is-done"><span class="rom-stage-mark">✓</span> ${escapeHtml(labelize(ev.event_type))} <small>${escapeHtml(labelize(ev.status))}</small></li>`
+        );
+      });
+      checklist.innerHTML = rows.join("") || '<li class="rom-empty">No events yet</li>';
+    }
+
+    const binding = draftBinding || {};
+    const drafts = binding.drafts || [];
+    const pending = drafts.filter((d) => String(d.status || "draft").toLowerCase() === "draft");
+    const published = drafts.filter((d) => String(d.status || "").toLowerCase() === "published");
+    const pendingHost = byId("lifecyclePendingDrafts");
+    const publishedHost = byId("lifecyclePublishedHistory");
+    if (pendingHost) {
+      pendingHost.innerHTML = pending.length
+        ? pending
+            .map((d) => {
+              const event = events.find((e) => Number(e.id) === Number(d.recruitmentEventId));
+              return `<article class="rom-draft-chip">
+                <strong>${escapeHtml(d.title || "Untitled draft")}</strong>
+                <span>Event: ${escapeHtml(event ? labelize(event.event_type) : "—")}</span>
+                <span class="rom-overview-meta">Draft #${escapeHtml(d.id)} · ${escapeHtml(d.status || "draft")}</span>
+                <a class="rom-row-btn" href="/generator?draftId=${encodeURIComponent(d.id)}" style="text-decoration:none;">Open Draft</a>
+              </article>`;
+            })
+            .join("")
+        : '<p class="rom-empty">No pending drafts</p>';
+    }
+    if (publishedHost) {
+      publishedHost.innerHTML = published.length
+        ? published
+            .map((d) => {
+              return `<article class="rom-draft-chip is-published">
+                <strong>${escapeHtml(d.title || "Untitled")}</strong>
+                <span class="rom-overview-meta">Published history · Draft #${escapeHtml(d.id)}</span>
+              </article>`;
+            })
+            .join("")
+        : linkedUpdates.length
+          ? linkedUpdates
+              .slice(0, 5)
+              .map(
+                (u) =>
+                  `<article class="rom-draft-chip is-published"><strong>${escapeHtml(u.title || "Update")}</strong><span class="rom-overview-meta">${escapeHtml(labelize(u.recruitmentEventType || u.recruitment_event_type || "update"))}</span></article>`
+              )
+              .join("")
+          : '<p class="rom-empty">No published history yet</p>';
+    }
+  }
+
+  function fillDraftBindEventSelect() {
+    const select = byId("draftBindEventSelect");
+    if (!select) return;
+    select.innerHTML =
+      '<option value="">Recruitment-level (no event)</option>' +
+      events
+        .map(
+          (event) =>
+            `<option value="${event.id}">${escapeHtml(labelize(event.event_type))} · ${escapeHtml(event.status || "")}</option>`
+        )
+        .join("");
+  }
+
   function fillRecruitmentForm(row) {
     byId("recruitmentId").value = row?.id || "";
     byId("recruitmentTitle").value = row?.title || "";
@@ -298,6 +456,8 @@
         ? "Edit this recruitment identity. Lifecycle updates use Manual Update below — same permanent page/slug."
         : "Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.";
     }
+    const overview = byId("recruitmentLifecycleOverview");
+    if (overview) overview.hidden = !row?.id;
   }
 
   function updateWorkflow() {
@@ -328,6 +488,7 @@
     const openReview = byId("openEditorialReviewBtn");
     const bindVisual = byId("romBindingVisual");
     const openGen = byId("openBoundDraftGeneratorBtn");
+    fillDraftBindEventSelect();
     if (!selected?.id) {
       statusEl.textContent = "No Draft";
       statusEl.className = "rom-status";
@@ -339,8 +500,14 @@
         openGen.textContent = "Open in Generator";
       }
       if (bindVisual) {
-        bindVisual.innerHTML = `<span class="rom-bind__node">Draft (content)</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
+        bindVisual.innerHTML = `
+          <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value">—</span></div>
+          <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">—</span></div>
+          <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">—</span></div>
+          <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">—</span></div>
+          <div class="rom-bind__row"><span class="rom-bind__label">Status</span><span class="rom-bind__value">Not linked</span></div>`;
       }
+      renderLifecycleOverview();
       return;
     }
     const binding = draftBinding || {};
@@ -352,6 +519,10 @@
 
     const drafts = binding.drafts || [];
     const primary = drafts.find((d) => Number(d.id) === Number(binding.primaryDraftId)) || drafts[0];
+    const canonical = canonicalPageResolution();
+    const primaryEvent = primary
+      ? events.find((e) => Number(e.id) === Number(primary.recruitmentEventId))
+      : null;
     if (openGen) {
       if (primary && primary.id) {
         openGen.href = `/generator?draftId=${encodeURIComponent(primary.id)}`;
@@ -362,13 +533,21 @@
       }
     }
     if (bindVisual) {
-      if (primary) {
-        const draftLabel = escapeHtml(primary.title || "Untitled draft");
-        const recLabel = escapeHtml(selected.title || "Recruitment");
-        bindVisual.innerHTML = `<span class="rom-bind__node">${draftLabel}</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Draft → Recruitment</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__node">${recLabel}</span>`;
-      } else {
-        bindVisual.innerHTML = `<span class="rom-bind__node">Draft (content)</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
-      }
+      const draftLabel = primary ? primary.title || `Draft #${primary.id}` : "—";
+      const eventLabel = primaryEvent ? labelize(primaryEvent.event_type) : "—";
+      const pageLabel =
+        canonical.status === "none"
+          ? "Not linked"
+          : `/${canonical.page.slug}${canonical.status === "ambiguous" ? " (ambiguous)" : ""}`;
+      const statusLabel = primary
+        ? labelize(primary.status || "draft")
+        : "Not linked";
+      bindVisual.innerHTML = `
+        <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value">${escapeHtml(draftLabel)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">${escapeHtml(selected.title || "Recruitment")}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">${escapeHtml(eventLabel)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">${escapeHtml(pageLabel)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Status</span><span class="rom-bind__value">${escapeHtml(statusLabel)}</span></div>`;
     }
 
     if (!drafts.length) {
@@ -376,13 +555,19 @@
     } else {
       rows.innerHTML = drafts.map((draft) => {
         const isPrimary = Number(draft.id) === Number(binding.primaryDraftId);
+        const event = events.find((e) => Number(e.id) === Number(draft.recruitmentEventId));
+        const isPublished = String(draft.status || "").toLowerCase() === "published";
         return `<tr>
-          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Status: ${escapeHtml(draft.status || "draft")} · content only</small></td>
-          <td>${escapeHtml(draft.updatedAt || "—")}</td>
-          <td>${isPrimary ? statusHtml("primary") : "Linked"}</td>
+          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Draft #${escapeHtml(draft.id)}${isPrimary ? " · primary" : ""}</small></td>
+          <td>${escapeHtml(event ? labelize(event.event_type) : "—")}</td>
+          <td>${statusHtml(draft.status || "draft")}</td>
           <td>
-            <a class="rom-row-btn" href="/generator?draftId=${encodeURIComponent(draft.id)}" style="text-decoration:none;">Open in Generator</a>
-            <button type="button" class="rom-row-btn is-danger" data-detach-draft="${draft.id}">Detach</button>
+            ${
+              isPublished
+                ? `<span class="rom-overview-meta">History only</span>`
+                : `<a class="rom-row-btn" href="/generator?draftId=${encodeURIComponent(draft.id)}" style="text-decoration:none;">Open in Generator</a>
+            <button type="button" class="rom-row-btn is-danger" data-detach-draft="${draft.id}">Detach</button>`
+            }
           </td>
         </tr>`;
       }).join("");
@@ -390,6 +575,7 @@
         button.addEventListener("click", () => detachDraft(button.dataset.detachDraft));
       });
     }
+    renderLifecycleOverview();
     updateWorkflow();
   }
 
@@ -435,10 +621,14 @@
     if (!draftId) return;
     const draftLabel =
       byId("draftBindSelect").selectedOptions?.[0]?.textContent?.trim() || "Draft";
+    const eventId = byId("draftBindEventSelect")?.value || "";
     try {
       const body = await api(`/api/admin/recruitments/${selected.id}/draft-binding/attach`, {
         method: "POST",
-        body: { draft_id: draftId }
+        body: {
+          draft_id: draftId,
+          ...(eventId ? { recruitment_event_id: eventId } : {})
+        }
       });
       draftBinding = body.data;
       message(
@@ -463,12 +653,14 @@
       message("Failed: Select a draft to replace with.", true);
       return;
     }
+    const eventId = byId("draftBindEventSelect")?.value || "";
     try {
       const body = await api(`/api/admin/recruitments/${selected.id}/draft-binding/replace`, {
         method: "POST",
         body: {
           draft_id: draftId,
-          previous_draft_id: draftBinding?.primaryDraftId || null
+          previous_draft_id: draftBinding?.primaryDraftId || null,
+          ...(eventId ? { recruitment_event_id: eventId } : {})
         }
       });
       draftBinding = body.data;
@@ -501,21 +693,27 @@
     const eventSelect = byId("pageLinkEvent");
     eventSelect.innerHTML = '<option value="">Recruitment-level link</option>' + events
       .map((event) => `<option value="${event.id}">${escapeHtml(labelize(event.event_type))} · ${escapeHtml(event.status || "")}</option>`).join("");
+    fillDraftBindEventSelect();
     if (!events.length) {
       host.innerHTML = '<li class="rom-empty">No lifecycle events yet.</li>';
+      renderLifecycleOverview();
       updateWorkflow();
       return;
     }
-    host.innerHTML = events.map((event) => `<li data-event-id="${event.id}">
-      <span class="rom-timeline__order">${escapeHtml(event.sequence_order)}</span>
+    host.innerHTML = events.map((event) => {
+      const done = ["active", "superseded"].includes(String(event.status || "").toLowerCase());
+      return `<li data-event-id="${event.id}" class="${done ? "is-done" : "is-pending"}">
+      <span class="rom-timeline__order">${done ? "✓" : "○"} ${escapeHtml(event.sequence_order)}</span>
       <span><strong>${escapeHtml(labelize(event.event_type))}</strong><br>${statusHtml(event.status)}</span>
       <span class="rom-row-actions">
         <button type="button" class="rom-row-btn" data-edit-event="${event.id}">Edit</button>
         <button type="button" class="rom-row-btn is-danger" data-delete-event="${event.id}">Delete</button>
       </span>
-    </li>`).join("");
+    </li>`;
+    }).join("");
     host.querySelectorAll("[data-edit-event]").forEach((button) => button.addEventListener("click", () => editEvent(button.dataset.editEvent)));
     host.querySelectorAll("[data-delete-event]").forEach((button) => button.addEventListener("click", () => deleteEvent(button.dataset.deleteEvent)));
+    renderLifecycleOverview();
     updateWorkflow();
   }
 
@@ -523,17 +721,23 @@
     const host = byId("pageLinkRows");
     if (!linkedPages.length) {
       host.innerHTML = '<tr><td colspan="4" class="rom-empty">No pages attached.</td></tr>';
+      renderLifecycleOverview();
       updateWorkflow();
       return;
     }
+    const ambiguous = linkedPages.length > 1;
     host.innerHTML = linkedPages.map((page) => {
       const event = events.find((item) => Number(item.id) === Number(page.recruitment_event_id));
-      return `<tr><td><a href="/${encodeURIComponent(page.slug)}" target="_blank" rel="noopener">${escapeHtml(page.slug)}</a></td>
+      return `<tr><td><a href="/${encodeURIComponent(page.slug)}" target="_blank" rel="noopener">${escapeHtml(page.slug)}</a>${ambiguous ? '<br><small class="rom-overview-meta">Ambiguous — resolve to one canonical page</small>' : ""}</td>
         <td>${escapeHtml(event ? labelize(event.event_type) : "Recruitment")}</td>
-        <td>${statusHtml("linked")}</td>
-        <td><button type="button" class="rom-row-btn is-danger" data-unlink-page="${page.id}">Detach</button></td></tr>`;
+        <td>${statusHtml(ambiguous ? "ambiguous" : "linked")}</td>
+        <td>
+          <a class="rom-row-btn" href="/generator?slug=${encodeURIComponent(page.slug)}" style="text-decoration:none;">Edit Page</a>
+          <button type="button" class="rom-row-btn is-danger" data-unlink-page="${page.id}">Detach</button>
+        </td></tr>`;
     }).join("");
     host.querySelectorAll("[data-unlink-page]").forEach((button) => button.addEventListener("click", () => unlinkPage(button.dataset.unlinkPage)));
+    renderLifecycleOverview();
     updateWorkflow();
   }
 
@@ -863,6 +1067,24 @@
   renderRecentSearches();
   renderDraftBinding();
   loadAvailableDrafts();
-  loadRecruitments().then(() => handleEventTimelineHash());
+  byId("lifecycleManualUpdateBtn")?.addEventListener("click", () => {
+    byId("manualUpdateForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    byId("manualUpdateTitle")?.focus();
+  });
+  byId("lifecycleAddEventBtn")?.addEventListener("click", () => {
+    showEventForm(null);
+    focusEventTimeline();
+  });
+  const deepRecruitmentId = params.get("recruitment_id") || params.get("id");
+  loadRecruitments().then(async () => {
+    if (deepRecruitmentId) {
+      try {
+        await selectRecruitment(deepRecruitmentId);
+      } catch (err) {
+        message(err.message || "Could not open recruitment", true);
+      }
+    }
+    await handleEventTimelineHash();
+  });
   window.addEventListener("hashchange", handleEventTimelineHash);
 })();

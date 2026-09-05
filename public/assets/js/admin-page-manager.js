@@ -394,18 +394,35 @@ function renderPages(pages) {
     const statusClass = getStatusBadgeClass(statusLabel);
     const isChecked = selectedSlugs.has(slug);
     const views = Number(p.views) || 0;
-    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span><span class="page-row-flags">${renderQualityFlags(p)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${p.lastDate ? `<span class="page-row-meta">Last: ${escapeAttr(p.lastDate)}</span>` : ""}${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
+    const recruitmentLabel =
+      p.recruitmentTitle ||
+      (p.recruitment_id ? `Recruitment #${p.recruitment_id}` : "");
+    const stageLabel = normalizeStatusLabel(p.status);
+    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span>${
+      recruitmentLabel
+        ? `<span class="page-row-meta">Recruitment: ${escapeAttr(recruitmentLabel)}</span><span class="page-row-meta">Current Stage: ${escapeAttr(stageLabel)}</span><span class="page-row-meta">Canonical Page: /${escapeAttr(slug)}</span>`
+        : ""
+    }<span class="page-row-flags">${renderQualityFlags(p)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${p.lastDate ? `<span class="page-row-meta">Last: ${escapeAttr(p.lastDate)}</span>` : ""}${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
     const actions = row.querySelector(".row-actions");
     const edit = document.createElement("a");
     edit.href = "/generator?slug=" + encodeURIComponent(slug);
     edit.className = "row-action-btn row-action-btn--edit";
-    edit.textContent = "Edit";
+    edit.textContent = "Edit Page";
     const view = document.createElement("a");
     view.href = url;
     view.target = "_blank";
     view.rel = "noopener";
     view.className = "row-action-btn row-action-btn--view";
     view.textContent = "View";
+    if (p.recruitment_id) {
+      const openRec = document.createElement("a");
+      openRec.href = `/admin/recruitments?recruitment_id=${encodeURIComponent(p.recruitment_id)}`;
+      openRec.className = "row-action-btn";
+      openRec.textContent = "Open Recruitment";
+      actions.append(edit, openRec, view);
+    } else {
+      actions.append(edit, view);
+    }
     const del = document.createElement("button");
     del.type = "button";
     del.className = "row-action-btn row-action-btn--delete";
@@ -413,7 +430,7 @@ function renderPages(pages) {
     del.addEventListener("click", async () => {
       await deletePage(slug, del);
     });
-    actions.append(edit, view, del);
+    actions.append(del);
     frag.appendChild(row);
   });
   table.appendChild(frag);

@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=8">
   <link rel="stylesheet" href="/css/admin/generator.css?v=21">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=28">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=29">
   <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
   <link rel="stylesheet" href="/css/admin/generator-workspace.css?v=2">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
@@ -76,11 +76,11 @@
   </div>
 </section>
 
-<section id="drafts" class="admin-page-head" aria-label="Drafts workspace">
+<section id="drafts" class="admin-page-head" aria-label="Saved Draft Management">
   <div>
     <p class="admin-page-head__eyebrow">Generator</p>
-    <h2>Drafts</h2>
-    <p class="page-subtitle">Parked content only. Draft ≠ Published. Drafts can exist before a recruitment and bind later. Separate from Review Center and Published Pages.</p>
+    <h2>Saved Draft Management</h2>
+    <p class="page-subtitle">Server drafts with Recruitment / Event / Public Page context. Draft ≠ Published. Draft ≠ Recruitment. Open Draft loads <code>/generator?draftId=N</code>.</p>
   </div>
 </section>
 
@@ -182,12 +182,13 @@
       </div>
     </div>
     <aside id="generatorContextCard" class="gen-context-card" aria-label="What will be affected">
-      <p class="gen-context-card__title">What will be affected</p>
+      <p class="gen-context-card__title" id="generatorContextModeTitle">Content context</p>
       <dl class="gen-context-card__grid">
         <div><dt>Recruitment</dt><dd id="generatorContextRecruitment">None (parent identity)</dd></div>
         <div><dt>Event</dt><dd id="generatorContextEvent">None (lifecycle stage)</dd></div>
         <div><dt>Draft</dt><dd id="generatorContextDraft">No parked draft (unsaved content)</dd></div>
-        <div><dt>Public page</dt><dd id="generatorContextStatus">New / unbound content</dd></div>
+        <div><dt>Public page</dt><dd id="generatorContextPublicPage">No canonical page yet</dd></div>
+        <div><dt>Mode</dt><dd id="generatorContextStatus">CREATE NEW PUBLIC PAGE</dd></div>
       </dl>
     </aside>
   </section>
@@ -582,7 +583,7 @@
 <script src="/js/admin-nav.js?v=31"></script>
 <script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-workflow-ia.js?v=3"></script>
-<script src="/js/admin-generator-drafts.js?v=5"></script>
+<script src="/js/admin-generator-drafts.js?v=6"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=3"></script>
@@ -596,7 +597,7 @@
 <script src="/js/jobSectionStructure.js"></script>
 <script src="/js/sectionEditorModel.js?v=8"></script>
 <script src="/js/sectionEditor.js?v=15"></script>
-<script src="/js/generator.js?v=17"></script>
+<script src="/js/generator.js?v=18"></script>
 <script src="/js/generator-workspace-core.js?v=1"></script>
 <script src="/js/generator-workspace.js?v=2"></script>
 </body>

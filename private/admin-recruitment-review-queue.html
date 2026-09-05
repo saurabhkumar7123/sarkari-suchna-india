@@ -176,6 +176,7 @@
         <section class="rrq-needs-matching" id="rrqNeedsMatching" hidden aria-label="Needs Matching">
           <h3>Needs Matching</h3>
           <p class="rrq-assist-note" id="rrqNeedsMatchingReason">AI is uncertain — choose how this update relates to a Recruitment.</p>
+          <dl class="rrq-history-grid" id="rrqNeedsMatchingSummary" style="margin-bottom:0.75rem;"></dl>
           <div class="rrq-detail-grid" id="rrqNeedsMatchingContext" style="margin-bottom:0.75rem;">
             <section>
               <h3>Detected update</h3>
@@ -198,7 +199,7 @@
             <table class="rrq-table" aria-label="Candidate recruitments">
               <thead>
                 <tr>
-                  <th>Recruitment</th>
+                  <th>Candidate Recruitments</th>
                   <th>Match</th>
                   <th>Score</th>
                   <th></th>
@@ -217,7 +218,7 @@
               <span id="rrqAttachRecruitmentLabel" class="rrq-assist-note" aria-live="polite">No recruitment selected</span>
               <div id="rrqAttachSuggestions" class="rrq-attach-suggestions" hidden></div>
             </label>
-            <button type="button" class="header-action-btn" data-match-action="attach">Attach to existing</button>
+            <button type="button" class="header-action-btn" data-match-action="attach">Attach</button>
             <button type="button" class="header-action-btn" data-match-action="create_parent">Create Parent</button>
             <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="standalone">Standalone</button>
             <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="reject">Reject</button>
@@ -317,6 +318,6 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=3"></script>
-<script src="/js/admin-recruitment-review-queue.js?v=7"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=8"></script>
 </body>
 </html>

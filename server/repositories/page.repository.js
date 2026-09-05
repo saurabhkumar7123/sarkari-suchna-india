@@ -823,8 +823,9 @@ async function selectAdminPageList(where, params, orderDir, limit, offset, execu
   const dir = String(orderDir || "DESC").toUpperCase() === "ASC" ? "ASC" : "DESC";
   const [rows] = await executor.query(
     `SELECT id, title, slug, category, status, created_at, updated_at, content_updated_at, views,
-            last_date, qualification, state, department, post_name
-     FROM pages 
+            last_date, qualification, state, department, post_name,
+            recruitment_id, recruitment_event_id
+     FROM pages
      ${where}
      ORDER BY COALESCE(content_updated_at, updated_at, created_at) ${dir}, id ${dir}
      LIMIT ? OFFSET ?`,

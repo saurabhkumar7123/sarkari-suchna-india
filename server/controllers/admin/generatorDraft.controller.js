@@ -24,7 +24,11 @@ function formatDraftSummary(row) {
     publishedAt: row.published_at,
     recruitmentId: row.recruitment_id != null ? Number(row.recruitment_id) : null,
     recruitmentEventId:
-      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null,
+    recruitmentTitle: row.recruitmentTitle || null,
+    eventLabel: row.eventLabel || null,
+    publicPageSlug: row.publicPageSlug || null,
+    publicPageAmbiguous: Boolean(row.publicPageAmbiguous)
   };
   return data;
 }

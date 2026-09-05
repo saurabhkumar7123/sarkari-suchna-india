@@ -176,9 +176,15 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
 
     const flags = read("server/config/automationFlags.js");
     const rrqJs = read("public/assets/js/admin-recruitment-review-queue.js");
+    const rrqHtml = read("private/admin-recruitment-review-queue.html");
     expect(rrqJs).toContain("/generator?draftId=");
     expect(rrqJs).toContain("/generator#drafts");
-    expect(rrqJs).not.toMatch(/rrqManualPublishLink[\s\S]*\/admin\/page-manager/);
+    // Default Manual Publish control stays on Generator; Page Manager is only a
+    // fallback when the linked draft is already published history.
+    expect(rrqHtml).toContain('id="rrqManualPublishLink" href="/generator#drafts"');
+    expect(rrqHtml).not.toContain('id="rrqManualPublishLink" href="/admin/page-manager"');
+    expect(rrqJs).toContain('getElementById("rrqManualPublishLink")');
+    expect(rrqJs).toMatch(/published[\s\S]*\/admin\/page-manager|\/admin\/page-manager[\s\S]*published/i);
 
     expect(flags).toContain("AUTO_PUBLISH_ENABLED: false");
     expect(flags).toContain("LIVE_CRAWLER_ENABLED: false");

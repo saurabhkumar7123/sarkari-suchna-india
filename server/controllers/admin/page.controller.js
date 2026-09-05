@@ -91,10 +91,39 @@ const getAllPages = async (req, res) => {
     const total = await pageRepository.countAdminPages(where, params);
 
     const rows = await pageRepository.selectAdminPageList(where, params, orderDir, limit, offset);
+    const recruitmentIds = [
+      ...new Set(
+        rows
+          .map((r) => (r.recruitment_id != null ? Number(r.recruitment_id) : null))
+          .filter((id) => Number.isInteger(id) && id > 0)
+      )
+    ];
+    const recruitmentTitles = {};
+    if (recruitmentIds.length) {
+      try {
+        const recruitmentRepository = require("../../repositories/recruitment.repository");
+        await Promise.all(
+          recruitmentIds.map(async (id) => {
+            try {
+              const rec = await recruitmentRepository.getRecruitmentById(id);
+              if (rec) recruitmentTitles[id] = rec.title || null;
+            } catch {
+              /* ignore */
+            }
+          })
+        );
+      } catch {
+        /* recruitment repo unavailable */
+      }
+    }
     const data = rows.map((row) => ({
       ...row,
       lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(row)) ?? "",
-      qualityFlags: buildPageQualityFlags(row)
+      qualityFlags: buildPageQualityFlags(row),
+      recruitmentTitle:
+        row.recruitment_id != null
+          ? recruitmentTitles[Number(row.recruitment_id)] || null
+          : null
     }));
 
     const categories = await pageRepository.selectDistinctCategories();

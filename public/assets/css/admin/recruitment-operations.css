@@ -416,6 +416,123 @@ body.admin-saas-v2 .rom-detail-panel {
   line-height: 1;
 }
 
+.rom-bind__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9.5rem) 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: baseline;
+}
+
+.rom-bind__label {
+  color: var(--admin-text-muted, #64748b);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rom-bind__value {
+  font-weight: 600;
+  color: var(--admin-text, #0f172a);
+}
+
+.rom-lifecycle-overview .rom-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin: 0.25rem 0 0.85rem;
+}
+
+.rom-overview-block {
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  background: var(--admin-surface-2, #f8fafc);
+  min-width: 0;
+}
+
+.rom-overview-block--wide {
+  grid-column: 1 / -1;
+}
+
+.rom-overview-block h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--admin-text-muted, #64748b);
+}
+
+.rom-overview-value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.rom-overview-meta {
+  margin: 0.25rem 0 0;
+  color: var(--admin-text-muted, #64748b);
+  font-size: 0.75rem;
+}
+
+.rom-overview-meta.is-warn {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.rom-stage-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+}
+
+.rom-stage-checklist li {
+  font-size: 0.8125rem;
+  color: var(--admin-text-muted, #64748b);
+}
+
+.rom-stage-checklist li.is-done {
+  color: var(--admin-text, #0f172a);
+  font-weight: 600;
+}
+
+.rom-stage-mark {
+  color: var(--admin-brand, #2563eb);
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+
+.rom-overview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rom-draft-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  background: var(--admin-surface, #fff);
+  font-size: 0.8125rem;
+}
+
+.rom-draft-chip.is-published {
+  opacity: 0.85;
+}
+
+.rom-draft-chip .rom-row-btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}
+
 @media (max-width: 768px) {
   .rom-form,
   .rom-inline-form,
@@ -425,5 +542,14 @@ body.admin-saas-v2 .rom-detail-panel {
 
   .rom-guide {
     padding: 0.55rem 0.7rem;
+  }
+
+  .rom-lifecycle-overview .rom-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rom-bind__row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
   }
 }
