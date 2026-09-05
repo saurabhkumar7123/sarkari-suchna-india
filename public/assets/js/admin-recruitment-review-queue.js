@@ -38,7 +38,29 @@
   function syncManualPublishLink(item) {
     const link = document.getElementById("rrqManualPublishLink");
     if (!link) return;
-    const draftId = resolveDraftId(item);
+    const linked = item && item.linked_draft;
+    const draftId =
+      linked && linked.id
+        ? String(linked.id)
+        : resolveDraftId(item);
+
+    if (linked && String(linked.status || "").toLowerCase() === "published") {
+      if (linked.publishedSlug) {
+        link.href = "/generator?slug=" + encodeURIComponent(linked.publishedSlug);
+        link.textContent = "Open published page (Generator)";
+      } else {
+        link.href = "/admin/page-manager";
+        link.textContent = "Open Page Manager";
+      }
+      return;
+    }
+
+    if (linked && String(linked.status || "").toLowerCase() === "missing") {
+      link.href = "/generator#drafts";
+      link.textContent = "Manual Publish (Generator)";
+      return;
+    }
+
     if (draftId) {
       link.href = "/generator?draftId=" + encodeURIComponent(draftId);
       link.textContent = "Manual Publish (Generator)";
@@ -594,10 +616,16 @@
 
   function nextStepMessage(action, item) {
     const name = recruitmentLabel(item);
+    const draftId =
+      (item && item.linked_draft && item.linked_draft.id) || resolveDraftId(item);
+    const draftHint = draftId
+      ? ` Open Generator with draft: /generator?draftId=${draftId}`
+      : " Open Generator when a draft is ready.";
     const messages = {
-      attach: `Attached to ${name}. Next: Generator → Preview → Manual Publish (same permanent page).`,
-      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Generator → Preview → Manual Publish.`,
-      standalone: `Standalone Recruitment created. Next: Generator → Preview → Manual Publish.`,
+      attach: `Attached to ${name}. Next: Generator → Preview → Manual Publish/Update (same permanent page).${draftHint}`,
+      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Generator → Preview → Manual Publish.${draftHint}`,
+      standalone:
+        "Left standalone — no Recruitment was created or attached. Detected content remains available. Next: Create Parent or Attach later, or reject if not needed.",
       reject: "Rejected — no Recruitment or page change."
     };
     return messages[action] || `Resolved: ${action}`;

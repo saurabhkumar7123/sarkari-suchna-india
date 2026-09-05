@@ -17,6 +17,10 @@ const { snapshotPublishedPage } = require("../../lib/recruitment/pageSnapshot");
 const recruitmentLifecycleService = require("../../services/recruitmentLifecycle.service");
 const { hasHighIdentity } = require("../../lib/recruitment/lifecycleSafety");
 const { extractRecruitmentAttributes } = require("../../lib/recruitment/recruitmentMatcher");
+const {
+  evaluateSamePagePublishGuard
+} = require("../../lib/recruitment/canonicalPublicPage");
+const recruitmentEventService = require("../../services/recruitmentEvent.service");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
 const CANONICAL_STATUSES = new Set([
@@ -324,6 +328,81 @@ const generatePage = async (req, res) => {
       });
     }
 
+    // Same-page guard: recruitment-bound updates must not create a second public page.
+    let publishRecruitmentId = null;
+    let publishRecruitmentEventId = null;
+    try {
+      const bodyRid =
+        req.body && req.body.recruitment_id != null
+          ? parseInt(String(req.body.recruitment_id), 10)
+          : NaN;
+      if (Number.isInteger(bodyRid) && bodyRid > 0) {
+        publishRecruitmentId = bodyRid;
+      }
+      const bodyEid =
+        req.body && req.body.recruitment_event_id != null
+          ? parseInt(String(req.body.recruitment_event_id), 10)
+          : NaN;
+      if (Number.isInteger(bodyEid) && bodyEid > 0) {
+        publishRecruitmentEventId = bodyEid;
+      }
+      if (publishRecruitmentId == null) {
+        const draftIdRaw =
+          req.body && req.body.generatorDraftId != null
+            ? parseInt(String(req.body.generatorDraftId), 10)
+            : NaN;
+        if (Number.isInteger(draftIdRaw) && draftIdRaw > 0) {
+          const draftRow = await generatorDraftService.getDraftById(draftIdRaw);
+          if (draftRow && draftRow.recruitment_id != null) {
+            publishRecruitmentId = Number(draftRow.recruitment_id);
+          }
+          if (
+            publishRecruitmentEventId == null &&
+            draftRow &&
+            draftRow.recruitment_event_id != null
+          ) {
+            publishRecruitmentEventId = Number(draftRow.recruitment_event_id);
+          }
+        }
+      }
+    } catch (ctxErr) {
+      logger.warn("generator: recruitment context resolve for same-page guard failed", {
+        message: ctxErr && ctxErr.message ? ctxErr.message : String(ctxErr)
+      });
+    }
+
+    if (publishRecruitmentId != null) {
+      try {
+        const resolution =
+          await recruitmentPageLinkService.resolveCanonicalPublicPage(publishRecruitmentId);
+        const guard = evaluateSamePagePublishGuard({
+          oldSlug: oldSlug || null,
+          resolution
+        });
+        if (!guard.allowed) {
+          return res.status(409).json({
+            status: "error",
+            code: guard.code,
+            message: guard.message,
+            existingSlug: guard.existingSlug || null,
+            generatorHref: guard.generatorHref || null,
+            linkedPublicPage: resolution
+          });
+        }
+        if (resolution && resolution.status === "ambiguous") {
+          logger.warn("generator: recruitment has multiple linked pages", {
+            recruitmentId: publishRecruitmentId,
+            pageCount: Array.isArray(resolution.pages) ? resolution.pages.length : 0
+          });
+        }
+      } catch (guardErr) {
+        if (guardErr && guardErr.statusCode === 409) throw guardErr;
+        logger.warn("generator: same-page publish guard skipped", {
+          message: guardErr && guardErr.message ? guardErr.message : String(guardErr)
+        });
+      }
+    }
+
     conn = await db.getConnection();
     await conn.beginTransaction();
 
@@ -606,6 +685,26 @@ const generatePage = async (req, res) => {
       status: "success"
     });
 
+    // Soft lifecycle alignment: keep Event as authoritative stage; activate when update publishes.
+    let lifecycleNote = null;
+    if (oldSlugNormalized && publishRecruitmentEventId != null) {
+      try {
+        const event = await recruitmentEventService.getRecruitmentEvent(publishRecruitmentEventId);
+        if (event && String(event.status || "").toLowerCase() === "pending") {
+          await recruitmentEventService.updateRecruitmentEvent(publishRecruitmentEventId, {
+            status: "active"
+          });
+          lifecycleNote = "Recruitment event marked active after page update.";
+        }
+      } catch (lifeErr) {
+        logger.warn("generator: event status alignment skipped", {
+          message: lifeErr && lifeErr.message ? lifeErr.message : String(lifeErr)
+        });
+        lifecycleNote =
+          "Page updated. Event status could not be auto-aligned — verify Event Timeline if needed.";
+      }
+    }
+
     setImmediate(() => {
       writeSitemapFile(db).catch((e) => logger.warn("sitemap refresh after publish failed", { message: e.message }));
     });
@@ -622,7 +721,8 @@ const generatePage = async (req, res) => {
         post_name: normalizedPostName,
         category: String(category || ""),
         warnings: parserWarnings,
-        contentAnalysis
+        contentAnalysis,
+        lifecycleNote
       },
       url,
       id: savedPageId,
@@ -631,7 +731,8 @@ const generatePage = async (req, res) => {
       post_name: normalizedPostName,
       category: String(category || ""),
       warnings: parserWarnings,
-      contentAnalysis
+      contentAnalysis,
+      lifecycleNote
     });
   } catch (err) {
     if (conn) {

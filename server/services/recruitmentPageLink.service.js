@@ -3,6 +3,9 @@
 const recruitmentRepository = require("../repositories/recruitment.repository");
 const recruitmentEventRepository = require("../repositories/recruitmentEvent.repository");
 const recruitmentPageLinkRepository = require("../repositories/recruitmentPageLink.repository");
+const {
+  resolveCanonicalFromLinkedPages
+} = require("../lib/recruitment/canonicalPublicPage");
 
 function assertLinkageReady() {
   return recruitmentPageLinkRepository.linkageColumnsExist().then((ok) => {
@@ -173,9 +176,26 @@ async function listLinkedPages(query = {}) {
   });
 }
 
+/**
+ * Identify the canonical/primary public page for a recruitment.
+ * Never deletes or merges pages. Ambiguous multi-page sets are flagged.
+ */
+async function resolveCanonicalPublicPage(recruitmentId) {
+  await assertLinkageReady();
+  const id = parsePositiveId(recruitmentId, "recruitment_id");
+  await assertRecruitmentExists(id);
+  const listed = await recruitmentPageLinkRepository.listPageLinkagesByRecruitmentId({
+    recruitment_id: id,
+    page: 1,
+    limit: 50
+  });
+  return resolveCanonicalFromLinkedPages(listed && listed.data ? listed.data : []);
+}
+
 module.exports = {
   linkPage,
   unlinkPage,
   getPageLinkage,
-  listLinkedPages
+  listLinkedPages,
+  resolveCanonicalPublicPage
 };

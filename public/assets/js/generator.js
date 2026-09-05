@@ -152,23 +152,41 @@ function setSaveState(state, reason) {
 async function confirmManualPublishSummary(payload) {
   const recSelect = document.getElementById("draftRecruitmentId");
   const evtSelect = document.getElementById("draftRecruitmentEventId");
-  const recruitment = selectedOptionLabel(recSelect, "None");
-  const eventLabel = selectedOptionLabel(evtSelect, "None");
+  const meta = window.__generatorDraftMeta || {};
+  const recruitment =
+    meta.recruitmentTitle || selectedOptionLabel(recSelect, "None (unbound)");
+  const eventLabel =
+    meta.eventLabel || selectedOptionLabel(evtSelect, "None");
   const draftTitle = String(payload.title || "").trim() || "Untitled";
+  const liveSlug = normalizeSlugKey(payload.oldSlug || "");
+  const isUpdate = Boolean(liveSlug);
+  const hasCanonical =
+    Boolean(liveSlug) &&
+    window.__generatorLinkedPublicPage &&
+    window.__generatorLinkedPublicPage.status === "unique";
+  const modeLine = isUpdate
+    ? hasCanonical || liveSlug
+      ? `Updating existing public page (/${liveSlug})`
+      : `Updating existing public page (/${liveSlug})`
+    : "Creating new public page";
   const lines = [
+    modeLine,
     `Recruitment: ${recruitment}`,
     `Draft / Public Page Title: ${draftTitle}`,
     `Event: ${eventLabel}`,
+    liveSlug ? `Public slug (permanent): /${liveSlug}` : "Public slug: will be created on publish",
     "",
     "This is Manual Publish. Auto Publish is disabled."
   ];
 
   if (window.AdminUI && typeof window.AdminUI.simpleConfirm === "function") {
     return window.AdminUI.simpleConfirm({
-      title: "Confirm Manual Publish",
+      title: isUpdate ? "Confirm Manual Publish / Update" : "Confirm Manual Publish",
       details: lines.filter(Boolean).join(" · "),
-      warnText: "Publishes the page now. Auto Publish stays disabled.",
-      confirmLabel: "Manual Publish",
+      warnText: isUpdate
+        ? "Updates the existing permanent public page. Auto Publish stays disabled."
+        : "Creates a new public page now. Auto Publish stays disabled.",
+      confirmLabel: isUpdate ? "Update existing page" : "Manual Publish",
       variant: "default"
     });
   }
@@ -631,8 +649,13 @@ async function probeEditorialAttachmentFlag() {
 function setRecruitmentContextSectionVisible(visible) {
   const section = document.getElementById("generatorRecruitmentContext");
   if (!section) return;
-  section.hidden = !visible;
-  section.classList.toggle("is-hidden", !visible);
+  // Context card always visible; selectors only when editorial attachment is enabled.
+  section.hidden = false;
+  section.classList.remove("is-hidden");
+  const selectors = document.getElementById("generatorRecruitmentSelectors");
+  if (selectors) {
+    selectors.hidden = !visible;
+  }
 }
 
 function formatRecruitmentOptionLabel(row) {
@@ -660,35 +683,47 @@ function updateRecruitmentContextCard() {
   const recSelect = document.getElementById("draftRecruitmentId");
   const evtSelect = document.getElementById("draftRecruitmentEventId");
   const draftId = getGeneratorDraftId();
+  const meta = window.__generatorDraftMeta || {};
   const draftTitle =
     String(document.getElementById("title")?.value || "").trim() ||
-    (draftId ? `Parked draft` : "Untitled (not saved)");
-  const status = draftId
-    ? "Draft (parked)"
-    : isEditingLivePage()
-      ? "Live page"
-      : "New / unsaved";
+    meta.title ||
+    (draftId ? `Draft #${draftId}` : "Untitled (not saved)");
+  const live = isEditingLivePage();
+  const liveSlug = normalizeSlugKey(document.getElementById("oldSlug")?.value || "");
+  let status = "New / unbound content";
+  if (draftId && live) status = "Updating existing public page";
+  else if (draftId) status = `Draft: ${draftTitle}`;
+  else if (live) status = "Updating existing public page";
 
-  const recName = selectedOptionLabel(recSelect, "None");
-  const eventName = selectedOptionLabel(evtSelect, "None");
-  const linked = Boolean(recSelect && recSelect.value);
+  const recName =
+    meta.recruitmentTitle ||
+    selectedOptionLabel(recSelect, "None (parent identity)");
+  const eventName = meta.eventLabel || selectedOptionLabel(evtSelect, "None (lifecycle stage)");
+  const linked = Boolean(recSelect && recSelect.value) || Boolean(meta.recruitmentTitle);
 
   const setText = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
-  setText("generatorContextRecruitment", recName);
-  setText("generatorContextEvent", eventName);
-  setText("generatorContextDraft", draftTitle);
-  setText("generatorContextStatus", status);
+  setText("generatorContextRecruitment", linked ? `Recruitment: ${recName}` : "None (parent identity)");
+  setText("generatorContextEvent", `Event: ${eventName}`);
+  setText(
+    "generatorContextDraft",
+    draftId ? `Draft: ${draftTitle}` : "No parked draft (unsaved content)"
+  );
+  setText(
+    "generatorContextStatus",
+    live && liveSlug ? `${status} (/${liveSlug})` : status
+  );
 
   const bindEl = document.getElementById("generatorBindingVisual");
   if (bindEl) {
     bindEl.innerHTML = linked
-      ? `<span class="gen-bind__node">Draft</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">linked to</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__node">${escapeAttr(recName)}</span>`
-      : `<span class="gen-bind__node">Draft</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">Not linked</span>`;
+      ? `<span class="gen-bind__node">Draft (content)</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">linked to</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__node">${escapeAttr(recName)}</span>`
+      : `<span class="gen-bind__node">Draft (content)</span><span class="gen-bind__arrow" aria-hidden="true">↓</span><span class="gen-bind__mid">Not linked to Recruitment</span>`;
   }
-  card.hidden = !recruitmentContextEnabled;
+  // Always show context card on generator when we have useful state
+  card.hidden = false;
 }
 
 async function loadRecruitmentOptions() {
@@ -935,16 +970,20 @@ async function saveGeneratorDraftToServer() {
     }
 
     const saved = fetchRes.body && fetchRes.body.data ? fetchRes.body.data : {};
+    const savedId = saved.id != null ? saved.id : draftId;
     clearDraftStorage();
     resetGeneratorForm();
     setGeneratorDraftId("");
     setSaveState("saved");
+    const openHref = savedId
+      ? `/generator?draftId=${encodeURIComponent(savedId)}`
+      : "/generator#drafts";
     setGeneratorFeedback(
       "success",
       `Draft saved successfully${saved.title ? `: ${saved.title}` : ""}`,
       {
         detailsHtml:
-          "Form cleared. Open this draft anytime from the sidebar under <strong>Parked drafts</strong>."
+          `Form cleared after park. <a href="${escapeAttr(openHref)}"><strong>Open saved draft</strong></a> anytime from this link or the sidebar under <strong>Parked drafts</strong>.`
       }
     );
     if (typeof window.refreshGeneratorDraftsSidebar === "function") {
@@ -971,6 +1010,22 @@ async function loadGeneratorDraftFromURL() {
   try {
     const data = await safeFetch("/api/admin/generator-drafts/" + encodeURIComponent(draftId));
     if (!data.ok || !data.body || !data.body.success || !data.body.data) {
+      const publishedMeta = data.body && data.body.data;
+      if (
+        publishedMeta &&
+        String(publishedMeta.status || "").toLowerCase() === "published"
+      ) {
+        const liveSlug = publishedMeta.publishedSlug || null;
+        const href = liveSlug
+          ? `/generator?slug=${encodeURIComponent(liveSlug)}`
+          : "/admin/page-manager";
+        setGeneratorFeedback("error", "Draft already published", {
+          detailsHtml: liveSlug
+            ? `This draft is history. <a href="${escapeAttr(href)}">Open the live public page</a> to edit/update.`
+            : `This draft is already published. Open it from <a href="/admin/page-manager">Page Manager</a>.`
+        });
+        return false;
+      }
       setGeneratorFeedback("error", "Could not load draft", {
         detailsHtml: (data.body && data.body.message) || "Draft not found."
       });
@@ -983,16 +1038,80 @@ async function loadGeneratorDraftFromURL() {
     applyGeneratorDraftPayload(row.payload || {});
     await applyRecruitmentContextFromDraft(row);
     setGeneratorDraftId(row.id);
-    setGeneratorFeedback("info", `Draft loaded: ${row.title || "Untitled"}`, {
-      detailsHtml: `${escapeAttr(row.title || "Untitled")} — edit and publish, or save draft again to park updates.`
-    });
+    window.__generatorLinkedPublicPage = row.linkedPublicPage || null;
+    window.__generatorDraftMeta = {
+      title: row.title || "",
+      recruitmentTitle: row.recruitmentTitle || null,
+      eventLabel: row.eventLabel || null
+    };
+    const hydrate = applyLinkedPublicPageToGenerator(row.linkedPublicPage);
     updateRecruitmentContextCard();
+    if (hydrate.blocked) {
+      setGeneratorFeedback("error", "Cannot safely update yet", {
+        detailsHtml: escapeAttr(hydrate.message || "Resolve linked public pages before publishing.")
+      });
+    } else if (hydrate.mode === "update") {
+      setGeneratorFeedback(
+        "info",
+        `Draft loaded: ${row.title || "Untitled"} — updating existing public page`,
+        {
+          detailsHtml: `Public slug <strong>/${escapeAttr(hydrate.slug)}</strong> stays permanent. Preview, then Manual Publish/Update.`
+        }
+      );
+    } else {
+      setGeneratorFeedback("info", `Draft loaded: ${row.title || "Untitled"}`, {
+        detailsHtml: `${escapeAttr(row.title || "Untitled")} — edit and publish, or save draft again to park updates.`
+      });
+    }
     return true;
   } catch (err) {
     console.error("Generator draft load error:", err);
     setGeneratorFeedback("error", "Failed to load draft");
     return false;
   }
+}
+
+/**
+ * When a bound draft has exactly one linked public page, enter update mode
+ * (oldSlug + locked URL) while preserving draft form content.
+ */
+function applyLinkedPublicPageToGenerator(linkedPublicPage) {
+  window.__generatorPublishBlock = null;
+  const resolution = linkedPublicPage && typeof linkedPublicPage === "object" ? linkedPublicPage : null;
+  if (!resolution || resolution.status === "none") {
+    return { mode: "create", blocked: false, slug: null, message: null };
+  }
+  if (resolution.status === "ambiguous") {
+    window.__generatorPublishBlock = {
+      code: "ambiguous_pages",
+      message:
+        resolution.message ||
+        "Multiple public pages are linked to this recruitment. Keep one primary page before publishing."
+    };
+    return {
+      mode: "blocked",
+      blocked: true,
+      slug: null,
+      message: window.__generatorPublishBlock.message
+    };
+  }
+  if (resolution.status === "unique" && resolution.page && resolution.page.slug) {
+    const slug = String(resolution.page.slug)
+      .trim()
+      .replace(/^\/+|\.html$/gi, "");
+    const oldSlugEl = document.getElementById("oldSlug");
+    const pageIdEl = document.getElementById("pageId");
+    const pageUrlEl = document.getElementById("pageUrl");
+    if (oldSlugEl) oldSlugEl.value = slug;
+    if (pageIdEl) pageIdEl.value = resolution.page.id != null ? String(resolution.page.id) : "";
+    if (pageUrlEl) pageUrlEl.value = `/${slug}`;
+    setPageUrlLocked(true);
+    setDeleteButtonVisible(true);
+    updateSlugPreview();
+    syncSaveDraftButtonState();
+    return { mode: "update", blocked: false, slug, message: null };
+  }
+  return { mode: "create", blocked: false, slug: null, message: null };
 }
 
 async function markGeneratorDraftPublishedOnServer(draftId, publishedSlug, publishedPageId) {
@@ -1983,6 +2102,41 @@ async function generatePage(){
     return;
   }
 
+  if (window.__generatorPublishBlock && !payload.oldSlug) {
+    const block = window.__generatorPublishBlock;
+    const linked = window.__generatorLinkedPublicPage;
+    const suggested =
+      (linked && linked.suggestedPage && linked.suggestedPage.slug) ||
+      (linked && linked.page && linked.page.slug) ||
+      null;
+    setGeneratorFeedback("error", "Publish blocked — existing public page", {
+      detailsHtml:
+        `${escapeAttr(block.message || "This recruitment already has a published page.")}` +
+        (suggested
+          ? `<br><a href="/generator?slug=${encodeURIComponent(suggested)}">Open existing page /${escapeAttr(suggested)}</a>`
+          : "")
+    });
+    return;
+  }
+
+  // Bound draft + known unique page but somehow still create mode → refuse locally.
+  const linkedPage = window.__generatorLinkedPublicPage;
+  if (
+    !payload.oldSlug &&
+    linkedPage &&
+    linkedPage.status === "unique" &&
+    linkedPage.page &&
+    linkedPage.page.slug
+  ) {
+    const existingSlug = linkedPage.page.slug;
+    setGeneratorFeedback("error", "Publish blocked — existing public page", {
+      detailsHtml:
+        `This recruitment already has a published page. Open the existing page/update context before publishing.<br>` +
+        `<a href="/generator?slug=${encodeURIComponent(existingSlug)}">Open /${escapeAttr(existingSlug)}</a>`
+    });
+    return;
+  }
+
   if (payload.lastDate && !isValidLastDateInput(payload.lastDate)) {
     setInlineFieldError("lastDate", "Use valid DD/MM/YYYY or YYYY-MM-DD.");
     setGeneratorFeedback("error", "Validation failed", {
@@ -2049,8 +2203,15 @@ async function generatePage(){
       } else {
         reason = String(b.message || b.error || fetchRes.networkError || "").trim();
         setSaveState("error", reason || `Request failed (${fetchRes.status})`);
+        const extra =
+          b.generatorHref || b.existingSlug
+            ? `<br><a href="${escapeAttr(
+                b.generatorHref ||
+                  `/generator?slug=${encodeURIComponent(b.existingSlug)}`
+              )}">Open existing page</a>`
+            : "";
         setGeneratorFeedback("error", "Save failed", {
-          detailsHtml: reason || `Request failed (${fetchRes.status})`
+          detailsHtml: (reason || `Request failed (${fetchRes.status})`) + extra
         });
       }
       return;
@@ -2095,7 +2256,7 @@ async function generatePage(){
 
     if (isCreate) {
       bumpAdminMetric("publishesSuccess");
-      showSuccess(resolvedUrl, payload.status, payload.title);
+      showSuccess(resolvedUrl, payload.status, payload.title, { isUpdate: false });
       await loadSmallBoxSlotOccupancy();
       if (parserWarnings.length) {
         setGeneratorFeedback("info", "Saved with parsing warnings", {
@@ -2135,7 +2296,7 @@ async function generatePage(){
     updateSlugPreview();
     updateRecruitmentContextCard();
 
-    showSuccess(resolvedUrl, payload.status, payload.title);
+    showSuccess(resolvedUrl, payload.status, payload.title, { isUpdate: true });
     await loadSmallBoxSlotOccupancy();
     if (window.AdminUI && window.AdminUI.toastSuccess) {
       window.AdminUI.toastSuccess("Page published successfully");
@@ -2167,11 +2328,21 @@ async function generatePage(){
 }
 
 // ================= SUCCESS MESSAGE =================  
-function showSuccess(url, status, publicTitle){
+function showSuccess(url, status, publicTitle, opts = {}) {
   const color = getStatusColor(status);
   const titleShown =
     String(publicTitle || document.getElementById("title")?.value || "").trim() || "(see published page)";
-  setGeneratorFeedback("success", "Page published successfully", {
+  const meta = window.__generatorDraftMeta || {};
+  const recSelect = document.getElementById("draftRecruitmentId");
+  const recruitmentName =
+    meta.recruitmentTitle ||
+    selectedOptionLabel(recSelect, "") ||
+    titleShown;
+  const isUpdate = Boolean(opts && opts.isUpdate);
+  const headline = isUpdate
+    ? `Published update to ${recruitmentName} — existing page updated.`
+    : `Published ${recruitmentName} — new public page created.`;
+  setGeneratorFeedback("success", headline, {
     detailsHtml: `
       <b>Public page title:</b> ${escapeAttr(titleShown)}<br>
       <b>Status:</b>

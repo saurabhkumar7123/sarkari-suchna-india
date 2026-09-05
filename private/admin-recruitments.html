@@ -192,7 +192,7 @@
           <div class="rom-card__head">
             <div>
               <h2>Generator Draft Binding</h2>
-              <p class="rom-section-purpose">Use this to connect an existing parked draft to this recruitment. Binding does not publish the draft.</p>
+              <p class="rom-section-purpose">Use this to connect an existing parked draft (content) to this recruitment (parent). Binding does not publish. Then open the draft in Generator.</p>
             </div>
             <span id="draftBindingStatus" class="rom-status">No Draft</span>
           </div>
@@ -220,7 +220,7 @@
           </div>
           <div class="rom-form-actions" style="margin-top:.75rem;">
             <a id="openEditorialReviewBtn" class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review (optional QA)</a>
-            <a class="header-action-btn" href="/generator" style="text-decoration:none;">Open Generator</a>
+            <a id="openBoundDraftGeneratorBtn" class="header-action-btn" href="/generator" style="text-decoration:none;">Open in Generator</a>
           </div>
         </section>
 
@@ -228,7 +228,7 @@
           <div class="rom-card__head">
             <div>
               <h2>Linked Updates &amp; Reviews</h2>
-              <p class="rom-section-purpose">View updates, drafts and review items associated with this recruitment.</p>
+              <p class="rom-section-purpose">View updates, drafts and review items associated with this recruitment. Review Center = matching/ops; Editorial Review = optional QA; Generator = Manual Publish.</p>
             </div>
           </div>
           <div class="rom-table-wrap">
@@ -244,7 +244,7 @@
             </table>
           </div>
           <form id="manualUpdateForm" class="rom-link-form" style="margin-top:.75rem;">
-            <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Manual Update: Admit Card / Result / Answer Key on this recruitment. Creates event + draft — then Generator → Preview → Manual Publish. Same permanent page (not a second recruitment).</p>
+            <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Manual Update: Admit Card / Result / Answer Key on this recruitment. Creates event + draft — then open that draft in Generator → Preview → Manual Publish/Update. Same permanent page (not a second recruitment).</p>
             <label>Event type
               <select id="manualUpdateEventType" required>
                 <option value="admit_card">Admit Card</option>
@@ -257,6 +257,7 @@
             </label>
             <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Admit Card Released"></label>
             <button type="submit" class="header-action-btn">Create manual update</button>
+            <a id="manualUpdateOpenGenerator" class="header-action-btn" href="/generator" hidden style="text-decoration:none;">Open Generator (this draft)</a>
           </form>
         </section>
 
@@ -264,7 +265,7 @@
           <div class="rom-card__head">
             <div>
               <h2>Shared Runtime Preview</h2>
-              <p class="rom-section-purpose">Preview what Editorial Review will see. Refresh manually.</p>
+              <p class="rom-section-purpose">Ops/Editorial snapshot for this recruitment (not the public page HTML preview). Refresh manually. Final publish stays in Generator; Page Manager manages already-published pages.</p>
             </div>
           </div>
           <div id="sharedPreviewPanel" class="spv-panel"></div>

@@ -161,7 +161,7 @@ describe("generatorDraftId save payload (recruitment binding)", () => {
       "utf8"
     );
     expect(html).toContain("rom-section-purpose");
-    expect(html).toContain("Binding does not publish the draft");
+    expect(html).toContain("Binding does not publish");
     expect(html).toContain("One recruitment = one permanent public page");
     expect(js).toContain("Draft linked successfully");
     expect(js).toContain("Draft detached successfully");
@@ -169,6 +169,9 @@ describe("generatorDraftId save payload (recruitment binding)", () => {
     expect(js).toContain("Event added successfully");
     expect(js).toContain("Recruitment created successfully");
     expect(js).toMatch(/draft\.title \|\| \"Untitled\"/);
+    expect(js).toContain("/generator?draftId=");
+    expect(html).toContain("openBoundDraftGeneratorBtn");
+    expect(html).toContain("manualUpdateOpenGenerator");
   });
 
   test("generator HTML distinguishes public page title and context card", () => {

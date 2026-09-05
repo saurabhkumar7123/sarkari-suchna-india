@@ -327,14 +327,19 @@
     const rows = byId("draftBindingRows");
     const openReview = byId("openEditorialReviewBtn");
     const bindVisual = byId("romBindingVisual");
+    const openGen = byId("openBoundDraftGeneratorBtn");
     if (!selected?.id) {
       statusEl.textContent = "No Draft";
       statusEl.className = "rom-status";
       workflowEl.textContent = "Workflow: —";
       rows.innerHTML = '<tr><td colspan="4" class="rom-empty">Select a recruitment to manage draft binding.</td></tr>';
       openReview.href = "/admin/editorial-review";
+      if (openGen) {
+        openGen.href = "/generator";
+        openGen.textContent = "Open in Generator";
+      }
       if (bindVisual) {
-        bindVisual.innerHTML = `<span class="rom-bind__node">Draft</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
+        bindVisual.innerHTML = `<span class="rom-bind__node">Draft (content)</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
       }
       return;
     }
@@ -347,13 +352,22 @@
 
     const drafts = binding.drafts || [];
     const primary = drafts.find((d) => Number(d.id) === Number(binding.primaryDraftId)) || drafts[0];
+    if (openGen) {
+      if (primary && primary.id) {
+        openGen.href = `/generator?draftId=${encodeURIComponent(primary.id)}`;
+        openGen.textContent = "Open in Generator";
+      } else {
+        openGen.href = "/generator";
+        openGen.textContent = "Open Generator";
+      }
+    }
     if (bindVisual) {
       if (primary) {
         const draftLabel = escapeHtml(primary.title || "Untitled draft");
         const recLabel = escapeHtml(selected.title || "Recruitment");
-        bindVisual.innerHTML = `<span class="rom-bind__node">${draftLabel}</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">linked to</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__node">${recLabel}</span>`;
+        bindVisual.innerHTML = `<span class="rom-bind__node">${draftLabel}</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Draft → Recruitment</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__node">${recLabel}</span>`;
       } else {
-        bindVisual.innerHTML = `<span class="rom-bind__node">Draft</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
+        bindVisual.innerHTML = `<span class="rom-bind__node">Draft (content)</span><span class="rom-bind__arrow" aria-hidden="true">↓</span><span class="rom-bind__mid">Not linked</span>`;
       }
     }
 
@@ -363,10 +377,13 @@
       rows.innerHTML = drafts.map((draft) => {
         const isPrimary = Number(draft.id) === Number(binding.primaryDraftId);
         return `<tr>
-          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Status: ${escapeHtml(draft.status || "draft")}</small></td>
+          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Status: ${escapeHtml(draft.status || "draft")} · content only</small></td>
           <td>${escapeHtml(draft.updatedAt || "—")}</td>
           <td>${isPrimary ? statusHtml("primary") : "Linked"}</td>
-          <td><button type="button" class="rom-row-btn is-danger" data-detach-draft="${draft.id}">Detach</button></td>
+          <td>
+            <a class="rom-row-btn" href="/generator?draftId=${encodeURIComponent(draft.id)}" style="text-decoration:none;">Open in Generator</a>
+            <button type="button" class="rom-row-btn is-danger" data-detach-draft="${draft.id}">Detach</button>
+          </td>
         </tr>`;
       }).join("");
       rows.querySelectorAll("[data-detach-draft]").forEach((button) => {
@@ -424,11 +441,13 @@
         body: { draft_id: draftId }
       });
       draftBinding = body.data;
-      message(`Draft linked successfully — ${draftLabel} → ${selected.title || "recruitment"}`);
+      message(
+        `Draft linked successfully — ${draftLabel} → ${selected.title || "recruitment"}. Open in Generator: /generator?draftId=${draftId}`
+      );
       notifyLocal(
         window.AdminOpsNotifications?.TYPES?.DRAFT_ATTACHED || "draft_attached",
         `Draft linked to ${selected.title || "recruitment"}`,
-        `/admin/editorial-review?recruitment_id=${selected.id}`
+        `/generator?draftId=${encodeURIComponent(draftId)}`
       );
       renderDraftBinding();
       await loadAvailableDrafts();
@@ -756,8 +775,13 @@
   async function createManualUpdate(event) {
     event.preventDefault();
     if (!selected?.id) return;
+    const openLink = byId("manualUpdateOpenGenerator");
+    if (openLink) {
+      openLink.hidden = true;
+      openLink.removeAttribute("href");
+    }
     try {
-      await api(`/api/admin/recruitments/${selected.id}/manual-update`, {
+      const body = await api(`/api/admin/recruitments/${selected.id}/manual-update`, {
         method: "POST",
         body: {
           event_type: byId("manualUpdateEventType").value,
@@ -765,8 +789,20 @@
         }
       });
       byId("manualUpdateForm").reset();
+      const draftId =
+        body &&
+        body.data &&
+        body.data.draft &&
+        (body.data.draft.id != null ? body.data.draft.id : null);
+      if (draftId && openLink) {
+        openLink.href = `/generator?draftId=${encodeURIComponent(draftId)}`;
+        openLink.hidden = false;
+        openLink.textContent = "Open Generator (this draft)";
+      }
       message(
-        "Manual update created successfully — event + draft ready. Next: Generator → Preview → Manual Publish (same permanent page)."
+        draftId
+          ? `Manual update created — event + draft #${draftId}. Next: Open Generator → Preview → Manual Publish/Update (same permanent page).`
+          : "Manual update created successfully — event + draft ready. Next: Generator → Preview → Manual Publish (same permanent page)."
       );
       await selectRecruitment(selected.id);
     } catch (err) {

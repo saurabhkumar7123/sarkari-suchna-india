@@ -8,7 +8,12 @@ jest.mock("../server/services/recruitmentReview.service", () => ({
   updateReviewNotes: jest.fn()
 }));
 
+jest.mock("../server/services/generatorDraft.service", () => ({
+  getDraftById: jest.fn()
+}));
+
 const recruitmentReviewService = require("../server/services/recruitmentReview.service");
+const generatorDraftService = require("../server/services/generatorDraft.service");
 const { REVIEW_DECISIONS, REVIEW_STATUS } = require("../server/lib/recruitment/reviewQueue");
 const {
   listRecruitmentReviewQueueHandler,
@@ -30,6 +35,7 @@ function mockRes() {
 describe("recruitmentReviewQueue.controller", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    generatorDraftService.getDraftById.mockResolvedValue(null);
   });
 
   test("lists items with pagination", async () => {
@@ -117,6 +123,38 @@ describe("recruitmentReviewQueue.controller", () => {
     const payload = res.json.mock.calls[0][0].data;
     expect(payload.assist.comparison.rows.length).toBe(9);
     expect(payload.status).toBe("pending");
+  });
+
+  test("detail linked_draft reports published status for Manual Publish routing", async () => {
+    recruitmentReviewService.getReviewItemById.mockResolvedValue({
+      id: 8,
+      title: "Published item",
+      status: "approved",
+      processor_output: { draftId: 77 }
+    });
+    generatorDraftService.getDraftById.mockResolvedValue({
+      id: 77,
+      title: "Done",
+      status: "published",
+      published_slug: "up-police-constable-2026",
+      published_page_id: 12,
+      recruitment_id: 1,
+      recruitment_event_id: 2
+    });
+
+    const res = mockRes();
+    await getRecruitmentReviewQueueHandler({ params: { id: "8" } }, res);
+
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: expect.objectContaining({
+        linked_draft: expect.objectContaining({
+          id: 77,
+          status: "published",
+          publishedSlug: "up-police-constable-2026"
+        })
+      })
+    });
   });
 
   test("returns 404 when detail missing", async () => {

@@ -257,6 +257,62 @@ async function getDraftById(id) {
   return row;
 }
 
+/**
+ * Generator load payload: draft + optional linked public page resolution.
+ * Does not mark drafts published or invent page content.
+ */
+async function getDraftWithPublishContext(id) {
+  const row = await getDraftById(id);
+  let linkedPublicPage = {
+    status: "none",
+    page: null,
+    suggestedPage: null,
+    pages: [],
+    ambiguous: false,
+    message: null
+  };
+  let recruitmentTitle = null;
+  let eventLabel = null;
+
+  const recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
+  const eventId = row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
+
+  if (recruitmentId != null && Number.isInteger(recruitmentId) && recruitmentId > 0) {
+    try {
+      const recruitment = await recruitmentRepository.getRecruitmentById(recruitmentId);
+      if (recruitment) {
+        recruitmentTitle = recruitment.title || null;
+      }
+    } catch {
+      /* ignore title lookup */
+    }
+    try {
+      const recruitmentPageLinkService = require("./recruitmentPageLink.service");
+      linkedPublicPage = await recruitmentPageLinkService.resolveCanonicalPublicPage(recruitmentId);
+    } catch {
+      /* linkage unavailable — treat as none */
+    }
+  }
+
+  if (eventId != null && Number.isInteger(eventId) && eventId > 0) {
+    try {
+      const event = await recruitmentEventRepository.getRecruitmentEventById(eventId);
+      if (event) {
+        eventLabel = String(event.event_type || "event").replace(/_/g, " ");
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return {
+    row,
+    linkedPublicPage,
+    recruitmentTitle,
+    eventLabel
+  };
+}
+
 async function markDraftPublished(id, { publishedSlug, publishedPageId }) {
   await assertTable();
   const ok = await generatorDraftRepository.markPublished(id, { publishedSlug, publishedPageId });
@@ -335,6 +391,7 @@ module.exports = {
   findUnpublishedDraftByUpdateId,
   listDraftsByRecruitmentId,
   getDraftById,
+  getDraftWithPublishContext,
   markDraftPublished,
   deleteDraftById,
   bindDraftRecruitmentLinkage,

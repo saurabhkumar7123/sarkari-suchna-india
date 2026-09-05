@@ -205,4 +205,30 @@ describe("recruitmentPageLink.service", () => {
       message: "Provide exactly one of recruitment_id or recruitment_event_id"
     });
   });
+
+  test("resolveCanonicalPublicPage returns unique when one page linked", async () => {
+    recruitmentPageLinkRepository.listPageLinkagesByRecruitmentId.mockResolvedValue({
+      data: [linkedPage],
+      pagination: { page: 1, limit: 50, total: 1 }
+    });
+
+    const result = await recruitmentPageLinkService.resolveCanonicalPublicPage(10);
+    expect(result.status).toBe("unique");
+    expect(result.page.slug).toBe("ssc-cgl-2026");
+  });
+
+  test("resolveCanonicalPublicPage returns ambiguous when multiple pages linked", async () => {
+    recruitmentPageLinkRepository.listPageLinkagesByRecruitmentId.mockResolvedValue({
+      data: [
+        { id: 1, slug: "page-a", recruitment_id: 10, recruitment_event_id: null },
+        { id: 2, slug: "page-b", recruitment_id: 10, recruitment_event_id: null }
+      ],
+      pagination: { page: 1, limit: 50, total: 2 }
+    });
+
+    const result = await recruitmentPageLinkService.resolveCanonicalPublicPage(10);
+    expect(result.status).toBe("ambiguous");
+    expect(result.page).toBeNull();
+    expect(result.pages).toHaveLength(2);
+  });
 });

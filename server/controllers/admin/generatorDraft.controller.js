@@ -29,7 +29,7 @@ function formatDraftSummary(row) {
   return data;
 }
 
-function formatDraftDetail(row) {
+function formatDraftDetail(row, extras = {}) {
   const data = {
     id: row.id,
     title: row.title,
@@ -38,9 +38,14 @@ function formatDraftDetail(row) {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    publishedSlug: row.published_slug || null,
+    publishedPageId: row.published_page_id != null ? Number(row.published_page_id) : null,
     recruitmentId: row.recruitment_id != null ? Number(row.recruitment_id) : null,
     recruitmentEventId:
-      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null
+      row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null,
+    recruitmentTitle: extras.recruitmentTitle || null,
+    eventLabel: extras.eventLabel || null,
+    linkedPublicPage: extras.linkedPublicPage || null
   };
   return data;
 }
@@ -73,16 +78,31 @@ async function getGeneratorDraft(req, res) {
     if (!Number.isInteger(id) || id < 1) {
       return res.status(400).json({ success: false, message: "Invalid draft id" });
     }
-    const row = await generatorDraftService.getDraftById(id);
+    const ctx = await generatorDraftService.getDraftWithPublishContext(id);
+    const row = ctx.row;
     if (row.status !== "draft") {
       return res.status(400).json({
         success: false,
-        message: "This draft is already published. Open the live page from the sidebar."
+        message: "This draft is already published. Open the live page from the sidebar.",
+        data: {
+          id: row.id,
+          status: row.status,
+          title: row.title,
+          publishedSlug: row.published_slug || null,
+          publishedPageId:
+            row.published_page_id != null ? Number(row.published_page_id) : null,
+          recruitmentId: row.recruitment_id != null ? Number(row.recruitment_id) : null,
+          linkedPublicPage: ctx.linkedPublicPage
+        }
       });
     }
     return res.json({
       success: true,
-      data: formatDraftDetail(row)
+      data: formatDraftDetail(row, {
+        linkedPublicPage: ctx.linkedPublicPage,
+        recruitmentTitle: ctx.recruitmentTitle,
+        eventLabel: ctx.eventLabel
+      })
     });
   } catch (err) {
     const status = err.statusCode && Number.isInteger(err.statusCode) ? err.statusCode : 500;

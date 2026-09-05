@@ -159,35 +159,35 @@
     <summary>Advanced (Optional)</summary>
     <div class="accordion-grid">
 
-  <section class="generator-card generator-recruitment-context is-hidden" id="generatorRecruitmentContext" data-quick-hide hidden>
-    <h3 class="card-title">Recruitment context (optional)</h3>
-    <p class="field-hint">Link this parked draft to a recruitment lifecycle. Binding does not publish. Skipping is fine — manual publish still works.</p>
+  <section class="generator-card generator-recruitment-context" id="generatorRecruitmentContext" data-quick-hide>
+    <h3 class="card-title">Lifecycle context</h3>
+    <p class="field-hint">Recruitment = permanent parent. Event = lifecycle stage. Draft = temporary content. Public page = one permanent URL (<code>pages.slug</code>).</p>
     <div id="generatorBindingVisual" class="gen-bind" aria-live="polite">
-      <span class="gen-bind__node">Draft</span>
+      <span class="gen-bind__node">Draft (content)</span>
       <span class="gen-bind__arrow" aria-hidden="true">↓</span>
-      <span class="gen-bind__mid">Not linked</span>
+      <span class="gen-bind__mid">Not linked to Recruitment</span>
     </div>
-    <div class="card-fields card-fields--recruitment-context">
+    <div class="card-fields card-fields--recruitment-context" id="generatorRecruitmentSelectors">
       <div class="field-group">
-        <label for="draftRecruitmentId">Recruitment</label>
+        <label for="draftRecruitmentId">Recruitment (parent)</label>
         <select id="draftRecruitmentId">
           <option value="">— None —</option>
         </select>
       </div>
       <div class="field-group">
-        <label for="draftRecruitmentEventId">Event (optional)</label>
+        <label for="draftRecruitmentEventId">Event (lifecycle stage)</label>
         <select id="draftRecruitmentEventId" disabled>
           <option value="">— None —</option>
         </select>
       </div>
     </div>
-    <aside id="generatorContextCard" class="gen-context-card" aria-label="What will be affected" hidden>
+    <aside id="generatorContextCard" class="gen-context-card" aria-label="What will be affected">
       <p class="gen-context-card__title">What will be affected</p>
       <dl class="gen-context-card__grid">
-        <div><dt>Recruitment</dt><dd id="generatorContextRecruitment">None</dd></div>
-        <div><dt>Event</dt><dd id="generatorContextEvent">None</dd></div>
-        <div><dt>Draft</dt><dd id="generatorContextDraft">Untitled (not saved)</dd></div>
-        <div><dt>Status</dt><dd id="generatorContextStatus">New / unsaved</dd></div>
+        <div><dt>Recruitment</dt><dd id="generatorContextRecruitment">None (parent identity)</dd></div>
+        <div><dt>Event</dt><dd id="generatorContextEvent">None (lifecycle stage)</dd></div>
+        <div><dt>Draft</dt><dd id="generatorContextDraft">No parked draft (unsaved content)</dd></div>
+        <div><dt>Public page</dt><dd id="generatorContextStatus">New / unbound content</dd></div>
       </dl>
     </aside>
   </section>

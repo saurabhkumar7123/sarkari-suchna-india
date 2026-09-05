@@ -6,6 +6,7 @@
  */
 
 const recruitmentReviewService = require("../../services/recruitmentReview.service");
+const generatorDraftService = require("../../services/generatorDraft.service");
 const { REVIEW_DECISIONS } = require("../../lib/recruitment/reviewQueue");
 const { buildReviewAssistView } = require("../../lib/recruitment/reviewComparison");
 const {
@@ -20,6 +21,46 @@ function sendServiceError(res, err) {
   });
 }
 
+function extractDraftIdFromReview(row) {
+  if (!row || typeof row !== "object") return null;
+  const processor =
+    row.processor_output && typeof row.processor_output === "object" ? row.processor_output : {};
+  const raw = row.draft_id || row.draftId || row.generator_draft_id || processor.draftId;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return n;
+  return null;
+}
+
+async function attachLinkedDraft(row) {
+  if (!row || typeof row !== "object") return row;
+  const draftId = extractDraftIdFromReview(row);
+  if (!draftId) {
+    return { ...row, linked_draft: null };
+  }
+  try {
+    const draft = await generatorDraftService.getDraftById(draftId);
+    return {
+      ...row,
+      linked_draft: {
+        id: Number(draft.id),
+        title: draft.title || null,
+        status: draft.status,
+        publishedSlug: draft.published_slug || null,
+        publishedPageId:
+          draft.published_page_id != null ? Number(draft.published_page_id) : null,
+        recruitmentId: draft.recruitment_id != null ? Number(draft.recruitment_id) : null,
+        recruitmentEventId:
+          draft.recruitment_event_id != null ? Number(draft.recruitment_event_id) : null
+      }
+    };
+  } catch {
+    return {
+      ...row,
+      linked_draft: { id: draftId, status: "missing", title: null }
+    };
+  }
+}
+
 /** Phase 29 — attach read-only comparison / recommendation (no persistence). */
 function withAssistView(row) {
   if (!row || typeof row !== "object") return row;
@@ -28,6 +69,11 @@ function withAssistView(row) {
     assist: buildReviewAssistView(row),
     needs_matching_candidates: resolveNeedsMatchingCandidates(row)
   };
+}
+
+async function withReviewDetail(row) {
+  const withDraft = await attachLinkedDraft(row);
+  return withAssistView(withDraft);
 }
 
 const listRecruitmentReviewQueueHandler = async (req, res) => {
@@ -59,7 +105,7 @@ const getRecruitmentReviewQueueHandler = async (req, res) => {
         message: "Review item not found"
       });
     }
-    res.json({ success: true, data: withAssistView(row) });
+    res.json({ success: true, data: await withReviewDetail(row) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -71,7 +117,7 @@ const approveRecruitmentReviewHandler = async (req, res) => {
       decision: REVIEW_DECISIONS.APPROVE,
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: withAssistView(updated) });
+    res.json({ success: true, data: await withReviewDetail(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -83,7 +129,7 @@ const rejectRecruitmentReviewHandler = async (req, res) => {
       decision: REVIEW_DECISIONS.REJECT,
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: withAssistView(updated) });
+    res.json({ success: true, data: await withReviewDetail(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -95,7 +141,7 @@ const markUnderReviewRecruitmentReviewHandler = async (req, res) => {
       decision: REVIEW_DECISIONS.SKIP,
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: withAssistView(updated) });
+    res.json({ success: true, data: await withReviewDetail(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -104,7 +150,7 @@ const markUnderReviewRecruitmentReviewHandler = async (req, res) => {
 const freezeRecruitmentReviewHandler = async (req, res) => {
   try {
     const updated = await recruitmentReviewService.freezeReviewItem(req.params.id);
-    res.json({ success: true, data: withAssistView(updated) });
+    res.json({ success: true, data: await withReviewDetail(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -115,7 +161,7 @@ const updateRecruitmentReviewNotesHandler = async (req, res) => {
     const updated = await recruitmentReviewService.updateReviewNotes(req.params.id, {
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: withAssistView(updated) });
+    res.json({ success: true, data: await withReviewDetail(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -132,7 +178,7 @@ const resolveNeedsMatchingHandler = async (req, res) => {
       notes: req.body && req.body.notes
     });
     const row = await recruitmentReviewService.getReviewItemById(req.params.id);
-    res.json({ success: true, data: withAssistView(row), resolution: result });
+    res.json({ success: true, data: await withReviewDetail(row), resolution: result });
   } catch (err) {
     return sendServiceError(res, err);
   }
