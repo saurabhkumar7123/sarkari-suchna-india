@@ -450,6 +450,25 @@
     if (contextHost) {
       const summary = document.getElementById("rrqNeedsMatchingSummary");
       if (summary) {
+        const conversionRequired = Boolean(
+          processor.conversionRequired ||
+            (processor.conversionError && typeof processor.conversionError === "object")
+        );
+        const validationProblems = []
+          .concat(
+            (processor.contentValidation && processor.contentValidation.problems) || []
+          )
+          .concat(
+            (processor.contentValidation && processor.contentValidation.warnings) || []
+          );
+        const conversionNote = conversionRequired
+          ? "Conversion required — extraction/AI convert failed or was weak. Retry in Generator."
+          : validationProblems.length
+            ? validationProblems
+                .slice(0, 3)
+                .map((p) => p.message || p.code)
+                .join("; ")
+            : "—";
         summary.innerHTML = `
           <div><dt>Detected Update</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || item.title || "—")}</dd></div>
           <div><dt>Source</dt><dd>${escapeHtml(item.source_url || "—")}</dd></div>
@@ -460,7 +479,8 @@
             draftId
               ? `<a href="/generator?draftId=${encodeURIComponent(draftId)}">Draft #${escapeHtml(draftId)}</a>`
               : "—"
-          }</dd></div>`;
+          }</dd></div>
+          <div><dt>Conversion / Validation</dt><dd>${escapeHtml(conversionNote)}</dd></div>`;
       }
     }
 

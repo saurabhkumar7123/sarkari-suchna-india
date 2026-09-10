@@ -46,7 +46,7 @@ describe("Recruitment lifecycle UI clarity", () => {
     expect(generatorJs).toContain("loadGeneratorDraftFromURL");
     expect(generatorJs).toContain("applyLinkedPublicPageToGenerator");
     expect(generatorJs).toContain("UPDATE EXISTING PAGE");
-    expect(generatorJs).toContain("CREATE NEW PUBLIC PAGE");
+    expect(generatorJs).toContain("CREATE NEW CANONICAL PAGE");
     expect(generatorJs).toContain("EDITING DRAFT");
     expect(generatorHtml).toContain("generatorContextPublicPage");
   });

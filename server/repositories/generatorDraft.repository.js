@@ -195,6 +195,34 @@ async function listDraftsByRecruitmentId(opts = {}) {
   return rows;
 }
 
+/**
+ * Active unpublished draft for a recruitment + event occurrence.
+ * Application-level uniqueness helper (no destructive unique constraint).
+ */
+async function findUnpublishedDraftForEventOccurrence({
+  recruitmentId,
+  recruitmentEventId
+} = {}) {
+  const rid = parseInt(String(recruitmentId), 10);
+  const eid = parseInt(String(recruitmentEventId), 10);
+  if (!Number.isInteger(rid) || rid <= 0 || !Number.isInteger(eid) || eid <= 0) {
+    return null;
+  }
+  if (!(await linkageColumnsExist())) return null;
+  const [rows] = await db.query(
+    `SELECT id FROM generator_drafts
+     WHERE status = 'draft'
+       AND recruitment_id = ?
+       AND recruitment_event_id = ?
+     ORDER BY id DESC
+     LIMIT 1`,
+    [rid, eid]
+  );
+  const row = rows && rows[0];
+  if (!row || row.id == null) return null;
+  return findById(row.id);
+}
+
 async function markPublished(id, { publishedSlug, publishedPageId }) {
   const [result] = await db.query(
     `UPDATE generator_drafts
@@ -262,6 +290,7 @@ module.exports = {
   listDrafts,
   findUnpublishedDraftByUpdateId,
   listDraftsByRecruitmentId,
+  findUnpublishedDraftForEventOccurrence,
   markPublished,
   deleteDraft,
   updateDraftLinkage,

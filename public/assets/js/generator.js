@@ -707,20 +707,20 @@ function updateRecruitmentContextCard() {
     publicPageLabel = `/${liveSlug}`;
   }
 
-  let modeLabel = "CREATE NEW PUBLIC PAGE";
+  let modeLabel = "CREATE NEW CANONICAL PAGE";
   let modeTitle = "NEW RECRUITMENT CONTENT";
   if (draftId && (live || (linkedPage && linkedPage.status === "unique"))) {
     modeLabel = "UPDATE EXISTING PAGE";
     modeTitle = "EDITING DRAFT";
   } else if (draftId) {
-    modeLabel = live ? "UPDATE EXISTING PAGE" : "CREATE NEW PUBLIC PAGE";
+    modeLabel = live ? "UPDATE EXISTING PAGE" : "CREATE NEW CANONICAL PAGE";
     modeTitle = "EDITING DRAFT";
   } else if (live) {
     modeLabel = "UPDATE EXISTING PAGE";
     modeTitle = "EDITING LIVE PAGE";
   } else if (linked) {
     modeTitle = "NEW RECRUITMENT CONTENT";
-    modeLabel = "CREATE NEW PUBLIC PAGE";
+    modeLabel = "CREATE NEW CANONICAL PAGE";
   }
 
   const setText = (id, value) => {
@@ -2288,8 +2288,14 @@ async function generatePage(){
     setSaveState("saved");
 
     if (openDraftId) {
-      const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
-      await markGeneratorDraftPublishedOnServer(openDraftId, newSlug, resolvedId);
+      const alreadyMarked =
+        dataRes &&
+        dataRes.data &&
+        dataRes.data.draftMarkedPublished === true;
+      if (!alreadyMarked) {
+        const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
+        await markGeneratorDraftPublishedOnServer(openDraftId, newSlug, resolvedId);
+      }
       setGeneratorDraftId("");
     }
 

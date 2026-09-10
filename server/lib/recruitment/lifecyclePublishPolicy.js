@@ -1,15 +1,24 @@
 "use strict";
 
 /**
- * Event-type publish policy. Advisory only — never publishes.
- * Human retains final target choice at generatePage time.
+ * Event-type publish policy — advisory only; never publishes.
+ *
+ * PRODUCT FREEZE:
+ * ONE RECRUITMENT → ONE CANONICAL PUBLIC PAGE (pages.slug).
+ * Admit Card / Answer Key / Result / Other MUST update that page.
+ * Dedicated status pages are NEVER the default target.
  */
 
-const { normalizeEventType, isAnnouncementEvent, isDownstreamEvent } = require("./lifecycleSafety");
+const {
+  normalizeEventType,
+  isAnnouncementEvent,
+  isDownstreamEvent
+} = require("./lifecycleSafety");
 
 const PUBLISH_TARGETS = Object.freeze({
   NEW_VACANCY_PAGE: "new_vacancy_page",
   UPDATE_EXISTING_VACANCY_PAGE: "update_existing_vacancy_page",
+  /** @deprecated Kept for backward-compat reads only — never returned as default. */
   DEDICATED_STATUS_PAGE: "dedicated_status_page",
   HUMAN_DECISION: "human_decision"
 });
@@ -42,50 +51,23 @@ function resolvePublishPolicy(eventType) {
       alsoUpdateParentLinks: false,
       autoPublish: false,
       humanChoosesTarget: true,
-      note: "New vacancy/public recruitment page after explicit manual publish."
+      oneCanonicalPage: true,
+      note:
+        "First Notification/new-vacancy publish may CREATE the single canonical public page. Later stages must UPDATE it."
     });
   }
 
-  if (type === "correction" || type === "exam_date") {
+  if (isDownstreamEvent(type) || type === "correction" || type === "exam_date") {
     return Object.freeze({
       eventType: type,
       target: PUBLISH_TARGETS.UPDATE_EXISTING_VACANCY_PAGE,
-      suggestedStatus: STATUS_BY_EVENT[type],
-      alsoUpdateParentLinks: false,
-      autoPublish: false,
-      humanChoosesTarget: true,
-      note: "Default is an explicit human update of the existing vacancy page."
-    });
-  }
-
-  if (
-    type === "admit_card" ||
-    type === "answer_key" ||
-    type === "result" ||
-    type === "final_result" ||
-    type === "city_intimation" ||
-    type === "objection"
-  ) {
-    return Object.freeze({
-      eventType: type,
-      target: PUBLISH_TARGETS.DEDICATED_STATUS_PAGE,
-      suggestedStatus: STATUS_BY_EVENT[type],
-      alsoUpdateParentLinks: true,
-      autoPublish: false,
-      humanChoosesTarget: true,
-      note: "Dedicated status page plus optional human-approved parent link/date update."
-    });
-  }
-
-  if (isDownstreamEvent(type)) {
-    return Object.freeze({
-      eventType: type,
-      target: PUBLISH_TARGETS.DEDICATED_STATUS_PAGE,
       suggestedStatus: STATUS_BY_EVENT[type] || "document",
       alsoUpdateParentLinks: true,
       autoPublish: false,
       humanChoosesTarget: true,
-      note: "Dedicated status page or human-selected page."
+      oneCanonicalPage: true,
+      note:
+        "Update the existing canonical vacancy page (same pages.slug). Do not create a dedicated Admit Card / Result / Answer Key page."
     });
   }
 
@@ -96,7 +78,8 @@ function resolvePublishPolicy(eventType) {
     alsoUpdateParentLinks: false,
     autoPublish: false,
     humanChoosesTarget: true,
-    note: "Unknown event — human decides page target."
+    oneCanonicalPage: true,
+    note: "Unknown event — human decides; still one Recruitment → one canonical page."
   });
 }
 

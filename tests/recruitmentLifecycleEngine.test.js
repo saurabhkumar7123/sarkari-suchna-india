@@ -220,7 +220,7 @@ describe("recruitment lifecycle engine", () => {
       expect(resolvePublishPolicy(type).autoPublish).toBe(false);
       expect(resolvePublishPolicy(type).humanChoosesTarget).toBe(true);
     }
-    expect(resolvePublishPolicy("admit_card").target).toBe(PUBLISH_TARGETS.DEDICATED_STATUS_PAGE);
+    expect(resolvePublishPolicy("admit_card").target).toBe(PUBLISH_TARGETS.UPDATE_EXISTING_VACANCY_PAGE);
     expect(resolvePublishPolicy("correction").target).toBe(PUBLISH_TARGETS.UPDATE_EXISTING_VACANCY_PAGE);
   });
 

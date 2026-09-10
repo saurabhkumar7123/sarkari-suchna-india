@@ -31,6 +31,10 @@ router.get(
   "/versions/:entityType/:entityId/compare/:leftVersion/:rightVersion",
   asyncHandler(controller.compareVersions)
 );
+router.post(
+  "/versions/page/:pageId/restore/:version",
+  asyncHandler(controller.restorePageVersion)
+);
 
 router.get("/notification-gateway", asyncHandler(controller.getNotificationGatewayStatus));
 router.get("/rbac", asyncHandler(controller.getRbacMatrix));

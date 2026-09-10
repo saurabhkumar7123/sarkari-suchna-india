@@ -170,10 +170,12 @@ describe("AMP-4B pipeline continues after lifecycle mapping", () => {
     expect(outcome.recruitmentId == null).toBe(true);
     expect(outcome.stage).not.toBe("recruitment_persistence");
     expect(createRecruitment).not.toHaveBeenCalled();
-    // AUTO_DRAFT off → no draft → review handoff is intentionally skipped.
+    // AUTO_DRAFT off → no draft, but Review Center handoff must still occur
+    // so NEEDS_MATCHING / human review never silently disappears.
     expect(outcome.draft && outcome.draft.skipped).toBe(true);
     expect(outcome.draft && outcome.draft.reason).toBe("auto_draft_disabled");
-    expect(outcome.review).toBeNull();
+    expect(outcome.review).toBeTruthy();
+    expect(outcome.review.id).toBe(88);
   });
 
   test("unknown currentStage without a matched recruitment does not fabricate or fail the pipeline", async () => {
@@ -224,6 +226,7 @@ describe("AMP-4B pipeline continues after lifecycle mapping", () => {
     expect(outcome.recruitmentId == null).toBe(true);
     expect(createRecruitment).not.toHaveBeenCalled();
     expect(outcome.draft && outcome.draft.skipped).toBe(true);
-    expect(outcome.review).toBeNull();
+    expect(outcome.review).toBeTruthy();
+    expect(outcome.review.id).toBe(88);
   });
 });

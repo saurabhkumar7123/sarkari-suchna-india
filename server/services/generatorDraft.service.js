@@ -318,6 +318,17 @@ async function findUnpublishedDraftByUpdateId(updateId) {
   return generatorDraftRepository.findUnpublishedDraftByUpdateId(updateId);
 }
 
+async function findUnpublishedDraftForEventOccurrence({
+  recruitmentId,
+  recruitmentEventId
+} = {}) {
+  await assertTable();
+  return generatorDraftRepository.findUnpublishedDraftForEventOccurrence({
+    recruitmentId,
+    recruitmentEventId
+  });
+}
+
 async function listDraftsByRecruitmentId(recruitmentId, query = {}) {
   await assertTable();
   const id = parseInt(String(recruitmentId), 10);
@@ -475,6 +486,7 @@ module.exports = {
   saveDraft,
   listDrafts,
   findUnpublishedDraftByUpdateId,
+  findUnpublishedDraftForEventOccurrence,
   listDraftsByRecruitmentId,
   getDraftById,
   getDraftWithPublishContext,

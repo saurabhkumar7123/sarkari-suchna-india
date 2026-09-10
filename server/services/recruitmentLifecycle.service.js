@@ -49,7 +49,38 @@ function slugFromTitle(title) {
     .slice(0, 80) || "recruitment";
 }
 
-async function persistTypedEvent({ recruitmentId, eventType }) {
+function isSparseSystemDraft(draft) {
+  if (!draft || String(draft.status) !== "draft") return false;
+  const payload = draft.payload && typeof draft.payload === "object" ? draft.payload : {};
+  const data = String(payload.data || payload.content || "").trim();
+  const title = String(payload.title || draft.title || "").trim();
+  if (payload.revisesDraftId) return false;
+  // Treat short auto-seeded section text as sparse/system.
+  if (data.length <= 180 && /\[Section:\s*Short Information\]/i.test(data)) return true;
+  if (!data && title.length < 80) return true;
+  return false;
+}
+
+/**
+ * Persist a typed lifecycle event.
+ *
+ * @param {{
+ *   recruitmentId: number,
+ *   eventType: string,
+ *   revision?: boolean,
+ *   reuseIfActive?: boolean
+ * }} input
+ *
+ * - First occurrence of a stage → create active event
+ * - Same stage correction (revision=true) → supersede prior active, create new
+ * - Default attach without revision → reuse active same-type event when present
+ */
+async function persistTypedEvent({
+  recruitmentId,
+  eventType,
+  revision = false,
+  reuseIfActive = true
+} = {}) {
   const type = normalizeEventType(eventType);
   if (!isLifecycleEventType(type)) {
     return { skipped: true, reason: "unclassified_event" };
@@ -63,7 +94,7 @@ async function persistTypedEvent({ recruitmentId, eventType }) {
     const listed = await recruitmentEventService.listRecruitmentEvents({
       recruitment_id: recruitmentId,
       page: 1,
-      limit: 50
+      limit: 100
     });
     existingEvents = Array.isArray(listed.data) ? listed.data : [];
   } catch (err) {
@@ -73,8 +104,23 @@ async function persistTypedEvent({ recruitmentId, eventType }) {
 
   const sameType = existingEvents.filter((row) => row && row.event_type === type);
   const newestSame = sameType[0] || null;
-  if (newestSame && newestSame.status === "active") {
-    return { skipped: false, reused: true, event: newestSame };
+
+  if (newestSame && newestSame.status === "active" && reuseIfActive && revision !== true) {
+    return { skipped: false, reused: true, revised: false, event: newestSame };
+  }
+
+  if (newestSame && newestSame.status === "active" && revision === true) {
+    try {
+      await recruitmentEventService.updateRecruitmentEvent(newestSame.id, {
+        status: "superseded"
+      });
+    } catch (err) {
+      logger.warn("lifecycle: supersede event failed", {
+        eventId: newestSame.id,
+        message: err && err.message ? err.message : String(err)
+      });
+      return { skipped: true, reason: "supersede_failed" };
+    }
   }
 
   const sequence = EVENT_SEQUENCE[type] != null ? EVENT_SEQUENCE[type] : 0;
@@ -85,7 +131,13 @@ async function persistTypedEvent({ recruitmentId, eventType }) {
       sequence_order: sequence,
       status: "active"
     });
-    return { skipped: false, reused: false, event: created };
+    return {
+      skipped: false,
+      reused: false,
+      revised: Boolean(newestSame && revision === true),
+      supersededEventId: newestSame && revision === true ? newestSame.id : null,
+      event: created
+    };
   } catch (err) {
     logger.warn("lifecycle: create event failed", { message: err && err.message });
     return { skipped: true, reason: err && err.message ? err.message : "create_event_failed" };
@@ -114,13 +166,19 @@ async function persistStrongMatchLinkage({
   recruitmentId,
   eventType,
   draftId,
-  reviewId
+  reviewId,
+  revision = false
 }) {
   if (!recruitmentId) {
     return { recruitmentEventId: null, updateLinked: false };
   }
 
-  const eventResult = await persistTypedEvent({ recruitmentId, eventType });
+  const eventResult = await persistTypedEvent({
+    recruitmentId,
+    eventType,
+    revision: revision === true,
+    reuseIfActive: revision !== true
+  });
   const recruitmentEventId =
     eventResult && eventResult.event && eventResult.event.id ? eventResult.event.id : null;
 
@@ -386,9 +444,31 @@ async function createManualRecruitmentUpdate({
     throw err;
   }
 
-  const eventResult = await persistTypedEvent({ recruitmentId: parent, eventType: type });
+  const eventResult = await persistTypedEvent({
+    recruitmentId: parent,
+    eventType: type,
+    revision: true,
+    reuseIfActive: false
+  });
   const recruitmentEventId =
     eventResult && eventResult.event && eventResult.event.id ? eventResult.event.id : null;
+
+  // One active unpublished draft per recruitment+event occurrence:
+  // reuse empty/system draft only; never overwrite human-edited content silently.
+  let existingUnpublished = null;
+  if (
+    recruitmentEventId &&
+    typeof generatorDraftService.findUnpublishedDraftForEventOccurrence === "function"
+  ) {
+    try {
+      existingUnpublished = await generatorDraftService.findUnpublishedDraftForEventOccurrence({
+        recruitmentId: parent,
+        recruitmentEventId
+      });
+    } catch {
+      existingUnpublished = null;
+    }
+  }
 
   const draftPayload =
     payload && typeof payload === "object"
@@ -398,11 +478,36 @@ async function createManualRecruitmentUpdate({
           data: `[Section: Short Information]\n${title || type}`
         };
 
-  const draft = await generatorDraftService.saveDraft({
-    payload: draftPayload,
-    recruitmentId: parent,
-    recruitmentEventId
-  });
+  let draft;
+  if (
+    existingUnpublished &&
+    existingUnpublished.id &&
+    isSparseSystemDraft(existingUnpublished)
+  ) {
+    draft = await generatorDraftService.saveDraft({
+      id: existingUnpublished.id,
+      payload: draftPayload,
+      recruitmentId: parent,
+      recruitmentEventId
+    });
+  } else if (existingUnpublished && existingUnpublished.id) {
+    // Preserve human-edited draft; create a revision draft instead.
+    draft = await generatorDraftService.saveDraft({
+      payload: {
+        ...draftPayload,
+        title: `${draftPayload.title || type} (revision)`,
+        revisesDraftId: existingUnpublished.id
+      },
+      recruitmentId: parent,
+      recruitmentEventId
+    });
+  } else {
+    draft = await generatorDraftService.saveDraft({
+      payload: draftPayload,
+      recruitmentId: parent,
+      recruitmentEventId
+    });
+  }
 
   const review = await recruitmentReviewService.saveReviewItem({
     reviewItem: {

@@ -104,7 +104,7 @@ describe("recruitment lifecycle same-page wiring (static)", () => {
     expect(generatorHtml).toContain("Lifecycle context");
     expect(generatorHtml).toContain("Recruitment = permanent parent");
     expect(generatorJs).toContain("UPDATE EXISTING PAGE");
-    expect(generatorJs).toContain("CREATE NEW PUBLIC PAGE");
+    expect(generatorJs).toContain("CREATE NEW CANONICAL PAGE");
     expect(generatorJs).toContain("EDITING DRAFT");
     expect(generatorHtml).toContain("generatorContextPublicPage");
   });

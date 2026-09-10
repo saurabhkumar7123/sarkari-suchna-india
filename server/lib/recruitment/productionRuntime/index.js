@@ -43,6 +43,7 @@ const {
   convertAmpExtractedTextToPublisher,
   withConvertedPublisherData
 } = require("./applyGeneratorAiConvert");
+const { validatePublisherDraftContent } = require("../publisherDraftValidation");
 
 function collapseWhitespace(value) {
   return String(value ?? "")
@@ -288,17 +289,37 @@ async function persistDraft({
     }
   }
 
+  // Soft conversion gate: never drop the update. Persist sparse draft + validation
+  // so Review Center still receives the item when extraction/AI convert fails.
+  let conversionRequired = false;
+  let contentValidation = null;
   if (requireAcceptedConvert && (!pdfExtraction.ok || aiConvert.ok !== true)) {
-    return {
-      skipped: true,
-      reason: pdfExtraction.ok ? aiConvert.reason || "conversion_not_accepted" : pdfExtraction.reason || "extraction_failed",
-      pdfExtraction,
-      aiConvert
-    };
+    conversionRequired = true;
+    logger.warn("production-runtime: conversion not accepted; persisting sparse draft for human review", {
+      pdfOk: pdfExtraction.ok,
+      aiOk: aiConvert.ok,
+      reason: pdfExtraction.ok
+        ? aiConvert.reason || "conversion_not_accepted"
+        : pdfExtraction.reason || "extraction_failed"
+    });
   }
 
   if (pdfExtraction.documentHash) {
     payloadForSave.documentHash = pdfExtraction.documentHash;
+  }
+
+  contentValidation = validatePublisherDraftContent({
+    text: payloadForSave.data,
+    title: payloadForSave.title,
+    eventType: workflowResult?.recruitmentObject?.currentStage || null
+  });
+  payloadForSave.conversionRequired = conversionRequired;
+  payloadForSave.validation = contentValidation;
+  if (conversionRequired) {
+    payloadForSave.conversionError = {
+      pdfExtraction,
+      aiConvert
+    };
   }
 
   let existingDraftId;
@@ -355,7 +376,16 @@ async function persistDraft({
     warnings: workflowResult?.intelligenceResult?.reviewFlags || []
   });
 
-  return { skipped: false, draftId: draft.id, draft, pdfExtraction, aiConvert, reused: Boolean(existingDraftId) };
+  return {
+    skipped: false,
+    draftId: draft.id,
+    draft,
+    pdfExtraction,
+    aiConvert,
+    conversionRequired,
+    contentValidation,
+    reused: Boolean(existingDraftId)
+  };
 }
 
 async function persistWorkflow({ workflowResult, recruitmentId, updateId }) {
@@ -932,8 +962,13 @@ async function runProductionDetectionPipeline({
 
   let reviewRow = null;
   const draftReady = Boolean(draftResult && draftResult.skipped !== true && draftResult.draftId);
-  if (!draftReady) {
-    logger.warn("production-runtime: review skipped because draft was not created", {
+  const needsMatching =
+    recruitmentRecord.persistence &&
+    recruitmentRecord.persistence.decision === PERSISTENCE_DECISIONS.NEEDS_MATCHING;
+  // Review Center must never disappear because AI conversion failed.
+  const shouldEnqueueReview = draftReady || needsMatching || Boolean(workingUpdateId);
+  if (!shouldEnqueueReview) {
+    logger.warn("production-runtime: review skipped — no draft/update context", {
       updateId: workingUpdateId,
       draftReason:
         draftResult && (draftResult.reason || draftResult.error)
@@ -942,14 +977,27 @@ async function runProductionDetectionPipeline({
     });
   } else {
     try {
+      const enrichedLifecycle = {
+        ...lifecyclePayload,
+        conversionRequired: Boolean(draftResult && draftResult.conversionRequired),
+        conversionError:
+          draftResult && draftResult.conversionRequired
+            ? {
+                pdf: draftResult.pdfExtraction || null,
+                ai: draftResult.aiConvert || null
+              }
+            : null,
+        contentValidation: (draftResult && draftResult.contentValidation) || null,
+        draftMissing: !draftReady
+      };
       reviewRow = await persistReviewQueue({
         pipelineOutcome,
         workflowResult,
         recruitmentId: recruitmentRecord.recruitmentId,
         notice,
         updateId: workingUpdateId,
-        draftId: draftResult.draftId,
-        lifecycle: lifecyclePayload
+        draftId: draftResult && draftResult.draftId ? draftResult.draftId : null,
+        lifecycle: enrichedLifecycle
       });
     } catch (reviewErr) {
       logger.warn("production-runtime: review queue persistence failed", { message: reviewErr.message });
@@ -964,7 +1012,8 @@ async function runProductionDetectionPipeline({
         recruitmentId: recruitmentRecord.recruitmentId,
         eventType,
         draftId: draftResult && draftResult.draftId,
-        reviewId: reviewRow && reviewRow.id
+        reviewId: reviewRow && reviewRow.id,
+        revision: Boolean(revision && revision.action === "revision_new_update")
       });
     } catch (linkErr) {
       logger.warn("production-runtime: strong-match linkage failed", {
@@ -987,7 +1036,7 @@ async function runProductionDetectionPipeline({
     ? {
         delivered: false,
         status: "skipped",
-        reason: draftReady ? "review_missing" : "draft_not_created"
+        reason: draftReady ? "review_missing" : "review_not_created"
       }
     : reviewRow.reused
       ? {

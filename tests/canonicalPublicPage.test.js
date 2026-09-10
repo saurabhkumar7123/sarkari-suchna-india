@@ -70,17 +70,17 @@ describe("canonicalPublicPage — same-page lifecycle guards", () => {
 
     const createGuard = evaluateSamePagePublishGuard({ oldSlug: "", resolution });
     expect(createGuard.allowed).toBe(false);
-    expect(createGuard.code).toBe("create_blocked_existing_page");
+    expect(createGuard.code).toBe("ambiguous_pages");
   });
 
-  test("ambiguous update allowed only when oldSlug is one of the linked pages", () => {
+  test("ambiguous update is blocked — never guess canonical page", () => {
     const resolution = resolveCanonicalFromLinkedPages([
       { id: 1, slug: "page-a", recruitment_id: 1 },
       { id: 2, slug: "page-b", recruitment_id: 1 }
     ]);
     expect(
       evaluateSamePagePublishGuard({ oldSlug: "page-b", resolution }).allowed
-    ).toBe(true);
+    ).toBe(false);
     expect(
       evaluateSamePagePublishGuard({ oldSlug: "page-c", resolution }).allowed
     ).toBe(false);

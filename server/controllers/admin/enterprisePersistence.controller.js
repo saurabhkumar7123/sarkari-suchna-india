@@ -149,6 +149,30 @@ async function compareVersions(req, res) {
   });
 }
 
+async function restorePageVersion(req, res) {
+  assertPermission(req, PERMISSIONS.RECRUITMENT_WRITE);
+  const { restorePageFromVersion } = require("../../lib/recruitment/pageRestore");
+  const confirm =
+    req.body &&
+    (req.body.confirm === true || String(req.body.confirm || "").toLowerCase() === "true");
+  const result = await restorePageFromVersion({
+    pageId: req.params.pageId,
+    version: req.params.version,
+    author: req.user?.username || "admin",
+    confirm
+  });
+  await defaultService.audit.recordEvent({
+    category: "automation",
+    eventType: "page_restore",
+    entityType: "page",
+    entityId: req.params.pageId,
+    action: "restore_from_version",
+    actor: req.user?.username || "admin",
+    detail: { version: req.params.version, slug: result.slug }
+  });
+  res.json({ success: true, data: result });
+}
+
 async function listSoftDeletes(req, res) {
   assertPermission(req, PERMISSIONS.RECRUITMENT_READ);
   const result = await defaultService.softDelete.listSoftDeleteLog(req.query);
@@ -187,6 +211,7 @@ module.exports = {
   listMetrics,
   listVersions,
   compareVersions,
+  restorePageVersion,
   listSoftDeletes,
   getNotificationGatewayStatus,
   getRbacMatrix

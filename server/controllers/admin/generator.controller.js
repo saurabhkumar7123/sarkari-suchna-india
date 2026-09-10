@@ -20,6 +20,11 @@ const { extractRecruitmentAttributes } = require("../../lib/recruitment/recruitm
 const {
   evaluateSamePagePublishGuard
 } = require("../../lib/recruitment/canonicalPublicPage");
+const {
+  finalizeLifecyclePublish,
+  isLifecycleUpdateEvent
+} = require("../../lib/recruitment/lifecycleAtomicPublish");
+const { normalizeEventType } = require("../../lib/recruitment/lifecycleSafety");
 const recruitmentEventService = require("../../services/recruitmentEvent.service");
 
 /** Canonical DB values for the predefined dropdown (lowercase). */
@@ -331,6 +336,8 @@ const generatePage = async (req, res) => {
     // Same-page guard: recruitment-bound updates must not create a second public page.
     let publishRecruitmentId = null;
     let publishRecruitmentEventId = null;
+    let publishEventType = null;
+    let publishGeneratorDraftId = null;
     try {
       const bodyRid =
         req.body && req.body.recruitment_id != null
@@ -346,23 +353,41 @@ const generatePage = async (req, res) => {
       if (Number.isInteger(bodyEid) && bodyEid > 0) {
         publishRecruitmentEventId = bodyEid;
       }
-      if (publishRecruitmentId == null) {
-        const draftIdRaw =
-          req.body && req.body.generatorDraftId != null
-            ? parseInt(String(req.body.generatorDraftId), 10)
-            : NaN;
-        if (Number.isInteger(draftIdRaw) && draftIdRaw > 0) {
-          const draftRow = await generatorDraftService.getDraftById(draftIdRaw);
-          if (draftRow && draftRow.recruitment_id != null) {
-            publishRecruitmentId = Number(draftRow.recruitment_id);
-          }
-          if (
-            publishRecruitmentEventId == null &&
-            draftRow &&
-            draftRow.recruitment_event_id != null
-          ) {
-            publishRecruitmentEventId = Number(draftRow.recruitment_event_id);
-          }
+      if (req.body && req.body.event_type) {
+        publishEventType = normalizeEventType(req.body.event_type);
+      }
+      const draftIdRaw =
+        req.body && req.body.generatorDraftId != null
+          ? parseInt(String(req.body.generatorDraftId), 10)
+          : NaN;
+      if (Number.isInteger(draftIdRaw) && draftIdRaw > 0) {
+        publishGeneratorDraftId = draftIdRaw;
+        const draftRow = await generatorDraftService.getDraftById(draftIdRaw);
+        if (draftRow && String(draftRow.status) === "published") {
+          return res.status(409).json({
+            status: "error",
+            code: "draft_already_published",
+            message:
+              "This draft is already published history. Open the live page or create a new draft for further updates."
+          });
+        }
+        if (publishRecruitmentId == null && draftRow && draftRow.recruitment_id != null) {
+          publishRecruitmentId = Number(draftRow.recruitment_id);
+        }
+        if (
+          publishRecruitmentEventId == null &&
+          draftRow &&
+          draftRow.recruitment_event_id != null
+        ) {
+          publishRecruitmentEventId = Number(draftRow.recruitment_event_id);
+        }
+      }
+      if (publishRecruitmentEventId != null && !publishEventType) {
+        try {
+          const ev = await recruitmentEventService.getRecruitmentEvent(publishRecruitmentEventId);
+          if (ev && ev.event_type) publishEventType = normalizeEventType(ev.event_type);
+        } catch {
+          /* ignore */
         }
       }
     } catch (ctxErr) {
@@ -377,7 +402,9 @@ const generatePage = async (req, res) => {
           await recruitmentPageLinkService.resolveCanonicalPublicPage(publishRecruitmentId);
         const guard = evaluateSamePagePublishGuard({
           oldSlug: oldSlug || null,
-          resolution
+          resolution,
+          isLifecycleUpdate: isLifecycleUpdateEvent(publishEventType),
+          eventType: publishEventType
         });
         if (!guard.allowed) {
           return res.status(409).json({
@@ -608,6 +635,7 @@ const generatePage = async (req, res) => {
       confirmIdentity &&
       !oldSlugNormalized &&
       !(linkResult && linkResult.recruitment_id) &&
+      !(publishRecruitmentId != null) &&
       isRecruitmentEditorialAttachmentEnabled()
     ) {
       try {
@@ -631,12 +659,8 @@ const generatePage = async (req, res) => {
             eventType: "notification"
           });
           if (created && created.recruitment && created.recruitment.id) {
-            await recruitmentPageLinkService.linkPage({
-              page_id: savedPageId,
-              recruitment_id: created.recruitment.id,
-              recruitment_event_id: null
-            });
-            logger.info("generator: human-confirmed recruitment created and linked", {
+            publishRecruitmentId = created.recruitment.id;
+            logger.info("generator: human-confirmed recruitment created", {
               slug,
               pageId: savedPageId,
               recruitmentId: created.recruitment.id
@@ -648,6 +672,39 @@ const generatePage = async (req, res) => {
           message: createErr && createErr.message ? createErr.message : String(createErr)
         });
       }
+    }
+
+    // Atomic finalize: draft mark-published + linkage + event activate + stage projection.
+    // Runs only after page DB+HTML write committed successfully.
+    let lifecycleNote = null;
+    let atomicFinalize = null;
+    try {
+      atomicFinalize = await finalizeLifecyclePublish({
+        savedPageId,
+        publishedSlug: slug,
+        generatorDraftId: publishGeneratorDraftId,
+        recruitmentId: publishRecruitmentId || (linkResult && linkResult.recruitment_id) || null,
+        recruitmentEventId: publishRecruitmentEventId,
+        eventType: publishEventType,
+        author: req.user && req.user.username ? req.user.username : "generator"
+      });
+      if (atomicFinalize && atomicFinalize.ok) {
+        lifecycleNote = "Lifecycle finalize complete (draft/history, linkage, event, stage).";
+      } else if (atomicFinalize && atomicFinalize.errors && atomicFinalize.errors.length) {
+        lifecycleNote = `Page published. Lifecycle finalize incomplete: ${atomicFinalize.errors
+          .map((e) => e.step)
+          .join(", ")}.`;
+        logger.warn("generator: atomic finalize incomplete", {
+          slug,
+          errors: atomicFinalize.errors
+        });
+      }
+    } catch (finalizeErr) {
+      lifecycleNote =
+        "Page published. Lifecycle finalize failed — verify draft/event/page linkage manually.";
+      logger.warn("generator: atomic finalize threw", {
+        message: finalizeErr && finalizeErr.message ? finalizeErr.message : String(finalizeErr)
+      });
     }
 
     const pageTarget = formatPageTarget(slug, title);
@@ -685,26 +742,6 @@ const generatePage = async (req, res) => {
       status: "success"
     });
 
-    // Soft lifecycle alignment: keep Event as authoritative stage; activate when update publishes.
-    let lifecycleNote = null;
-    if (oldSlugNormalized && publishRecruitmentEventId != null) {
-      try {
-        const event = await recruitmentEventService.getRecruitmentEvent(publishRecruitmentEventId);
-        if (event && String(event.status || "").toLowerCase() === "pending") {
-          await recruitmentEventService.updateRecruitmentEvent(publishRecruitmentEventId, {
-            status: "active"
-          });
-          lifecycleNote = "Recruitment event marked active after page update.";
-        }
-      } catch (lifeErr) {
-        logger.warn("generator: event status alignment skipped", {
-          message: lifeErr && lifeErr.message ? lifeErr.message : String(lifeErr)
-        });
-        lifecycleNote =
-          "Page updated. Event status could not be auto-aligned — verify Event Timeline if needed.";
-      }
-    }
-
     setImmediate(() => {
       writeSitemapFile(db).catch((e) => logger.warn("sitemap refresh after publish failed", { message: e.message }));
     });
@@ -722,7 +759,16 @@ const generatePage = async (req, res) => {
         category: String(category || ""),
         warnings: parserWarnings,
         contentAnalysis,
-        lifecycleNote
+        lifecycleNote,
+        draftMarkedPublished: Boolean(
+          atomicFinalize && atomicFinalize.draft && atomicFinalize.draft.skipped === false
+        ),
+        atomicFinalize: atomicFinalize
+          ? {
+              ok: atomicFinalize.ok,
+              errors: atomicFinalize.errors || []
+            }
+          : null
       },
       url,
       id: savedPageId,
