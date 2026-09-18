@@ -14,8 +14,8 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=18">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=21">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=16">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Official Sources" data-acc-page="sources">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -36,7 +36,7 @@
       <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
       <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
       
-      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+      <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
     </div>
   </header>
 
@@ -72,7 +72,7 @@
       </div>
       <div class="acc-section__actions">
         <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
-        <button type="button" class="header-action-btn" id="accAddSourceBtn">Add Official Monitoring Source</button>
+        <button type="button" class="header-action-btn header-action-btn--primary" id="accAddSourceBtn">Add Official Monitoring Source</button>
       </div>
     </div>
     <div class="acc-toolbar">
@@ -81,7 +81,7 @@
       <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option></select></label>
     </div>
     <div class="acc-data-table acc-source-table-wrap">
-      <table aria-label="Official source registry" class="acc-source-table">
+      <table aria-label="Official source registry" class="acc-source-table acc-wide-table">
         <thead>
           <tr>
             <th>Organization</th>
@@ -99,7 +99,7 @@
       </table>
     </div>
     <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
-    <div class="acc-toolbar" style="margin-top:0.75rem;">
+    <div class="acc-pager" style="margin-top:0.75rem;">
       <button type="button" class="header-action-btn" id="accSourcesPrevBtn">Previous</button>
       <span id="accSourcesPageLabel">Page 1</span>
       <button type="button" class="header-action-btn" id="accSourcesNextBtn">Next</button>
@@ -154,8 +154,8 @@
     <div class="acc-dialog__actions acc-source-form-actions">
       <button type="button" class="header-action-btn" id="accOpenOfficialSiteBtn">Open official site</button>
       <button type="button" class="header-action-btn" id="accVerifySourceBtn">Verify URL</button>
-      <button type="submit" class="header-action-btn">Save Source</button>
-      <button type="button" class="header-action-btn" id="accDeleteSourceBtn">Delete</button>
+      <button type="submit" class="header-action-btn header-action-btn--primary">Save Source</button>
+      <button type="button" class="header-action-btn header-action-btn--danger" id="accDeleteSourceBtn">Delete</button>
     </div>
     <div id="accVerifyReport" class="acc-verify-report" hidden></div>
     <p class="acc-section__sub" style="margin:0.5rem 0 0;">Official-host, private-host, duplicate, robots/policy, and redirect checks are fail-closed. There is no bypass control.</p>
@@ -187,6 +187,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=11"></script>
+<script src="/js/admin-automation-control-center.js?v=13"></script>
 </body>
 </html>

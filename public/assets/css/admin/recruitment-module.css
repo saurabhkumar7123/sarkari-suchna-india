@@ -31,8 +31,8 @@ body.admin-saas-v2 .main > .admin-header {
 }
 
 body.admin-saas-v2 .main > .admin-header .admin-title {
-  font-size: 1.35rem;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 750;
   letter-spacing: -0.02em;
   color: var(--admin-text);
   line-height: 1.25;
@@ -289,44 +289,36 @@ body.admin-saas-v2 .main > .admin-header .admin-title {
   align-items: flex-end;
 }
 
-/* ===== Secondary / ghost / danger buttons ===== */
+/* ===== Secondary / ghost / danger buttons =====
+ * Prefer shared Admin design-system hierarchy.
+ * Keep thin compatibility aliases without !important fights.
+ */
 .rom-secondary,
 .er-secondary,
-.header-action-btn--ghost,
 .recruitment-testing-actions .is-secondary {
-  color: var(--admin-text-secondary) !important;
-  background: var(--admin-surface) !important;
-  border: 1px solid var(--admin-border-strong) !important;
+  color: var(--admin-text-secondary);
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border-strong);
   box-shadow: var(--admin-shadow-sm);
 }
 
 .rom-secondary:hover,
 .er-secondary:hover,
-.header-action-btn--ghost:hover,
 .recruitment-testing-actions .is-secondary:hover {
-  background: var(--admin-brand-soft) !important;
-  border-color: color-mix(in srgb, var(--admin-brand) 40%, var(--admin-border)) !important;
-  color: var(--admin-brand) !important;
+  background: var(--admin-brand-soft);
+  border-color: color-mix(in srgb, var(--admin-brand) 40%, var(--admin-border));
+  color: var(--admin-brand);
 }
 
 .rom-danger {
-  color: var(--admin-danger) !important;
-  background: var(--admin-surface) !important;
-  border: 1px solid color-mix(in srgb, var(--admin-danger) 45%, var(--admin-border)) !important;
+  color: var(--admin-danger);
+  background: var(--admin-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 45%, var(--admin-border));
 }
 
 .rom-danger:hover {
-  background: var(--admin-danger-soft) !important;
-}
-
-.header-action-btn--danger {
-  color: #fff !important;
-  background: var(--admin-danger) !important;
-  border: 1px solid var(--admin-danger) !important;
-}
-
-.header-action-btn--danger:hover {
-  filter: brightness(1.06);
+  background: var(--admin-danger);
+  color: #fff;
 }
 
 /* ===== Tables ===== */
@@ -422,6 +414,29 @@ body.admin-saas-v2 .main > .admin-header .admin-title {
   font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.rom-repair-banner {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #b45309;
+  background: #fff7ed;
+  color: #7c2d12;
+  border-radius: 8px;
+}
+
+.rom-repair-banner__head {
+  margin-bottom: 0.35rem;
+}
+
+.rom-repair-banner__reason {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+.page-row-meta--warn {
+  color: #b45309;
+  font-weight: 700;
 }
 
 .rom-status.is-active,

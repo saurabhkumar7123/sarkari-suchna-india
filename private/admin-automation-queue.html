@@ -14,8 +14,8 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=18">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=21">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=16">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Queue Snapshot" data-acc-page="queue">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -36,7 +36,7 @@
       <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
       <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
       
-      <button type="button" class="header-action-btn" id="accRefreshBtn">Refresh</button>
+      <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
     </div>
   </header>
 
@@ -78,7 +78,7 @@
       <label><span>Priority</span><select id="accWorkflowPriorityFilter"><option value="">All</option><option value="P0">P0</option><option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option></select></label>
     </div>
     <div class="acc-data-table">
-      <table aria-label="Workflow queue">
+      <table aria-label="Workflow queue" class="acc-wide-table">
         <thead>
           <tr>
             <th><input type="checkbox" id="accWorkflowSelectAll" aria-label="Select all queue items"></th>
@@ -107,6 +107,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=8"></script>
+<script src="/js/admin-automation-control-center.js?v=13"></script>
 </body>
 </html>

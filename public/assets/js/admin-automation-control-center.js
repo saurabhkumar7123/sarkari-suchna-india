@@ -427,27 +427,27 @@
       const quality = source.qualityGrade || (source.enabled ? "GREEN" : "YELLOW");
       return `
       <tr>
-        <td>
+        <td data-label="Organization">
           <strong>${escapeHtml(source.name)}</strong><br>
           <small>${escapeHtml(source.officialDomain || "-")}</small>
         </td>
-        <td class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></td>
-        <td>${escapeHtml(source.purposeLabel || source.purpose || "—")}</td>
-        <td><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>Quality: ${escapeHtml(quality)}</small><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
-        <td><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
-        <td><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
-        <td>
+        <td class="acc-url-cell" data-label="Exact monitoring URL"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></td>
+        <td data-label="Purpose">${escapeHtml(source.purposeLabel || source.purpose || "—")}</td>
+        <td data-label="State"><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>Quality: ${escapeHtml(quality)}</small><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
+        <td data-label="Health"><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
+        <td data-label="Priority"><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
+        <td data-label="Last checked">
           <small>Checked: ${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</small><br>
           <small>OK: ${escapeHtml(source.lastSuccessfulCheck || "-")}</small><br>
           <small>Change: ${escapeHtml(source.lastDetectedChange || "-")}</small>
         </td>
-        <td>${escapeHtml(source.failCount ?? 0)}</td>
-        <td class="acc-source-actions">
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="view">View</button>
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="verify">Verify</button>
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="${source.enabled ? "disable" : "enable"}">${source.enabled ? "Disable" : "Enable"}</button>
-          <button type="button" class="header-action-btn" data-source-id="${escapeHtml(source.id)}" data-action="run-check">Run Check</button>
+        <td data-label="Failures">${escapeHtml(source.failCount ?? 0)}</td>
+        <td class="acc-source-actions" data-label="Actions">
+          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="view">View</button>
+          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
+          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="verify">Verify</button>
+          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="${source.enabled ? "disable" : "enable"}">${source.enabled ? "Disable" : "Enable"}</button>
+          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="run-check">Run Check</button>
         </td>
       </tr>`;
     }).join("");
@@ -747,12 +747,12 @@
     if (!body) return;
     body.innerHTML = rows.map((item) => `
       <tr data-recruitment-id="${item.id}">
-        <td><strong>${escapeHtml(item.title)}</strong></td>
-        <td>${escapeHtml(item.department || "-")}</td>
-        <td>${escapeHtml(item.lifecycle_state || "-")}</td>
-        <td>${escapeHtml(item.confidence || 0)}%</td>
-        <td><span class="acc-pill">${escapeHtml(item.status || "tracked")}</span></td>
-        <td>${escapeHtml(item.updated_at || "-")}</td>
+        <td data-label="Recruitment" class="acc-recruitment-title"><strong>${escapeHtml(item.title)}</strong></td>
+        <td data-label="Organization">${escapeHtml(item.department || "-")}</td>
+        <td data-label="Stage">${escapeHtml(item.lifecycle_state || "-")}</td>
+        <td data-label="Confidence">${escapeHtml(item.confidence || 0)}%</td>
+        <td data-label="Status"><span class="acc-pill">${escapeHtml(item.status || "tracked")}</span></td>
+        <td data-label="Updated">${escapeHtml(item.updated_at || "-")}</td>
       </tr>
     `).join("");
   }
@@ -843,19 +843,19 @@
     const body = qs("accWorkflowRows");
     if (!body) return;
     if (!state.workflow.length) {
-      body.innerHTML = `<tr><td colspan="8"><div class="acc-empty">No workflow queue items in the current snapshot.</div></td></tr>`;
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="8"><div class="acc-empty">No workflow queue items in the current snapshot.</div></td></tr>`;
       return;
     }
     body.innerHTML = state.workflow.map((item) => `
       <tr>
-        <td><input type="checkbox" data-workflow-id="${escapeHtml(item.id)}" ${state.workflowSelected.has(item.id) ? "checked" : ""}></td>
-        <td>${escapeHtml(item.item || "-")}</td>
-        <td><span class="acc-pill">${escapeHtml(item.status || "-")}</span></td>
-        <td>${escapeHtml(item.priority || "-")}</td>
-        <td>${escapeHtml(item.department || "-")}</td>
-        <td>${escapeHtml(item.source || "-")}</td>
-        <td>${escapeHtml(item.updatedAt || "-")}</td>
-        <td>${escapeHtml(item.retry || "No")}</td>
+        <td data-label="Select"><input type="checkbox" data-workflow-id="${escapeHtml(item.id)}" ${state.workflowSelected.has(item.id) ? "checked" : ""}></td>
+        <td data-label="Item">${escapeHtml(item.item || "-")}</td>
+        <td data-label="Status"><span class="acc-pill">${escapeHtml(item.status || "-")}</span></td>
+        <td data-label="Priority">${escapeHtml(item.priority || "-")}</td>
+        <td data-label="Department">${escapeHtml(item.department || "-")}</td>
+        <td data-label="Source">${escapeHtml(item.source || "-")}</td>
+        <td data-label="Updated">${escapeHtml(item.updatedAt || "-")}</td>
+        <td data-label="Retry">${escapeHtml(item.retry || "No")}</td>
       </tr>
     `).join("");
   }
@@ -883,16 +883,16 @@
     const body = qs("accAuditRows");
     if (!body) return;
     if (!state.audit.length) {
-      body.innerHTML = `<tr><td colspan="5"><div class="acc-empty">No automation audit events in the current snapshot.</div></td></tr>`;
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="5"><div class="acc-empty">No automation audit events in the current snapshot.</div></td></tr>`;
       return;
     }
     body.innerHTML = state.audit.map((item) => `
       <tr>
-        <td>${escapeHtml(item.time || "-")}</td>
-        <td>${escapeHtml(item.category || "-")}</td>
-        <td>${escapeHtml(item.event || "-")}</td>
-        <td>${escapeHtml(item.entity || "-")}</td>
-        <td>${escapeHtml(item.summary || "-")}</td>
+        <td data-label="Time">${escapeHtml(item.time || "-")}</td>
+        <td data-label="Category">${escapeHtml(item.category || "-")}</td>
+        <td data-label="Event">${escapeHtml(item.event || "-")}</td>
+        <td data-label="Entity">${escapeHtml(item.entity || "-")}</td>
+        <td data-label="Summary">${escapeHtml(item.summary || "-")}</td>
       </tr>
     `).join("");
   }

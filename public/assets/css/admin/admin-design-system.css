@@ -61,6 +61,13 @@ body.admin-saas-v2 {
   /* Layout */
   --admin-content-max: 1240px;
   --admin-control-h: 42px;
+  --admin-btn-h: 36px;
+  --admin-btn-h-sm: 32px;
+  --admin-btn-h-lg: 42px;
+  --admin-btn-pad-x: 12px;
+  --admin-btn-pad-x-sm: 10px;
+  --admin-btn-font: 13px;
+  --admin-btn-weight: 650;
   --admin-topbar-h: 44px;
   --admin-font: "Segoe UI", system-ui, -apple-system, sans-serif;
   --admin-font-mono: "Cascadia Mono", "Segoe UI Mono", "SF Mono", Consolas, monospace;
@@ -629,57 +636,135 @@ body.admin-saas-v2 textarea.is-invalid {
   box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
 }
 
-/* ===== Buttons ===== */
-body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn),
-body.admin-saas-v2 #standaloneAdminShell button:not(.icon-only),
+/* ===== Buttons (shared Admin action system) =====
+ * Hierarchy:
+ *   primary   → saas-btn--primary | header-action-btn--primary | btn-primary | btn-save
+ *   secondary → header-action-btn | saas-btn | btn-secondary | rom-secondary | er-secondary
+ *   tertiary  → header-action-btn--ghost | is-secondary | btn-tool (layout only)
+ *   danger    → header-action-btn--danger | bulk-action-btn--danger | row-action-btn--delete
+ * Compact: header-action-btn--sm | table/card action clusters
+ * Do not restyle sidebar nav, switchers, tabs, filter pills, or ACC switches.
+ */
+body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn):not(.acc-switch):not(.acc-dialog__close):not(.saas-filter-pill):not(.mon-switcher__option):not(.acc-switcher__option):not(.acc-tab),
+body.admin-saas-v2 #standaloneAdminShell button:not(.icon-only):not(.acc-switch):not(.acc-dialog__close),
 body.admin-saas-v2 .btn,
 body.admin-saas-v2 .saas-btn,
 body.admin-saas-v2 .header-action-btn,
+body.admin-saas-v2 a.header-action-btn,
+body.admin-saas-v2 a.saas-btn,
 body.admin-saas-v2 .btn-primary,
 body.admin-saas-v2 .btn-secondary,
 body.admin-saas-v2 .btn-tool,
-body.admin-saas-v2 .btn-save {
-  min-height: 42px;
-  padding: 0 14px;
+body.admin-saas-v2 .btn-save,
+body.admin-saas-v2 .bulk-action-btn,
+body.admin-saas-v2 .row-action-btn,
+body.admin-saas-v2 .row-actions a {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: var(--admin-btn-h);
+  height: auto;
+  padding: 0 var(--admin-btn-pad-x);
   border-radius: var(--admin-radius-sm);
-  font-size: 12px;
-  font-weight: 800;
+  font-family: inherit;
+  font-size: var(--admin-btn-font);
+  font-weight: var(--admin-btn-weight);
   letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  max-width: 100%;
+  vertical-align: middle;
   cursor: pointer;
-  transition: background var(--admin-duration) var(--admin-ease),
+  transition:
+    background-color var(--admin-duration) var(--admin-ease),
     border-color var(--admin-duration) var(--admin-ease),
     box-shadow var(--admin-duration) var(--admin-ease),
-    transform var(--admin-duration) var(--admin-ease),
-    color var(--admin-duration) var(--admin-ease);
+    color var(--admin-duration) var(--admin-ease),
+    opacity var(--admin-duration) var(--admin-ease);
+}
+
+body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn):not(.acc-switch):not(.acc-dialog__close) svg,
+body.admin-saas-v2 .saas-btn svg,
+body.admin-saas-v2 .header-action-btn svg,
+body.admin-saas-v2 .btn-tool svg,
+body.admin-saas-v2 .btn-primary svg,
+body.admin-saas-v2 .btn-save svg {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
 }
 
 body.admin-saas-v2 button:focus-visible,
 body.admin-saas-v2 .saas-btn:focus-visible,
 body.admin-saas-v2 .header-action-btn:focus-visible,
+body.admin-saas-v2 a.header-action-btn:focus-visible,
+body.admin-saas-v2 a.saas-btn:focus-visible,
+body.admin-saas-v2 .btn-tool:focus-visible,
+body.admin-saas-v2 .bulk-action-btn:focus-visible,
+body.admin-saas-v2 .row-action-btn:focus-visible,
 body.admin-saas-v2 a:focus-visible {
   outline: 2px solid var(--admin-brand);
   outline-offset: 2px;
 }
 
+/* Secondary (default action) */
 body.admin-saas-v2 .saas-btn,
 body.admin-saas-v2 .header-action-btn,
+body.admin-saas-v2 a.header-action-btn,
+body.admin-saas-v2 a.saas-btn,
 body.admin-saas-v2 .btn-secondary,
-body.admin-saas-v2 .btn-tool {
+body.admin-saas-v2 .bulk-action-btn,
+body.admin-saas-v2 .rom-secondary,
+body.admin-saas-v2 .er-secondary,
+body.admin-saas-v2 .header-action-btn.is-secondary,
+body.admin-saas-v2 .recruitment-testing-actions .is-secondary {
   border: 1px solid var(--admin-border-strong);
   background: var(--admin-surface);
-  color: var(--admin-text);
+  color: var(--admin-text-secondary);
   box-shadow: var(--admin-shadow-sm);
 }
 
-body.admin-saas-v2 .saas-btn:hover,
-body.admin-saas-v2 .header-action-btn:hover,
-body.admin-saas-v2 .btn-secondary:hover,
-body.admin-saas-v2 .btn-tool:hover {
-  background: var(--admin-brand-soft);
-  border-color: #93c5fd;
+/* Keep <a class="header-action-btn"> metrics identical to <button> */
+body.admin-saas-v2 a.header-action-btn,
+body.admin-saas-v2 a.saas-btn {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.25;
+  -webkit-text-decoration-skip-ink: none;
+  text-underline-offset: 0;
 }
 
+body.admin-saas-v2 .saas-btn:hover:not(:disabled),
+body.admin-saas-v2 .header-action-btn:hover:not(:disabled),
+body.admin-saas-v2 a.header-action-btn:hover,
+body.admin-saas-v2 a.saas-btn:hover,
+body.admin-saas-v2 .btn-secondary:hover:not(:disabled),
+body.admin-saas-v2 .bulk-action-btn:hover:not(:disabled),
+body.admin-saas-v2 .rom-secondary:hover,
+body.admin-saas-v2 .er-secondary:hover,
+body.admin-saas-v2 .header-action-btn.is-secondary:hover:not(:disabled),
+body.admin-saas-v2 .recruitment-testing-actions .is-secondary:hover:not(:disabled) {
+  background: var(--admin-brand-soft);
+  border-color: #93c5fd;
+  color: var(--admin-brand);
+}
+
+body.admin-saas-v2 .saas-btn:active:not(:disabled),
+body.admin-saas-v2 .header-action-btn:active:not(:disabled),
+body.admin-saas-v2 a.header-action-btn:active,
+body.admin-saas-v2 .btn-secondary:active:not(:disabled) {
+  background: #dbeafe;
+  border-color: #60a5fa;
+}
+
+/* Primary */
 body.admin-saas-v2 .saas-btn--primary,
+body.admin-saas-v2 .header-action-btn--primary,
 body.admin-saas-v2 .btn-primary,
 body.admin-saas-v2 .btn-save,
 body.admin-saas-v2 button.primary {
@@ -687,20 +772,252 @@ body.admin-saas-v2 button.primary {
   border: 1px solid var(--admin-brand-hover);
   color: #fff;
   box-shadow: none;
+  font-weight: 700;
 }
 
-body.admin-saas-v2 .saas-btn--primary:hover,
-body.admin-saas-v2 .btn-primary:hover,
-body.admin-saas-v2 .btn-save:hover {
-  filter: brightness(1.05);
+body.admin-saas-v2 .saas-btn--primary:hover:not(:disabled),
+body.admin-saas-v2 .header-action-btn--primary:hover:not(:disabled),
+body.admin-saas-v2 .btn-primary:hover:not(:disabled),
+body.admin-saas-v2 .btn-save:hover:not(:disabled),
+body.admin-saas-v2 button.primary:hover:not(:disabled) {
+  background: var(--admin-brand-hover);
+  border-color: var(--admin-brand-hover);
+  color: #fff;
+  filter: none;
 }
 
+body.admin-saas-v2 .saas-btn--primary:active:not(:disabled),
+body.admin-saas-v2 .header-action-btn--primary:active:not(:disabled),
+body.admin-saas-v2 .btn-primary:active:not(:disabled),
+body.admin-saas-v2 .btn-save:active:not(:disabled) {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+/* Tertiary / ghost / utility */
+body.admin-saas-v2 .header-action-btn--ghost,
+body.admin-saas-v2 a.header-action-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text-muted);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+body.admin-saas-v2 .header-action-btn--ghost:hover:not(:disabled),
+body.admin-saas-v2 a.header-action-btn--ghost:hover {
+  background: var(--admin-surface-2);
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+}
+
+body.admin-saas-v2 .header-action-btn--ghost:active:not(:disabled) {
+  background: var(--admin-surface-3);
+}
+
+/* Destructive */
+body.admin-saas-v2 .header-action-btn--danger,
+body.admin-saas-v2 .saas-btn--danger,
+body.admin-saas-v2 .bulk-action-btn--danger,
+body.admin-saas-v2 .rom-danger {
+  background: var(--admin-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 40%, var(--admin-border));
+  color: var(--admin-danger);
+  box-shadow: none;
+}
+
+body.admin-saas-v2 .header-action-btn--danger:hover:not(:disabled),
+body.admin-saas-v2 .saas-btn--danger:hover:not(:disabled),
+body.admin-saas-v2 .bulk-action-btn--danger:hover:not(:disabled),
+body.admin-saas-v2 .rom-danger:hover {
+  background: var(--admin-danger);
+  border-color: var(--admin-danger);
+  color: #fff;
+  filter: none;
+}
+
+/* Compact size */
+body.admin-saas-v2 .header-action-btn--sm,
+body.admin-saas-v2 .saas-btn--sm,
+body.admin-saas-v2 .btn--sm,
+body.admin-saas-v2 .row-action-btn,
+body.admin-saas-v2 .row-actions a,
+body.admin-saas-v2 .acc-source-actions .header-action-btn,
+body.admin-saas-v2 .acc-pager .header-action-btn,
+body.admin-saas-v2 td .header-action-btn,
+body.admin-saas-v2 .monitor-row-actions button,
+body.admin-saas-v2 .monitor-row-actions .header-action-btn,
+body.admin-saas-v2 .rrq-actions .header-action-btn--ghost {
+  min-height: var(--admin-btn-h-sm);
+  padding: 0 var(--admin-btn-pad-x-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Table / card action clusters */
+body.admin-saas-v2 .acc-source-actions,
+body.admin-saas-v2 .acc-overview-card__actions,
+body.admin-saas-v2 .acc-section__actions,
+body.admin-saas-v2 .acc-workspace-head__actions,
+body.admin-saas-v2 .admin-header-actions,
+body.admin-saas-v2 .row-actions,
+body.admin-saas-v2 .bulk-action-bar__actions,
+body.admin-saas-v2 .monitor-row-actions,
+body.admin-saas-v2 .rrq-actions,
+body.admin-saas-v2 .er-decisions,
+body.admin-saas-v2 .acc-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.admin-saas-v2 .acc-source-actions .header-action-btn,
+body.admin-saas-v2 .acc-overview-card__actions .header-action-btn,
+body.admin-saas-v2 .acc-section__actions .header-action-btn,
+body.admin-saas-v2 td .header-action-btn {
+  flex: 0 1 auto;
+  white-space: normal;
+  text-wrap: balance;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+/* Row action semantic colors (page-manager) */
+body.admin-saas-v2 .row-action-btn--edit,
+body.admin-saas-v2 .row-actions a.row-action-btn--edit {
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand);
+  border-color: #bfdbfe;
+}
+
+body.admin-saas-v2 .row-action-btn--view,
+body.admin-saas-v2 .row-actions a.row-action-btn--view {
+  background: var(--admin-success-soft);
+  color: var(--admin-success);
+  border-color: #bbf7d0;
+}
+
+body.admin-saas-v2 .row-action-btn--delete,
+body.admin-saas-v2 .row-actions .row-action-btn--delete {
+  background: var(--admin-danger-soft);
+  color: var(--admin-danger);
+  border-color: #fecaca;
+}
+
+/* Disabled + loading */
 body.admin-saas-v2 button:disabled,
 body.admin-saas-v2 .saas-btn:disabled,
-body.admin-saas-v2 .btn:disabled {
+body.admin-saas-v2 .header-action-btn:disabled,
+body.admin-saas-v2 .btn:disabled,
+body.admin-saas-v2 .btn-tool:disabled,
+body.admin-saas-v2 .bulk-action-btn:disabled,
+body.admin-saas-v2 .row-action-btn:disabled,
+body.admin-saas-v2 a.header-action-btn[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: none;
   transform: none !important;
+  filter: none !important;
+}
+
+body.admin-saas-v2 .saas-btn.is-loading,
+body.admin-saas-v2 .header-action-btn.is-loading,
+body.admin-saas-v2 .btn.is-loading,
+body.admin-saas-v2 button.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+  cursor: wait;
+}
+
+body.admin-saas-v2 .saas-btn.is-loading::after,
+body.admin-saas-v2 .header-action-btn.is-loading::after,
+body.admin-saas-v2 .btn.is-loading::after,
+body.admin-saas-v2 button.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  color: var(--admin-brand);
+  animation: adminBtnSpin 0.7s linear infinite;
+}
+
+body.admin-saas-v2 .saas-btn--primary.is-loading::after,
+body.admin-saas-v2 .header-action-btn--primary.is-loading::after,
+body.admin-saas-v2 .btn-primary.is-loading::after,
+body.admin-saas-v2 .btn-save.is-loading::after {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+  border-right-color: transparent;
+}
+
+@keyframes adminBtnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.admin-saas-v2 .main button,
+  body.admin-saas-v2 .saas-btn,
+  body.admin-saas-v2 .header-action-btn,
+  body.admin-saas-v2 .btn-tool,
+  body.admin-saas-v2 .bulk-action-btn,
+  body.admin-saas-v2 .row-action-btn {
+    transition: none !important;
+  }
+
+  body.admin-saas-v2 .saas-btn.is-loading::after,
+  body.admin-saas-v2 .header-action-btn.is-loading::after,
+  body.admin-saas-v2 .btn.is-loading::after,
+  body.admin-saas-v2 button.is-loading::after {
+    animation: none;
+    border-right-color: currentColor;
+    opacity: 0.85;
+  }
+}
+
+/* Generator action-bar: keep approved tool variants; only normalize layout */
+body.admin-saas-v2.generator-page .action-bar .btn-tool,
+body.admin-saas-v2.generator-saas-v2 .action-bar .btn-tool {
+  min-height: var(--admin-btn-h-lg);
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+body.admin-saas-v2.generator-page .action-bar .btn-primary,
+body.admin-saas-v2.generator-page .action-bar .btn-save,
+body.admin-saas-v2.generator-saas-v2 .action-bar .btn-primary,
+body.admin-saas-v2.generator-saas-v2 .action-bar .btn-save {
+  min-width: 0;
+}
+
+/* Soften legacy generator primary min-width that fights responsive layout */
+body.admin-saas-v2 .btn-primary {
+  min-width: 0;
+}
+
+/* Filter pills stay chips — not action buttons */
+body.admin-saas-v2 .saas-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
 }
 
 /* ===== Tables ===== */
@@ -1271,7 +1588,7 @@ body.dark.admin-saas-v2 *::-webkit-scrollbar-thumb {
 body.admin-saas-v2 .saas-stat,
 body.admin-saas-v2 .upload-stat,
 body.admin-saas-v2 .saas-search input,
-body.admin-saas-v2 .saas-btn,
+body.admin-saas-v2 .saas-btn:not(.saas-btn--primary):not(.saas-btn--danger),
 body.admin-saas-v2 .saas-empty-state,
 body.admin-saas-v2 .empty-state-panel,
 body.admin-saas-v2 .monitor-table,
@@ -1427,6 +1744,10 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
 }
 
 @media (max-width: 768px) {
+  body.admin-saas-v2 {
+    --admin-btn-h: 40px;
+  }
+
   body.admin-saas-v2 .main,
   body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
     padding: 16px 12px 28px;
@@ -1438,10 +1759,21 @@ body.dark.admin-saas-v2.standalone-admin-page.generator-page {
     padding-top: 16px;
   }
 
-  body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn),
+  body.admin-saas-v2 .main button:not(.sidebar-nav-btn):not(.nav-group-toggle):not(.sidebar-drafts__toggle):not(.sidebar-drafts__btn):not(.sidebar-drafts__delete):not(.sidebar-collapse-btn):not(.toggle-btn):not(.acc-switch),
   body.admin-saas-v2 .saas-btn,
-  body.admin-saas-v2 .header-action-btn {
-    min-height: 42px;
+  body.admin-saas-v2 .header-action-btn,
+  body.admin-saas-v2 a.header-action-btn,
+  body.admin-saas-v2 button.header-action-btn {
+    min-height: 40px;
+  }
+
+  body.admin-saas-v2 .acc-source-actions .header-action-btn,
+  body.admin-saas-v2 td .header-action-btn,
+  body.admin-saas-v2 .row-action-btn,
+  body.admin-saas-v2 .header-action-btn--sm,
+  body.admin-saas-v2 button.header-action-btn--sm,
+  body.admin-saas-v2 a.header-action-btn--sm {
+    min-height: 36px;
   }
 
   body.admin-saas-v2 .page-table-wrap,
@@ -1939,10 +2271,13 @@ body.admin-saas-v2 .rom-table-wrap,
 body.admin-saas-v2 .sites-table-host,
 body.admin-saas-v2 .page-list-host,
 body.admin-saas-v2 .acc-table-wrap,
+body.admin-saas-v2 .acc-data-table,
+body.admin-saas-v2 .acc-source-table-wrap,
 body.admin-saas-v2 .filters-toolbar,
 body.admin-saas-v2 .admin-ops-flow,
 body.admin-saas-v2 .rom-workflow {
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1965,7 +2300,12 @@ body.admin-saas-v2 .rom-header-links {
   body.admin-saas-v2 .admin-workspace-tabs button,
   body.admin-saas-v2 .header-action-btn,
   body.admin-saas-v2 .rrq-actions .header-action-btn {
-    min-height: 42px;
+    min-height: 40px;
+  }
+
+  body.admin-saas-v2 .acc-source-actions .header-action-btn,
+  body.admin-saas-v2 .rrq-actions .header-action-btn--ghost {
+    min-height: 36px;
   }
 
   body.admin-saas-v2 .action-bar__inner,
