@@ -7,7 +7,8 @@
 
   const MAX_LABEL = 20;
   let openSidebarSection = null;
-  let openBarSection = null;
+  let openBarSection = "all";
+  let barDraftCache = { drafts: [], published: [] };
 
   const SIDEBAR_PANEL_HTML = `
   <div class="sidebar-drafts" id="sidebarGeneratorDrafts" aria-label="Generator parked drafts">
@@ -117,34 +118,35 @@
     bar.id = "generatorDraftsBar";
     bar.className = "generator-drafts-bar";
     bar.hidden = true;
-    bar.setAttribute("aria-label", "Drafts");
+    bar.setAttribute("aria-label", "Saved Draft Management");
     bar.innerHTML = `
       <div class="generator-drafts-bar__head">
         <strong class="generator-drafts-bar__title">Saved Draft Management</strong>
         <span class="generator-drafts-bar__count" id="generatorDraftsBarTotal">Total 0</span>
         <span class="generator-drafts-bar__capacity" id="generatorDraftsBarCapacity" title="Unpublished draft capacity">0 / 20</span>
       </div>
-      <div class="generator-drafts-bar__section" data-draft-section="draft">
-        <button type="button" class="generator-drafts-bar__toggle" data-draft-toggle="draft" aria-expanded="false">
-          <span>Unpublished</span>
-          <span class="generator-drafts-bar__badge" id="generatorDraftsBarBadgeDraft">0</span>
-          <span class="generator-drafts-bar__chevron" aria-hidden="true">▾</span>
+      <div class="generator-drafts-bar__filters" role="tablist" aria-label="Draft status">
+        <button type="button" class="generator-drafts-bar__filter is-active" data-draft-filter="all" aria-selected="true">All</button>
+        <button type="button" class="generator-drafts-bar__filter" data-draft-filter="draft" aria-selected="false">
+          Unpublished <span class="generator-drafts-bar__badge" id="generatorDraftsBarBadgeDraft">0</span>
         </button>
-        <div class="generator-drafts-bar__body" id="generatorDraftsBarBodyDraft" hidden>
-          <ul class="generator-drafts-bar__list" id="generatorDraftsBarListDraft" role="list"></ul>
-          <p class="generator-drafts-bar__section-empty" id="generatorDraftsBarEmptyDraft" hidden>No unpublished drafts.</p>
-        </div>
+        <button type="button" class="generator-drafts-bar__filter" data-draft-filter="published" aria-selected="false">
+          Published <span class="generator-drafts-bar__badge is-muted" id="generatorDraftsBarBadgePublished">0</span>
+        </button>
       </div>
-      <div class="generator-drafts-bar__section" data-draft-section="published">
-        <button type="button" class="generator-drafts-bar__toggle" data-draft-toggle="published" aria-expanded="false">
-          <span>Published</span>
-          <span class="generator-drafts-bar__badge is-muted" id="generatorDraftsBarBadgePublished">0</span>
-          <span class="generator-drafts-bar__chevron" aria-hidden="true">▾</span>
-        </button>
-        <div class="generator-drafts-bar__body" id="generatorDraftsBarBodyPublished" hidden>
-          <ul class="generator-drafts-bar__list" id="generatorDraftsBarListPublished" role="list"></ul>
-          <p class="generator-drafts-bar__section-empty" id="generatorDraftsBarEmptyPublished" hidden>No published-from-draft pages yet.</p>
-        </div>
+      <div class="generator-drafts-bar__table-wrap">
+        <table class="generator-drafts-bar__table" aria-label="Saved drafts">
+          <thead>
+            <tr>
+              <th scope="col">Draft / Recruitment</th>
+              <th scope="col">Status</th>
+              <th scope="col">Updated</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="generatorDraftsBarTableBody"></tbody>
+        </table>
+        <p class="generator-drafts-bar__section-empty" id="generatorDraftsBarEmpty" hidden>No saved drafts yet.</p>
       </div>`;
 
     if (host.classList.contains("main-container")) {
@@ -152,7 +154,7 @@
     } else {
       host.insertAdjacentElement("afterend", bar);
     }
-    bindBarAccordion(bar);
+    bindBarFilters(bar);
     return bar;
   }
 
@@ -204,15 +206,130 @@
     });
   }
 
-  function bindBarAccordion(bar) {
-    if (!bar || bar.dataset.accordionBound === "1") return;
-    bar.dataset.accordionBound = "1";
-    bar.querySelectorAll("[data-draft-toggle]").forEach((btn) => {
+  function bindBarFilters(bar) {
+    if (!bar || bar.dataset.filtersBound === "1") return;
+    bar.dataset.filtersBound = "1";
+    bar.querySelectorAll("[data-draft-filter]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        toggleSection(bar, btn.getAttribute("data-draft-toggle"), "bar");
+        const filter = btn.getAttribute("data-draft-filter") || "all";
+        openBarSection = filter;
+        bar.querySelectorAll("[data-draft-filter]").forEach((el) => {
+          const active = el.getAttribute("data-draft-filter") === filter;
+          el.classList.toggle("is-active", active);
+          el.setAttribute("aria-selected", active ? "true" : "false");
+        });
+        renderBarTable(barDraftCache.drafts, barDraftCache.published, filter);
       });
     });
+  }
+
+  function bindBarAccordion(bar) {
+    // Legacy accordion removed — filters replace toggles.
+    bindBarFilters(bar);
+  }
+
+  function renderBarTableRow(row, listMode) {
+    const tr = document.createElement("tr");
+    tr.dataset.draftStatus = listMode;
+    const title = truncate(row.title || "Untitled", 64);
+    const when = formatWhen(row.updated_at || row.updatedAt || row.created_at || row.createdAt);
+    const href = buildDraftLink(row, listMode);
+    const isPublished = listMode === "published" || String(row.status || "").toLowerCase() === "published";
+    const status = String(row.status || row.workflow_state || (isPublished ? "Published" : "Draft")).trim();
+    const recruitment = row.recruitmentTitle
+      ? row.recruitmentTitle
+      : row.recruitmentId
+        ? `Recruitment #${row.recruitmentId}`
+        : "Not bound";
+
+    const identityTd = document.createElement("td");
+    identityTd.className = "generator-drafts-bar__cell-identity";
+    identityTd.innerHTML = `
+      <strong class="generator-drafts-bar__row-title" title="${escapeHtml(row.title || "Untitled")}">${escapeHtml(title)}</strong>
+      <span class="generator-drafts-bar__row-meta">
+        ${row.id != null ? `Draft #${escapeHtml(String(row.id))} · ` : ""}${escapeHtml(recruitment)}
+      </span>`;
+
+    const statusTd = document.createElement("td");
+    statusTd.className = "generator-drafts-bar__cell-status";
+    statusTd.innerHTML = `<span class="generator-drafts-bar__status ${isPublished ? "is-published" : "is-draft"}">${escapeHtml(status)}</span>`;
+
+    const updatedTd = document.createElement("td");
+    updatedTd.className = "generator-drafts-bar__cell-updated";
+    updatedTd.textContent = when || "—";
+
+    const actionsTd = document.createElement("td");
+    actionsTd.className = "generator-drafts-bar__cell-actions";
+    const actions = document.createElement("div");
+    actions.className = "generator-drafts-bar__actions";
+
+    if (!isPublished) {
+      const openBtn = document.createElement("a");
+      openBtn.className = "generator-drafts-bar__btn generator-drafts-bar__btn--open";
+      openBtn.href = href;
+      openBtn.textContent = "Open";
+      actions.appendChild(openBtn);
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "generator-drafts-bar__btn generator-drafts-bar__btn--delete";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteDraft(row.id, title);
+      });
+      actions.appendChild(delBtn);
+    } else if (row.published_slug || row.publishedSlug || row.publicPageSlug) {
+      const slug = row.published_slug || row.publishedSlug || row.publicPageSlug;
+      const openLive = document.createElement("a");
+      openLive.className = "generator-drafts-bar__btn generator-drafts-bar__btn--open";
+      openLive.href = `/generator?slug=${encodeURIComponent(slug)}`;
+      openLive.textContent = "Open";
+      actions.appendChild(openLive);
+    }
+
+    if (row.recruitmentId) {
+      const recBtn = document.createElement("a");
+      recBtn.className = "generator-drafts-bar__btn";
+      recBtn.href = `/admin/recruitments?recruitment_id=${encodeURIComponent(row.recruitmentId)}`;
+      recBtn.textContent = "Recruitment";
+      actions.appendChild(recBtn);
+    }
+
+    actionsTd.appendChild(actions);
+    tr.appendChild(identityTd);
+    tr.appendChild(statusTd);
+    tr.appendChild(updatedTd);
+    tr.appendChild(actionsTd);
+    return tr;
+  }
+
+  function renderBarTable(drafts, published, filter) {
+    const body = el("generatorDraftsBarTableBody");
+    const emptyEl = el("generatorDraftsBarEmpty");
+    if (!body) return;
+    body.innerHTML = "";
+
+    const showDraft = filter === "all" || filter === "draft";
+    const showPublished = filter === "all" || filter === "published";
+    const rows = [];
+    if (showDraft) drafts.forEach((row) => rows.push(renderBarTableRow(row, "draft")));
+    if (showPublished) published.forEach((row) => rows.push(renderBarTableRow(row, "published")));
+    rows.forEach((tr) => body.appendChild(tr));
+
+    if (emptyEl) {
+      emptyEl.hidden = rows.length > 0;
+      if (!rows.length) {
+        emptyEl.textContent =
+          filter === "published"
+            ? "No published-from-draft pages yet."
+            : filter === "draft"
+              ? "No unpublished drafts."
+              : "No saved drafts yet.";
+      }
+    }
   }
 
   async function apiRequest(url, options = {}) {
@@ -281,15 +398,15 @@
     refreshGeneratorDraftsSidebar();
   }
 
-  function renderDraftRow(row, mode, ui) {
+  function renderDraftRow(row, listMode, ui) {
     const li = document.createElement("li");
     const title = truncate(row.title || "Untitled", 48);
     const when = formatWhen(row.updated_at || row.updatedAt || row.created_at || row.createdAt);
-    const href = buildDraftLink(row, mode);
+    const href = buildDraftLink(row, listMode);
     const isBar = ui === "bar";
     const itemClass = isBar ? "generator-drafts-bar__item" : "sidebar-drafts__item";
     const actionsClass = isBar ? "generator-drafts-bar__actions" : "sidebar-drafts__actions";
-    const isPublished = mode === "published" || String(row.status || "").toLowerCase() === "published";
+    const isPublished = listMode === "published" || String(row.status || "").toLowerCase() === "published";
 
     li.className = itemClass;
 
@@ -304,20 +421,43 @@
     const meta = document.createElement("span");
     meta.className = isBar ? "generator-drafts-bar__row-meta" : "sidebar-drafts__link-meta";
     const status = String(row.status || row.workflow_state || (isPublished ? "Published" : "Draft")).trim();
-    const recruitment = row.recruitmentTitle || (row.recruitmentId ? `Recruitment #${row.recruitmentId}` : "Not matched yet");
+    const recruitment = row.recruitmentTitle
+      ? row.recruitmentTitle
+      : row.recruitmentId
+        ? `Recruitment #${row.recruitmentId}`
+        : "NOT BOUND";
     const eventName = row.eventLabel || "—";
     const pageSlug =
       row.publicPageSlug ||
       row.publishedSlug ||
       row.published_slug ||
       (row.publicPageAmbiguous ? "(ambiguous)" : "—");
+    const generatorMode = String(
+      row.generatorMode || (pageSlug !== "—" && pageSlug !== "(ambiguous)" ? "UPDATE" : "CREATE")
+    ).toUpperCase();
+    const extraction =
+      row.extractionCode ||
+      row.extractionStatus ||
+      (row.conversionRequired ? "conversion_required" : "—");
+    const validation = row.validationStatus || "—";
+    const nextAction =
+      row.nextAction ||
+      (isPublished
+        ? "Immutable history"
+        : !row.recruitmentId
+          ? "Resolve Recruitment"
+          : "Open Generator → Preview → Manual Publish");
     meta.innerHTML = [
+      row.id != null ? `<span>Draft #${escapeHtml(String(row.id))}</span>` : "",
       `<span>Recruitment: ${escapeHtml(recruitment)}</span>`,
       `<span>Event: ${escapeHtml(eventName)}</span>`,
       `<span>Public Page: ${escapeHtml(pageSlug === "—" || pageSlug === "(ambiguous)" ? pageSlug : "/" + String(pageSlug).replace(/^\//, ""))}</span>`,
+      `<span>Mode: ${escapeHtml(generatorMode)}</span>`,
       `<span>Status: ${escapeHtml(status)}</span>`,
-      when ? `<span>${escapeHtml(when)}</span>` : "",
-      `<span class="generator-drafts-bar__id">Draft #${escapeHtml(row.id)}</span>`
+      `<span>Extraction: ${escapeHtml(String(extraction))}</span>`,
+      `<span>Validation: ${escapeHtml(String(validation))}</span>`,
+      `<span>Next Action: ${escapeHtml(nextAction)}</span>`,
+      when ? `<span>${escapeHtml(when)}</span>` : ""
     ]
       .filter(Boolean)
       .join(" · ");
@@ -374,7 +514,8 @@
       actions.appendChild(pageBtn);
     }
 
-    if (mode === "draft") {
+    // Unpublished working drafts only — never delete published history.
+    if (listMode === "draft" && !isPublished) {
       const delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.className = isBar
@@ -406,8 +547,13 @@
     if (panel && openSidebarSection) {
       setSectionOpen(panel, openSidebarSection, true, "sidebar");
     }
-    if (bar && openBarSection) {
-      setSectionOpen(bar, openBarSection, true, "bar");
+    if (bar) {
+      bindBarFilters(bar);
+      bar.querySelectorAll("[data-draft-filter]").forEach((elBtn) => {
+        const active = elBtn.getAttribute("data-draft-filter") === (openBarSection || "all");
+        elBtn.classList.toggle("is-active", active);
+        elBtn.setAttribute("aria-selected", active ? "true" : "false");
+      });
     }
   }
 
@@ -485,10 +631,11 @@
   function renderGeneratorBar(data) {
     const bar = ensureGeneratorBar();
     if (!bar) return;
-    bindBarAccordion(bar);
+    bindBarFilters(bar);
 
     const drafts = Array.isArray(data?.drafts) ? data.drafts : [];
     const published = Array.isArray(data?.published) ? data.published : [];
+    barDraftCache = { drafts, published };
     const draftCount = data?.draftCount != null ? Number(data.draftCount) : drafts.length;
     const maxDrafts = data?.maxDrafts != null ? Number(data.maxDrafts) : MAX_LABEL;
     const total = drafts.length + published.length;
@@ -511,25 +658,23 @@
     const badgePub = el("generatorDraftsBarBadgePublished");
     if (badgePub) badgePub.textContent = String(published.length);
 
-    fillList(el("generatorDraftsBarListDraft"), el("generatorDraftsBarEmptyDraft"), drafts, "draft", "bar");
-    fillList(
-      el("generatorDraftsBarListPublished"),
-      el("generatorDraftsBarEmptyPublished"),
-      published,
-      "published",
-      "bar"
-    );
-
-    bar.hidden = total === 0 && String(window.location.hash || "") !== "#drafts";
-    if (String(window.location.hash || "") === "#drafts") {
-      bar.hidden = false;
-      setSectionOpen(bar, "draft", true, "bar");
-      openBarSection = "draft";
-      if (typeof bar.scrollIntoView === "function") {
-        bar.scrollIntoView({ block: "start" });
-      }
+    const hashDrafts = String(window.location.hash || "") === "#drafts";
+    if (hashDrafts && (!openBarSection || openBarSection === "all")) {
+      openBarSection = "all";
     }
-    restoreOpenSections(null, bar);
+
+    bar.querySelectorAll("[data-draft-filter]").forEach((elBtn) => {
+      const active = elBtn.getAttribute("data-draft-filter") === openBarSection;
+      elBtn.classList.toggle("is-active", active);
+      elBtn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    renderBarTable(drafts, published, openBarSection || "all");
+
+    bar.hidden = total === 0 && !hashDrafts;
+    if (hashDrafts) {
+      bar.hidden = false;
+    }
   }
 
   async function refreshGeneratorDraftsSidebar() {
@@ -560,6 +705,21 @@
     ensureGeneratorBar();
     refreshGeneratorDraftsSidebar();
     window.refreshGeneratorDraftsSidebar = refreshGeneratorDraftsSidebar;
+    window.addEventListener("hashchange", () => {
+      if (!isGeneratorPage()) return;
+      const bar = el("generatorDraftsBar");
+      if (!bar) return;
+      if (String(window.location.hash || "") === "#drafts") {
+        openBarSection = "all";
+        bar.hidden = false;
+        bar.querySelectorAll("[data-draft-filter]").forEach((elBtn) => {
+          const active = elBtn.getAttribute("data-draft-filter") === "all";
+          elBtn.classList.toggle("is-active", active);
+          elBtn.setAttribute("aria-selected", active ? "true" : "false");
+        });
+        renderBarTable(barDraftCache.drafts, barDraftCache.published, "all");
+      }
+    });
   }
 
   function scheduleInit() {

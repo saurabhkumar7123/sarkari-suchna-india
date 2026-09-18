@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=24">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=15">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=18">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Activity" data-mon-page="activity">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -34,17 +34,7 @@
   </header>
 
   <nav class="mon-switcher" aria-label="Monitoring sections" data-mon-switcher>
-    <div class="mon-switcher__bar">
-      <div class="mon-switcher__current">
-        <span class="mon-switcher__eyebrow">Current section</span>
-        <strong class="mon-switcher__value">Activity</strong>
-      </div>
-      <button type="button" class="mon-switcher__trigger header-action-btn" id="monSwitcherTrigger" aria-expanded="false" aria-controls="monSwitcherMenu" aria-haspopup="listbox">
-        Switch section
-        <span class="mon-switcher__chevron" aria-hidden="true">▾</span>
-      </button>
-    </div>
-    <div class="mon-switcher__menu" id="monSwitcherMenu" role="listbox" hidden>
+    <div class="mon-switcher__menu" id="monSwitcherMenu" role="listbox">
       <a class="mon-switcher__option" href="/admin/monitoring">Source Health</a>
       <a class="mon-switcher__option" href="/admin/monitoring/updates">Detected Updates</a>
       <a class="mon-switcher__option is-active" href="/admin/monitoring/activity" aria-current="page">Activity</a>
@@ -91,10 +81,10 @@
 <script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js?v=3"></script>
+<script src="/js/admin-layout.js?v=4"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-monitoring.js?v=3"></script>
+<script src="/js/admin-monitoring.js?v=4"></script>
 </body>
 </html>

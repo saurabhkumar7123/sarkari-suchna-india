@@ -1,22 +1,19 @@
 body.admin-saas-v2 {
-  --acc-bg: #f4f7fb;
-  --acc-surface: rgba(255, 255, 255, 0.82);
-  --acc-surface-strong: #ffffff;
-  --acc-line: rgba(148, 163, 184, 0.24);
-  --acc-text: #0f172a;
-  --acc-muted: #64748b;
-  --acc-brand: #2563eb;
-  --acc-brand-2: #7c3aed;
-  --acc-success: #16a34a;
-  --acc-warning: #d97706;
-  --acc-danger: #dc2626;
-  --acc-radius: 22px;
-  --acc-radius-sm: 16px;
-  --acc-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(124, 58, 237, 0.1), transparent 22%),
-    var(--acc-bg) !important;
+  --acc-bg: var(--admin-bg, #eef2f8);
+  --acc-surface: var(--admin-surface, #ffffff);
+  --acc-surface-strong: var(--admin-surface, #ffffff);
+  --acc-line: var(--admin-border, #e2e8f0);
+  --acc-text: var(--admin-text, #0f172a);
+  --acc-muted: var(--admin-muted, #64748b);
+  --acc-brand: var(--admin-brand, #2563eb);
+  --acc-brand-2: var(--admin-brand, #2563eb);
+  --acc-success: var(--admin-success, #15803d);
+  --acc-warning: var(--admin-warning, #b45309);
+  --acc-danger: var(--admin-danger, #b91c1c);
+  --acc-radius: var(--admin-radius-lg, 10px);
+  --acc-radius-sm: var(--admin-radius, 8px);
+  --acc-shadow: var(--admin-shadow, 0 1px 2px rgba(15, 23, 42, 0.05));
+  background: var(--acc-bg) !important;
 }
 
 body.admin-saas-v2 .acc-main {
@@ -36,7 +33,7 @@ body.admin-saas-v2 .acc-main {
 .acc-toolbar,
 .acc-monitor-card,
 .acc-dialog__surface {
-  backdrop-filter: blur(16px);
+  backdrop-filter: none;
 }
 
 .acc-header__sub,
@@ -212,100 +209,56 @@ body.admin-saas-v2 .acc-main {
   position: relative;
   top: auto;
   z-index: 4;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   min-width: 0;
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
 }
 
-.acc-switcher__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--acc-line);
-  border-radius: var(--acc-radius-sm);
-  background: var(--acc-surface-strong);
-  box-shadow: var(--acc-shadow);
-  min-width: 0;
-  max-width: 100%;
-  width: 100%;
-  box-sizing: border-box;
-}
-
+/* Compact horizontal section nav — no dropdown / Switch section control */
+.acc-switcher__bar,
+.acc-switcher__trigger,
 .acc-switcher__current {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.acc-switcher__eyebrow {
-  display: block;
-  margin: 0 0 2px;
-  color: var(--acc-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.acc-switcher__value {
-  display: block;
-  color: var(--acc-text);
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-}
-
-.acc-switcher__trigger {
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  position: relative;
-  z-index: 1;
-}
-
-.acc-switcher__chevron {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.acc-switcher__menu {
-  position: relative;
-  z-index: 5;
-  margin-top: 8px;
-  padding: 8px;
-  border: 1px solid var(--acc-line);
-  border-radius: var(--acc-radius-sm);
-  background: var(--acc-surface-strong);
-  box-shadow: var(--acc-shadow);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-  gap: 4px;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.acc-switcher__menu[hidden] {
   display: none !important;
 }
 
-.acc-switcher__option {
-  display: block;
+.acc-switcher__menu,
+.acc-switcher__menu[hidden] {
+  position: relative;
+  z-index: 5;
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px;
+  border: 1px solid var(--acc-line);
+  border-radius: var(--acc-radius-sm);
+  background: var(--acc-surface-strong);
+  box-shadow: var(--acc-shadow);
+  max-width: 100%;
   min-width: 0;
-  padding: 10px 12px;
-  border-radius: 12px;
+  box-sizing: border-box;
+  max-height: none;
+  overflow: visible;
+  grid-template-columns: unset;
+}
+
+.acc-switcher__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 10px;
   color: var(--acc-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .acc-switcher__option:hover {
@@ -317,7 +270,7 @@ body.admin-saas-v2 .acc-main {
 .acc-switcher__option[aria-current="page"] {
   background: rgba(37, 99, 235, 0.12);
   color: var(--acc-brand);
-  box-shadow: inset 3px 0 0 var(--acc-brand);
+  box-shadow: inset 0 -2px 0 var(--acc-brand);
   font-weight: 800;
 }
 
@@ -332,12 +285,10 @@ body.admin-saas-v2 .acc-main {
 
 @keyframes acc-content-enter {
   from {
-    opacity: 0;
-    transform: translateY(2px);
+    opacity: 0.92;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -349,31 +300,31 @@ body.admin-saas-v2 .acc-main {
 
 @supports (view-transition-name: none) {
   .acc-workspace-head {
-    view-transition-name: acc-head;
+    view-transition-name: none;
   }
 
   .acc-switcher {
-    view-transition-name: acc-switcher;
+    view-transition-name: none;
   }
 
   .acc-content {
-    view-transition-name: acc-content;
+    view-transition-name: none;
   }
 }
 
+/* Disable full-document view transitions — primary cause of ACC navigation "jhatka" */
 @view-transition {
-  navigation: auto;
+  navigation: none;
 }
 
 ::view-transition-old(acc-content),
 ::view-transition-new(acc-content) {
-  animation-duration: 180ms;
-  animation-timing-function: ease-out;
+  animation: none;
 }
 
 ::view-transition-group(acc-head),
 ::view-transition-group(acc-switcher) {
-  animation-duration: 1ms;
+  animation: none;
 }
 
 .acc-workspace-head {
@@ -462,6 +413,14 @@ body.admin-saas-v2 .acc-main {
   line-height: 1.1;
 }
 
+.acc-table-wrap,
+.acc-data-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .acc-visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -482,9 +441,9 @@ body.admin-saas-v2 .acc-main {
   justify-content: center;
   min-height: 40px;
   padding: 8px 14px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--acc-line);
+  border-radius: var(--acc-radius-sm);
+  background: var(--acc-surface-strong);
   color: var(--acc-muted);
   font: inherit;
   font-size: 12.5px;
@@ -494,11 +453,9 @@ body.admin-saas-v2 .acc-main {
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 200ms ease,
-    color 200ms ease,
-    border-color 200ms ease,
-    box-shadow 200ms ease,
-    transform 200ms ease;
+    background-color var(--admin-duration, 0.14s) var(--admin-ease, ease),
+    color var(--admin-duration, 0.14s) var(--admin-ease, ease),
+    border-color var(--admin-duration, 0.14s) var(--admin-ease, ease);
 }
 
 .acc-tab:hover {
@@ -698,10 +655,25 @@ body.admin-saas-v2 .acc-main {
 }
 
 .acc-data-table {
+  display: block;
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
   min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.acc-panel,
+.acc-section,
+.acc-main {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.acc-panel {
+  overflow-x: hidden;
 }
 
 .acc-data-table table {
@@ -760,6 +732,8 @@ body.admin-saas-v2 .acc-main {
 
 .acc-two-column {
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .acc-three-column {
@@ -1063,6 +1037,24 @@ body.admin-saas-v2 .acc-main {
     grid-template-columns: 1fr;
   }
 
+  .acc-two-column,
+  .acc-three-column {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .acc-toolbar label {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .acc-toolbar label input,
+  .acc-toolbar label select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
   .acc-workspace-head {
     flex-direction: column;
   }
@@ -1075,15 +1067,15 @@ body.admin-saas-v2 .acc-main {
     top: auto;
   }
 
-  .acc-switcher__bar {
-    flex-wrap: wrap;
+  .acc-switcher__menu,
+  .acc-switcher__menu[hidden] {
+    max-height: none;
+    overflow: visible;
   }
 
-  .acc-switcher__menu {
-    grid-template-columns: 1fr;
-    max-height: min(60vh, 420px);
-    overflow-y: auto;
-    overflow-x: hidden;
+  .acc-switcher__option {
+    min-height: 40px;
+    padding: 8px 12px;
   }
 
   .acc-stats-grid {
@@ -1121,12 +1113,12 @@ body.admin-saas-v2 .acc-main {
 /* Dark mode — ACC surfaces follow admin design system */
 body.dark.admin-saas-v2 {
   --acc-bg: var(--admin-bg, #0b1220);
-  --acc-surface: rgba(17, 24, 39, 0.92);
+  --acc-surface: var(--admin-surface, #111827);
   --acc-surface-strong: var(--admin-surface, #111827);
   --acc-line: var(--admin-border, #334155);
   --acc-text: var(--admin-text, #f1f5f9);
   --acc-muted: var(--admin-muted, #94a3b8);
-  --acc-shadow: var(--admin-shadow, 0 16px 40px rgba(0, 0, 0, 0.35));
+  --acc-shadow: var(--admin-shadow, 0 1px 2px rgba(0, 0, 0, 0.28));
 }
 
 body.dark.admin-saas-v2 .acc-tab {
@@ -1144,7 +1136,7 @@ body.dark.admin-saas-v2 .acc-tab[aria-selected="true"],
 body.dark.admin-saas-v2 .acc-tab[aria-current="page"] {
   background: var(--acc-brand);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+  box-shadow: none;
 }
 
 body.dark.admin-saas-v2 .acc-tab:focus-visible {

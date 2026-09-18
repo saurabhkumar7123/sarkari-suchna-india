@@ -49,12 +49,9 @@ body.dark .admin-global-error-banner button{
 }
 .main > .admin-header .admin-title{flex:1;min-width:140px}
 
-/* ===== Topbar tools (bell, palette hint) ===== */
+/* ===== Topbar tools removed from Admin header (sidebar keeps auth/theme) ===== */
 .admin-topbar-tools{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin-left:auto;
+  display:none !important;
 }
 .admin-breadcrumbs{
   display:flex;
@@ -480,14 +477,29 @@ body.dark .action-bar.is-sticky-publish{
 }
 .page-manager .page-head,
 .page-manager .page-row{
-  grid-template-columns:36px minmax(160px,2.2fr) minmax(72px,1fr) minmax(72px,.9fr) minmax(88px,.8fr) minmax(180px,1.2fr);
+  grid-template-columns:36px minmax(160px,2.2fr) minmax(72px,1fr) minmax(72px,.9fr) minmax(88px,.8fr) minmax(280px,1.8fr);
 }
 .page-manager .row-actions{
   display:flex;
-  flex-wrap:nowrap;
+  flex-wrap:wrap;
   align-items:center;
   gap:6px;
   justify-content:flex-start;
+}
+.page-manager .row-action-btn--versions,
+.page-manager .row-action-btn--restore{
+  background:#f8fafc;
+  color:#334155;
+  border-color:#cbd5e1;
+}
+.page-manager .row-action-btn--repair{
+  background:#fff7ed;
+  color:#c2410c;
+  border-color:#fdba74;
+}
+.page-manager .page-row-meta--muted{
+  color:#64748b;
+  font-weight:500;
 }
 
 .row-actions a,

@@ -6,7 +6,7 @@
 (function () {
   "use strict";
 
-  const WF_VERSION = "3";
+  const WF_VERSION = "4";
 
   /** Factual page catalog aligned to existing backend capabilities. */
   const PAGES = Object.freeze({
@@ -175,60 +175,14 @@
       .join('<span class="adm-wf-steps__arrow" aria-hidden="true">&rarr;</span>');
   }
 
-  function renderContext(pageKey) {
-    const page = PAGES[pageKey];
-    if (!page) return "";
-    const primary = page.primaryAction
-      ? page.primaryAction.href
-        ? `<a class="header-action-btn adm-wf__action" href="${escapeHtml(page.primaryAction.href)}">${escapeHtml(page.primaryAction.label)}</a>`
-        : page.primaryAction.targetId
-          ? `<button type="button" class="header-action-btn adm-wf__action" data-adm-wf-click="${escapeHtml(page.primaryAction.targetId)}">${escapeHtml(page.primaryAction.label)}</button>`
-          : ""
-      : "";
-    const secondary = page.secondaryAction
-      ? `<a class="header-action-btn rom-secondary adm-wf__action" href="${escapeHtml(page.secondaryAction.href)}">${escapeHtml(page.secondaryAction.label)}</a>`
-      : "";
-
-    return `
-      <div class="adm-wf__top">
-        <div class="adm-wf__identity">
-          <p class="adm-wf__eyebrow">Where am I</p>
-          <h2 class="adm-wf__title">${escapeHtml(page.where)}</h2>
-        </div>
-        <div class="adm-wf__badges">
-          <span class="adm-wf-badge adm-wf-badge--path" data-adm-wf-path="${escapeHtml(page.path)}">${escapeHtml(pathLabel(page.path))}</span>
-          <span class="adm-wf-badge adm-wf-badge--auto is-off" data-adm-wf-auto-badge>Automation: OFF · Manual workflow available</span>
-          <span class="adm-wf-badge adm-wf-badge--publish">Publish: MANUAL ONLY</span>
-        </div>
-      </div>
-      <dl class="adm-wf__meta">
-        <div><dt>This page</dt><dd>${escapeHtml(page.purpose)}</dd></div>
-        <div><dt>Before this</dt><dd>${escapeHtml(page.before)}</dd></div>
-        <div><dt>Do here</dt><dd>${escapeHtml(page.here)}</dd></div>
-        <div><dt>Next step</dt><dd>${escapeHtml(page.next)}</dd></div>
-      </dl>
-      <nav class="adm-wf-steps" aria-label="Workflow steps">${stepList(page)}</nav>
-      <div class="adm-wf__actions">${primary}${secondary}</div>
-    `;
+  function renderContext(_pageKey) {
+    // Guidance panel (This page / Before this / Do here / Next step) removed from Admin UI.
+    return "";
   }
 
   function hydrateMounts() {
     document.querySelectorAll("[data-adm-wf]").forEach((el) => {
-      if (el.dataset.admWfHydrated === "1") return;
-      const key = el.getAttribute("data-adm-wf");
-      const html = renderContext(key);
-      if (!html) return;
-      el.innerHTML = html;
-      el.dataset.admWfHydrated = "1";
-      el.dataset.admWfVersion = WF_VERSION;
-    });
-
-    document.querySelectorAll("[data-adm-wf-click]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-adm-wf-click");
-        const target = id ? document.getElementById(id) : null;
-        if (target) target.click();
-      });
+      el.remove();
     });
   }
 

@@ -435,9 +435,14 @@
     const el = document.getElementById(hash);
     if (!el) return;
     el.classList.add("admin-workspace-target");
+    const reduced =
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.setTimeout(() => {
-      if (typeof el.scrollIntoView === "function") {
-        el.scrollIntoView({ block: "start", behavior: "smooth" });
+      if (typeof el.scrollIntoView !== "function") return;
+      try {
+        el.scrollIntoView({ block: "start", behavior: reduced ? "auto" : "smooth" });
+      } catch (_) {
+        /* ignore */
       }
     }, 40);
   }
@@ -505,15 +510,8 @@
     if (toggle && toggle.parentElement !== bar) {
       bar.insertBefore(toggle, bar.firstChild);
     }
-    let identity = document.getElementById("adminTopbarIdentity");
-    if (!identity) {
-      identity = document.createElement("div");
-      identity.id = "adminTopbarIdentity";
-    }
-    if (identity.parentElement !== bar) {
-      const afterToggle = toggle && toggle.parentElement === bar ? toggle.nextSibling : bar.firstChild;
-      bar.insertBefore(identity, afterToggle);
-    }
+    // Breadcrumb identity slot removed — do not leave an empty flex placeholder.
+    bar.querySelectorAll("#adminTopbarIdentity, .admin-breadcrumbs").forEach((node) => node.remove());
     document.body.classList.add("admin-has-topbar");
   }
 

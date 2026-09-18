@@ -277,8 +277,17 @@
   }
 
   function setEditorVisible(visible) {
-    byId("recruitmentEmpty").hidden = visible;
-    byId("recruitmentEditor").hidden = !visible;
+    const empty = byId("recruitmentEmpty");
+    const editor = byId("recruitmentEditor");
+    const detail = byId("recruitmentDetailPanel") || document.querySelector(".rom-detail-panel");
+    const layout = document.querySelector(".rom-layout");
+    if (empty) {
+      empty.hidden = true;
+      empty.setAttribute("aria-hidden", "true");
+    }
+    if (editor) editor.hidden = !visible;
+    if (detail) detail.hidden = !visible;
+    if (layout) layout.classList.toggle("rom-layout--list-only", !visible);
   }
 
   function canonicalPageResolution() {
@@ -295,16 +304,99 @@
     };
   }
 
-  function currentStageLabel() {
-    const active = events.find((e) => String(e.status || "").toLowerCase() === "active");
-    if (active) return labelize(active.event_type);
-    if (events.length) {
-      const sorted = [...events].sort(
-        (a, b) => Number(b.sequence_order || 0) - Number(a.sequence_order || 0)
-      );
-      return labelize(sorted[0].event_type);
+  function selectAuthoritativeEventClient(eventList) {
+    const list = Array.isArray(eventList) ? eventList.filter(Boolean) : [];
+    const excluded = new Set(["superseded", "cancelled"]);
+    const eligible = list.filter((e) => !excluded.has(String(e.status || "").toLowerCase()));
+    const byNewest = (a, b) => {
+      const sa = Number(a.sequence_order);
+      const sb = Number(b.sequence_order);
+      const seqA = Number.isFinite(sa) ? sa : -1;
+      const seqB = Number.isFinite(sb) ? sb : -1;
+      if (seqB !== seqA) return seqB - seqA;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    };
+    for (const preferred of ["active", "pending"]) {
+      const matches = eligible
+        .filter((e) => String(e.status || "").toLowerCase() === preferred)
+        .sort(byNewest);
+      if (matches.length) return matches[0];
     }
+    return null;
+  }
+
+  function currentStageLabel() {
+    const active = selectAuthoritativeEventClient(events);
+    if (active) return labelize(active.event_type);
     return labelize(selected?.lifecycle_state || "announced");
+  }
+
+  function computeRepairState() {
+    if (!selected?.id) return null;
+    const canonical = canonicalPageResolution();
+    const activeEvent = selectAuthoritativeEventClient(events);
+    const unpublished = (draftBinding && draftBinding.drafts
+      ? draftBinding.drafts
+      : []
+    ).filter((d) => String(d.status || "").toLowerCase() !== "published");
+
+    if (canonical.status === "ambiguous") {
+      return {
+        reason: "ambiguous_page",
+        title: "REPAIR REQUIRED — ambiguous canonical pages",
+        detail:
+          "Multiple pages linked. Never guess. Human must select the single canonical public page before publish/update.",
+        action: "Unlink extra pages until exactly one canonical page remains.",
+        recruitment: selected.title || `#${selected.id}`,
+        event: activeEvent ? labelize(activeEvent.event_type) : "—",
+        draft: unpublished[0] ? unpublished[0].title || `Draft #${unpublished[0].id}` : "—",
+        page: canonical.page ? `/${canonical.page.slug}` : "—"
+      };
+    }
+    if (canonical.status === "none") {
+      const hasDownstream = events.some((e) =>
+        ["admit_card", "answer_key", "result", "final_result", "correction"].includes(
+          String(e.event_type || "").toLowerCase()
+        )
+      );
+      if (hasDownstream) {
+        return {
+          reason: "missing_page",
+          title: "REPAIR REQUIRED — missing canonical page",
+          detail:
+            "Admit Card / Result / Answer Key updates are BLOCKED until the canonical Notification page is linked. Do not create a status-only page.",
+          action: "Link the existing Notification public page, or create the first canonical page only for Notification.",
+          recruitment: selected.title || `#${selected.id}`,
+          event: activeEvent ? labelize(activeEvent.event_type) : "—",
+          draft: unpublished[0] ? unpublished[0].title || `Draft #${unpublished[0].id}` : "—",
+          page: "Not linked"
+        };
+      }
+    }
+    return null;
+  }
+
+  function renderRepairBanner() {
+    const host = byId("lifecycleRepairBanner");
+    if (!host) return;
+    const repair = computeRepairState();
+    if (!repair) {
+      host.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="rom-repair-banner__head"><strong>${escapeHtml(repair.title)}</strong></div>
+      <p class="rom-repair-banner__reason"><strong>Reason:</strong> ${escapeHtml(repair.reason)}</p>
+      <p>${escapeHtml(repair.detail)}</p>
+      <div class="rom-bind">
+        <div class="rom-bind__row"><span class="rom-bind__label">Current Recruitment</span><span class="rom-bind__value">${escapeHtml(repair.recruitment)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Current Event</span><span class="rom-bind__value">${escapeHtml(repair.event)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Current Draft</span><span class="rom-bind__value">${escapeHtml(repair.draft)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Current Page</span><span class="rom-bind__value">${escapeHtml(repair.page)}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Required action</span><span class="rom-bind__value">${escapeHtml(repair.action)}</span></div>
+      </div>`;
   }
 
   function renderLifecycleOverview() {
@@ -357,7 +449,14 @@
     }
 
     const stageEl = byId("lifecycleCurrentStage");
-    if (stageEl) stageEl.textContent = currentStageLabel();
+    if (stageEl) {
+      const auth = selectAuthoritativeEventClient(events);
+      stageEl.textContent = auth
+        ? `${labelize(auth.event_type)} (Event #${auth.id} · ${auth.status})`
+        : `${currentStageLabel()} (cached projection)`;
+    }
+
+    renderRepairBanner();
 
     const checklist = byId("lifecycleStageChecklist");
     if (checklist) {

@@ -347,6 +347,55 @@ body.admin-saas-v2 .rom-detail-panel {
   min-width: 0;
 }
 
+/* List-only until a recruitment is opened — reclaim vertical/horizontal space */
+.rom-layout.rom-layout--list-only {
+  grid-template-columns: 1fr;
+}
+
+.rom-layout.rom-layout--list-only .rom-detail-panel[hidden] {
+  display: none !important;
+}
+
+.rom-list-panel .rom-card__head {
+  margin-bottom: 0.35rem;
+  padding-bottom: 0;
+}
+
+.rom-list-panel .rom-filters {
+  margin-bottom: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  gap: 0.55rem 0.75rem;
+}
+
+.rom-list-panel .rom-table-wrap {
+  max-height: min(52vh, 520px);
+  overflow: auto;
+}
+
+.rom-list-panel .rom-table th,
+.rom-list-panel .rom-table td {
+  padding: 0.45rem 0.55rem;
+  vertical-align: middle;
+}
+
+.rom-list-panel .rom-table th {
+  font-size: 0.68rem;
+}
+
+.rom-list-panel .rom-table td strong {
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+
+.rom-list-panel .rom-table td small {
+  font-size: 0.72rem;
+  color: var(--admin-muted);
+}
+
+.rom-list-panel .rom-pagination {
+  margin-top: 0.65rem;
+}
+
 .rom-section-purpose {
   margin: 0.15rem 0 0;
   color: var(--admin-text-muted, #64748b);
@@ -538,6 +587,14 @@ body.admin-saas-v2 .rom-detail-panel {
   .rom-inline-form,
   .rom-link-form {
     grid-template-columns: 1fr;
+  }
+
+  .rom-layout:not(.rom-layout--list-only) {
+    grid-template-columns: 1fr;
+  }
+
+  .rom-list-panel .rom-table-wrap {
+    max-height: none;
   }
 
   .rom-guide {

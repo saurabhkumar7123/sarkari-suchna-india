@@ -1162,29 +1162,12 @@
 
   function bindAccSwitcher() {
     const root = document.querySelector("[data-acc-switcher]");
-    const trigger = qs("accSwitcherTrigger");
+    if (!root) return;
+
+    const bar = root.querySelector(".acc-switcher__bar");
+    if (bar) bar.remove();
     const menu = qs("accSwitcherMenu");
-    if (!root || !trigger || !menu) return;
-
-    function setOpen(open) {
-      menu.hidden = !open;
-      trigger.setAttribute("aria-expanded", open ? "true" : "false");
-      root.classList.toggle("is-open", open);
-    }
-
-    trigger.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setOpen(menu.hidden);
-    });
-
-    document.addEventListener("click", (event) => {
-      if (!root.contains(event.target)) setOpen(false);
-    });
-
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") setOpen(false);
-    });
+    if (menu) menu.hidden = false;
 
     root.querySelectorAll("a.acc-switcher__option").forEach((link) => {
       link.addEventListener("click", () => {

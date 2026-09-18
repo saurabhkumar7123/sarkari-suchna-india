@@ -414,29 +414,12 @@ function syncMonitoringWorkspaceTabs() {
 
 function bindMonSwitcher() {
   const root = document.querySelector("[data-mon-switcher]");
-  const trigger = document.getElementById("monSwitcherTrigger");
+  if (!root) return;
+
+  const bar = root.querySelector(".mon-switcher__bar");
+  if (bar) bar.remove();
   const menu = document.getElementById("monSwitcherMenu");
-  if (!root || !trigger || !menu) return;
-
-  function setOpen(open) {
-    menu.hidden = !open;
-    trigger.setAttribute("aria-expanded", open ? "true" : "false");
-    root.classList.toggle("is-open", open);
-  }
-
-  trigger.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setOpen(menu.hidden);
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!root.contains(event.target)) setOpen(false);
-  });
-
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") setOpen(false);
-  });
+  if (menu) menu.hidden = false;
 
   root.querySelectorAll("a.mon-switcher__option").forEach((link) => {
     link.addEventListener("click", () => {
