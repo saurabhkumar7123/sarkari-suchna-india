@@ -1,9 +1,32 @@
 /**
  * Generator-only UI: sticky publish bar, section step nav,
- * collapsed header search toggle (hidden on #drafts).
+ * collapsed search toggle, show Live Preview only after Preview action.
  * Presentation only — does not replace generator.js handlers.
  */
 (function () {
+  function showGeneratorPreview() {
+    document.body.classList.add("generator-preview-visible");
+  }
+
+  /* Reveal Live Preview after existing Preview actions (handlers unchanged). */
+  ["previewBtn", "editorFsPreviewBtn"].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (!btn || btn.dataset.previewRevealBound === "1") return;
+    btn.dataset.previewRevealBound = "1";
+    btn.addEventListener("click", showGeneratorPreview);
+  });
+
+  if (String(window.location.hash || "") === "#gen-step-preview") {
+    showGeneratorPreview();
+  }
+  window.addEventListener("hashchange", () => {
+    if (String(window.location.hash || "") === "#gen-step-preview") {
+      showGeneratorPreview();
+    }
+  });
+
+  /* Collapsed search → icon opens existing #pageSearch UI (logic unchanged).
+     Only active on /generator (not #drafts). */
   function isDraftsHash() {
     return String(window.location.hash || "").toLowerCase() === "#drafts";
   }
@@ -69,6 +92,7 @@
       const target = id ? document.getElementById(id) : null;
       if (!target) return;
       e.preventDefault();
+      if (id === "gen-step-preview") showGeneratorPreview();
       target.scrollIntoView({ behavior: "smooth", block: "start" });
       setActiveStep(id);
     });

@@ -1085,9 +1085,9 @@ body.dark .pagination button{
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  padding:4px 8px 12px;
+  padding:8px 10px 8px;
   border-bottom:1px solid rgba(255,255,255,.08);
-  margin-bottom:8px;
+  margin-bottom:0;
   flex-shrink:0;
 }
 

@@ -295,7 +295,37 @@ body.admin-saas-v2 #adminAppTopbar {
   overflow: hidden !important;
 }
 
-/* Page-purpose / workflow explainer copy — hide shared subtitle blocks */
+/* Desktop: empty topbar (no tools/breadcrumbs) was leaving a blank white strip
+   above the page header and pushing content down — reclaim that space. */
+@media (min-width: 769px) {
+  body.admin-saas-v2.admin-has-topbar {
+    --admin-topbar-h: 0px;
+  }
+
+  #adminAppTopbar,
+  body.admin-saas-v2 #adminAppTopbar {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  body.admin-saas-v2.admin-has-topbar .main,
+  body.admin-saas-v2.admin-has-topbar #standaloneAdminShell,
+  body.admin-saas-v2.admin-has-topbar .standalone-admin-content {
+    margin-top: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* Page-purpose / workflow explainer copy — hide shared subtitle blocks.
+   Keep id'd manager-hints (live status / operational feedback). */
 .mon-workspace-head__sub,
 .acc-workspace-head__sub,
 .admin-page-head > div > .manager-hint,
@@ -304,7 +334,16 @@ body.admin-saas-v2 #adminAppTopbar {
 .generator-hero > p,
 .generator-hero .page-subtitle,
 section.admin-page-head > div > p.page-subtitle,
-body.admin-saas-v2 .main > .admin-page-head .manager-hint {
+body.admin-saas-v2 .main > .admin-page-head .manager-hint,
+body.admin-saas-v2 p.manager-hint:not([id]),
+body.admin-saas-v2 .seo-help,
+body.admin-saas-v2 .rrq-help,
+body.admin-saas-v2 .rrp-help,
+body.admin-saas-v2 .er-help:not([id]),
+body.admin-saas-v2 .recruitment-testing-help,
+body.admin-saas-v2 .dashboard-hero__sub,
+body.admin-saas-v2 .seo-card__head > p:not([id]),
+body.admin-saas-v2 #featureCompletionReport {
   display: none !important;
 }
 
@@ -402,7 +441,7 @@ body.admin-saas-v2 .standalone-admin-content {
 }
 
 body.admin-saas-v2 .main {
-  padding: var(--admin-space-4) var(--admin-space-6) var(--admin-space-8);
+  padding: var(--admin-space-3) var(--admin-space-6) var(--admin-space-8);
 }
 
 /* In-page compact header — never a second hero topbar */
@@ -414,9 +453,9 @@ body.admin-saas-v2.standalone-admin-page #standaloneAdminShell > .admin-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  margin: 0 0 14px !important;
-  padding: 0 0 12px !important;
+  gap: 6px 12px;
+  margin: 0 0 10px !important;
+  padding: 0 0 8px !important;
   border: none !important;
   border-bottom: 1px solid var(--admin-border) !important;
   border-radius: 0 !important;
@@ -426,12 +465,12 @@ body.admin-saas-v2.standalone-admin-page #standaloneAdminShell > .admin-header {
 }
 
 .content-section {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
 }
 
 /* Standalone shell padding only — offset comes from --admin-sidebar-current above */
 body.admin-saas-v2.standalone-admin-page #standaloneAdminShell {
-  padding-top: var(--admin-space-5);
+  padding-top: var(--admin-space-3);
   padding-right: var(--admin-space-6);
   padding-bottom: var(--admin-space-8);
   padding-left: var(--admin-space-6);

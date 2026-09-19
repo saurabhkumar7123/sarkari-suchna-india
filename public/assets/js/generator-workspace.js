@@ -739,8 +739,8 @@
     } catch {
       stored = null;
     }
-    const isNarrow = window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
-    setWorkspaceOpen(stored === null ? !isNarrow : stored === "1");
+    /* Default CLOSED — open via Show workspace / Review; respect stored preference. */
+    setWorkspaceOpen(stored === null ? false : stored === "1");
   }
 
   /* ----------------------------------------------------------- app events */

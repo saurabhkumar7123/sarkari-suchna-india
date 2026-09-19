@@ -20,7 +20,6 @@ function initDashboardWelcome() {
   const banner = document.getElementById("dashboardWelcomeBanner");
   const dismiss = document.getElementById("dashboardWelcomeDismiss");
   const greeting = document.getElementById("dashboardGreeting");
-  const heroTitle = document.getElementById("dashboardHeroTitle");
   const welcomeTitle = document.getElementById("dashboardWelcomeTitle");
   const dateLine = document.getElementById("dashboardDateLine");
 
@@ -39,7 +38,6 @@ function initDashboardWelcome() {
   const greet = getTimeGreeting();
   const displayName = username.charAt(0).toUpperCase() + username.slice(1);
   if (greeting) greeting.textContent = `${greet}, ${displayName}`;
-  if (heroTitle) heroTitle.textContent = `${greet}, ${displayName}`;
   if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${displayName}`;
   if (dateLine) {
     dateLine.textContent = new Date().toLocaleDateString("en-IN", {

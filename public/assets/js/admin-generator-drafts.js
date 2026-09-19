@@ -121,32 +121,37 @@
     bar.setAttribute("aria-label", "Saved Draft Management");
     bar.innerHTML = `
       <div class="generator-drafts-bar__head">
-        <strong class="generator-drafts-bar__title">Saved Draft Management</strong>
-        <span class="generator-drafts-bar__count" id="generatorDraftsBarTotal">Total 0</span>
-        <span class="generator-drafts-bar__capacity" id="generatorDraftsBarCapacity" title="Unpublished draft capacity">0 / 20</span>
-      </div>
-      <div class="generator-drafts-bar__filters" role="tablist" aria-label="Draft status">
-        <button type="button" class="generator-drafts-bar__filter is-active" data-draft-filter="all" aria-selected="true">All</button>
-        <button type="button" class="generator-drafts-bar__filter" data-draft-filter="draft" aria-selected="false">
-          Unpublished <span class="generator-drafts-bar__badge" id="generatorDraftsBarBadgeDraft">0</span>
-        </button>
-        <button type="button" class="generator-drafts-bar__filter" data-draft-filter="published" aria-selected="false">
-          Published <span class="generator-drafts-bar__badge is-muted" id="generatorDraftsBarBadgePublished">0</span>
+        <button type="button" class="generator-drafts-bar__collapse" id="generatorDraftsBarCollapse" aria-expanded="false" aria-controls="generatorDraftsBarPanel">
+          <strong class="generator-drafts-bar__title">Saved Draft Management</strong>
+          <span class="generator-drafts-bar__count" id="generatorDraftsBarTotal">Total 0</span>
+          <span class="generator-drafts-bar__capacity" id="generatorDraftsBarCapacity" title="Unpublished draft capacity">0 / 20</span>
+          <span class="generator-drafts-bar__collapse-chevron" aria-hidden="true">▾</span>
         </button>
       </div>
-      <div class="generator-drafts-bar__table-wrap">
-        <table class="generator-drafts-bar__table" aria-label="Saved drafts">
-          <thead>
-            <tr>
-              <th scope="col">Draft / Recruitment</th>
-              <th scope="col">Status</th>
-              <th scope="col">Updated</th>
-              <th scope="col">Action</th>
-            </tr>
-          </thead>
-          <tbody id="generatorDraftsBarTableBody"></tbody>
-        </table>
-        <p class="generator-drafts-bar__section-empty" id="generatorDraftsBarEmpty" hidden>No saved drafts yet.</p>
+      <div class="generator-drafts-bar__panel" id="generatorDraftsBarPanel" hidden>
+        <div class="generator-drafts-bar__filters" role="tablist" aria-label="Draft status">
+          <button type="button" class="generator-drafts-bar__filter is-active" data-draft-filter="all" aria-selected="true">All</button>
+          <button type="button" class="generator-drafts-bar__filter" data-draft-filter="draft" aria-selected="false">
+            Unpublished <span class="generator-drafts-bar__badge" id="generatorDraftsBarBadgeDraft">0</span>
+          </button>
+          <button type="button" class="generator-drafts-bar__filter" data-draft-filter="published" aria-selected="false">
+            Published <span class="generator-drafts-bar__badge is-muted" id="generatorDraftsBarBadgePublished">0</span>
+          </button>
+        </div>
+        <div class="generator-drafts-bar__table-wrap">
+          <table class="generator-drafts-bar__table" aria-label="Saved drafts">
+            <thead>
+              <tr>
+                <th scope="col">Draft / Recruitment</th>
+                <th scope="col">Status</th>
+                <th scope="col">Updated</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="generatorDraftsBarTableBody"></tbody>
+          </table>
+          <p class="generator-drafts-bar__section-empty" id="generatorDraftsBarEmpty" hidden>No saved drafts yet.</p>
+        </div>
       </div>`;
 
     if (host.classList.contains("main-container")) {
@@ -154,8 +159,32 @@
     } else {
       host.insertAdjacentElement("afterend", bar);
     }
+    bindBarCollapse(bar);
     bindBarFilters(bar);
     return bar;
+  }
+
+  function setBarListOpen(bar, open) {
+    if (!bar) return;
+    const panel = el("generatorDraftsBarPanel");
+    const toggle = el("generatorDraftsBarCollapse");
+    if (panel) panel.hidden = !open;
+    if (toggle) toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    bar.classList.toggle("is-list-open", Boolean(open));
+  }
+
+  function bindBarCollapse(bar) {
+    if (!bar || bar.dataset.collapseBound === "1") return;
+    bar.dataset.collapseBound = "1";
+    const toggle = el("generatorDraftsBarCollapse");
+    if (!toggle) return;
+    /* Default CLOSED — open only on user click. */
+    setBarListOpen(bar, false);
+    toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      setBarListOpen(bar, open);
+    });
   }
 
   function setSectionOpen(root, section, open, prefix) {

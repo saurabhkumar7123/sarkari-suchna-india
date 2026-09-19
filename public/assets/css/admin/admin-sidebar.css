@@ -53,7 +53,8 @@ body.admin-saas-v2 .sidebar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 12px 12px;
+  padding: 8px 10px 8px;
+  margin-bottom: 0;
   border-bottom: 1px solid var(--sb-border);
   flex-shrink: 0;
 }
@@ -67,7 +68,7 @@ body.admin-saas-v2 .sidebar {
   text-decoration: none;
   color: inherit;
   border-radius: 8px;
-  padding: 4px 6px;
+  padding: 2px 4px;
 }
 
 .sidebar-brand:hover {

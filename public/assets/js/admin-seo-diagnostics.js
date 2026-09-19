@@ -156,13 +156,19 @@
 
   async function loadPanel() {
     try {
-      const [panel, report] = await Promise.all([
-        api("/api/admin/seo-diagnostics?limit=40"),
-        api("/api/admin/seo-diagnostics/feature-completion-report")
-      ]);
+      const panel = await api("/api/admin/seo-diagnostics?limit=40");
       renderPanel(panel.data || {});
-      renderFeatureReport(report.data || {});
-      message("SEO diagnostics refreshed.");
+      const reportSection = byId("featureCompletionReport");
+      if (
+        reportSection &&
+        !reportSection.hasAttribute("hidden") &&
+        byId("seoFeatureReport")
+      ) {
+        const report = await api("/api/admin/seo-diagnostics/feature-completion-report");
+        renderFeatureReport(report.data || {});
+      }
+      // Intentionally no "refreshed" toast — keep errors/operational messages only.
+      message("");
     } catch (err) {
       message(err.message, true);
     }
