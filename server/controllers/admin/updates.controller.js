@@ -107,7 +107,57 @@ const listRecentUpdates = asyncHandler(async (req, res) => {
   const rows = await fetchRecentUpdates(limit, {
     includeRecruitmentLinkage: isRecruitmentReadAwarenessEnabled()
   });
-  res.json({ success: true, data: rows });
+
+  let data = Array.isArray(rows) ? rows : [];
+  try {
+    const recruitmentReviewService = require("../../services/recruitmentReview.service");
+    const recruitmentReviewRepository = require("../../repositories/recruitmentReview.repository");
+    if (await recruitmentReviewRepository.tableExists()) {
+      data = await Promise.all(
+        data.map(async (row) => {
+          const updateId = row && row.id != null ? Number(row.id) : null;
+          if (!Number.isFinite(updateId) || updateId <= 0) return row;
+          try {
+            const review = await recruitmentReviewService.getReviewItemByUpdateId(updateId);
+            if (!review) {
+              return {
+                ...row,
+                review_id: null,
+                review_status: null,
+                draft_id: row.draft_id || row.draftId || null
+              };
+            }
+            const processor =
+              review.processor_output && typeof review.processor_output === "object"
+                ? review.processor_output
+                : {};
+            const draftId =
+              review.draft_id ||
+              review.draftId ||
+              review.generator_draft_id ||
+              processor.draftId ||
+              row.draft_id ||
+              row.draftId ||
+              null;
+            return {
+              ...row,
+              review_id: review.id,
+              review_status: review.status || null,
+              needs_matching: String(review.status || "").toLowerCase() === "needs_matching",
+              draft_id: draftId,
+              draftId: draftId
+            };
+          } catch {
+            return row;
+          }
+        })
+      );
+    }
+  } catch {
+    /* review enrichment is best-effort */
+  }
+
+  res.json({ success: true, data });
 });
 
 const restoreSiteHandler = asyncHandler(async (req, res) => {

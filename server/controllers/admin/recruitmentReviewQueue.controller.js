@@ -76,6 +76,71 @@ async function withReviewDetail(row) {
   return withAssistView(withDraft);
 }
 
+function buildWorkflowGuidance(item) {
+  const status = String((item && item.status) || "").toLowerCase();
+  const linked = item && item.linked_draft;
+  const draftId = extractDraftIdFromReview(item);
+  const published = linked && String(linked.status || "").toLowerCase() === "published";
+  const hasRecruitment = item && item.recruitment_id != null && item.recruitment_id !== "";
+
+  const guide = {
+    currentStatus: status || "unknown",
+    meaning: "",
+    nextAction: "",
+    publishAllowed: false,
+    approveMeans: "Decision approved for editorial readiness — does NOT publish publicly."
+  };
+
+  if (status === "needs_matching") {
+    guide.meaning =
+      "Matching is uncertain — decide whether this belongs to an existing recruitment or is new.";
+    guide.nextAction =
+      "Attach to existing recruitment, Create Parent (new recruitment), Keep Under Review, Reject, or Freeze.";
+  } else if (status === "pending") {
+    guide.meaning = "Detected / queued — awaiting a human decision.";
+    guide.nextAction = hasRecruitment
+      ? "Review content, then Approve (not publish), Reject, Mark Under Review, or Freeze."
+      : "Resolve matching first, or Approve/Reject/Under Review/Freeze.";
+  } else if (status === "under_review") {
+    guide.meaning = "Decision deferred — item stays in the review workflow; no public change.";
+    guide.nextAction = "Continue later: Approve, Reject, resolve matching if needed, or Freeze.";
+  } else if (status === "approved") {
+    guide.meaning =
+      "Review decision approved. Public publishing is still blocked until Manual Publish.";
+    guide.nextAction = draftId
+      ? `Open Generator draft #${draftId} → Preview → Manual Publish.`
+      : "Create/open draft in Generator → Preview → Manual Publish.";
+    guide.publishAllowed = !published;
+  } else if (status === "rejected") {
+    guide.meaning = "Rejected — must not enter draft/publish path from this review item.";
+    guide.nextAction =
+      "No publish. Notes/history preserve the reason. Re-open only via a new detection or manual work if needed.";
+  } else if (status === "frozen") {
+    guide.meaning =
+      "Frozen — hold for investigation. Not Reject and not Approve. Editing and decisions are blocked until Unfreeze.";
+    guide.nextAction = "Unfreeze to restore Under Review, then continue the workflow.";
+  } else {
+    guide.meaning = "Review item loaded.";
+    guide.nextAction = "Choose an available action for the current status.";
+  }
+
+  if (published) {
+    guide.meaning =
+      "Already published via Manual Publish — subsequent updates must attach to the same canonical recruitment page.";
+    guide.nextAction = linked.publishedSlug
+      ? `Open public page /${String(linked.publishedSlug).replace(/^\//, "")} or create a new typed update on the same recruitment.`
+      : "Open Page Manager / Recruitments for the canonical page; do not create a duplicate recruitment.";
+    guide.publishAllowed = false;
+  }
+
+  return guide;
+}
+
+async function withReviewDetailAndGuidance(row) {
+  const detail = await withReviewDetail(row);
+  return { ...detail, workflow: buildWorkflowGuidance(detail) };
+}
+
 const listRecruitmentReviewQueueHandler = async (req, res) => {
   try {
     const result = await recruitmentReviewService.listReviewItems({
@@ -84,6 +149,7 @@ const listRecruitmentReviewQueueHandler = async (req, res) => {
       status: req.query.status,
       event_type: req.query.event_type,
       recruitment_id: req.query.recruitment_id,
+      update_id: req.query.update_id,
       search: req.query.search
     });
     res.json({
@@ -105,7 +171,39 @@ const getRecruitmentReviewQueueHandler = async (req, res) => {
         message: "Review item not found"
       });
     }
-    res.json({ success: true, data: await withReviewDetail(row) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(row) });
+  } catch (err) {
+    return sendServiceError(res, err);
+  }
+};
+
+const getRecruitmentReviewByUpdateHandler = async (req, res) => {
+  try {
+    const row = await recruitmentReviewService.getReviewItemByUpdateId(req.params.updateId);
+    if (!row) {
+      return res.status(404).json({
+        success: false,
+        message: "No review item for this update"
+      });
+    }
+    res.json({ success: true, data: await withReviewDetailAndGuidance(row) });
+  } catch (err) {
+    return sendServiceError(res, err);
+  }
+};
+
+const ensureRecruitmentReviewFromUpdateHandler = async (req, res) => {
+  try {
+    const updateId =
+      (req.body && req.body.update_id) ||
+      req.params.updateId ||
+      (req.query && req.query.update_id);
+    const result = await recruitmentReviewService.ensureReviewFromUpdate(updateId);
+    res.json({
+      success: true,
+      created: Boolean(result.created),
+      data: await withReviewDetailAndGuidance(result.item)
+    });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -117,7 +215,7 @@ const approveRecruitmentReviewHandler = async (req, res) => {
       decision: REVIEW_DECISIONS.APPROVE,
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: await withReviewDetail(updated) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -125,11 +223,18 @@ const approveRecruitmentReviewHandler = async (req, res) => {
 
 const rejectRecruitmentReviewHandler = async (req, res) => {
   try {
+    const notes = req.body && req.body.notes !== undefined ? req.body.notes : undefined;
+    if (!notes || !String(notes).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Reject requires a reason in notes"
+      });
+    }
     const updated = await recruitmentReviewService.updateReviewDecision(req.params.id, {
       decision: REVIEW_DECISIONS.REJECT,
-      notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
+      notes
     });
-    res.json({ success: true, data: await withReviewDetail(updated) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -141,7 +246,7 @@ const markUnderReviewRecruitmentReviewHandler = async (req, res) => {
       decision: REVIEW_DECISIONS.SKIP,
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: await withReviewDetail(updated) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -150,7 +255,18 @@ const markUnderReviewRecruitmentReviewHandler = async (req, res) => {
 const freezeRecruitmentReviewHandler = async (req, res) => {
   try {
     const updated = await recruitmentReviewService.freezeReviewItem(req.params.id);
-    res.json({ success: true, data: await withReviewDetail(updated) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
+  } catch (err) {
+    return sendServiceError(res, err);
+  }
+};
+
+const unfreezeRecruitmentReviewHandler = async (req, res) => {
+  try {
+    const updated = await recruitmentReviewService.unfreezeReviewItem(req.params.id, {
+      notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
+    });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -161,7 +277,7 @@ const updateRecruitmentReviewNotesHandler = async (req, res) => {
     const updated = await recruitmentReviewService.updateReviewNotes(req.params.id, {
       notes: req.body && req.body.notes !== undefined ? req.body.notes : undefined
     });
-    res.json({ success: true, data: await withReviewDetail(updated) });
+    res.json({ success: true, data: await withReviewDetailAndGuidance(updated) });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -178,7 +294,11 @@ const resolveNeedsMatchingHandler = async (req, res) => {
       notes: req.body && req.body.notes
     });
     const row = await recruitmentReviewService.getReviewItemById(req.params.id);
-    res.json({ success: true, data: await withReviewDetail(row), resolution: result });
+    res.json({
+      success: true,
+      data: await withReviewDetailAndGuidance(row),
+      resolution: result
+    });
   } catch (err) {
     return sendServiceError(res, err);
   }
@@ -187,10 +307,13 @@ const resolveNeedsMatchingHandler = async (req, res) => {
 module.exports = {
   listRecruitmentReviewQueueHandler,
   getRecruitmentReviewQueueHandler,
+  getRecruitmentReviewByUpdateHandler,
+  ensureRecruitmentReviewFromUpdateHandler,
   approveRecruitmentReviewHandler,
   rejectRecruitmentReviewHandler,
   markUnderReviewRecruitmentReviewHandler,
   freezeRecruitmentReviewHandler,
+  unfreezeRecruitmentReviewHandler,
   updateRecruitmentReviewNotesHandler,
   resolveNeedsMatchingHandler
 };

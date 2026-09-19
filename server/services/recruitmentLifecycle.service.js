@@ -370,9 +370,14 @@ async function resolveNeedsMatching({
   }
 
   if (chosen === "reject") {
+    if (!notes || !String(notes).trim()) {
+      const err = new Error("Reject requires a reason in notes");
+      err.statusCode = 400;
+      throw err;
+    }
     await recruitmentReviewService.updateReviewDecision(reviewId, {
       decision: "reject",
-      notes: notes || "Human rejected needs-matching item"
+      notes
     });
     return { ok: true, action: "reject", recruitmentId: null };
   }

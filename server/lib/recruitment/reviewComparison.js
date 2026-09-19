@@ -255,12 +255,52 @@ function buildReviewComparison(reviewItem = {}) {
  */
 function buildReviewHistory(reviewItem = {}) {
   const status = pickFirstDisplay(reviewItem.status, reviewItem.review_status);
+  const trail = [];
+  if (reviewItem.created_at || reviewItem.createdAt) {
+    trail.push({
+      at: reviewItem.created_at ?? reviewItem.createdAt,
+      event: "detected_or_queued",
+      detail: "Review item created"
+    });
+  }
+  if (reviewItem.update_id != null) {
+    trail.push({
+      at: null,
+      event: "linked_update",
+      detail: `Monitoring update #${reviewItem.update_id}`
+    });
+  }
+  if (reviewItem.recruitment_id != null) {
+    trail.push({
+      at: null,
+      event: "mapped_recruitment",
+      detail: `Recruitment #${reviewItem.recruitment_id}`
+    });
+  }
+  if (status) {
+    trail.push({
+      at: reviewItem.updated_at ?? reviewItem.updatedAt ?? null,
+      event: "current_status",
+      detail: String(status)
+    });
+  }
+  if (reviewItem.decision && String(reviewItem.decision).toLowerCase() !== "none") {
+    trail.push({
+      at: reviewItem.updated_at ?? reviewItem.updatedAt ?? null,
+      event: "decision",
+      detail: String(reviewItem.decision)
+    });
+  }
   return {
     createdAt: reviewItem.created_at ?? reviewItem.createdAt ?? null,
+    updatedAt: reviewItem.updated_at ?? reviewItem.updatedAt ?? null,
     status: status || null,
     decision: reviewItem.decision ?? null,
     notes: reviewItem.notes ?? null,
-    frozen: String(status || "").toLowerCase() === "frozen"
+    frozen: String(status || "").toLowerCase() === "frozen",
+    updateId: reviewItem.update_id ?? reviewItem.updateId ?? null,
+    recruitmentId: reviewItem.recruitment_id ?? reviewItem.recruitmentId ?? null,
+    trail
   };
 }
 

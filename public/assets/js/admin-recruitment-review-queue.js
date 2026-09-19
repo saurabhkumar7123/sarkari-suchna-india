@@ -8,6 +8,7 @@
   let totalItems = 0;
   let selectedId = null;
   let selectedItem = null;
+  let focusedUpdateId = null;
 
   function prettyJson(value) {
     if (value === undefined || value === null || value === "") return "—";
@@ -37,12 +38,25 @@
 
   function syncManualPublishLink(item) {
     const link = document.getElementById("rrqManualPublishLink");
+    const editLink = document.getElementById("rrqEditDraftLink");
     if (!link) return;
     const linked = item && item.linked_draft;
     const draftId =
       linked && linked.id
         ? String(linked.id)
         : resolveDraftId(item);
+    const status = String((item && item.status) || "").toLowerCase();
+    const published = linked && String(linked.status || "").toLowerCase() === "published";
+
+    if (editLink) {
+      if (draftId && !published && status !== "rejected" && status !== "frozen") {
+        editLink.hidden = false;
+        editLink.href = "/generator?draftId=" + encodeURIComponent(draftId);
+        editLink.textContent = "Edit Draft #" + draftId;
+      } else {
+        editLink.hidden = true;
+      }
+    }
 
     if (linked && String(linked.status || "").toLowerCase() === "published") {
       if (linked.publishedSlug) {
@@ -52,9 +66,16 @@
         link.href = "/admin/page-manager";
         link.textContent = "Open Page Manager";
       }
+      link.hidden = false;
       return;
     }
 
+    if (status === "rejected" || status === "frozen") {
+      link.hidden = true;
+      return;
+    }
+
+    link.hidden = false;
     if (linked && String(linked.status || "").toLowerCase() === "missing") {
       link.href = "/generator#drafts";
       link.textContent = "Manual Publish (Generator)";
@@ -63,11 +84,162 @@
 
     if (draftId) {
       link.href = "/generator?draftId=" + encodeURIComponent(draftId);
-      link.textContent = "Manual Publish (Generator)";
+      link.textContent =
+        status === "approved" ? "Manual Publish (required)" : "Manual Publish (Generator)";
       return;
     }
     link.href = "/generator#drafts";
     link.textContent = "Manual Publish (Generator)";
+  }
+
+  function syncActionAvailability(item) {
+    if (!item) {
+      document.querySelectorAll("#rrqActions [data-action]").forEach((btn) => {
+        btn.hidden = true;
+        btn.disabled = true;
+      });
+      const editLink = document.getElementById("rrqEditDraftLink");
+      const pubLink = document.getElementById("rrqManualPublishLink");
+      if (editLink) editLink.hidden = true;
+      if (pubLink) pubLink.hidden = true;
+      return;
+    }
+    const status = String((item && item.status) || "").toLowerCase();
+    const frozen = status === "frozen";
+    const rejected = status === "rejected";
+    const approved = status === "approved";
+    const published =
+      item &&
+      item.linked_draft &&
+      String(item.linked_draft.status || "").toLowerCase() === "published";
+    const needsMatching = status === "needs_matching";
+
+    const show = {
+      approve: !frozen && !rejected && !approved && !published,
+      reject: !frozen && !rejected && !published,
+      "under-review": !frozen && !rejected && !approved && !published,
+      freeze: !frozen && !rejected && !published,
+      unfreeze: frozen
+    };
+
+    document.querySelectorAll("#rrqActions [data-action]").forEach((btn) => {
+      const action = btn.getAttribute("data-action");
+      const visible = show[action] !== false;
+      btn.hidden = !visible;
+      btn.disabled = !visible;
+    });
+
+    const saveNotesBtn = document.getElementById("rrqSaveNotes");
+    const notesEl = document.getElementById("rrqNotes");
+    if (saveNotesBtn) saveNotesBtn.disabled = frozen;
+    if (notesEl) notesEl.disabled = frozen;
+
+    const matchActions = document.getElementById("rrqNeedsMatchingActions");
+    if (matchActions) {
+      matchActions.querySelectorAll("[data-match-action]").forEach((btn) => {
+        btn.disabled = frozen || rejected || published;
+      });
+    }
+
+    const legend = document.getElementById("rrqActionLegend");
+    if (legend) {
+      if (frozen) {
+        legend.textContent =
+          "Frozen: decisions blocked. Unfreeze restores Under Review. Freeze is not Reject or Approve.";
+      } else if (rejected) {
+        legend.textContent = "Rejected: no Publish from this item. Reason is stored in Notes.";
+      } else if (approved) {
+        legend.textContent =
+          "Approved (decision only). Next: Edit Draft / Preview → Manual Publish. Approve never auto-publishes.";
+      } else if (needsMatching) {
+        legend.textContent =
+          "Needs Matching: Attach existing, Create Parent (new), Reject, Keep Under Review, or Freeze.";
+      } else if (published) {
+        legend.textContent =
+          "Published: use Recruitments → Manual Update for Admit Card / Result on the same canonical page.";
+      } else {
+        legend.textContent =
+          "Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred. After Approve: Generator → Preview → Manual Publish.";
+      }
+    }
+  }
+
+  function renderWorkflowGuidance(item) {
+    const grid = document.getElementById("rrqWorkflowGrid");
+    const focusNote = document.getElementById("rrqFocusedUpdateNote");
+    if (!grid) return;
+    if (!item) {
+      grid.innerHTML = `
+        <div><dt>Current status</dt><dd>—</dd></div>
+        <div><dt>What this means</dt><dd>—</dd></div>
+        <div><dt>Next available action</dt><dd>—</dd></div>
+      `;
+      if (focusNote) {
+        focusNote.hidden = true;
+        focusNote.textContent = "";
+      }
+      return;
+    }
+    const wf = (item && item.workflow) || {};
+    const status = wf.currentStatus || item?.status || "—";
+    grid.innerHTML = `
+      <div>
+        <dt>Current status</dt>
+        <dd><span class="${statusClass(status)}">${escapeHtml(String(status).replace(/_/g, " "))}</span></dd>
+      </div>
+      <div>
+        <dt>What this means</dt>
+        <dd>${escapeHtml(wf.meaning || "—")}</dd>
+      </div>
+      <div>
+        <dt>Next available action</dt>
+        <dd>${escapeHtml(wf.nextAction || "—")}</dd>
+      </div>
+      <div>
+        <dt>Approve meaning</dt>
+        <dd>${escapeHtml(wf.approveMeans || "Approve is not publish.")}</dd>
+      </div>
+    `;
+    if (focusNote) {
+      const updateId = item && item.update_id;
+      if (updateId) {
+        focusNote.hidden = false;
+        focusNote.textContent = `Focused from Monitoring update #${updateId}. This detail is the selected review item — not a generic unrelated queue page.`;
+      } else {
+        focusNote.hidden = true;
+        focusNote.textContent = "";
+      }
+    }
+  }
+
+  function renderContextPanel(item) {
+    const grid = document.getElementById("rrqContextGrid");
+    if (!grid) return;
+    if (!item) {
+      grid.innerHTML = "";
+      return;
+    }
+    const processor =
+      item.processor_output && typeof item.processor_output === "object" ? item.processor_output : {};
+    const raw = item.raw_notice && typeof item.raw_notice === "object" ? item.raw_notice : {};
+    const siteName = processor.siteName || raw.siteName || "—";
+    const sourceUrl = item.source_url || raw.link || "—";
+    const updateId = item.update_id || raw.updateId || "—";
+    const detectedAt = formatDate(item.created_at || raw.detectedAt);
+    grid.innerHTML = `
+      <div><dt>SOURCE</dt><dd>${escapeHtml(siteName)}</dd></div>
+      <div><dt>Official URL</dt><dd>${
+        sourceUrl && sourceUrl !== "—"
+          ? `<a class="rrq-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(sourceUrl)}</a>`
+          : "—"
+      }</dd></div>
+      <div><dt>UPDATE</dt><dd>${escapeHtml(item.title || "—")}</dd></div>
+      <div><dt>Update type</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>
+      <div><dt>Detected</dt><dd>${escapeHtml(detectedAt)}</dd></div>
+      <div><dt>Update ID</dt><dd>${escapeHtml(String(updateId))}</dd></div>
+      <div><dt>RECRUITMENT</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
+      <div><dt>Review ID</dt><dd>${escapeHtml(String(item.id || "—"))}</dd></div>
+    `;
   }
 
   function setMessage(el, message, tone) {
@@ -101,7 +273,8 @@
       search: document.getElementById("filterSearch")?.value.trim() || "",
       status: document.getElementById("filterStatus")?.value || "",
       event_type: document.getElementById("filterEventType")?.value || "",
-      recruitment_id: document.getElementById("filterRecruitmentId")?.value || ""
+      recruitment_id: document.getElementById("filterRecruitmentId")?.value || "",
+      update_id: focusedUpdateId ? String(focusedUpdateId) : ""
     };
   }
 
@@ -114,6 +287,7 @@
     if (filters.status) params.set("status", filters.status);
     if (filters.event_type) params.set("event_type", filters.event_type);
     if (filters.recruitment_id) params.set("recruitment_id", filters.recruitment_id);
+    if (filters.update_id) params.set("update_id", filters.update_id);
     return params.toString();
   }
 
@@ -307,16 +481,36 @@
 
     const history = (assist && assist.history) || {};
     const createdAt = history.createdAt ?? item?.created_at;
+    const updatedAt = history.updatedAt ?? item?.updated_at;
     const status = history.status ?? item?.status;
     const decision = history.decision ?? item?.decision;
     const notes = history.notes ?? item?.notes;
     const frozen =
       history.frozen === true || String(status || "").toLowerCase() === "frozen";
+    const trail = Array.isArray(history.trail) ? history.trail : [];
+
+    const trailHtml = trail.length
+      ? `<div class="rrq-detail-full">
+          <dt>Trail</dt>
+          <dd><ul class="rrq-history-trail">${trail
+            .map(
+              (step) =>
+                `<li><strong>${escapeHtml(step.event || "event")}</strong>${
+                  step.detail ? `: ${escapeHtml(step.detail)}` : ""
+                }${step.at ? ` · ${escapeHtml(formatDate(step.at))}` : ""}</li>`
+            )
+            .join("")}</ul></dd>
+        </div>`
+      : "";
 
     grid.innerHTML = `
       <div>
         <dt>Created Time</dt>
         <dd>${escapeHtml(formatDate(createdAt))}</dd>
+      </div>
+      <div>
+        <dt>Updated</dt>
+        <dd>${escapeHtml(formatDate(updatedAt))}</dd>
       </div>
       <div>
         <dt>Current Status</dt>
@@ -334,6 +528,7 @@
         <dt>Frozen state</dt>
         <dd>${frozen ? "Frozen" : "Not frozen"}</dd>
       </div>
+      ${trailHtml}
     `;
   }
 
@@ -454,6 +649,11 @@
           processor.conversionRequired ||
             (processor.conversionError && typeof processor.conversionError === "object")
         );
+        const extractionQuality = processor.extractionQuality || null;
+        const validationStatus =
+          (processor.contentValidation && processor.contentValidation.status) ||
+          (extractionQuality && extractionQuality.status) ||
+          null;
         const validationProblems = []
           .concat(
             (processor.contentValidation && processor.contentValidation.problems) || []
@@ -461,26 +661,72 @@
           .concat(
             (processor.contentValidation && processor.contentValidation.warnings) || []
           );
+        const extractionNote =
+          extractionQuality && extractionQuality.lowConfidence
+            ? extractionQuality.code || "EXTRACTION_LOW_CONFIDENCE"
+            : extractionQuality && extractionQuality.code
+              ? extractionQuality.code
+              : "—";
         const conversionNote = conversionRequired
-          ? "Conversion required — extraction/AI convert failed or was weak. Retry in Generator."
+          ? "Conversion failed/weak — Review item preserved; retry in Generator."
           : validationProblems.length
             ? validationProblems
                 .slice(0, 3)
                 .map((p) => p.message || p.code)
                 .join("; ")
             : "—";
+        const mode =
+          processor.generatorMode ||
+          (processor.mergeContext && processor.mergeContext.generatorMode) ||
+          "—";
+        const canon =
+          pageSlug
+            ? "/" + String(pageSlug).replace(/^\//, "")
+            : (processor.canonicalPage && processor.canonicalPage.slug
+                ? "/" + String(processor.canonicalPage.slug).replace(/^\//, "")
+                : "Not linked yet");
+        const matchLevel =
+          processor.matchLevel ||
+          (processor.matching && processor.matching.matchLevel) ||
+          item.match_level ||
+          "—";
+        const decision =
+          String(item.status || "").toLowerCase() === "needs_matching"
+            ? "Human must attach correct Recruitment (never auto-publish)"
+            : mode === "UPDATE" || mode === "UPDATE EXISTING PAGE"
+              ? "Human: Generator → Preview → Manual Publish (UPDATE EXISTING PAGE)"
+              : "Human: Generator → Preview → Manual Publish (CREATE NEW CANONICAL PAGE)";
+        const repairBits = [];
+        if (!item.recruitment_id) repairBits.push("missing recruitment");
+        if (canon === "Not linked yet" && ["admit_card", "answer_key", "result", "final_result"].includes(String(item.event_type || "").toLowerCase())) {
+          repairBits.push("missing canonical page — BLOCK UPDATE");
+        }
+        if (processor.canonicalAmbiguous || (processor.mergeContext && processor.mergeContext.blocked)) {
+          repairBits.push("canonical page blocked/ambiguous");
+        }
         summary.innerHTML = `
-          <div><dt>Detected Update</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || item.title || "—")}</dd></div>
+          <div><dt>Detected document</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || item.title || "—")}</dd></div>
+          <div><dt>Document type</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>
           <div><dt>Source</dt><dd>${escapeHtml(item.source_url || "—")}</dd></div>
-          <div><dt>AI Match</dt><dd>Uncertain</dd></div>
-          <div><dt>Recruitment</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
-          <div><dt>Canonical Page</dt><dd>${escapeHtml(pageSlug ? "/" + String(pageSlug).replace(/^\//, "") : "Not linked yet")}</dd></div>
+          <div><dt>Match confidence</dt><dd>${escapeHtml(matchLevel)}</dd></div>
+          <div><dt>Recruitment candidate</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
+          <div><dt>Event</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>
           <div><dt>Draft</dt><dd>${
             draftId
               ? `<a href="/generator?draftId=${encodeURIComponent(draftId)}">Draft #${escapeHtml(draftId)}</a>`
               : "—"
           }</dd></div>
-          <div><dt>Conversion / Validation</dt><dd>${escapeHtml(conversionNote)}</dd></div>`;
+          <div><dt>Canonical Page</dt><dd>${escapeHtml(canon)}</dd></div>
+          <div><dt>Generator Mode</dt><dd>${escapeHtml(mode)}</dd></div>
+          <div><dt>Extraction</dt><dd>${escapeHtml(extractionNote)}</dd></div>
+          <div><dt>Validation</dt><dd>${escapeHtml(validationStatus || "—")}</dd></div>
+          <div><dt>Conversion / Warnings</dt><dd>${escapeHtml(conversionNote)}</dd></div>
+          <div><dt>Required human decision</dt><dd>${escapeHtml(decision)}</dd></div>
+          ${
+            repairBits.length
+              ? `<div><dt>REPAIR REQUIRED</dt><dd>${escapeHtml(repairBits.join("; "))}</dd></div>`
+              : ""
+          }`;
       }
     }
 
@@ -607,15 +853,139 @@
       if (status == null) return;
       const select = document.getElementById("filterStatus");
       if (!select) return;
-      const allowed = new Set(
-        Array.from(select.options).map((o) => o.value)
-      );
+      const allowed = new Set(Array.from(select.options).map((o) => o.value));
       if (allowed.has(status)) {
         select.value = status;
       }
     } catch {
       /* ignore */
     }
+  }
+
+  function readDeepLinkFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const reviewIdRaw = params.get("id") || params.get("review_id");
+      const updateIdRaw = params.get("update_id");
+      const reviewId = reviewIdRaw ? parseInt(reviewIdRaw, 10) : null;
+      const updateId = updateIdRaw ? parseInt(updateIdRaw, 10) : null;
+      return {
+        reviewId: Number.isInteger(reviewId) && reviewId > 0 ? reviewId : null,
+        updateId: Number.isInteger(updateId) && updateId > 0 ? updateId : null
+      };
+    } catch {
+      return { reviewId: null, updateId: null };
+    }
+  }
+
+  async function openFocusedReviewFromUrl() {
+    const deep = readDeepLinkFromUrl();
+    focusedUpdateId = deep.updateId;
+    const listMessage = document.getElementById("rrqListMessage");
+    const detailMessage = document.getElementById("rrqDetailMessage");
+
+    if (deep.reviewId) {
+      await loadDetail(deep.reviewId);
+      setMessage(
+        detailMessage,
+        `Opened review #${deep.reviewId}${deep.updateId ? ` for update #${deep.updateId}` : ""}.`,
+        "success"
+      );
+      return;
+    }
+
+    if (!deep.updateId) return;
+
+    const ensure = await apiRequest(`${API_BASE}/ensure-from-update`, {
+      method: "POST",
+      body: JSON.stringify({ update_id: deep.updateId })
+    });
+
+    if (!ensure.ok || !ensure.body || ensure.body.success !== true) {
+      setMessage(
+        listMessage,
+        (ensure.body && ensure.body.message) ||
+          `Could not open review for update #${deep.updateId}.`,
+        "error"
+      );
+      return;
+    }
+
+    renderDetail(ensure.body.data);
+    const created = Boolean(ensure.body.created);
+    setMessage(
+      detailMessage,
+      created
+        ? `Created review for Monitoring update #${deep.updateId}. Decide matching / next action below.`
+        : `Opened existing review for Monitoring update #${deep.updateId}.`,
+      "success"
+    );
+    // Prefer the focused item's real status over a stale URL status filter
+    // so the list stays aligned with the opened review row.
+    if (ensure.body.data && ensure.body.data.status) {
+      const select = document.getElementById("filterStatus");
+      if (select) {
+        select.value = String(ensure.body.data.status);
+        syncStatusChips();
+      }
+    }
+  }
+
+  function actionOutcomeMessage(action, item) {
+    const wf = (item && item.workflow) || {};
+    const status = item && item.status ? String(item.status) : action;
+    if (action === "approve") {
+      return `Approved (decision only). Status: ${status}. Next: ${wf.nextAction || "Manual Publish in Generator."}`;
+    }
+    if (action === "reject") {
+      return `Rejected. Status: ${status}. Will not draft/publish from this item.`;
+    }
+    if (action === "under-review") {
+      return `Marked Under Review — decision deferred. Status: ${status}. No public change.`;
+    }
+    if (action === "freeze") {
+      return `Frozen — hold for investigation (not Reject/Approve). Unfreeze to continue.`;
+    }
+    if (action === "unfreeze") {
+      return `Unfrozen → Under Review. Continue Approve / Reject / matching as needed.`;
+    }
+    return `Updated: ${action}. Status: ${status}.`;
+  }
+
+  async function runAction(action) {
+    if (!selectedId) return;
+    const detailMessage = document.getElementById("rrqDetailMessage");
+    setMessage(detailMessage, "");
+
+    const notes = document.getElementById("rrqNotes")?.value ?? "";
+    if (action === "reject" && !String(notes).trim()) {
+      setMessage(detailMessage, "Reject requires a reason in Notes.", "error");
+      document.getElementById("rrqNotes")?.focus();
+      return;
+    }
+
+    const path =
+      action === "under-review"
+        ? `${API_BASE}/${selectedId}/under-review`
+        : `${API_BASE}/${selectedId}/${action}`;
+
+    const result = await apiRequest(path, {
+      method: "POST",
+      body: JSON.stringify({ notes })
+    });
+
+    if (!result.ok || !result.body || result.body.success !== true) {
+      setMessage(
+        detailMessage,
+        (result.body && result.body.message) || `Could not ${action}.`,
+        "error"
+      );
+      return;
+    }
+
+    renderDetail(result.body.data);
+    setMessage(detailMessage, actionOutcomeMessage(action, result.body.data), "success");
+    await loadList();
   }
 
   function renderDetail(item) {
@@ -627,6 +997,9 @@
     if (!item) {
       panel.hidden = true;
       syncManualPublishLink(null);
+      syncActionAvailability(null);
+      renderWorkflowGuidance(null);
+      renderContextPanel(null);
       return;
     }
 
@@ -650,19 +1023,14 @@
     renderNeedsMatching(item);
     renderLinkage(item);
     renderHistory(assist, item);
+    renderWorkflowGuidance(item);
+    renderContextPanel(item);
     syncManualPublishLink(item);
+    syncActionAvailability(item);
     setAttachSelection("", "");
 
     const notesEl = document.getElementById("rrqNotes");
     if (notesEl) notesEl.value = item.notes || "";
-
-    const frozen = item.status === "frozen";
-    document.querySelectorAll("#rrqActions [data-action]").forEach((btn) => {
-      btn.disabled = frozen;
-    });
-    const saveNotesBtn = document.getElementById("rrqSaveNotes");
-    if (saveNotesBtn) saveNotesBtn.disabled = frozen;
-    if (notesEl) notesEl.disabled = frozen;
 
     const fields = {
       title: item.title,
@@ -780,36 +1148,6 @@
     await loadList();
   }
 
-  async function runAction(action) {
-    if (!selectedId) return;
-    const detailMessage = document.getElementById("rrqDetailMessage");
-    setMessage(detailMessage, "");
-
-    const notes = document.getElementById("rrqNotes")?.value ?? "";
-    const path =
-      action === "under-review"
-        ? `${API_BASE}/${selectedId}/under-review`
-        : `${API_BASE}/${selectedId}/${action}`;
-
-    const result = await apiRequest(path, {
-      method: "POST",
-      body: JSON.stringify({ notes })
-    });
-
-    if (!result.ok || !result.body || result.body.success !== true) {
-      setMessage(
-        detailMessage,
-        (result.body && result.body.message) || `Could not ${action}.`,
-        "error"
-      );
-      return;
-    }
-
-    renderDetail(result.body.data);
-    setMessage(detailMessage, `Updated: ${action}`, "success");
-    await loadList();
-  }
-
   async function saveNotes() {
     if (!selectedId) return;
     const detailMessage = document.getElementById("rrqDetailMessage");
@@ -847,6 +1185,7 @@
     document.getElementById("filterStatus").value = "";
     document.getElementById("filterEventType").value = "";
     document.getElementById("filterRecruitmentId").value = "";
+    focusedUpdateId = null;
     currentPage = 1;
     syncStatusChips();
     await loadList();
@@ -915,6 +1254,18 @@
       );
       return;
     }
+    if (action === "reject") {
+      const notes = document.getElementById("rrqNotes")?.value || "";
+      if (!String(notes).trim()) {
+        setMessage(
+          document.getElementById("rrqDetailMessage"),
+          "Reject requires a reason in Notes.",
+          "error"
+        );
+        document.getElementById("rrqNotes")?.focus();
+        return;
+      }
+    }
     await resolveMatching(action, recruitmentId || undefined);
   });
 
@@ -979,5 +1330,8 @@
 
   applyStatusFromUrl();
   syncStatusChips();
-  loadList();
+  (async function initReviewCenter() {
+    await openFocusedReviewFromUrl();
+    await loadList();
+  })();
 })();

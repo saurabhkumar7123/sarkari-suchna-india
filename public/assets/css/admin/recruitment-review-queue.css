@@ -33,7 +33,9 @@
 
 .rrq-assist,
 .rrq-comparison,
-.rrq-history {
+.rrq-history,
+.rrq-workflow,
+.rrq-context {
   margin-bottom: var(--admin-space-4);
   padding: var(--admin-space-4);
   border: 1px solid var(--admin-border);
@@ -43,12 +45,28 @@
 
 .rrq-assist h3,
 .rrq-comparison h3,
-.rrq-history h3 {
+.rrq-history h3,
+.rrq-workflow h3,
+.rrq-context h3 {
   margin: 0 0 0.55rem;
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--admin-text);
 }
+
+.rrq-workflow {
+  border-color: color-mix(in srgb, var(--admin-accent, #2563eb) 35%, var(--admin-border));
+  background: color-mix(in srgb, var(--admin-accent, #2563eb) 6%, var(--admin-surface-2));
+}
+
+.rrq-history-trail {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--admin-text-secondary);
+  line-height: 1.45;
+}
+
 
 .rrq-assist-note {
   margin: 0 0 0.65rem;

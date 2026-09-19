@@ -138,13 +138,17 @@ describe("reviewComparison — history", () => {
       })
     );
 
-    expect(history).toEqual({
-      createdAt: "2026-07-14T10:00:00.000Z",
-      status: "frozen",
-      decision: "approve",
-      notes: "locked",
-      frozen: true
-    });
+    expect(history).toEqual(
+      expect.objectContaining({
+        createdAt: "2026-07-14T10:00:00.000Z",
+        status: "frozen",
+        decision: "approve",
+        notes: "locked",
+        frozen: true
+      })
+    );
+    expect(Array.isArray(history.trail)).toBe(true);
+    expect(history.trail.some((step) => step.event === "current_status")).toBe(true);
   });
 
   test("marks non-frozen statuses correctly", () => {

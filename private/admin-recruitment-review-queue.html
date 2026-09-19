@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
-<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=8">
+<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=9">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -142,6 +142,21 @@
 
         <div class="rrq-detail-meta" id="rrqDetailMeta"></div>
 
+        <section class="rrq-workflow" id="rrqWorkflowPanel" aria-label="Workflow status">
+          <h3>Workflow status</h3>
+          <dl class="rrq-history-grid" id="rrqWorkflowGrid">
+            <div><dt>Current status</dt><dd>—</dd></div>
+            <div><dt>What this means</dt><dd>—</dd></div>
+            <div><dt>Next available action</dt><dd>—</dd></div>
+          </dl>
+          <p class="rrq-assist-note" id="rrqFocusedUpdateNote" hidden></p>
+        </section>
+
+        <section class="rrq-context" id="rrqContextPanel" aria-label="Source and update context">
+          <h3>SOURCE · UPDATE · RECRUITMENT</h3>
+          <dl class="rrq-history-grid" id="rrqContextGrid"></dl>
+        </section>
+
         <section class="rrq-assist" id="rrqDecisionAssist" aria-label="Decision assistant">
           <h3>Decision Assistant</h3>
           <p class="rrq-assist-note">
@@ -248,17 +263,22 @@
         </section>
 
         <div class="rrq-actions" id="rrqActions">
-          <button type="button" class="header-action-btn" data-action="approve" title="Approve does not publish">Approve</button>
-          <button type="button" class="header-action-btn" data-action="reject">Reject</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review">Mark Under Review</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze">Freeze</button>
+          <button type="button" class="header-action-btn" data-action="approve" title="Approve review decision only — does not publish">Approve (not publish)</button>
+          <button type="button" class="header-action-btn" data-action="reject" title="Reject with a required reason in Notes">Reject</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review" title="Defer decision — stay in review workflow">Keep Under Review</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze" title="Hold for investigation — not Reject/Approve">Freeze</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="unfreeze" hidden title="Restore to Under Review">Unfreeze</button>
+          <a class="header-action-btn" id="rrqEditDraftLink" href="/generator#drafts" hidden style="text-decoration:none;">Edit Draft</a>
           <a class="header-action-btn header-action-btn--ghost" id="rrqManualPublishLink" href="/generator#drafts" style="text-decoration:none;">Manual Publish (Generator)</a>
         </div>
-        <p class="rrq-assist-note" style="margin-top:0.35rem;">Approve ≠ Publish. After a decision, open Generator for Preview → Manual Publish.</p>
+        <p class="rrq-assist-note" id="rrqActionLegend" style="margin-top:0.35rem;">
+          Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred.
+          After Approve: Generator → Preview → Manual Publish.
+        </p>
 
         <label class="rrq-notes-label">
-          Notes
-          <textarea id="rrqNotes" rows="4" maxlength="5000" placeholder="Reviewer notes"></textarea>
+          Notes / Reject reason
+          <textarea id="rrqNotes" rows="4" maxlength="5000" placeholder="Required when Rejecting. Optional otherwise."></textarea>
         </label>
         <button type="button" class="header-action-btn" id="rrqSaveNotes">Update Notes</button>
 
@@ -318,6 +338,6 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-recruitment-review-queue.js?v=8"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=9"></script>
 </body>
 </html>

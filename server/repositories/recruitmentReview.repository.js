@@ -449,6 +449,14 @@ async function list(opts = {}) {
     }
   }
 
+  if (opts.update_id !== undefined && opts.update_id !== null && opts.update_id !== "") {
+    const updateId = parseInt(String(opts.update_id), 10);
+    if (Number.isInteger(updateId) && updateId > 0) {
+      where += " AND update_id = ?";
+      params.push(updateId);
+    }
+  }
+
   const search = String(opts.search || "").trim();
   if (search) {
     const like = `%${search}%`;

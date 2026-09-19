@@ -488,10 +488,21 @@ const recruitmentReviewQueueListQuerySchema = Joi.object({
   recruitment_id: Joi.alternatives()
     .try(Joi.number().integer().positive(), Joi.string().trim().allow(""))
     .optional(),
+  update_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim().allow(""))
+    .optional(),
   search: Joi.string().trim().max(500).allow("").optional()
 })
   .optional()
   .default({})
+  .unknown(false);
+
+const recruitmentReviewQueueEnsureFromUpdateSchema = Joi.object({
+  update_id: Joi.alternatives()
+    .try(Joi.number().integer().positive(), Joi.string().trim())
+    .required()
+})
+  .required()
   .unknown(false);
 
 const recruitmentReviewQueueActionSchema = Joi.object({
@@ -784,6 +795,7 @@ module.exports = {
   recruitmentReviewQueueActionSchema,
   recruitmentReviewQueueNotesSchema,
   recruitmentReviewQueueResolveSchema,
+  recruitmentReviewQueueEnsureFromUpdateSchema,
   recruitmentManualUpdateSchema,
   recruitmentRuntimePreviewListQuerySchema,
   recruitmentDraftAttachSchema,

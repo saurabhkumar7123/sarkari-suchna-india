@@ -138,6 +138,7 @@ async function listPendingReviewItems(opts = {}) {
  *   status?: string,
  *   event_type?: string,
  *   recruitment_id?: number|string,
+ *   update_id?: number|string,
  *   search?: string
  * }} opts
  */
@@ -155,6 +156,166 @@ async function listReviewItems(opts = {}) {
   }
 
   return recruitmentReviewRepository.list(opts);
+}
+
+/**
+ * Open Review from a monitoring update: reuse existing review row or create a
+ * pending / needs_matching row so Automation OFF still has a manual path.
+ * Never publishes. Never creates a recruitment or draft by itself.
+ * @param {number|string} updateId
+ * @returns {Promise<{ item: object, created: boolean }>}
+ */
+async function ensureReviewFromUpdate(updateId) {
+  await assertTable();
+  const id = parseInt(String(updateId), 10);
+  if (!Number.isInteger(id) || id <= 0) {
+    const err = new Error("Invalid update id");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const existing = await getReviewItemByUpdateId(id);
+  if (existing && existing.id) {
+    return { item: existing, created: false };
+  }
+
+  const db = require("../config/db");
+  const { linkageColumnsExist } = require("./updates/updates.repository");
+  const hasLinkage = await linkageColumnsExist();
+  const [rows] = await db.query(
+    hasLinkage
+      ? `SELECT u.id, u.site_id, u.title, u.link, u.created_at,
+                u.recruitment_id, u.recruitment_event_id,
+                s.name AS site_name, s.url AS site_url,
+                re.event_type AS recruitment_event_type
+         FROM updates u
+         JOIN monitored_sites s ON s.id = u.site_id
+         LEFT JOIN recruitment_events re ON re.id = u.recruitment_event_id
+         WHERE u.id = ?
+         LIMIT 1`
+      : `SELECT u.id, u.site_id, u.title, u.link, u.created_at,
+                NULL AS recruitment_id, NULL AS recruitment_event_id,
+                s.name AS site_name, s.url AS site_url,
+                NULL AS recruitment_event_type
+         FROM updates u
+         JOIN monitored_sites s ON s.id = u.site_id
+         WHERE u.id = ?
+         LIMIT 1`,
+    [id]
+  );
+  const update = Array.isArray(rows) ? rows[0] : null;
+  if (!update) {
+    const err = new Error("Detected update not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const recruitmentId =
+    update.recruitment_id != null ? Number(update.recruitment_id) : null;
+  const eventTypeRaw = collapseWhitespace(update.recruitment_event_type).toLowerCase();
+  const allowedEventTypes = [
+    "notification",
+    "short_notification",
+    "correction",
+    "exam_date",
+    "city_intimation",
+    "admit_card",
+    "answer_key",
+    "objection",
+    "result",
+    "final_result",
+    "dv",
+    "medical",
+    "joining",
+    "unknown"
+  ];
+  const safeEventType = allowedEventTypes.includes(eventTypeRaw) ? eventTypeRaw : "unknown";
+
+  const saved = await saveReviewItem({
+    updateId: id,
+    recruitmentId: Number.isFinite(recruitmentId) && recruitmentId > 0 ? recruitmentId : null,
+    recruitmentEventId:
+      update.recruitment_event_id != null ? Number(update.recruitment_event_id) : null,
+    reviewItem: {
+      recruitmentId: Number.isFinite(recruitmentId) && recruitmentId > 0 ? recruitmentId : null,
+      eventType: safeEventType,
+      confidence: "none",
+      sourceUrl: update.link || update.site_url || null,
+      title: update.title || `Detected update #${id}`,
+      createdAt: update.created_at
+        ? new Date(update.created_at).toISOString()
+        : new Date().toISOString(),
+      notes: null
+    },
+    rawNotice: {
+      updateId: id,
+      siteId: update.site_id,
+      siteName: update.site_name || null,
+      title: update.title,
+      link: update.link,
+      detectedAt: update.created_at
+    },
+    processorOutput: {
+      origin: "manual_open_review",
+      publishPolicy: "human_publish_required",
+      siteName: update.site_name || null
+    },
+    status:
+      Number.isFinite(recruitmentId) && recruitmentId > 0
+        ? REVIEW_STATUS.PENDING
+        : REVIEW_STATUS.NEEDS_MATCHING,
+    needsMatching:
+      Number.isFinite(recruitmentId) && recruitmentId > 0
+        ? null
+        : {
+            reason:
+              "Opened from Monitoring for manual review — choose existing recruitment or create new."
+          }
+  });
+
+  return { item: saved, created: true };
+}
+
+/**
+ * Unfreeze restores the item to under_review so the administrator can continue.
+ * Does not approve, reject, or publish. Does not change recruitment linkage.
+ * @param {number|string} id
+ * @param {{ notes?: string | null }} [input]
+ */
+async function unfreezeReviewItem(id, input = {}) {
+  await assertTable();
+  const reviewId = parseInt(String(id), 10);
+  if (!Number.isInteger(reviewId) || reviewId <= 0) {
+    const err = new Error("Invalid review id");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const existing = await recruitmentReviewRepository.findById(reviewId);
+  if (!existing) {
+    const err = new Error("Review item not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (existing.status !== REVIEW_STATUS.FROZEN) {
+    const err = new Error("Review item is not frozen");
+    err.statusCode = 409;
+    throw err;
+  }
+
+  const notes =
+    input.notes !== undefined
+      ? input.notes === null || input.notes === ""
+        ? existing.notes
+        : collapseWhitespace(input.notes)
+      : existing.notes;
+
+  return recruitmentReviewRepository.updateDecision(reviewId, {
+    decision: REVIEW_DECISIONS.SKIP,
+    status: REVIEW_STATUS.UNDER_REVIEW,
+    notes
+  });
 }
 
 /**
@@ -327,8 +488,10 @@ module.exports = {
   getReviewItemByUpdateId,
   listPendingReviewItems,
   listReviewItems,
+  ensureReviewFromUpdate,
   updateReviewDecision,
   freezeReviewItem,
+  unfreezeReviewItem,
   updateReviewNotes,
   bindReviewItemRecruitment
 };

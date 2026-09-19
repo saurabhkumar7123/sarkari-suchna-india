@@ -9,15 +9,19 @@ const {
   recruitmentReviewQueueListQuerySchema,
   recruitmentReviewQueueNotesSchema,
   recruitmentReviewQueueActionSchema,
-  recruitmentReviewQueueResolveSchema
+  recruitmentReviewQueueResolveSchema,
+  recruitmentReviewQueueEnsureFromUpdateSchema
 } = require("../../validations/admin.validation");
 const {
   listRecruitmentReviewQueueHandler,
   getRecruitmentReviewQueueHandler,
+  getRecruitmentReviewByUpdateHandler,
+  ensureRecruitmentReviewFromUpdateHandler,
   approveRecruitmentReviewHandler,
   rejectRecruitmentReviewHandler,
   markUnderReviewRecruitmentReviewHandler,
   freezeRecruitmentReviewHandler,
+  unfreezeRecruitmentReviewHandler,
   updateRecruitmentReviewNotesHandler,
   resolveNeedsMatchingHandler
 } = require("../../controllers/admin/recruitmentReviewQueue.controller");
@@ -26,6 +30,18 @@ router.get(
   "/recruitment-review-queue",
   validateJoi(recruitmentReviewQueueListQuerySchema, "query"),
   asyncHandler(listRecruitmentReviewQueueHandler)
+);
+
+router.get(
+  "/recruitment-review-queue/by-update/:updateId",
+  asyncHandler(getRecruitmentReviewByUpdateHandler)
+);
+
+router.post(
+  "/recruitment-review-queue/ensure-from-update",
+  adminSensitiveLimiter,
+  validateJoi(recruitmentReviewQueueEnsureFromUpdateSchema, "body"),
+  asyncHandler(ensureRecruitmentReviewFromUpdateHandler)
 );
 
 router.get("/recruitment-review-queue/:id", asyncHandler(getRecruitmentReviewQueueHandler));
@@ -56,6 +72,13 @@ router.post(
   adminSensitiveLimiter,
   validateJoi(recruitmentReviewQueueActionSchema, "body"),
   asyncHandler(freezeRecruitmentReviewHandler)
+);
+
+router.post(
+  "/recruitment-review-queue/:id/unfreeze",
+  adminSensitiveLimiter,
+  validateJoi(recruitmentReviewQueueActionSchema, "body"),
+  asyncHandler(unfreezeRecruitmentReviewHandler)
 );
 
 router.patch(

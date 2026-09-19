@@ -251,7 +251,16 @@ async function loadRecentUpdates() {
 }
 
 function classifyUpdate(r) {
-  const raw = String(r.status || r.processing_status || r.draft_status || r.review_status || "detected").toLowerCase();
+  const reviewStatus = String(r.review_status || "").toLowerCase();
+  if (reviewStatus === "needs_matching" || Boolean(r.needs_matching)) return "needs-matching";
+  if (reviewStatus === "approved" || reviewStatus === "rejected" || reviewStatus === "under_review") {
+    return "reviewed";
+  }
+  if (reviewStatus === "frozen") return "reviewed";
+  if (reviewStatus === "pending" && (r.draft_id || r.draftId)) return "drafted";
+  if (reviewStatus === "pending") return "needs-draft";
+
+  const raw = String(r.status || r.processing_status || r.draft_status || "detected").toLowerCase();
   const matchState = String(r.match_status || r.matching_status || r.recruitment_match_status || "").toLowerCase();
   const needsMatching =
     matchState === "needs_matching" ||
@@ -259,7 +268,7 @@ function classifyUpdate(r) {
     Boolean(r.needs_matching);
   if (needsMatching) return "needs-matching";
   const hasDraft = Boolean(r.draft_id || r.draftId || r.draft_status || /draft/.test(raw));
-  const reviewed = Boolean(r.review_status || /review|approved|published/.test(raw));
+  const reviewed = Boolean(/review|approved|published/.test(raw));
   if (reviewed) return "reviewed";
   if (hasDraft) return "drafted";
   return "needs-draft";
@@ -342,10 +351,18 @@ function renderDetectedUpdates(rows) {
       const draftBtn = draftId
         ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}">Open Draft</a>`
         : "";
-      const reviewHref =
-        stage === "needs-matching"
-          ? `/admin/recruitment-review-queue?status=needs_matching`
-          : `/admin/recruitment-review-queue`;
+      const updateId = r.id != null ? String(r.id) : "";
+      const reviewId = r.review_id || r.reviewId || "";
+      const reviewParams = new URLSearchParams();
+      if (updateId) reviewParams.set("update_id", updateId);
+      if (reviewId) reviewParams.set("id", String(reviewId));
+      if (stage === "needs-matching") reviewParams.set("status", "needs_matching");
+      const reviewHref = reviewParams.toString()
+        ? `/admin/recruitment-review-queue?${reviewParams.toString()}`
+        : `/admin/recruitment-review-queue`;
+      const reviewStatusLabel = r.review_status
+        ? String(r.review_status).replace(/_/g, " ")
+        : stageLabel;
       return `<article class="detected-update">
         <div>
           <strong>${source}</strong>
@@ -357,7 +374,7 @@ function renderDetectedUpdates(rows) {
           ${buildUpdateMiniFlow(stage)}
         </div>
         <span>${escapeAttr(when)}</span>
-        <span class="admin-status admin-status--${statusTone}"><span class="admin-status__ico" aria-hidden="true">${statusIco}</span>${stageLabel}</span>
+        <span class="admin-status admin-status--${statusTone}"><span class="admin-status__ico" aria-hidden="true">${statusIco}</span>${escapeAttr(reviewStatusLabel)}</span>
         <div class="detected-update__actions">
           <span class="badge">Class: ${classification}</span>
           <span class="badge">Recruitment: ${escapeAttr(String(recruitment))}</span>
