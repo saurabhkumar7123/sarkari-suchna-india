@@ -2215,9 +2215,11 @@ body[data-admin-hash="eventTimeline"] .rom-events-card {
 body[data-admin-hash="drafts"] .generator-hero,
 body[data-admin-hash="drafts"] .generator-steps,
 body[data-admin-hash="drafts"] .page-search-panel,
+body[data-admin-hash="drafts"] #pageSearchPanel,
+body[data-admin-hash="drafts"] .page-search-toggle,
 body[data-admin-hash="drafts"] .form-grid,
 body[data-admin-hash="drafts"] .admin-ops-flow {
-  display: none;
+  display: none !important;
 }
 
 body:not([data-admin-hash="drafts"]) #drafts,

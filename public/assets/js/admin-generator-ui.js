@@ -1,45 +1,57 @@
 /**
- * Generator-only UI: sticky publish bar, draft status chip, section step nav.
+ * Generator-only UI: sticky publish bar, section step nav,
+ * collapsed header search toggle (hidden on #drafts).
+ * Presentation only — does not replace generator.js handlers.
  */
 (function () {
+  function isDraftsHash() {
+    return String(window.location.hash || "").toLowerCase() === "#drafts";
+  }
+
+  const searchPanel = document.getElementById("pageSearchPanel");
+  const searchToggle = document.getElementById("pageSearchToggle");
+  const searchBody = document.getElementById("pageSearchBody");
+  const pageSearch = document.getElementById("pageSearch");
+
+  function syncSearchForHash() {
+    if (!searchPanel) return;
+    const onDrafts = isDraftsHash();
+    searchPanel.hidden = onDrafts;
+    searchPanel.setAttribute("aria-hidden", onDrafts ? "true" : "false");
+    if (onDrafts) {
+      if (searchToggle) searchToggle.setAttribute("aria-expanded", "false");
+      if (searchBody) searchBody.hidden = true;
+      searchPanel.classList.add("is-collapsed");
+      searchPanel.classList.remove("is-open");
+    }
+  }
+
+  syncSearchForHash();
+  window.addEventListener("hashchange", syncSearchForHash);
+
+  if (searchPanel && searchToggle && searchBody && searchToggle.dataset.searchBound !== "1") {
+    searchToggle.dataset.searchBound = "1";
+    searchToggle.addEventListener("click", () => {
+      if (isDraftsHash()) return;
+      const open = searchToggle.getAttribute("aria-expanded") !== "true";
+      searchToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      searchBody.hidden = !open;
+      searchPanel.classList.toggle("is-collapsed", !open);
+      searchPanel.classList.toggle("is-open", open);
+      if (open && pageSearch) {
+        window.setTimeout(() => pageSearch.focus(), 0);
+      }
+    });
+  }
+
   if (!window.AdminEnhancements || !window.AdminEnhancements.isEnabled()) return;
 
   const bar = document.querySelector(".action-bar");
   if (bar) {
     bar.classList.add("is-sticky-publish");
     document.body.classList.add("has-sticky-publish-bar");
-
-    let statusEl = document.getElementById("stickyDraftStatus");
-    const inner = bar.querySelector(".action-bar__inner") || bar;
-    if (!statusEl) {
-      statusEl = document.createElement("span");
-      statusEl.id = "stickyDraftStatus";
-      statusEl.className = "sticky-draft-status";
-      statusEl.setAttribute("aria-live", "polite");
-      inner.insertBefore(statusEl, inner.firstChild);
-    } else if (statusEl.parentElement !== inner) {
-      inner.insertBefore(statusEl, inner.firstChild);
-    }
-
-    function updateDraftStatus() {
-      try {
-        const pending = Number(localStorage.getItem("generatorPendingDrafts") || "0") > 0;
-        const raw = localStorage.getItem("generatorDraft_v1");
-        if (pending && raw) {
-          statusEl.textContent = "Draft saved locally";
-        } else if (pending) {
-          statusEl.textContent = "Unsaved draft";
-        } else {
-          statusEl.textContent = "";
-        }
-      } catch {
-        statusEl.textContent = "";
-      }
-    }
-
-    updateDraftStatus();
-    const t = window.setInterval(updateDraftStatus, 5000);
-    window.addEventListener("pagehide", () => clearInterval(t));
+    /* Remove legacy local-draft status chip if present — no replacement. */
+    document.getElementById("stickyDraftStatus")?.remove();
   }
 
   const steps = Array.from(document.querySelectorAll(".generator-step"));
