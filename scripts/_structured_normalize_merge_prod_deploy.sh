@@ -165,9 +165,9 @@ const snm = fs.readFileSync(
   "utf8"
 );
 if (
-  !snm.includes("normalizeRawToPublisherSections") ||
-  !snm.includes("mergePublisherSections") ||
-  !/REMOVE/.test(snm)
+  !snm.includes("normalizePublisherDocument") ||
+  !snm.includes("mergeStructuredPublisherDocuments") ||
+  !snm.includes('REMOVE: "REMOVE"')
 ) {
   console.error("REFUSING: structuredNormalizeMerge missing core exports/REMOVE handling");
   process.exit(2);
@@ -179,7 +179,7 @@ const merge = fs.readFileSync(
 if (
   !merge.includes("structuredNormalizeMerge") ||
   !merge.includes("mergePublisherSectionText") ||
-  !merge.includes("legacyMergePublisherSectionText")
+  !merge.includes("mergeStructuredPublisherDocuments")
 ) {
   console.error("REFUSING: updateMergeContext missing structured merge wiring");
   process.exit(2);

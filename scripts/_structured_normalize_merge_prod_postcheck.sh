@@ -65,15 +65,16 @@ echo "=== STRUCTURAL ==="
 node - <<'NODE'
 const fs = require("fs");
 const checks = [
-  ["structuredNormalizeMerge exports", "server/lib/recruitment/preparationPipeline/structuredNormalizeMerge.js", /normalizeRawToPublisherSections/],
-  ["structured merge REMOVE", "server/lib/recruitment/preparationPipeline/structuredNormalizeMerge.js", /REMOVE/],
+  ["structuredNormalizeMerge normalize", "server/lib/recruitment/preparationPipeline/structuredNormalizeMerge.js", /normalizePublisherDocument/],
+  ["structuredNormalizeMerge merge", "server/lib/recruitment/preparationPipeline/structuredNormalizeMerge.js", /mergeStructuredPublisherDocuments/],
+  ["structured merge REMOVE", "server/lib/recruitment/preparationPipeline/structuredNormalizeMerge.js", /REMOVE:\s*"REMOVE"/],
   ["updateMergeContext structured", "server/lib/recruitment/preparationPipeline/updateMergeContext.js", /structuredNormalizeMerge/],
-  ["legacyMerge fallback", "server/lib/recruitment/preparationPipeline/updateMergeContext.js", /legacyMergePublisherSectionText/],
+  ["updateMergeContext merge call", "server/lib/recruitment/preparationPipeline/updateMergeContext.js", /mergeStructuredPublisherDocuments/],
   ["pipeline export", "server/lib/recruitment/preparationPipeline/index.js", /structuredNormalizeMerge/],
   ["runtime structured", "server/lib/recruitment/productionRuntime/index.js", /structuredNormalizeMerge/],
   ["runtime classifications", "server/lib/recruitment/productionRuntime/index.js", /mergeClassifications/],
   ["BLOCKED gate", "server/lib/recruitment/productionRuntime/index.js", /BLOCKED/],
-  ["lifecycle eventType", "server/services/recruitmentLifecycle.service.js", /eventType|structured/i],
+  ["lifecycle structured", "server/services/recruitmentLifecycle.service.js", /mergePublisherSectionText|structuredNormalizeMerge|eventType/],
   ["draft combined preview", "server/services/generatorDraft.service.js", /resolveCombinedPreviewText/],
   ["pdf extractionQuality", "server/services/pdfGeneratorExtract.service.js", /extractionQuality/]
 ];
