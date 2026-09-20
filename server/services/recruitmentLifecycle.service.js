@@ -483,6 +483,56 @@ async function createManualRecruitmentUpdate({
           data: `[Section: Short Information]\n${title || type}`
         };
 
+  // Seed UPDATE drafts with existing canonical page + pending update sections
+  // so Generator Combined Preview / Manual Publish never start from a sparse stub.
+  try {
+    const recruitmentPageLinkService = require("./recruitmentPageLink.service");
+    const pageRepository = require("../repositories/page.repository");
+    const {
+      mergePublisherSectionText,
+      buildUpdateMergeContext,
+      buildEventDraftTitle
+    } = require("../lib/recruitment/preparationPipeline/updateMergeContext");
+
+    const canonical = await recruitmentPageLinkService.resolveCanonicalPublicPage(parent);
+    if (canonical && canonical.status === "unique" && canonical.page && canonical.page.slug) {
+      const page = await pageRepository.findAdminPageBySlug(canonical.page.slug);
+      const existingText = page && page.raw_text != null ? String(page.raw_text) : "";
+      const updateStub = String(draftPayload.data || draftPayload.content || "").trim();
+      if (existingText.trim()) {
+        const merged = updateStub
+          ? mergePublisherSectionText(existingText, updateStub)
+          : existingText;
+        const parentRec = await recruitmentService.getRecruitment(parent).catch(() => null);
+        const mergeContext = buildUpdateMergeContext({
+          recruitment: parentRec || { id: parent },
+          eventType: type,
+          event: eventResult && eventResult.event ? eventResult.event : { id: recruitmentEventId, event_type: type },
+          linkedPages: canonical.pages || [canonical.page],
+          existingPageContent: existingText,
+          draft: null
+        });
+        draftPayload.data = merged;
+        draftPayload.existingPageData = existingText;
+        draftPayload.mergeApplied = true;
+        draftPayload.generatorMode = "UPDATE";
+        draftPayload.mergeContext = mergeContext;
+        if (!draftPayload.title || draftPayload.title === `${type} update`) {
+          draftPayload.title =
+            buildEventDraftTitle(
+              (parentRec && (parentRec.title || parentRec.recruitment_name)) || title,
+              type
+            ) || draftPayload.title;
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn("manual update merge seed skipped", {
+      recruitmentId: parent,
+      message: err && err.message ? err.message : String(err)
+    });
+  }
+
   let draft;
   if (
     existingUnpublished &&
@@ -512,6 +562,21 @@ async function createManualRecruitmentUpdate({
       recruitmentId: parent,
       recruitmentEventId
     });
+  }
+
+  // Lifecycle manual updates must always bind recruitment linkage (editorial flag may be off).
+  if (draft && draft.id && typeof generatorDraftService.bindDraftRecruitmentLinkage === "function") {
+    try {
+      draft = await generatorDraftService.bindDraftRecruitmentLinkage(draft.id, {
+        recruitmentId: parent,
+        recruitmentEventId
+      });
+    } catch (err) {
+      logger.warn("manual update draft linkage bind skipped", {
+        draftId: draft.id,
+        message: err && err.message ? err.message : String(err)
+      });
+    }
   }
 
   const review = await recruitmentReviewService.saveReviewItem({

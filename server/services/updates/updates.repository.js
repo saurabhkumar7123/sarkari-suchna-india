@@ -363,6 +363,7 @@ function mapLegacyUpdateRow(row) {
     id: row.id,
     siteId: row.siteId,
     siteName: row.siteName,
+    siteUrl: row.siteUrl || null,
     title: row.title,
     link: row.link,
     createdAt: row.createdAt
@@ -412,7 +413,7 @@ async function fetchRecentUpdates(limit = 50, options = {}) {
 
   if (!canIncludeLinkage) {
     const [rows] = await db.query(
-      `SELECT u.id, u.site_id AS siteId, s.name AS siteName, u.title, u.link, u.created_at AS createdAt
+      `SELECT u.id, u.site_id AS siteId, s.name AS siteName, s.url AS siteUrl, u.title, u.link, u.created_at AS createdAt
        FROM updates u
        JOIN monitored_sites s ON s.id = u.site_id
        ORDER BY u.created_at DESC
@@ -423,7 +424,7 @@ async function fetchRecentUpdates(limit = 50, options = {}) {
   }
 
   const [rows] = await db.query(
-    `SELECT u.id, u.site_id AS siteId, s.name AS siteName, u.title, u.link, u.created_at AS createdAt,
+    `SELECT u.id, u.site_id AS siteId, s.name AS siteName, s.url AS siteUrl, u.title, u.link, u.created_at AS createdAt,
             u.recruitment_id AS recruitmentId, u.recruitment_event_id AS recruitmentEventId,
             r.title AS recruitmentTitle, r.slug AS recruitmentSlug,
             r.lifecycle_state AS recruitmentLifecycleState,

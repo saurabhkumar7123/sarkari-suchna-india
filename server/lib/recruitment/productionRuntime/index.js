@@ -44,6 +44,14 @@ const {
   withConvertedPublisherData
 } = require("./applyGeneratorAiConvert");
 const { validatePublisherDraftContent } = require("../publisherDraftValidation");
+const {
+  assessExtractionConfidence,
+  validatePreparationDraft,
+  buildUpdateMergeContext,
+  buildEventDraftTitle,
+  classifyLifecycleDocument,
+  mergePublisherSectionText
+} = require("../preparationPipeline");
 
 function collapseWhitespace(value) {
   return String(value ?? "")
@@ -212,7 +220,11 @@ async function persistDraft({
   notice = null,
   monitoredSite = null,
   updateId = null,
-  requireAcceptedConvert = false
+  requireAcceptedConvert = false,
+  eventType = null,
+  matchEvaluation = null,
+  linkedPages = null,
+  recruitmentRow = null
 }) {
   if (flags.AUTO_DRAFT_ENABLED !== true) {
     return { skipped: true, reason: "auto_draft_disabled" };
@@ -223,33 +235,70 @@ async function persistDraft({
     return { skipped: true, reason: "no_draft_payload" };
   }
 
+  const resolvedEventType =
+    eventType ||
+    resolveEventStageForPersistence(
+      workflowResult?.detection || null,
+      workflowResult?.recruitmentObject || {}
+    ) ||
+    (notice && notice.eventType) ||
+    null;
+
+  const classification = classifyLifecycleDocument({
+    title: payload.title || (notice && notice.title),
+    content: notice && (notice.content || notice.text),
+    url: (notice && (notice.pdfUrl || notice.url)) || payload.pageUrl,
+    sourceDocumentRef: updateId != null ? `update:${updateId}` : null
+  });
+
   let pdfExtraction = { ok: false, reason: "not_attempted" };
+  let extractionQuality = null;
   try {
     const extracted = await downloadOfficialPdfForGeneratorExtraction({
       notice,
       payload,
       monitoredSite
     });
+    extractionQuality =
+      extracted.extractionQuality ||
+      assessExtractionConfidence({
+        text: extracted.text,
+        pageCount: extracted.pageCount,
+        ocrUsed: extracted.ocrUsed,
+        extractionNote: extracted.extractionNote || null
+      });
     pdfExtraction = {
       ok: true,
       text: extracted.text,
       extractionNote: extracted.extractionNote || undefined,
       sourceUrl: extracted.sourceUrl,
-      documentHash: extracted.documentHash || null
+      documentHash: extracted.documentHash || null,
+      pageCount: extracted.pageCount || null,
+      ocrUsed: Boolean(extracted.ocrUsed),
+      extractionQuality
     };
     logger.info("production-runtime: official PDF extracted (draft payload unchanged)", {
       textLen: String(extracted.text || "").length,
-      sourceUrl: extracted.sourceUrl
+      sourceUrl: extracted.sourceUrl,
+      extractionCode: extractionQuality && extractionQuality.code
     });
   } catch (err) {
+    extractionQuality =
+      (err && err.extractionQuality) ||
+      assessExtractionConfidence({
+        text: "",
+        errorCode: err && err.code ? err.code : "EXTRACT_FAILED"
+      });
     pdfExtraction = {
       ok: false,
       reason: err && err.code ? err.code : "EXTRACT_FAILED",
-      message: err && err.message ? err.message : String(err)
+      message: err && err.message ? err.message : String(err),
+      extractionQuality
     };
     logger.warn("production-runtime: official PDF extraction skipped; retaining sparse draft", {
       reason: pdfExtraction.reason,
-      message: pdfExtraction.message
+      message: pdfExtraction.message,
+      extractionCode: extractionQuality && extractionQuality.code
     });
   }
 
@@ -304,20 +353,95 @@ async function persistDraft({
     });
   }
 
+  // BLOCKED extraction must never be treated as publish-ready,
+  // even when AI convert returns an accepted-looking publisher document.
+  if (extractionQuality && String(extractionQuality.status || "").toUpperCase() === "BLOCKED") {
+    conversionRequired = true;
+  }
+
   if (pdfExtraction.documentHash) {
     payloadForSave.documentHash = pdfExtraction.documentHash;
   }
 
-  contentValidation = validatePublisherDraftContent({
+  // Prefer event-aware draft titles when a recruitment parent title is known.
+  const recruitmentTitle =
+    (recruitmentRow && (recruitmentRow.title || recruitmentRow.recruitment_name)) ||
+    (workflowResult &&
+      workflowResult.recruitmentObject &&
+      (workflowResult.recruitmentObject.recruitmentName || workflowResult.recruitmentObject.title)) ||
+    null;
+  if (recruitmentTitle && resolvedEventType) {
+    payloadForSave.title = buildEventDraftTitle(recruitmentTitle, resolvedEventType);
+  }
+
+  contentValidation = validatePreparationDraft({
     text: payloadForSave.data,
     title: payloadForSave.title,
-    eventType: workflowResult?.recruitmentObject?.currentStage || null
+    eventType: resolvedEventType || classification.event_type,
+    identity: (matchEvaluation && matchEvaluation.identity) || {},
+    extractedText: pdfExtraction.ok ? pdfExtraction.text : null,
+    extractionStatus: extractionQuality && extractionQuality.status
   });
+
+  if (contentValidation && contentValidation.unsafeAutoPublishPrep === true) {
+    conversionRequired = true;
+  }
+
+  // Keep legacy publisher shape for older Review UI readers.
+  const legacyValidation = validatePublisherDraftContent({
+    text: payloadForSave.data,
+    title: payloadForSave.title,
+    eventType: resolvedEventType || classification.event_type
+  });
+
+  const pagesForCanonical = Array.isArray(linkedPages) ? linkedPages : [];
+  const mergeContext = buildUpdateMergeContext({
+    recruitment: recruitmentRow || (recruitmentId ? { id: recruitmentId, title: recruitmentTitle } : null),
+    eventType: resolvedEventType || classification.event_type,
+    linkedPages: pagesForCanonical,
+    sourceDocument: {
+      url: pdfExtraction.sourceUrl || (notice && notice.url) || null,
+      hash: pdfExtraction.documentHash || null
+    },
+    extraction: extractionQuality,
+    validation: contentValidation
+  });
+
+  // For UPDATE mode with existing page content on the payload, preserve merge base.
+  if (
+    mergeContext.generatorMode === "UPDATE" &&
+    payloadForSave.existingPageData &&
+    aiConvert.ok &&
+    payloadForSave.data
+  ) {
+    payloadForSave.data = mergePublisherSectionText(
+      payloadForSave.existingPageData,
+      payloadForSave.data
+    );
+    payloadForSave.mergeApplied = true;
+  }
+
   payloadForSave.conversionRequired = conversionRequired;
-  payloadForSave.validation = contentValidation;
+  payloadForSave.validation = {
+    ...legacyValidation,
+    status: contentValidation.status,
+    unsafeAutoBind: contentValidation.unsafeAutoBind,
+    problems: contentValidation.problems,
+    warnings: contentValidation.warnings
+  };
+  payloadForSave.extractionQuality = extractionQuality;
+  payloadForSave.classification = classification;
+  payloadForSave.mergeContext = mergeContext;
+  payloadForSave.generatorMode = mergeContext.generatorMode;
+  payloadForSave.canonicalPage = mergeContext.canonicalPage;
   if (conversionRequired) {
     payloadForSave.conversionError = {
-      pdfExtraction,
+      pdfExtraction: {
+        ok: pdfExtraction.ok,
+        reason: pdfExtraction.reason,
+        message: pdfExtraction.message,
+        extractionQuality
+      },
       aiConvert
     };
   }
@@ -336,6 +460,28 @@ async function persistDraft({
       }
     } catch (err) {
       logger.warn("production-runtime: update-keyed draft lookup failed; continuing", {
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
+
+  // One active unpublished draft per recruitment + event occurrence when updateId reuse misses.
+  if (
+    !existingDraftId &&
+    recruitmentId &&
+    recruitmentEventId &&
+    typeof generatorDraftService.findUnpublishedDraftForEventOccurrence === "function"
+  ) {
+    try {
+      const existingByEvent = await generatorDraftService.findUnpublishedDraftForEventOccurrence({
+        recruitmentId,
+        recruitmentEventId
+      });
+      if (existingByEvent && existingByEvent.id && String(existingByEvent.status) === "draft") {
+        existingDraftId = existingByEvent.id;
+      }
+    } catch (err) {
+      logger.warn("production-runtime: event-occurrence draft lookup failed; continuing", {
         message: err && err.message ? err.message : String(err)
       });
     }
@@ -372,7 +518,7 @@ async function persistDraft({
     structured_output: workflowResult?.draftPreview || {},
     difference_report: workflowResult?.difference || { changes: [] },
     confidence: workflowResult?.intelligenceResult?.confidence || {},
-    validation: workflowResult?.validation || {},
+    validation: contentValidation || workflowResult?.validation || {},
     warnings: workflowResult?.intelligenceResult?.reviewFlags || []
   });
 
@@ -384,6 +530,9 @@ async function persistDraft({
     aiConvert,
     conversionRequired,
     contentValidation,
+    extractionQuality,
+    mergeContext,
+    classification,
     reused: Boolean(existingDraftId)
   };
 }
@@ -929,7 +1078,14 @@ async function runProductionDetectionPipeline({
     notice,
     monitoredSite,
     updateId: workingUpdateId,
-    requireAcceptedConvert: true
+    requireAcceptedConvert: true,
+    eventType: resolveEventStageForPersistence(
+      pipelineOutcome.skipped || pipelineOutcome.failed ? null : pipelineOutcome.result,
+      workflowResult && workflowResult.recruitmentObject
+    ),
+    matchEvaluation: recruitmentRecord.evaluation || matchEvaluation,
+    linkedPages: pageCandidates,
+    recruitmentRow: recruitmentRecord.row || null
   }).catch((err) => ({ skipped: true, reason: "draft_error", error: err.message }));
 
   const incomingHash =
@@ -988,6 +1144,15 @@ async function runProductionDetectionPipeline({
               }
             : null,
         contentValidation: (draftResult && draftResult.contentValidation) || null,
+        extractionQuality: (draftResult && draftResult.extractionQuality) || null,
+        classification: (draftResult && draftResult.classification) || null,
+        mergeContext: (draftResult && draftResult.mergeContext) || null,
+        generatorMode:
+          (draftResult && draftResult.mergeContext && draftResult.mergeContext.generatorMode) ||
+          null,
+        canonicalPage:
+          (draftResult && draftResult.mergeContext && draftResult.mergeContext.canonicalPage) ||
+          null,
         draftMissing: !draftReady
       };
       reviewRow = await persistReviewQueue({

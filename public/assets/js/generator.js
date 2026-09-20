@@ -77,7 +77,9 @@ function setPageUrlLocked(locked) {
   if (modeBadge) {
     modeBadge.classList.toggle("is-edit", !!locked);
     modeBadge.classList.toggle("is-create", !locked);
-    modeBadge.textContent = locked ? "Edit mode · URL locked" : "Create mode · URL editable";
+    modeBadge.textContent = locked
+      ? "UPDATE EXISTING PAGE · slug locked"
+      : "CREATE NEW CONTENT · slug editable";
   }
   if (modeHint) {
     modeHint.textContent = locked
@@ -636,11 +638,17 @@ function collectGeneratorDraftPayload() {
 
 let recruitmentContextEnabled = false;
 
+/**
+ * Capability probe for recruitment context selectors.
+ * MUST NOT call /recruitments/:id/events with a placeholder/default ID (e.g. 1).
+ * Events are loaded only after a real recruitment ID is selected or resolved from
+ * draft/page ownership.
+ */
 async function probeEditorialAttachmentFlag() {
   try {
-    const res = await safeFetch("/api/admin/recruitments/1/events?limit=1");
+    const res = await safeFetch("/api/admin/recruitments?limit=1");
     if (res.status === 503) return false;
-    return true;
+    return Boolean(res.ok);
   } catch {
     return false;
   }
@@ -685,18 +693,34 @@ function updateRecruitmentContextCard() {
   const draftId = getGeneratorDraftId();
   const meta = window.__generatorDraftMeta || {};
   const linkedPage = window.__generatorLinkedPublicPage || null;
+  const pageOwn = window.__generatorPageOwnership || null;
   const draftTitle =
     String(document.getElementById("title")?.value || "").trim() ||
     meta.title ||
     (draftId ? `Draft #${draftId}` : "Untitled (not saved)");
   const live = isEditingLivePage();
   const liveSlug = normalizeSlugKey(document.getElementById("oldSlug")?.value || "");
-  const linked = Boolean(recSelect && recSelect.value) || Boolean(meta.recruitmentTitle);
+  const pageBound = Boolean(
+    pageOwn &&
+      pageOwn.recruitmentBound &&
+      pageOwn.recruitmentId != null &&
+      Number(pageOwn.recruitmentId) > 0
+  );
+  const linked =
+    Boolean(recSelect && recSelect.value) ||
+    Boolean(meta.recruitmentTitle) ||
+    pageBound;
 
   const recName =
     meta.recruitmentTitle ||
+    (pageBound ? pageOwn.recruitmentTitle : null) ||
     selectedOptionLabel(recSelect, "None (parent identity)");
-  const eventName = meta.eventLabel || selectedOptionLabel(evtSelect, "None (lifecycle stage)");
+  const eventName =
+    meta.eventLabel ||
+    (pageBound && pageOwn.authoritativeEventType
+      ? String(pageOwn.authoritativeEventType).replace(/_/g, " ")
+      : null) ||
+    selectedOptionLabel(evtSelect, "None (lifecycle stage)");
 
   let publicPageLabel = "No canonical page yet";
   if (linkedPage && linkedPage.status === "unique" && linkedPage.page && linkedPage.page.slug) {
@@ -709,15 +733,16 @@ function updateRecruitmentContextCard() {
 
   let modeLabel = "CREATE NEW CANONICAL PAGE";
   let modeTitle = "NEW RECRUITMENT CONTENT";
-  if (draftId && (live || (linkedPage && linkedPage.status === "unique"))) {
+  // Existing published canonical slug ⇒ always UPDATE (never CREATE).
+  if (live) {
+    modeLabel = "UPDATE EXISTING PAGE";
+    modeTitle = draftId ? "EDITING DRAFT" : "EDITING LIVE PAGE";
+  } else if (draftId && linkedPage && linkedPage.status === "unique") {
     modeLabel = "UPDATE EXISTING PAGE";
     modeTitle = "EDITING DRAFT";
   } else if (draftId) {
-    modeLabel = live ? "UPDATE EXISTING PAGE" : "CREATE NEW CANONICAL PAGE";
+    modeLabel = "CREATE NEW CANONICAL PAGE";
     modeTitle = "EDITING DRAFT";
-  } else if (live) {
-    modeLabel = "UPDATE EXISTING PAGE";
-    modeTitle = "EDITING LIVE PAGE";
   } else if (linked) {
     modeTitle = "NEW RECRUITMENT CONTENT";
     modeLabel = "CREATE NEW CANONICAL PAGE";
@@ -728,17 +753,69 @@ function updateRecruitmentContextCard() {
     if (el) el.textContent = value;
   };
   setText("generatorContextModeTitle", modeTitle);
+  const recruitmentDisplayId =
+    (recSelect && recSelect.value) ||
+    (pageBound && pageOwn.recruitmentId != null ? String(pageOwn.recruitmentId) : "");
   setText(
     "generatorContextRecruitment",
-    linked ? recName : "Not matched yet"
+    linked
+      ? recruitmentDisplayId
+        ? `${recName} (#${recruitmentDisplayId})`
+        : recName
+      : "NOT BOUND"
   );
-  setText("generatorContextEvent", eventName);
+  setText(
+    "generatorContextEvent",
+    evtSelect && evtSelect.value ? `${eventName} (#${evtSelect.value})` : eventName
+  );
   setText(
     "generatorContextDraft",
     draftId ? `${draftTitle} (#${draftId})` : "No parked draft (unsaved content)"
   );
   setText("generatorContextPublicPage", publicPageLabel);
   setText("generatorContextStatus", modeLabel);
+
+  const isUpdateMode = modeLabel === "UPDATE EXISTING PAGE";
+  setText(
+    "generatorContextExtraction",
+    meta.extractionCode || meta.extractionStatus || "—"
+  );
+  setText("generatorContextValidation", meta.validationStatus || "—");
+  setText(
+    "generatorContextNextAction",
+    isUpdateMode
+      ? "Preview → HUMAN MANUAL PUBLISH (UPDATE same slug)"
+      : "Preview → HUMAN MANUAL PUBLISH (CREATE canonical page)"
+  );
+
+  const slugLockEl = document.getElementById("generatorContextSlugLock");
+  if (slugLockEl) {
+    slugLockEl.hidden = !isUpdateMode;
+    if (isUpdateMode) {
+      slugLockEl.textContent = liveSlug
+        ? `SLUG LOCKED: /${liveSlug}`
+        : "SLUG LOCKED — UPDATE EXISTING PAGE only";
+    }
+  }
+
+  const ownershipExtra = document.getElementById("generatorContextOwnershipExtra");
+  if (ownershipExtra) {
+    const bits = [];
+    if (meta.updateId) bits.push(`Source update #${meta.updateId}`);
+    if (meta.conversionRequired) bits.push("Conversion required");
+    if (linkedPage && linkedPage.status === "ambiguous") {
+      bits.push("REPAIR REQUIRED: ambiguous canonical pages");
+    }
+    if (live && pageOwn && (pageOwn.recruitmentLinkage === "unbound" || pageOwn.recruitmentOrphan)) {
+      bits.push(
+        pageOwn.recruitmentOrphan
+          ? "REPAIR REQUIRED: linked recruitment missing"
+          : "REPAIR REQUIRED: page not linked to a Recruitment"
+      );
+    }
+    ownershipExtra.textContent = bits.join(" · ");
+    ownershipExtra.hidden = bits.length === 0;
+  }
 
   const bindEl = document.getElementById("generatorBindingVisual");
   if (bindEl) {
@@ -798,6 +875,11 @@ function clearRecruitmentContextSelectors() {
     evt.value = "";
     evt.disabled = true;
   }
+  window.__generatorPageOwnership = null;
+  if (window.__generatorDraftMeta) {
+    window.__generatorDraftMeta.recruitmentTitle = null;
+    window.__generatorDraftMeta.eventLabel = null;
+  }
   updateRecruitmentContextCard();
 }
 
@@ -824,6 +906,77 @@ async function applyRecruitmentContextFromDraft(row) {
     evtSelect.appendChild(opt);
   }
   evtSelect.value = eventId;
+  updateRecruitmentContextCard();
+}
+
+/**
+ * Apply canonical page↔recruitment ownership from GET /api/admin/pages/:slug.
+ * Same source as Page Manager — does NOT auto-bind or guess from title/slug text.
+ * Events API is called only for a real positive recruitment ID when bound.
+ */
+async function applyCanonicalPageOwnershipFromAdminPage(page) {
+  if (!page || typeof page !== "object") return;
+
+  const rid = page.recruitment_id != null ? Number(page.recruitment_id) : null;
+  const eid = page.recruitment_event_id != null ? Number(page.recruitment_event_id) : null;
+  const linkage = String(page.recruitmentLinkage || "").toLowerCase();
+  const bound =
+    page.recruitmentBound === true ||
+    (linkage === "bound" && Number.isInteger(rid) && rid > 0);
+  const orphan =
+    page.recruitmentOrphan === true ||
+    linkage === "orphan" ||
+    (Number.isInteger(rid) && rid > 0 && !bound && !page.recruitmentTitle);
+
+  window.__generatorPageOwnership = {
+    recruitmentId: Number.isInteger(rid) && rid > 0 ? rid : null,
+    recruitmentEventId: Number.isInteger(eid) && eid > 0 ? eid : null,
+    recruitmentTitle: bound ? page.recruitmentTitle || null : null,
+    recruitmentLinkage:
+      linkage ||
+      (Number.isInteger(rid) && rid > 0 ? (orphan ? "orphan" : "bound") : "unbound"),
+    recruitmentBound: Boolean(bound),
+    recruitmentOrphan: Boolean(orphan),
+    authoritativeEventType: bound ? page.authoritativeEventType || null : null
+  };
+
+  window.__generatorDraftMeta = {
+    ...(window.__generatorDraftMeta || {}),
+    recruitmentTitle: bound ? page.recruitmentTitle || null : null,
+    eventLabel:
+      bound && page.authoritativeEventType
+        ? String(page.authoritativeEventType).replace(/_/g, " ")
+        : null
+  };
+
+  if (bound && Number.isInteger(rid) && rid > 0 && recruitmentContextEnabled) {
+    const recSelect = document.getElementById("draftRecruitmentId");
+    if (recSelect && page.recruitmentTitle) {
+      const existing = [...recSelect.options].find((opt) => opt.value === String(rid));
+      if (existing) {
+        existing.textContent = page.recruitmentTitle;
+      } else {
+        const opt = document.createElement("option");
+        opt.value = String(rid);
+        opt.textContent = page.recruitmentTitle;
+        recSelect.appendChild(opt);
+      }
+    }
+    await applyRecruitmentContextFromDraft({
+      recruitmentId: rid,
+      recruitmentEventId: Number.isInteger(eid) && eid > 0 ? eid : null
+    });
+  } else if (!bound && recruitmentContextEnabled) {
+    const rec = document.getElementById("draftRecruitmentId");
+    const evt = document.getElementById("draftRecruitmentEventId");
+    if (rec) rec.value = "";
+    if (evt) {
+      evt.value = "";
+      evt.disabled = true;
+      evt.innerHTML = '<option value="">— None —</option>';
+    }
+  }
+
   updateRecruitmentContextCard();
 }
 
@@ -1078,11 +1231,64 @@ async function loadGeneratorDraftFromURL() {
     await applyRecruitmentContextFromDraft(row);
     setGeneratorDraftId(row.id);
     window.__generatorLinkedPublicPage = row.linkedPublicPage || null;
+    window.__generatorExistingPageContent =
+      row.existingPageContent != null ? String(row.existingPageContent) : null;
+    window.__generatorExistingPageSlug =
+      row.linkedPublicPage &&
+      row.linkedPublicPage.page &&
+      row.linkedPublicPage.page.slug
+        ? String(row.linkedPublicPage.page.slug).replace(/^\/+|\.html$/gi, "")
+        : null;
+    window.__generatorSectionDiff = row.sectionDiff || null;
     window.__generatorDraftMeta = {
       title: row.title || "",
       recruitmentTitle: row.recruitmentTitle || null,
-      eventLabel: row.eventLabel || null
+      eventLabel: row.eventLabel || null,
+      updateId:
+        row.payload && (row.payload.updateId || row.payload.update_id)
+          ? row.payload.updateId || row.payload.update_id
+          : null,
+      extractionStatus:
+        row.payload && row.payload.extractionQuality && row.payload.extractionQuality.status
+          ? row.payload.extractionQuality.status
+          : null,
+      extractionCode:
+        row.payload && row.payload.extractionQuality && row.payload.extractionQuality.code
+          ? row.payload.extractionQuality.code
+          : null,
+      validationStatus:
+        row.payload && row.payload.validation && row.payload.validation.status
+          ? row.payload.validation.status
+          : null,
+      conversionRequired: Boolean(row.payload && row.payload.conversionRequired),
+      generatorMode:
+        (row.payload && row.payload.generatorMode) ||
+        (row.payload && row.payload.mergeContext && row.payload.mergeContext.generatorMode) ||
+        null,
+      mergeApplied: Boolean(row.payload && row.payload.mergeApplied),
+      sourceUrl:
+        (row.payload && (row.payload.pageUrl || row.payload.sourceUrl || row.payload.source_url)) ||
+        null
     };
+
+    // If UPDATE draft is still a sparse stub but server computed combined text, hydrate editor once.
+    const dataEl = document.getElementById("data");
+    const currentData = dataEl ? String(dataEl.value || "").trim() : "";
+    if (
+      row.combinedPreviewText &&
+      row.existingPageContent &&
+      !(row.payload && row.payload.mergeApplied) &&
+      currentData.length <= 180 &&
+      /\[Section:\s*Short Information\]/i.test(currentData)
+    ) {
+      dataEl.value = String(row.combinedPreviewText);
+      window.__generatorDraftMeta.mergeApplied = true;
+      syncSectionEditorFromData();
+      if (typeof window.sectionEditor?.preferVisualIfSafe === "function") {
+        window.sectionEditor.preferVisualIfSafe();
+      }
+    }
+
     const hydrate = applyLinkedPublicPageToGenerator(row.linkedPublicPage);
     updateRecruitmentContextCard();
     if (hydrate.blocked) {
@@ -1090,11 +1296,14 @@ async function loadGeneratorDraftFromURL() {
         detailsHtml: escapeAttr(hydrate.message || "Resolve linked public pages before publishing.")
       });
     } else if (hydrate.mode === "update") {
+      const diff = row.sectionDiff || {};
+      const addedN = Array.isArray(diff.added) ? diff.added.length : 0;
+      const modN = Array.isArray(diff.modified) ? diff.modified.length : 0;
       setGeneratorFeedback(
         "info",
-        `Draft loaded: ${row.title || "Untitled"} — updating existing public page`,
+        `Draft loaded: ${row.title || "Untitled"} — Combined Preview ready`,
         {
-          detailsHtml: `Public slug <strong>/${escapeAttr(hydrate.slug)}</strong> stays permanent. Preview, then Manual Publish/Update.`
+          detailsHtml: `Public slug <strong>/${escapeAttr(hydrate.slug)}</strong> stays permanent. Preview shows existing page + pending update (NEW ${addedN}, CHANGED ${modN}). Then Manual Publish/Update.`
         }
       );
     } else {
@@ -1850,6 +2059,11 @@ async function loadPageFromURL(){
     syncAiConvertButton();
     updateBreakingOrderVisibility();
     await loadSmallBoxSlotOccupancy();
+    // Canonical ownership from pages.recruitment_id (same source as Page Manager).
+    await applyCanonicalPageOwnershipFromAdminPage(page);
+    // Critical: refresh CREATE/UPDATE card after oldSlug is set for ?slug= loads.
+    updateRecruitmentContextCard();
+    syncSaveDraftButtonState();
 
   }catch(err){
     console.error("Auto load error:", err);
@@ -2038,6 +2252,8 @@ async function selectPage(p){
     syncAiConvertButton();
     updateBreakingOrderVisibility();
     await loadSmallBoxSlotOccupancy();
+    await applyCanonicalPageOwnershipFromAdminPage(page);
+    updateRecruitmentContextCard();
   }
 
   recentPages = recentPages.filter(r => r.url !== p.url);
@@ -2287,16 +2503,67 @@ async function generatePage(){
     clearDraftStorage();
     setSaveState("saved");
 
+    const lifecycleNote =
+      dataRes?.lifecycleNote ||
+      dataRes?.data?.lifecycleNote ||
+      null;
+    const repairNeeded =
+      dataRes?.repairNeeded === true ||
+      dataRes?.data?.repairNeeded === true ||
+      (dataRes?.data?.atomicFinalize && dataRes.data.atomicFinalize.repairNeeded === true);
+    const repairHint =
+      (dataRes?.data?.atomicFinalize && dataRes.data.atomicFinalize.repairHint) ||
+      null;
+    const finalizeErrors =
+      (dataRes?.data?.atomicFinalize && Array.isArray(dataRes.data.atomicFinalize.errors)
+        ? dataRes.data.atomicFinalize.errors
+        : []) || [];
+
     if (openDraftId) {
       const alreadyMarked =
         dataRes &&
         dataRes.data &&
         dataRes.data.draftMarkedPublished === true;
-      if (!alreadyMarked) {
+      if (!alreadyMarked && !repairNeeded) {
         const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
         await markGeneratorDraftPublishedOnServer(openDraftId, newSlug, resolvedId);
       }
       setGeneratorDraftId("");
+    }
+
+    if (repairNeeded) {
+      const errorSteps = finalizeErrors
+        .map((e) => (e && e.step ? e.step : String(e)))
+        .filter(Boolean)
+        .join(", ");
+      setGeneratorFeedback("error", "REPAIR REQUIRED — lifecycle finalize incomplete", {
+        detailsHtml:
+          `${escapeAttr(lifecycleNote || "Page write succeeded but lifecycle finalize failed.")}` +
+          (errorSteps ? `<br><strong>Failed steps:</strong> ${escapeAttr(errorSteps)}` : "") +
+          (repairHint ? `<br>${escapeAttr(repairHint)}` : "") +
+          `<br><strong>Do not claim success.</strong> Verify draft published status, page↔recruitment link, event activation, and stage projection. Retry must be safe/idempotent — do not create a second page.` +
+          (resolvedUrl
+            ? `<br><a href="${escapeAttr(resolvedUrl)}" target="_blank" rel="noopener">Open published page</a> · <a href="/admin/recruitments">Open Recruitment Manager</a>`
+            : "")
+      });
+      if (window.AdminUI && window.AdminUI.toastError) {
+        window.AdminUI.toastError("Publish incomplete — repair required");
+      }
+      if (!isCreate) {
+        const newSlug = String(resolvedUrl).replace(/^\//, "").replace(/\.html$/i, "");
+        document.getElementById("oldSlug").value = newSlug;
+        document.getElementById("pageUrl").value = resolvedUrl.startsWith("/")
+          ? resolvedUrl
+          : "/" + resolvedUrl;
+        if (resolvedId != null && resolvedId !== "") {
+          document.getElementById("pageId").value = String(resolvedId);
+        }
+        setDeleteButtonVisible(true);
+        setPageUrlLocked(true);
+        updateSlugPreview();
+        updateRecruitmentContextCard();
+      }
+      return;
     }
 
     if (isCreate) {
@@ -2306,6 +2573,10 @@ async function generatePage(){
       if (parserWarnings.length) {
         setGeneratorFeedback("info", "Saved with parsing warnings", {
           detailsHtml: parserWarnings.map((w) => `• ${escapeAttr(String(w))}`).join("<br>")
+        });
+      } else if (lifecycleNote) {
+        setGeneratorFeedback("success", "HUMAN MANUAL PUBLISH complete", {
+          detailsHtml: escapeAttr(lifecycleNote)
         });
       }
       resetGeneratorForm();
@@ -2350,6 +2621,10 @@ async function generatePage(){
     if (parserWarnings.length) {
       setGeneratorFeedback("info", "Saved with parsing warnings", {
         detailsHtml: parserWarnings.map((w) => `• ${escapeAttr(String(w))}`).join("<br>")
+      });
+    } else if (lifecycleNote) {
+      setGeneratorFeedback("success", "HUMAN MANUAL PUBLISH complete", {
+        detailsHtml: escapeAttr(lifecycleNote)
       });
     }
   } catch (err) {
@@ -2585,6 +2860,46 @@ function scheduleContentAnalysis() {
 // ================= PREVIEW =================
 let previewTimer;
 
+async function resolveExistingPageTextForPreview(oldSlug) {
+  const slug = String(oldSlug || "")
+    .trim()
+    .replace(/^\/+|\.html$/gi, "");
+  if (!slug) return null;
+  if (
+    window.__generatorExistingPageContent &&
+    window.__generatorExistingPageSlug === slug
+  ) {
+    return window.__generatorExistingPageContent;
+  }
+  try {
+    const data = await safeFetch("/api/admin/pages/" + encodeURIComponent(slug));
+    if (data.ok && data.body && data.body.success && data.body.data) {
+      const raw = data.body.data.rawText != null ? String(data.body.data.rawText) : "";
+      window.__generatorExistingPageContent = raw;
+      window.__generatorExistingPageSlug = slug;
+      return raw;
+    }
+  } catch (err) {
+    console.warn("Combined preview: could not load existing page", err);
+  }
+  return null;
+}
+
+function updateCombinedPreviewChrome(isCombined, sectionDiff) {
+  const hint = document.querySelector(".preview-panel .preview-hint");
+  if (hint) {
+    if (isCombined) {
+      const added = (sectionDiff && sectionDiff.added && sectionDiff.added.length) || 0;
+      const modified = (sectionDiff && sectionDiff.modified && sectionDiff.modified.length) || 0;
+      hint.textContent = `Combined Preview — existing + pending update (NEW ${added} · CHANGED ${modified})`;
+      hint.classList.add("preview-hint--combined");
+    } else {
+      hint.textContent = "Rendered output (same pipeline as publish)";
+      hint.classList.remove("preview-hint--combined");
+    }
+  }
+}
+
 function updatePreview(){
 
   flushSectionEditorBeforeRead();
@@ -2597,13 +2912,40 @@ function updatePreview(){
 
   previewTimer = setTimeout(async ()=>{
 
+    const oldSlugEl = document.getElementById("oldSlug");
+    const oldSlug = oldSlugEl ? String(oldSlugEl.value || "").trim() : "";
+    const editorText = document.getElementById("data").value.trim();
     const payload = {
       title: document.getElementById("title").value.trim(),
       post_name: String(document.getElementById("post_name")?.value ?? ""),
       total_posts: String(document.getElementById("total_posts")?.value ?? ""),
       advertisement_no: String(document.getElementById("advertisement_no")?.value ?? ""),
-      text: document.getElementById("data").value.trim()
+      text: editorText
     };
+
+    let isCombined = false;
+    let sectionDiff = window.__generatorSectionDiff || null;
+
+    if (oldSlug) {
+      const existingText =
+        (window.__generatorExistingPageContent != null &&
+        window.__generatorExistingPageSlug === oldSlug.replace(/^\/+|\.html$/gi, "")
+          ? window.__generatorExistingPageContent
+          : null) || (await resolveExistingPageTextForPreview(oldSlug));
+      if (existingText != null && String(existingText).trim()) {
+        payload.existingText = existingText;
+        payload.combinePreview = true;
+        payload.oldSlug = oldSlug.replace(/^\/+|\.html$/gi, "");
+        payload.mergeAlreadyApplied = Boolean(
+          window.__generatorDraftMeta &&
+            window.__generatorDraftMeta.mergeApplied
+        );
+        isCombined = true;
+        if (window.__generatorSectionDiff) {
+          payload.sectionDiff = window.__generatorSectionDiff;
+        }
+      }
+    }
 
     try{
 
@@ -2618,6 +2960,10 @@ function updatePreview(){
 
       const html = await res.text();
       document.getElementById("previewFrame").srcdoc = html;
+      if (res.headers && res.headers.get("X-Combined-Preview") === "1") {
+        isCombined = true;
+      }
+      updateCombinedPreviewChrome(isCombined, sectionDiff);
 
     }catch(err){
       console.error("Preview error:", err);

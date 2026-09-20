@@ -357,6 +357,7 @@ async function getDraftById(id) {
 /**
  * Generator load payload: draft + optional linked public page resolution.
  * Does not mark drafts published or invent page content.
+ * For UPDATE drafts, attaches existing page text + Combined Preview helpers.
  */
 async function getDraftWithPublishContext(id) {
   const row = await getDraftById(id);
@@ -370,8 +371,19 @@ async function getDraftWithPublishContext(id) {
   };
   let recruitmentTitle = null;
   let eventLabel = null;
+  let existingPageContent = null;
+  let combinedPreviewText = null;
+  let sectionDiff = null;
 
-  const recruitmentId = row.recruitment_id != null ? Number(row.recruitment_id) : null;
+  const recruitmentId =
+    row.recruitment_id != null
+      ? Number(row.recruitment_id)
+      : row.payload &&
+          row.payload.mergeContext &&
+          row.payload.mergeContext.recruitment &&
+          row.payload.mergeContext.recruitment.id != null
+        ? Number(row.payload.mergeContext.recruitment.id)
+        : null;
   const eventId = row.recruitment_event_id != null ? Number(row.recruitment_event_id) : null;
 
   if (recruitmentId != null && Number.isInteger(recruitmentId) && recruitmentId > 0) {
@@ -402,11 +414,55 @@ async function getDraftWithPublishContext(id) {
     }
   }
 
+  if (
+    linkedPublicPage &&
+    linkedPublicPage.status === "unique" &&
+    linkedPublicPage.page &&
+    linkedPublicPage.page.slug
+  ) {
+    try {
+      const pageRepository = require("../repositories/page.repository");
+      const page = await pageRepository.findAdminPageBySlug(linkedPublicPage.page.slug);
+      if (page) {
+        existingPageContent = page.raw_text != null ? String(page.raw_text) : "";
+        const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+        const editorText = String(payload.data || payload.content || payload.text || "");
+        const {
+          resolveCombinedPreviewText,
+          diffPublisherSections,
+          buildUpdateMergeContext
+        } = require("../lib/recruitment/preparationPipeline/updateMergeContext");
+        combinedPreviewText = resolveCombinedPreviewText(existingPageContent, editorText, {
+          mergeAlreadyApplied: payload.mergeApplied === true
+        });
+        sectionDiff = diffPublisherSections(existingPageContent, combinedPreviewText);
+        if (!payload.mergeContext && !linkedPublicPage.page._mergeContextAttached) {
+          // Attach advisory merge context for Generator UI (read-only; does not mutate draft).
+          linkedPublicPage = {
+            ...linkedPublicPage,
+            mergeContextHint: buildUpdateMergeContext({
+              recruitment: { id: recruitmentId, title: recruitmentTitle },
+              eventType: eventLabel ? String(eventLabel).replace(/\s+/g, "_").toLowerCase() : null,
+              linkedPages: linkedPublicPage.pages || [linkedPublicPage.page],
+              existingPageContent,
+              draft: row
+            })
+          };
+        }
+      }
+    } catch {
+      /* page content optional for draft load */
+    }
+  }
+
   return {
     row,
     linkedPublicPage,
     recruitmentTitle,
-    eventLabel
+    eventLabel,
+    existingPageContent,
+    combinedPreviewText,
+    sectionDiff
   };
 }
 

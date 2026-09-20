@@ -707,7 +707,24 @@
         summary.innerHTML = `
           <div><dt>Detected document</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || item.title || "—")}</dd></div>
           <div><dt>Document type</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>
-          <div><dt>Source</dt><dd>${escapeHtml(item.source_url || "—")}</dd></div>
+          <div><dt>Source</dt><dd>${
+            item.source_url
+              ? `<a class="rrq-source-link" href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.source_url)}</a>`
+              : "—"
+          }</dd></div>
+          <div><dt>Source verification</dt><dd>${
+            item.source_url
+              ? `<a class="header-action-btn header-action-btn--ghost" href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${
+                  /\.pdf(\?|#|$)/i.test(String(item.source_url))
+                    ? "Open Official PDF"
+                    : "Open Official Notice"
+                }</a>${
+                  draftId
+                    ? ` <a class="header-action-btn header-action-btn--ghost" href="/generator?draftId=${encodeURIComponent(draftId)}&pdfUrl=${encodeURIComponent(item.source_url)}">Verify PDF in Generator</a>`
+                    : ""
+                }`
+              : "—"
+          }</dd></div>
           <div><dt>Match confidence</dt><dd>${escapeHtml(matchLevel)}</dd></div>
           <div><dt>Recruitment candidate</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
           <div><dt>Event</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>

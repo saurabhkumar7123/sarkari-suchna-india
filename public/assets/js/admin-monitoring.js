@@ -323,7 +323,12 @@ function renderDetectedUpdates(rows) {
       const source = escapeAttr(r.site_name || r.siteName || r.source || "Source");
       const title = escapeAttr(r.summary || r.title || "Update detected");
       const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at);
-      const href = r.url ? escapeAttr(r.url) : "";
+      const href = r.url || r.link ? escapeAttr(r.url || r.link) : "";
+      const siteHref = r.site_url || r.siteUrl ? escapeAttr(r.site_url || r.siteUrl) : "";
+      const isPdf =
+        href && /\.pdf(\?|#|$)/i.test(String(r.url || r.link || ""))
+          ? true
+          : false;
       const classification = escapeAttr(r.classification || r.event_type || r.category || "—");
       const recruitment =
         r.recruitment_title || r.recruitmentTitle || r.recruitment_id || r.recruitmentId || "—";
@@ -349,7 +354,9 @@ function renderDetectedUpdates(rows) {
         stage === "needs-matching" ? "!" : stage === "reviewed" ? "✓" : stage === "drafted" ? "●" : "○";
       const idMeta = r.id != null ? `<span class="detected-update__url">ID ${escapeAttr(r.id)}</span>` : "";
       const draftBtn = draftId
-        ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}">Open Draft</a>`
+        ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}${
+            href && isPdf ? `&pdfUrl=${encodeURIComponent(String(r.url || r.link || ""))}` : ""
+          }">${href && isPdf ? "Open Draft + PDF" : "Open Draft"}</a>`
         : "";
       const updateId = r.id != null ? String(r.id) : "";
       const reviewId = r.review_id || r.reviewId || "";
@@ -378,7 +385,8 @@ function renderDetectedUpdates(rows) {
         <div class="detected-update__actions">
           <span class="badge">Class: ${classification}</span>
           <span class="badge">Recruitment: ${escapeAttr(String(recruitment))}</span>
-          ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">Open Update</a>` : ""}
+          ${siteHref ? `<a class="header-action-btn" href="${siteHref}" target="_blank" rel="noopener">Open Official Site</a>` : ""}
+          ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">${isPdf ? "Open Official PDF" : "Open Official Notice"}</a>` : ""}
           ${draftBtn}
           <a class="header-action-btn" href="${reviewHref}">Open Review</a>
         </div>

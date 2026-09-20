@@ -130,7 +130,31 @@ const relatedClickBodySchema = Joi.object({
 
 const previewBodySchema = Joi.object({
   title: Joi.string().allow("").max(500).default(""),
-  text: Joi.string().allow("").max(500000).default("")
+  text: Joi.string().allow("").max(500000).default(""),
+  post_name: Joi.string().allow("").max(500).optional(),
+  total_posts: Joi.alternatives().try(Joi.string().allow(""), Joi.number()).optional(),
+  advertisement_no: Joi.string().allow("").max(500).optional(),
+  category: Joi.string().allow("").max(200).optional(),
+  tag: Joi.string().allow("").max(200).optional(),
+  status: Joi.string().allow("").max(200).optional(),
+  normalizedStatus: Joi.string().allow("").max(200).optional(),
+  // Combined Preview (UPDATE drafts): existing published page + pending update
+  existingText: Joi.string().allow("").max(500000).optional(),
+  existing_page_text: Joi.string().allow("").max(500000).optional(),
+  combinePreview: Joi.boolean().optional(),
+  combinedPreview: Joi.boolean().optional(),
+  mergeAlreadyApplied: Joi.boolean().optional(),
+  oldSlug: Joi.string().allow("").max(255).optional(),
+  canonicalSlug: Joi.string().allow("").max(255).optional(),
+  sectionDiff: Joi.object({
+    added: Joi.array().items(Joi.string().allow("")).optional(),
+    modified: Joi.array().items(Joi.string().allow("")).optional(),
+    unchanged: Joi.array().items(Joi.string().allow("")).optional(),
+    removed: Joi.array().items(Joi.string().allow("")).optional(),
+    hasChanges: Joi.boolean().optional()
+  })
+    .unknown(true)
+    .optional()
 });
 
 const aiParseBodySchema = Joi.object({
