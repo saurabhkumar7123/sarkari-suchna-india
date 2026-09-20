@@ -29,7 +29,21 @@ const SECTION_ALIAS_MAP = {
   vacancy: "Vacancy",
   "vacancy details": "Vacancy Details",
   "age limit": "Age Limit",
+  "age limits": "Age Limit",
   agelimit: "Age Limit",
+  agelimits: "Age Limit",
+  "eligibility criteria": "Eligibility",
+  "physical standard": "Physical Standard / PET",
+  "physical standard / pet": "Physical Standard / PET",
+  "physical standards": "Physical Standard / PET",
+  pet: "Physical Standard / PET",
+  pst: "Physical Standard / PET",
+  "admit card": "Admit Card Details",
+  "admit card details": "Admit Card Details",
+  "answer key": "Answer Key Details",
+  "answer key details": "Answer Key Details",
+  result: "Result Details",
+  "result details": "Result Details",
   "how to apply": "How To Apply",
   howtoapply: "How To Apply",
   salary: "Salary",
@@ -78,6 +92,7 @@ function sectionKind(title) {
   if (base === "short information") return "short";
   if (base === "important dates") return "dates";
   if (base === "application fee") return "fee";
+  if (base === "age limit" || base === "age limits") return "age";
   if (base === "important links") return "links";
   if (base === "important questions" || base === "faq") return "faq";
   if (base === "vacancy" || base === "vacancy details") return "vacancy";
@@ -150,7 +165,7 @@ function normalizePublisherSection(title, body) {
   let nextBody = String(body || "").trim();
   const kind = sectionKind(nextTitle);
 
-  if (kind === "dates" || kind === "fee") {
+  if (kind === "dates" || kind === "fee" || kind === "age") {
     nextBody = nextBody
       .split("\n")
       .map((l) => l.trim())

@@ -147,10 +147,14 @@ function buildUpdateMergeContext(input = {}) {
 }
 
 /**
- * Merge helper: keep existing publisher sections, append/replace update sections by title.
- * Deterministic; does not call AI. Human still edits in Generator.
+ * Legacy title-based merge (fallback when structured mapping is unavailable).
+ * Deterministic; does not call AI.
  */
-function mergePublisherSectionText(existingText, updateText, { preferUpdateTitles = [] } = {}) {
+function legacyMergePublisherSectionText(
+  existingText,
+  updateText,
+  { preferUpdateTitles = [] } = {}
+) {
   const SECTION_RE = /\[Section:\s*([^\]]+)\]/gi;
 
   function parse(text) {
@@ -188,7 +192,6 @@ function mergePublisherSectionText(existingText, updateText, { preferUpdateTitle
       base.order.push(row.title);
       base.map.set(key, row);
     } else if (prefer.has(key) || prefer.size === 0) {
-      // For update-oriented sections, prefer new body; otherwise keep existing if prefer list empty for known titles.
       if (
         prefer.has(key) ||
         /admit card|answer key|result|important date|important link|short information/i.test(title)
@@ -204,6 +207,56 @@ function mergePublisherSectionText(existingText, updateText, { preferUpdateTitle
       return `[Section: ${row.title}]\n${row.body}`;
     })
     .join("\n\n");
+}
+
+/**
+ * Merge helper: structured field-level merge when possible; title-based fallback otherwise.
+ * Existing page = base. Missing fields in update are NEVER deleted.
+ * Deterministic; does not call AI. Human still edits in Generator.
+ *
+ * @param {string} existingText
+ * @param {string} updateText
+ * @param {{
+ *   preferUpdateTitles?: string[],
+ *   eventType?: string|null,
+ *   allowRemove?: boolean,
+ *   structuredMerge?: boolean,
+ *   collectClassifications?: object[]
+ * }} [options]
+ * @returns {string}
+ */
+function mergePublisherSectionText(existingText, updateText, options = {}) {
+  const preferUpdateTitles = options.preferUpdateTitles || [];
+  if (options.structuredMerge === false) {
+    return legacyMergePublisherSectionText(existingText, updateText, { preferUpdateTitles });
+  }
+
+  try {
+    const {
+      mergeStructuredPublisherDocuments
+    } = require("./structuredNormalizeMerge");
+    const result = mergeStructuredPublisherDocuments(existingText, updateText, {
+      eventType: options.eventType || null,
+      allowRemove: options.allowRemove === true
+    });
+    if (result && typeof result.text === "string") {
+      if (Array.isArray(options.collectClassifications) && Array.isArray(result.classifications)) {
+        for (const row of result.classifications) {
+          options.collectClassifications.push(row);
+        }
+      }
+      if (result.usedStructuredMerge && result.text.trim()) {
+        return result.text;
+      }
+      if (result.usedStructuredMerge && String(existingText || "").trim()) {
+        return result.text;
+      }
+    }
+  } catch {
+    /* fall through to legacy title merge */
+  }
+
+  return legacyMergePublisherSectionText(existingText, updateText, { preferUpdateTitles });
 }
 
 function parsePublisherSections(text) {
@@ -292,7 +345,11 @@ function resolveCombinedPreviewText(existingText, editorText, options = {}) {
     return editor;
   }
   return mergePublisherSectionText(existing, editor, {
-    preferUpdateTitles: options.preferUpdateTitles
+    preferUpdateTitles: options.preferUpdateTitles,
+    eventType: options.eventType || null,
+    allowRemove: options.allowRemove === true,
+    structuredMerge: options.structuredMerge,
+    collectClassifications: options.collectClassifications
   });
 }
 
@@ -301,6 +358,7 @@ module.exports = {
   buildEventDraftTitle,
   buildUpdateMergeContext,
   mergePublisherSectionText,
+  legacyMergePublisherSectionText,
   parsePublisherSections,
   diffPublisherSections,
   editorLooksFullyMerged,

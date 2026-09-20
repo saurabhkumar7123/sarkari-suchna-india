@@ -433,7 +433,12 @@ async function getDraftWithPublishContext(id) {
           buildUpdateMergeContext
         } = require("../lib/recruitment/preparationPipeline/updateMergeContext");
         combinedPreviewText = resolveCombinedPreviewText(existingPageContent, editorText, {
-          mergeAlreadyApplied: payload.mergeApplied === true
+          mergeAlreadyApplied: payload.mergeApplied === true,
+          eventType:
+            (payload.mergeContext && payload.mergeContext.event && payload.mergeContext.event.type) ||
+            (payload.generatorMode === "UPDATE" && eventLabel
+              ? String(eventLabel).replace(/\s+/g, "_").toLowerCase()
+              : null)
         });
         sectionDiff = diffPublisherSections(existingPageContent, combinedPreviewText);
         if (!payload.mergeContext && !linkedPublicPage.page._mergeContextAttached) {

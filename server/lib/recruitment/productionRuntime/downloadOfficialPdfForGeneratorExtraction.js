@@ -423,12 +423,18 @@ async function downloadOfficialPdfForGeneratorExtraction(input = {}) {
       byteLength: buffer.length
     };
     if (extracted && extracted.extractionNote) result.extractionNote = extracted.extractionNote;
+    if (extracted && extracted.extractionQuality) result.extractionQuality = extracted.extractionQuality;
+    if (extracted && extracted.pageCount != null) result.pageCount = extracted.pageCount;
+    if (extracted && extracted.ocrUsed != null) result.ocrUsed = extracted.ocrUsed;
     return result;
   } catch (err) {
-    throw new OfficialPdfBridgeError(
+    const bridgeErr = new OfficialPdfBridgeError(
       BRIDGE_CODES.EXTRACT_FAILED,
       err && err.message ? err.message : "Generator PDF extraction failed"
     );
+    if (err && err.extractionQuality) bridgeErr.extractionQuality = err.extractionQuality;
+    if (err && err.code) bridgeErr.extractCode = err.code;
+    throw bridgeErr;
   }
 }
 

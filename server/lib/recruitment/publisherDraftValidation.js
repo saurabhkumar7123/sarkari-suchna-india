@@ -115,12 +115,14 @@ function validatePublisherDraftContent(input = {}) {
 
   return {
     ok: problems.length === 0,
+    status: problems.length ? "BLOCKED" : warnings.length ? "WARNING" : "PASS",
     documentClass,
     sectionCount: sections.length,
     sections: sections.map((s) => s.title),
     problems,
     warnings,
-    blocking: false
+    blocking: false,
+    reviewEnqueueBlocked: false
   };
 }
 

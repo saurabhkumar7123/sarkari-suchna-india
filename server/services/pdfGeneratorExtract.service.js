@@ -14,6 +14,9 @@ const {
   advancedNormalize,
   fixSpacedWordsLine
 } = require("../lib/generatorIntelligence/textNormalization");
+const {
+  assessExtractionConfidence
+} = require("../lib/recruitment/preparationPipeline/extractionQualityGate");
 
 const pdfParse = require("pdf-parse");
 
@@ -711,14 +714,39 @@ async function extractGeneratorPdfText(buffer) {
     harvestedLinkCount: harvestedLinks.length
   });
 
+  const quality = assessExtractionConfidence({
+    text: finalText,
+    pageCount: numpages,
+    ocrUsed,
+    extractionNote: ocrUsed ? ocrNote : null,
+    pdfParseLen,
+    pdfJsLen
+  });
+
   if (finalText.length >= MIN_FINAL_TEXT) {
-    const out = { text: finalText };
+    const out = {
+      text: finalText,
+      extractionQuality: quality,
+      pageCount: numpages,
+      ocrUsed
+    };
     if (ocrUsed && ocrNote) out.extractionNote = ocrNote;
+    if (quality.lowConfidence) {
+      out.extractionNote = [out.extractionNote, quality.code].filter(Boolean).join(" | ");
+    }
     return out;
   }
 
   const err = new Error(ERR_READ_FAIL);
   err.code = "TEXT_TOO_SHORT";
+  err.extractionQuality = assessExtractionConfidence({
+    text: finalText,
+    pageCount: numpages,
+    ocrUsed,
+    errorCode: "TEXT_TOO_SHORT",
+    pdfParseLen,
+    pdfJsLen
+  });
   throw err;
 }
 
@@ -730,6 +758,7 @@ module.exports = {
   harvestLinkUrisFromAnnotations,
   appendHarvestedLinks,
   ocrDepsAvailable,
+  assessExtractionConfidence,
   OCR_TRIGGER_BELOW_CHARS,
   MAX_OCR_PAGES,
   MIN_FINAL_TEXT

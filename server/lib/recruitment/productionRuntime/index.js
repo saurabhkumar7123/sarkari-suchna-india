@@ -407,18 +407,102 @@ async function persistDraft({
     validation: contentValidation
   });
 
-  // For UPDATE mode with existing page content on the payload, preserve merge base.
+  const {
+    normalizePublisherDocument,
+    assessPublishPrepReadiness,
+    buildRawSourceEnvelope
+  } = require("../preparationPipeline/structuredNormalizeMerge");
+
+  // Preserve raw extraction separately — never treat as published page body.
+  if (pdfExtraction.ok && pdfExtraction.text) {
+    payloadForSave.rawSource = buildRawSourceEnvelope({
+      url: pdfExtraction.sourceUrl || (notice && (notice.pdfUrl || notice.url)) || null,
+      documentHash: pdfExtraction.documentHash || null,
+      extractedText: pdfExtraction.text
+    });
+  } else if (payloadForSave.pageUrl || (notice && notice.url)) {
+    payloadForSave.rawSource = buildRawSourceEnvelope({
+      url: payloadForSave.pageUrl || (notice && (notice.pdfUrl || notice.url)) || null,
+      documentHash: pdfExtraction.documentHash || null,
+      extractedText: null
+    });
+  }
+
+  // Load existing canonical page as merge base when UPDATE mode.
+  if (
+    !payloadForSave.existingPageData &&
+    mergeContext.generatorMode === "UPDATE" &&
+    mergeContext.canonicalPage &&
+    mergeContext.canonicalPage.slug
+  ) {
+    try {
+      const pageRepository = require("../../../repositories/page.repository");
+      const page = await pageRepository.findAdminPageBySlug(mergeContext.canonicalPage.slug);
+      if (page && page.raw_text != null && String(page.raw_text).trim()) {
+        payloadForSave.existingPageData = String(page.raw_text);
+      }
+    } catch (err) {
+      logger.warn("production-runtime: existing page load for merge skipped", {
+        slug: mergeContext.canonicalPage.slug,
+        message: err && err.message ? err.message : String(err)
+      });
+    }
+  }
+
+  // Normalize AI/manual publisher text into fixed Generator section format.
+  // Raw unstructured extract is rejected as publish content.
+  if (payloadForSave.data) {
+    const eventForNorm = resolvedEventType || classification.event_type;
+    const normalized = normalizePublisherDocument(payloadForSave.data, {
+      eventType: eventForNorm,
+      filterByEvent: mergeContext.generatorMode === "UPDATE"
+    });
+    if (normalized.publishContent) {
+      payloadForSave.data = normalized.text;
+      payloadForSave.normalization = {
+        sectionCount: normalized.sectionCount,
+        identities: normalized.identities,
+        filteredOut: normalized.filteredOut,
+        eventType: eventForNorm || null
+      };
+    } else if (aiConvert.ok) {
+      // Convert claimed success but format invalid — soft gate for human review.
+      conversionRequired = true;
+      payloadForSave.normalization = {
+        sectionCount: 0,
+        reason: normalized.reason || "publisher_text_not_structured"
+      };
+    }
+  }
+
+  const prepReadiness = assessPublishPrepReadiness({
+    extractedText: pdfExtraction.ok ? pdfExtraction.text : null,
+    publisherText: payloadForSave.data,
+    extractionQuality,
+    conversionAccepted: aiConvert.ok === true
+  });
+  payloadForSave.publishPrep = prepReadiness;
+  if (!prepReadiness.publishReady) {
+    conversionRequired = true;
+  }
+
+  // Structured field-level merge onto existing recruitment page (never blind replace).
   if (
     mergeContext.generatorMode === "UPDATE" &&
     payloadForSave.existingPageData &&
-    aiConvert.ok &&
     payloadForSave.data
   ) {
+    const classifications = [];
     payloadForSave.data = mergePublisherSectionText(
       payloadForSave.existingPageData,
-      payloadForSave.data
+      payloadForSave.data,
+      {
+        eventType: resolvedEventType || classification.event_type,
+        collectClassifications: classifications
+      }
     );
     payloadForSave.mergeApplied = true;
+    payloadForSave.mergeClassifications = classifications;
   }
 
   payloadForSave.conversionRequired = conversionRequired;

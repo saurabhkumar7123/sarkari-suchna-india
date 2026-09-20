@@ -500,8 +500,12 @@ async function createManualRecruitmentUpdate({
       const existingText = page && page.raw_text != null ? String(page.raw_text) : "";
       const updateStub = String(draftPayload.data || draftPayload.content || "").trim();
       if (existingText.trim()) {
+        const classifications = [];
         const merged = updateStub
-          ? mergePublisherSectionText(existingText, updateStub)
+          ? mergePublisherSectionText(existingText, updateStub, {
+              eventType: type,
+              collectClassifications: classifications
+            })
           : existingText;
         const parentRec = await recruitmentService.getRecruitment(parent).catch(() => null);
         const mergeContext = buildUpdateMergeContext({
@@ -517,6 +521,31 @@ async function createManualRecruitmentUpdate({
         draftPayload.mergeApplied = true;
         draftPayload.generatorMode = "UPDATE";
         draftPayload.mergeContext = mergeContext;
+        draftPayload.mergeClassifications = classifications;
+        try {
+          const {
+            normalizePublisherDocument,
+            buildRawSourceEnvelope
+          } = require("../lib/recruitment/preparationPipeline/structuredNormalizeMerge");
+          if (updateStub) {
+            const norm = normalizePublisherDocument(updateStub, {
+              eventType: type,
+              filterByEvent: true
+            });
+            draftPayload.normalization = {
+              sectionCount: norm.sectionCount,
+              identities: norm.identities,
+              filteredOut: norm.filteredOut,
+              eventType: type
+            };
+          }
+          draftPayload.rawSource = buildRawSourceEnvelope({
+            url: draftPayload.pageUrl || null,
+            extractedText: null
+          });
+        } catch {
+          /* optional metadata */
+        }
         if (!draftPayload.title || draftPayload.title === `${type} update`) {
           draftPayload.title =
             buildEventDraftTitle(

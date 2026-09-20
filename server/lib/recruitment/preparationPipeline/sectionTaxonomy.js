@@ -30,7 +30,8 @@ const SECTION_TAXONOMY = Object.freeze({
   ANSWER_KEY_DETAILS: "ANSWER_KEY_DETAILS",
   RESULT_DETAILS: "RESULT_DETAILS",
   FAQ: "FAQ",
-  IMPORTANT_INSTRUCTIONS: "IMPORTANT_INSTRUCTIONS"
+  IMPORTANT_INSTRUCTIONS: "IMPORTANT_INSTRUCTIONS",
+  PHYSICAL_STANDARD: "PHYSICAL_STANDARD"
 });
 
 /** Maps taxonomy / CIP / aliases → Generator section titles. */
@@ -43,10 +44,17 @@ const SECTION_TO_GENERATOR_TITLE = Object.freeze({
   application_fee: "Application Fee",
   AGE_LIMIT: "Age Limit",
   age_limit: "Age Limit",
+  age_limits: "Age Limit",
+  AGE_LIMITS: "Age Limit",
   VACANCY_DETAILS: "Vacancy Details",
   vacancy_details: "Vacancy Details",
+  vacancy: "Vacancy Details",
   ELIGIBILITY: "Eligibility",
   eligibility: "Eligibility",
+  eligibility_criteria: "Eligibility",
+  ELIGIBILITY_CRITERIA: "Eligibility",
+  PHYSICAL_STANDARD: "Physical Standard / PET",
+  physical_standard: "Physical Standard / PET",
   EDUCATION_QUALIFICATION: "Education Qualification",
   education_qualification: "Education Qualification",
   qualification: "Qualification",
@@ -65,16 +73,16 @@ const SECTION_TO_GENERATOR_TITLE = Object.freeze({
   HOW_TO_APPLY: "How To Apply",
   how_to_apply: "How To Apply",
   ADMIT_CARD_DETAILS: "Admit Card Details",
-  admit_card: "Admit Card",
-  ADMIT_CARD: "Admit Card",
+  admit_card: "Admit Card Details",
+  ADMIT_CARD: "Admit Card Details",
   ANSWER_KEY_DETAILS: "Answer Key Details",
-  answer_key: "Answer Key",
-  ANSWER_KEY: "Answer Key",
+  answer_key: "Answer Key Details",
+  ANSWER_KEY: "Answer Key Details",
   RESULT_DETAILS: "Result Details",
-  result: "Result",
-  RESULT: "Result",
-  FAQ: "FAQ",
-  faq: "FAQ",
+  result: "Result Details",
+  RESULT: "Result Details",
+  FAQ: "Important Questions",
+  faq: "Important Questions",
   IMPORTANT_INSTRUCTIONS: "Important Instructions",
   important_instructions: "Important Instructions"
 });
@@ -104,15 +112,17 @@ const SUGGESTED_SECTIONS_BY_EVENT = Object.freeze({
     "SHORT_INFORMATION",
     "ANSWER_KEY_DETAILS",
     "IMPORTANT_DATES",
-    "IMPORTANT_LINKS"
+    "IMPORTANT_LINKS",
+    "IMPORTANT_INSTRUCTIONS"
   ],
   RESULT: [
     "SHORT_INFORMATION",
     "RESULT_DETAILS",
     "IMPORTANT_DATES",
-    "IMPORTANT_LINKS"
+    "IMPORTANT_LINKS",
+    "IMPORTANT_INSTRUCTIONS"
   ],
-  OTHER_UPDATE: ["SHORT_INFORMATION", "IMPORTANT_DATES", "IMPORTANT_LINKS"]
+  OTHER_UPDATE: ["SHORT_INFORMATION", "IMPORTANT_DATES", "IMPORTANT_LINKS", "IMPORTANT_INSTRUCTIONS"]
 });
 
 function resolveGeneratorSectionTitle(sectionTypeOrTitle) {
@@ -169,9 +179,22 @@ function mapStructuredSectionsToGenerator(sections, options = {}) {
   const suggested =
     SUGGESTED_SECTIONS_BY_EVENT[String(options.eventType || "").toUpperCase()] || null;
 
-  const publisherText = mapped
+  let publisherText = mapped
     .map((row) => `[Section: ${row.generatorTitle}]\n${row.value}`)
     .join("\n\n");
+
+  try {
+    const { normalizePublisherDocument } = require("./structuredNormalizeMerge");
+    const normalized = normalizePublisherDocument(publisherText, {
+      eventType: options.eventType || null,
+      filterByEvent: false
+    });
+    if (normalized.publishContent) {
+      publisherText = normalized.text;
+    }
+  } catch {
+    /* keep raw mapped publisher text */
+  }
 
   return Object.freeze({
     sections: Object.freeze(mapped),

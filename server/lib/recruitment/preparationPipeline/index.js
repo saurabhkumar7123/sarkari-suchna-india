@@ -25,6 +25,13 @@ const {
   editorLooksFullyMerged,
   GENERATOR_MODES
 } = require("./updateMergeContext");
+const {
+  normalizePublisherDocument,
+  mergeStructuredPublisherDocuments,
+  assessPublishPrepReadiness,
+  buildRawSourceEnvelope,
+  FIELD_ACTIONS
+} = require("./structuredNormalizeMerge");
 const { describeAuthoritativePath } = require("./authoritativePath");
 const {
   evaluateLifecycleMatch
@@ -226,6 +233,11 @@ module.exports = {
   diffPublisherSections,
   resolveCombinedPreviewText,
   editorLooksFullyMerged,
+  normalizePublisherDocument,
+  mergeStructuredPublisherDocuments,
+  assessPublishPrepReadiness,
+  buildRawSourceEnvelope,
+  FIELD_ACTIONS,
   evaluatePreparationPackage,
   describeAuthoritativePath
 };
