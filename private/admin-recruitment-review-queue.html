@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
-<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=9">
+<link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=12">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -38,6 +38,7 @@
     <aside class="adm-wf" data-adm-wf="needsMatching" id="admWfNeedsMatching" hidden aria-label="Needs Matching filter context"></aside>
     <p class="rrq-help">
       Operational decisions: which Recruitment does this update belong to, and what to do next?
+      Detail opens a step-by-step decision tree — only the chosen branch’s actions appear.
       <strong>Needs Matching</strong> is a filter here — not a separate workspace.
       Approve ≠ publish. Next step: Generator → Preview → Manual Publish.
     </p>
@@ -210,77 +211,171 @@
               <pre class="rrq-json" data-field="nm_content"></pre>
             </section>
           </div>
-          <div class="rrq-table-wrap">
-            <table class="rrq-table" aria-label="Candidate recruitments">
-              <thead>
-                <tr>
-                  <th>Candidate Recruitments</th>
-                  <th>Match</th>
-                  <th>Score</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="rrqCandidateBody">
-                <tr><td colspan="4" class="rrq-empty">No candidates.</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="rrq-actions" id="rrqNeedsMatchingActions">
-            <label class="rrq-attach-label">
-              Attach to existing Recruitment
-              <input type="search" id="rrqAttachRecruitmentSearch" maxlength="200" placeholder="Search by recruitment name…" autocomplete="off">
-              <input type="hidden" id="rrqAttachRecruitmentId" value="">
-              <span id="rrqAttachRecruitmentLabel" class="rrq-assist-note" aria-live="polite">No recruitment selected</span>
-              <div id="rrqAttachSuggestions" class="rrq-attach-suggestions" hidden></div>
-            </label>
-            <button type="button" class="header-action-btn" data-match-action="attach">Attach</button>
-            <button type="button" class="header-action-btn" data-match-action="create_parent">Create Parent</button>
-            <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="standalone">Standalone</button>
-            <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="reject">Reject</button>
-          </div>
         </section>
 
         <section class="rrq-linkage" id="rrqLinkagePanel" hidden aria-label="Linked chain after attach">
           <h3>Linked chain</h3>
-          <p class="rrq-assist-note">After Attach, confirm the relationship. Preview, edit, and Manual Publish happen in Generator.</p>
-          <nav class="admin-ops-flow" aria-label="Recruitment content chain">
-            <span class="admin-ops-flow__step is-done" id="rrqLinkRecruitment">Recruitment</span>
+          <p class="rrq-assist-note">After Attach / Create Parent: confirm the relationship. Next: Edit Draft → Combined Preview → Approve → Manual Publish (same canonical page).</p>
+          <nav class="admin-ops-flow" aria-label="Recruitment content chain" id="rrqOpsFlow">
+            <span class="admin-ops-flow__step" id="rrqFlowSource">SOURCE</span>
             <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-            <span class="admin-ops-flow__step is-done" id="rrqLinkUpdate">Update</span>
+            <span class="admin-ops-flow__step" id="rrqFlowUpdate">UPDATE</span>
             <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-            <span class="admin-ops-flow__step is-current" id="rrqLinkEvent">Event</span>
+            <span class="admin-ops-flow__step" id="rrqFlowRecruitment">RECRUITMENT</span>
             <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-            <span class="admin-ops-flow__step" id="rrqLinkDraft">Draft</span>
+            <span class="admin-ops-flow__step" id="rrqFlowDraft">DRAFT</span>
             <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-            <span class="admin-ops-flow__step" id="rrqLinkReview">Review</span>
+            <span class="admin-ops-flow__step" id="rrqFlowPreview">PREVIEW</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" id="rrqFlowPublish">PUBLISH</span>
           </nav>
           <dl class="rrq-history-grid" id="rrqLinkageMeta"></dl>
         </section>
 
-        <section class="rrq-history" id="rrqHistory" aria-label="Review history">
-          <h3>History</h3>
-          <dl class="rrq-history-grid" id="rrqHistoryGrid"></dl>
-        </section>
+        <section class="rrq-decision-tree" id="rrqDecisionTree" hidden aria-label="Decision workflow">
+          <div class="rrq-step-context" id="rrqStepContext" aria-live="polite">
+            <p class="rrq-step-now"><span class="rrq-step-label">अब क्या</span> <span id="rrqStepNow">—</span></p>
+            <p class="rrq-step-next"><span class="rrq-step-label">इसके बाद</span> <span id="rrqStepNext">—</span></p>
+            <p class="rrq-step-why" id="rrqStepWhyWrap" hidden><span class="rrq-step-label">क्यों</span> <span id="rrqStepWhy">—</span></p>
+          </div>
 
-        <div class="rrq-actions" id="rrqActions">
-          <button type="button" class="header-action-btn" data-action="approve" title="Approve review decision only — does not publish">Approve (not publish)</button>
-          <button type="button" class="header-action-btn" data-action="reject" title="Reject with a required reason in Notes">Reject</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review" title="Defer decision — stay in review workflow">Keep Under Review</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze" title="Hold for investigation — not Reject/Approve">Freeze</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" data-action="unfreeze" hidden title="Restore to Under Review">Unfreeze</button>
-          <a class="header-action-btn" id="rrqEditDraftLink" href="/generator#drafts" hidden style="text-decoration:none;">Edit Draft</a>
-          <a class="header-action-btn header-action-btn--ghost" id="rrqManualPublishLink" href="/generator#drafts" style="text-decoration:none;">Manual Publish (Generator)</a>
-        </div>
-        <p class="rrq-assist-note" id="rrqActionLegend" style="margin-top:0.35rem;">
-          Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred.
-          After Approve: Generator → Preview → Manual Publish.
-        </p>
+          <nav class="admin-ops-flow rrq-tree-pipeline" id="rrqTreePipeline" aria-label="Workflow stages">
+            <span class="admin-ops-flow__step" data-rrq-pipe="source">SOURCE</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" data-rrq-pipe="update">UPDATE</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" data-rrq-pipe="recruitment">RECRUITMENT</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" data-rrq-pipe="draft">DRAFT</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" data-rrq-pipe="preview">PREVIEW</span>
+            <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
+            <span class="admin-ops-flow__step" data-rrq-pipe="publish">PUBLISH</span>
+          </nav>
+
+          <section class="rrq-tree-step" id="rrqStepRelation" hidden aria-label="Related to existing recruitment?">
+            <h3>Step 1 — Relation</h3>
+            <p class="rrq-tree-question" id="rrqRelationQuestion">
+              क्या यह update किसी existing Recruitment से संबंधित है?
+            </p>
+            <div class="rrq-actions rrq-tree-choices" id="rrqRelationChoices">
+              <button type="button" class="header-action-btn" data-rrq-branch="yes" title="YES: this belongs to an existing recruitment lifecycle — next you will Select → Attach">YES — existing Recruitment</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-rrq-branch="no" title="NO: not an existing match — next you will Create Parent, Standalone, or Reject">NO — not an existing match</button>
+            </div>
+            <div class="rrq-actions rrq-tree-hold" id="rrqRelationHold" hidden>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review" title="Preserve state without publishing. Resume later from Under Review filter.">Keep Under Review</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze" title="Pause this item. Does not publish or create a page. Only Unfreeze afterward.">Freeze</button>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepAttach" hidden aria-label="Attach to existing recruitment">
+            <h3>Step 2 — Existing Recruitment चुनी गई है</h3>
+            <p class="rrq-assist-note">
+              <strong>Attach:</strong> This update will become part of the selected recruitment lifecycle.
+              Same canonical public page will be updated later via Manual Publish — no new recruitment/page.
+              YES selection persists across refresh (`match_intent=yes`).
+            </p>
+            <button type="button" class="rrq-branch-back" data-rrq-branch-reset>← Change YES / NO</button>
+            <div class="rrq-table-wrap">
+              <table class="rrq-table" aria-label="Candidate recruitments">
+                <thead>
+                  <tr>
+                    <th>Candidate Recruitments</th>
+                    <th>Match</th>
+                    <th>Score</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="rrqCandidateBody">
+                  <tr><td colspan="4" class="rrq-empty">No candidates.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="rrq-actions" id="rrqNeedsMatchingActions">
+              <label class="rrq-attach-label">
+                Attach to existing Recruitment
+                <input type="search" id="rrqAttachRecruitmentSearch" maxlength="200" placeholder="Search by recruitment name…" autocomplete="off">
+                <input type="hidden" id="rrqAttachRecruitmentId" value="">
+                <span id="rrqAttachRecruitmentLabel" class="rrq-assist-note" aria-live="polite">No recruitment selected</span>
+                <div id="rrqAttachSuggestions" class="rrq-attach-suggestions" hidden></div>
+              </label>
+              <button type="button" class="header-action-btn" data-match-action="attach" title="Links this update to the selected recruitment. Does not publish.">Attach</button>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepAlternate" hidden aria-label="Create parent, standalone, or reject">
+            <h3>Step 2 — Not an existing match</h3>
+            <ul class="rrq-choice-explain">
+              <li><strong>Create Parent</strong> — new recruitment lifecycle that deserves a canonical page.</li>
+              <li><strong>Standalone</strong> — keep content without attaching/creating a recruitment.</li>
+              <li><strong>Reject</strong> — irrelevant/invalid/duplicate; will not proceed to publication (Notes required).</li>
+            </ul>
+            <button type="button" class="rrq-branch-back" data-rrq-branch-reset>← Change YES / NO</button>
+            <div class="rrq-actions" id="rrqAlternateActions">
+              <button type="button" class="header-action-btn" data-match-action="create_parent" title="Creates a new recruitment lifecycle. Does not publish.">Create Parent</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="standalone" title="Does not create or attach a recruitment. No public page from this action.">Standalone</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-match-action="reject" title="Rejected items will not proceed to publication. Notes/reason required.">Reject</button>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepReview" hidden aria-label="Review decision">
+            <h3>Review decision</h3>
+            <p class="rrq-assist-note">
+              Recommended order: <strong>Edit Draft</strong> (open official source/PDF, edit structured data, Combined Preview) →
+              <strong>Approve (not publish)</strong> → then Manual Publish in Generator.
+              Approve केवल editorial approval है — public page नहीं बदलती.
+            </p>
+            <div class="rrq-actions" id="rrqActions">
+              <a class="header-action-btn" id="rrqEditDraftLink" href="/generator#drafts" hidden style="text-decoration:none;" title="Opens the exact Generator draft when draftId is known">Edit Draft / Combined Preview</a>
+              <button type="button" class="header-action-btn" data-action="approve" title="Approval does not publish the page. Manual Publish is still required.">Approve (not publish)</button>
+              <button type="button" class="header-action-btn" data-action="reject" title="Rejected items will not proceed to publication. Notes required.">Reject</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-action="under-review" title="Preserve state without publishing. Resume later.">Keep Under Review</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" data-action="freeze" title="Pause without publishing or creating a page. Only Unfreeze afterward.">Freeze</button>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepFrozen" hidden aria-label="Frozen hold">
+            <h3>Frozen</h3>
+            <p class="rrq-assist-note">STOP / HOLD. Frozen does not publish, does not create a page, and does not change the canonical public page. Unfreeze restores Under Review — not Approve.</p>
+            <div class="rrq-actions" id="rrqFrozenActions">
+              <button type="button" class="header-action-btn" data-action="unfreeze" title="Restore to Under Review. Unfreeze is not Approve.">Unfreeze</button>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepPublish" hidden aria-label="Draft preview and manual publish">
+            <h3>Approved → Manual Publish</h3>
+            <p class="rrq-assist-note">
+              Approve केवल editorial approval है. Public page अभी publish नहीं हुई है.
+              Open the exact draft → Combined Preview (OLD + NEW) → <strong>Manual Publish</strong> (only public-write gate).
+              For updates: same recruitment, same canonical page — page count must not increase.
+            </p>
+            <div class="rrq-actions" id="rrqPublishActions">
+              <a class="header-action-btn" id="rrqEditDraftLinkPublish" href="/generator#drafts" hidden style="text-decoration:none;">Edit Draft / Combined Preview</a>
+              <a class="header-action-btn" id="rrqManualPublishLink" href="/generator#drafts" style="text-decoration:none;" title="Opens Generator for Manual Publish. Does not publish from Review Center.">Manual Publish (Generator)</a>
+            </div>
+          </section>
+
+          <section class="rrq-tree-step" id="rrqStepTerminal" hidden aria-label="Terminal state">
+            <h3 id="rrqTerminalTitle">Done</h3>
+            <p class="rrq-assist-note" id="rrqTerminalNote"></p>
+          </section>
+
+          <p class="rrq-assist-note" id="rrqActionLegend">
+            Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred.
+            Path: Edit Draft → Combined Preview → Approve → Manual Publish.
+          </p>
+        </section>
 
         <label class="rrq-notes-label">
           Notes / Reject reason
           <textarea id="rrqNotes" rows="4" maxlength="5000" placeholder="Required when Rejecting. Optional otherwise."></textarea>
         </label>
         <button type="button" class="header-action-btn" id="rrqSaveNotes">Update Notes</button>
+
+        <section class="rrq-history" id="rrqHistory" aria-label="Review history">
+          <h3>History</h3>
+          <dl class="rrq-history-grid" id="rrqHistoryGrid"></dl>
+        </section>
 
         <div class="rrq-detail-grid">
           <section>
@@ -338,6 +433,7 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-recruitment-review-queue.js?v=9"></script>
+<script src="/js/admin-rrq-workflow-state.js?v=1"></script>
+<script src="/js/admin-recruitment-review-queue.js?v=12"></script>
 </body>
 </html>

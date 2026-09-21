@@ -288,7 +288,8 @@ function buildUpdateMiniFlow(stage) {
         { id: "detected", label: "Detected" },
         { id: "draft", label: "Draft" },
         { id: "review", label: "Review" },
-        { id: "publish", label: "Publish" }
+        { id: "approve", label: "Approve" },
+        { id: "publish", label: "Manual Publish" }
       ];
   const current =
     stage === "needs-matching"

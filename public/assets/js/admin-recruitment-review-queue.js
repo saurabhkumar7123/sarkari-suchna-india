@@ -9,6 +9,14 @@
   let selectedId = null;
   let selectedItem = null;
   let focusedUpdateId = null;
+  /** In-progress YES/NO while status is still needs_matching — restored from URL/sessionStorage. */
+  let matchingBranch = null;
+  let matchingBranchForId = null;
+
+  const WorkflowState =
+    (typeof window !== "undefined" && window.RrqWorkflowState) ||
+    (typeof globalThis !== "undefined" && globalThis.RrqWorkflowState) ||
+    null;
 
   function prettyJson(value) {
     if (value === undefined || value === null || value === "") return "—";
@@ -36,10 +44,196 @@
     return null;
   }
 
+  function itemNeedsMatchingDecision(item) {
+    return String((item && item.status) || "").toLowerCase() === "needs_matching";
+  }
+
+  function readStoredMatchIntent(reviewId) {
+    if (!WorkflowState) return null;
+    const key = WorkflowState.storageKeyForReview(reviewId);
+    if (!key) return null;
+    try {
+      return WorkflowState.normalizeIntent(sessionStorage.getItem(key));
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStoredMatchIntent(reviewId, intent) {
+    if (!WorkflowState) return;
+    const key = WorkflowState.storageKeyForReview(reviewId);
+    if (!key) return;
+    try {
+      const normalized = WorkflowState.normalizeIntent(intent);
+      if (normalized) sessionStorage.setItem(key, normalized);
+      else sessionStorage.removeItem(key);
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function readStoredRecruitmentPick(reviewId) {
+    if (!WorkflowState) return null;
+    const key = WorkflowState.recruitmentStorageKey(reviewId);
+    if (!key) return null;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      const id = String(parsed.id || "").trim();
+      if (!id) return null;
+      return { id, title: String(parsed.title || "") };
+    } catch {
+      return null;
+    }
+  }
+
+  function writeStoredRecruitmentPick(reviewId, recruitmentId, title) {
+    if (!WorkflowState) return;
+    const key = WorkflowState.recruitmentStorageKey(reviewId);
+    if (!key) return;
+    try {
+      const id = String(recruitmentId || "").trim();
+      if (!id) {
+        sessionStorage.removeItem(key);
+        return;
+      }
+      sessionStorage.setItem(key, JSON.stringify({ id, title: String(title || "") }));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function syncMatchIntentUrl(intent) {
+    if (!WorkflowState) return;
+    try {
+      const nextSearch = WorkflowState.writeIntentIntoSearch(window.location.search, intent);
+      const next = `${window.location.pathname}${nextSearch}${window.location.hash || ""}`;
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash || ""}`;
+      if (next !== current) {
+        window.history.replaceState({}, "", next);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function persistMatchIntent(reviewId, intent) {
+    const normalized = WorkflowState
+      ? WorkflowState.normalizeIntent(intent)
+      : intent === "yes" || intent === "no"
+        ? intent
+        : null;
+    matchingBranch = normalized;
+    matchingBranchForId = reviewId || null;
+    if (reviewId) writeStoredMatchIntent(reviewId, normalized);
+    syncMatchIntentUrl(normalized);
+    if (!normalized && reviewId) writeStoredRecruitmentPick(reviewId, "", "");
+  }
+
+  function clearMatchIntentArtifacts(reviewId) {
+    matchingBranch = null;
+    matchingBranchForId = reviewId || null;
+    if (reviewId) {
+      writeStoredMatchIntent(reviewId, null);
+      writeStoredRecruitmentPick(reviewId, "", "");
+    }
+    syncMatchIntentUrl(null);
+  }
+
+  function restoreMatchIntentForItem(item) {
+    const id = item && item.id;
+    if (!itemNeedsMatchingDecision(item)) {
+      clearMatchIntentArtifacts(id);
+      return null;
+    }
+
+    const fromUrl = WorkflowState
+      ? WorkflowState.readIntentFromSearch(window.location.search)
+      : null;
+    const fromStore = readStoredMatchIntent(id);
+    const restored = fromUrl || fromStore || null;
+
+    matchingBranch = restored;
+    matchingBranchForId = id || null;
+
+    // Keep URL and storage aligned when either source has a value.
+    if (restored) {
+      writeStoredMatchIntent(id, restored);
+      syncMatchIntentUrl(restored);
+      const pick = readStoredRecruitmentPick(id);
+      if (pick && restored === "yes") {
+        setAttachSelection(pick.id, pick.title);
+      }
+    } else {
+      syncMatchIntentUrl(null);
+    }
+    return restored;
+  }
+
+  function resolveUiPhase(item) {
+    if (WorkflowState) {
+      return WorkflowState.resolvePhase(item, matchingBranch);
+    }
+    if (!item) return "empty";
+    const status = String(item.status || "").toLowerCase();
+    if (status === "frozen") return "frozen";
+    if (status === "rejected") return "rejected";
+    if (
+      item.linked_draft &&
+      String(item.linked_draft.status || "").toLowerCase() === "published"
+    ) {
+      return "published";
+    }
+    if (status === "approved") return "approved";
+    if (status === "needs_matching") {
+      if (matchingBranch === "yes") return "attach";
+      if (matchingBranch === "no") return "alternate";
+      return "relation";
+    }
+    if (!item.recruitment_id) return "standalone_review";
+    return "review";
+  }
+
+  function resetMatchingBranchIfNeeded(item) {
+    restoreMatchIntentForItem(item);
+  }
+
+  function setStepVisibility(id, visible) {
+    const el = document.getElementById(id);
+    if (el) el.hidden = !visible;
+  }
+
+  function setStepContext(nowText, nextText, whyText) {
+    const nowEl = document.getElementById("rrqStepNow");
+    const nextEl = document.getElementById("rrqStepNext");
+    const whyEl = document.getElementById("rrqStepWhy");
+    const whyWrap = document.getElementById("rrqStepWhyWrap");
+    if (nowEl) nowEl.textContent = nowText || "—";
+    if (nextEl) nextEl.textContent = nextText || "—";
+    if (whyEl) whyEl.textContent = whyText || "—";
+    if (whyWrap) whyWrap.hidden = !whyText;
+  }
+
+  function syncPipelineHighlight(stageKey) {
+    const pipe = document.getElementById("rrqTreePipeline");
+    if (!pipe) return;
+    const order = ["source", "update", "recruitment", "draft", "preview", "publish"];
+    const idx = Math.max(0, order.indexOf(stageKey));
+    pipe.querySelectorAll("[data-rrq-pipe]").forEach((el) => {
+      const key = el.getAttribute("data-rrq-pipe");
+      const i = order.indexOf(key);
+      el.classList.remove("is-done", "is-current");
+      if (i < idx) el.classList.add("is-done");
+      else if (i === idx) el.classList.add("is-current");
+    });
+  }
+
   function syncManualPublishLink(item) {
     const link = document.getElementById("rrqManualPublishLink");
     const editLink = document.getElementById("rrqEditDraftLink");
-    if (!link) return;
+    const editLinkPublish = document.getElementById("rrqEditDraftLinkPublish");
     const linked = item && item.linked_draft;
     const draftId =
       linked && linked.id
@@ -48,15 +242,24 @@
     const status = String((item && item.status) || "").toLowerCase();
     const published = linked && String(linked.status || "").toLowerCase() === "published";
 
-    if (editLink) {
+    function applyEditLink(el) {
+      if (!el) return;
       if (draftId && !published && status !== "rejected" && status !== "frozen") {
-        editLink.hidden = false;
-        editLink.href = "/generator?draftId=" + encodeURIComponent(draftId);
-        editLink.textContent = "Edit Draft #" + draftId;
+        el.hidden = false;
+        el.href = "/generator?draftId=" + encodeURIComponent(draftId);
+        el.textContent =
+          el.id === "rrqEditDraftLinkPublish"
+            ? "Edit Draft / Combined Preview #" + draftId
+            : "Edit Draft #" + draftId;
       } else {
-        editLink.hidden = true;
+        el.hidden = true;
       }
     }
+
+    applyEditLink(editLink);
+    applyEditLink(editLinkPublish);
+
+    if (!link) return;
 
     if (linked && String(linked.status || "").toLowerCase() === "published") {
       if (linked.publishedSlug) {
@@ -93,17 +296,24 @@
   }
 
   function syncActionAvailability(item) {
+    const tree = document.getElementById("rrqDecisionTree");
     if (!item) {
-      document.querySelectorAll("#rrqActions [data-action]").forEach((btn) => {
+      if (tree) tree.hidden = true;
+      document.querySelectorAll("#rrqDecisionTree [data-action]").forEach((btn) => {
         btn.hidden = true;
         btn.disabled = true;
       });
       const editLink = document.getElementById("rrqEditDraftLink");
+      const editLinkPublish = document.getElementById("rrqEditDraftLinkPublish");
       const pubLink = document.getElementById("rrqManualPublishLink");
       if (editLink) editLink.hidden = true;
+      if (editLinkPublish) editLinkPublish.hidden = true;
       if (pubLink) pubLink.hidden = true;
+      matchingBranch = null;
+      matchingBranchForId = null;
       return;
     }
+
     const status = String((item && item.status) || "").toLowerCase();
     const frozen = status === "frozen";
     const rejected = status === "rejected";
@@ -112,7 +322,7 @@
       item &&
       item.linked_draft &&
       String(item.linked_draft.status || "").toLowerCase() === "published";
-    const needsMatching = status === "needs_matching";
+    const needsMatching = itemNeedsMatchingDecision(item);
 
     const show = {
       approve: !frozen && !rejected && !approved && !published,
@@ -122,9 +332,9 @@
       unfreeze: frozen
     };
 
-    document.querySelectorAll("#rrqActions [data-action]").forEach((btn) => {
+    document.querySelectorAll("#rrqDecisionTree [data-action]").forEach((btn) => {
       const action = btn.getAttribute("data-action");
-      const visible = show[action] !== false;
+      const visible = show[action] === true;
       btn.hidden = !visible;
       btn.disabled = !visible;
     });
@@ -134,12 +344,11 @@
     if (saveNotesBtn) saveNotesBtn.disabled = frozen;
     if (notesEl) notesEl.disabled = frozen;
 
-    const matchActions = document.getElementById("rrqNeedsMatchingActions");
-    if (matchActions) {
-      matchActions.querySelectorAll("[data-match-action]").forEach((btn) => {
+    document
+      .querySelectorAll("#rrqNeedsMatchingActions [data-match-action], #rrqAlternateActions [data-match-action]")
+      .forEach((btn) => {
         btn.disabled = frozen || rejected || published;
       });
-    }
 
     const legend = document.getElementById("rrqActionLegend");
     if (legend) {
@@ -150,18 +359,159 @@
         legend.textContent = "Rejected: no Publish from this item. Reason is stored in Notes.";
       } else if (approved) {
         legend.textContent =
-          "Approved (decision only). Next: Edit Draft / Preview → Manual Publish. Approve never auto-publishes.";
+          "Approved (decision only). Next: Edit Draft / Combined Preview → Manual Publish. Approve never auto-publishes.";
       } else if (needsMatching) {
         legend.textContent =
-          "Needs Matching: Attach existing, Create Parent (new), Reject, Keep Under Review, or Freeze.";
+          "Needs Matching: answer YES/NO first, then only that branch’s actions. Hold options: Keep Under Review or Freeze.";
       } else if (published) {
         legend.textContent =
           "Published: use Recruitments → Manual Update for Admit Card / Result on the same canonical page.";
       } else {
         legend.textContent =
-          "Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred. After Approve: Generator → Preview → Manual Publish.";
+          "Approve ≠ Publish. Freeze ≠ Reject. Under Review = decision deferred. Path: Edit Draft → Combined Preview → Approve → Manual Publish.";
       }
     }
+
+    syncDecisionTree(item, { frozen, rejected, approved, published, needsMatching, show });
+  }
+
+  function syncDecisionTree(item, flags) {
+    const tree = document.getElementById("rrqDecisionTree");
+    if (!tree || !item) {
+      if (tree) tree.hidden = true;
+      return;
+    }
+    tree.hidden = false;
+    resetMatchingBranchIfNeeded(item);
+
+    const { show } = flags;
+    const phase = resolveUiPhase(item);
+
+    setStepVisibility("rrqStepRelation", false);
+    setStepVisibility("rrqStepAttach", false);
+    setStepVisibility("rrqStepAlternate", false);
+    setStepVisibility("rrqStepReview", false);
+    setStepVisibility("rrqStepFrozen", false);
+    setStepVisibility("rrqStepPublish", false);
+    setStepVisibility("rrqStepTerminal", false);
+
+    const hold = document.getElementById("rrqRelationHold");
+    const reviewAssist = document.querySelector("#rrqStepReview .rrq-assist-note");
+
+    if (phase === "frozen") {
+      setStepVisibility("rrqStepFrozen", true);
+      syncPipelineHighlight("update");
+      setStepContext(
+        "Frozen — STOP / HOLD. Public page नहीं बदली।",
+        "Unfreeze → Under Review (Approve नहीं)। फिर Edit Draft → Approve → Manual Publish.",
+        "Freeze pauses without publishing or creating a page."
+      );
+      return;
+    }
+
+    if (phase === "rejected") {
+      setStepVisibility("rrqStepTerminal", true);
+      syncPipelineHighlight("update");
+      const title = document.getElementById("rrqTerminalTitle");
+      const note = document.getElementById("rrqTerminalNote");
+      if (title) title.textContent = "Rejected";
+      if (note) {
+        note.textContent =
+          "Terminal: no Approve, Edit Draft, Manual Publish, Attach, or Create Parent. Reason is in Notes.";
+      }
+      setStepContext(
+        "Rejected — publication path closed for this item.",
+        "No further matching / approve / publish actions.",
+        "Rejected items will not proceed to publication."
+      );
+      return;
+    }
+
+    if (phase === "published") {
+      setStepVisibility("rrqStepPublish", true);
+      syncPipelineHighlight("publish");
+      setStepContext(
+        "Published — canonical page live. Duplicate recruitment/page न बनाएँ।",
+        "Open published page. Later events: Recruitments → Manual Update (same page).",
+        "ONE recruitment = ONE canonical page."
+      );
+      return;
+    }
+
+    if (phase === "relation") {
+      setStepVisibility("rrqStepRelation", true);
+      syncPipelineHighlight("update");
+      if (hold) {
+        const canHold = show["under-review"] || show.freeze;
+        hold.hidden = !canHold;
+      }
+      setStepContext(
+        "Matching undecided — क्या यह update existing Recruitment से संबंधित है?",
+        "YES → Select → Attach. NO → Create Parent / Standalone / Reject.",
+        "Chosen branch persists across refresh via URL. Public page नहीं बदलेगी।"
+      );
+      return;
+    }
+
+    if (phase === "attach") {
+      setStepVisibility("rrqStepAttach", true);
+      syncPipelineHighlight("recruitment");
+      setStepContext(
+        "Existing Recruitment path (YES) — Select Recruitment, then Attach.",
+        "After Attach → Edit Draft → Combined Preview → Approve → Manual Publish (same canonical page).",
+        "Attach links this update into the selected recruitment — does not publish."
+      );
+      return;
+    }
+
+    if (phase === "alternate") {
+      setStepVisibility("rrqStepAlternate", true);
+      syncPipelineHighlight("recruitment");
+      setStepContext(
+        "NO path — Create Parent, Standalone, or Reject.",
+        "Create Parent → new recruitment then draft path. Standalone → no recruitment. Reject → terminal (Notes required).",
+        "Public page अभी नहीं बदलेगी।"
+      );
+      return;
+    }
+
+    if (phase === "approved") {
+      setStepVisibility("rrqStepPublish", true);
+      syncPipelineHighlight("publish");
+      setStepContext(
+        "Approved — editorial only. Public page अभी publish नहीं हुई है।",
+        "Edit Draft / Combined Preview → Manual Publish (only public-write gate).",
+        "Approve ≠ Publish."
+      );
+      return;
+    }
+
+    setStepVisibility("rrqStepReview", true);
+    syncPipelineHighlight("draft");
+    if (phase === "standalone_review") {
+      if (reviewAssist) {
+        reviewAssist.textContent =
+          "Standalone: कोई Recruitment attach/create नहीं हुआ। Matching YES/NO दोबारा नहीं। Edit Draft जहाँ लागू हो → Approve / Reject / Freeze. Approve ≠ Publish.";
+      }
+      setStepContext(
+        "Standalone Under Review — no recruitment linked. Public page नहीं बदली।",
+        "Resume: Edit Draft (if any) → Approve, or Reject / Freeze.",
+        "Matching already resolved as standalone."
+      );
+      return;
+    }
+
+    if (reviewAssist) {
+      reviewAssist.innerHTML =
+        "Recommended: <strong>Edit Draft</strong> (source/PDF + Combined Preview) → <strong>Approve (not publish)</strong> → Manual Publish. Matching decision दोबारा नहीं। Approve केवल editorial approval है।";
+    }
+    setStepContext(
+      item && item.recruitment_id
+        ? "Update existing recruitment से attached/linked है। Public page अभी नहीं बदली।"
+        : "Review in progress. Public page नहीं बदली।",
+      "Draft खोलकर official PDF के अनुसार verify/edit → Combined Preview → Approve → Manual Publish.",
+      "Approve does not publish. Under Review preserves state; Freeze pauses."
+    );
   }
 
   function renderWorkflowGuidance(item) {
@@ -223,13 +573,38 @@
       item.processor_output && typeof item.processor_output === "object" ? item.processor_output : {};
     const raw = item.raw_notice && typeof item.raw_notice === "object" ? item.raw_notice : {};
     const siteName = processor.siteName || raw.siteName || "—";
-    const sourceUrl = item.source_url || raw.link || "—";
+    const siteUrl = processor.siteUrl || raw.siteUrl || raw.site_url || "";
+    const sourceUrl = item.source_url || raw.link || "";
     const updateId = item.update_id || raw.updateId || "—";
     const detectedAt = formatDate(item.created_at || raw.detectedAt);
+    const draftId = resolveDraftId(item);
+    const isPdf = sourceUrl && /\.pdf(\?|#|$)/i.test(String(sourceUrl));
+    const verifyBits = [];
+    if (siteUrl) {
+      verifyBits.push(
+        `<a class="header-action-btn header-action-btn--ghost" href="${escapeHtml(siteUrl)}" target="_blank" rel="noopener noreferrer">Open Official Site</a>`
+      );
+    }
+    if (sourceUrl) {
+      verifyBits.push(
+        `<a class="header-action-btn header-action-btn--ghost" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${
+          isPdf ? "Open Official PDF" : "Open Official Notice"
+        }</a>`
+      );
+    }
+    if (draftId && sourceUrl) {
+      verifyBits.push(
+        `<a class="header-action-btn header-action-btn--ghost" href="/generator?draftId=${encodeURIComponent(draftId)}&pdfUrl=${encodeURIComponent(sourceUrl)}">Verify PDF in Generator</a>`
+      );
+    } else if (draftId) {
+      verifyBits.push(
+        `<a class="header-action-btn header-action-btn--ghost" href="/generator?draftId=${encodeURIComponent(draftId)}">Edit Draft #${escapeHtml(draftId)}</a>`
+      );
+    }
     grid.innerHTML = `
       <div><dt>SOURCE</dt><dd>${escapeHtml(siteName)}</dd></div>
       <div><dt>Official URL</dt><dd>${
-        sourceUrl && sourceUrl !== "—"
+        sourceUrl
           ? `<a class="rrq-source-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(sourceUrl)}</a>`
           : "—"
       }</dd></div>
@@ -239,6 +614,11 @@
       <div><dt>Update ID</dt><dd>${escapeHtml(String(updateId))}</dd></div>
       <div><dt>RECRUITMENT</dt><dd>${escapeHtml(recruitmentLabel(item))}</dd></div>
       <div><dt>Review ID</dt><dd>${escapeHtml(String(item.id || "—"))}</dd></div>
+      ${
+        verifyBits.length
+          ? `<div class="rrq-detail-full"><dt>Verify source</dt><dd class="rrq-verify-actions">${verifyBits.join(" ")}</dd></div>`
+          : ""
+      }
     `;
   }
 
@@ -360,7 +740,7 @@
     return item.title || "—";
   }
 
-  function setAttachSelection(id, title) {
+  function setAttachSelection(id, title, options) {
     const idEl = document.getElementById("rrqAttachRecruitmentId");
     const labelEl = document.getElementById("rrqAttachRecruitmentLabel");
     const searchEl = document.getElementById("rrqAttachRecruitmentSearch");
@@ -372,9 +752,14 @@
         : "No recruitment selected";
     }
     if (searchEl && title) searchEl.value = title;
+    if (!id && searchEl) searchEl.value = "";
     if (suggestions) {
       suggestions.hidden = true;
       suggestions.innerHTML = "";
+    }
+    const persist = !options || options.persist !== false;
+    if (persist && selectedId) {
+      writeStoredRecruitmentPick(selectedId, id, title);
     }
   }
 
@@ -692,10 +1077,10 @@
           "—";
         const decision =
           String(item.status || "").toLowerCase() === "needs_matching"
-            ? "Human must attach correct Recruitment (never auto-publish)"
+            ? "Human must answer YES/NO, then Attach or Create Parent / Standalone / Reject (never auto-publish)"
             : mode === "UPDATE" || mode === "UPDATE EXISTING PAGE"
-              ? "Human: Generator → Preview → Manual Publish (UPDATE EXISTING PAGE)"
-              : "Human: Generator → Preview → Manual Publish (CREATE NEW CANONICAL PAGE)";
+              ? "Human: Edit Draft → Combined Preview → Approve → Manual Publish (UPDATE EXISTING PAGE)"
+              : "Human: Edit Draft → Preview → Approve → Manual Publish (CREATE NEW CANONICAL PAGE)";
         const repairBits = [];
         if (!item.recruitment_id) repairBits.push("missing recruitment");
         if (canon === "Not linked yet" && ["admit_card", "answer_key", "result", "final_result"].includes(String(item.event_type || "").toLowerCase())) {
@@ -951,22 +1336,42 @@
   function actionOutcomeMessage(action, item) {
     const wf = (item && item.workflow) || {};
     const status = item && item.status ? String(item.status) : action;
+    const draftId =
+      (item && item.linked_draft && item.linked_draft.id) || resolveDraftId(item);
+    const draftHint = draftId ? ` Open /generator?draftId=${draftId}` : "";
     if (action === "approve") {
-      return `Approved (decision only). Status: ${status}. Next: ${wf.nextAction || "Manual Publish in Generator."}`;
+      return `Approved (decision only — not published). Status: ${status}. Next: Combined Preview → Manual Publish.${draftHint}`;
     }
     if (action === "reject") {
       return `Rejected. Status: ${status}. Will not draft/publish from this item.`;
     }
     if (action === "under-review") {
-      return `Marked Under Review — decision deferred. Status: ${status}. No public change.`;
+      return `Marked Under Review — state preserved, no publish, no duplicate recruitment. Resume later from Under Review filter.`;
     }
     if (action === "freeze") {
-      return `Frozen — hold for investigation (not Reject/Approve). Unfreeze to continue.`;
+      return `Frozen — hold without publishing or creating a page. Unfreeze restores Under Review (not Approve).`;
     }
     if (action === "unfreeze") {
-      return `Unfrozen → Under Review. Continue Approve / Reject / matching as needed.`;
+      return `Unfrozen → Under Review. Continue Edit Draft → Approve → Manual Publish (Unfreeze ≠ Approve).`;
     }
-    return `Updated: ${action}. Status: ${status}.`;
+    return `Updated: ${action}. Status: ${status}. ${wf.nextAction || ""}`;
+  }
+
+  function nextStepMessage(action, item) {
+    const name = recruitmentLabel(item);
+    const draftId =
+      (item && item.linked_draft && item.linked_draft.id) || resolveDraftId(item);
+    const draftHint = draftId
+      ? ` Open exact draft: /generator?draftId=${draftId}`
+      : " Open Generator when a draft is ready.";
+    const messages = {
+      attach: `Attached to ${name}. This update is part of that recruitment lifecycle. Next: Edit Draft → Combined Preview → Approve → Manual Publish (same permanent page).${draftHint}`,
+      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Edit Draft → Preview → Approve → Manual Publish (new canonical page once).${draftHint}`,
+      standalone:
+        "Left standalone — no Recruitment was created or attached. Content remains available. Next: Create Parent or Attach later, or Reject if not needed.",
+      reject: "Rejected — will not proceed to publication. No Recruitment or page change from this item."
+    };
+    return messages[action] || `Resolved: ${action}`;
   }
 
   async function runAction(action) {
@@ -1044,7 +1449,13 @@
     renderContextPanel(item);
     syncManualPublishLink(item);
     syncActionAvailability(item);
-    setAttachSelection("", "");
+    // Restore attach pick after sync; do not wipe YES-branch selection on refresh.
+    if (resolveUiPhase(item) === "attach") {
+      const pick = readStoredRecruitmentPick(item.id);
+      if (pick) setAttachSelection(pick.id, pick.title, { persist: false });
+    } else if (itemNeedsMatchingDecision(item) && matchingBranch !== "yes") {
+      setAttachSelection("", "", { persist: false });
+    }
 
     const notesEl = document.getElementById("rrqNotes");
     if (notesEl) notesEl.value = item.notes || "";
@@ -1068,23 +1479,6 @@
       const el = document.querySelector(`[data-field="${key}"]`);
       if (el) el.textContent = prettyJson(fields[key]);
     });
-  }
-
-  function nextStepMessage(action, item) {
-    const name = recruitmentLabel(item);
-    const draftId =
-      (item && item.linked_draft && item.linked_draft.id) || resolveDraftId(item);
-    const draftHint = draftId
-      ? ` Open Generator with draft: /generator?draftId=${draftId}`
-      : " Open Generator when a draft is ready.";
-    const messages = {
-      attach: `Attached to ${name}. Next: Generator → Preview → Manual Publish/Update (same permanent page).${draftHint}`,
-      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Generator → Preview → Manual Publish.${draftHint}`,
-      standalone:
-        "Left standalone — no Recruitment was created or attached. Detected content remains available. Next: Create Parent or Attach later, or reject if not needed.",
-      reject: "Rejected — no Recruitment or page change."
-    };
-    return messages[action] || `Resolved: ${action}`;
   }
 
   async function resolveMatching(action, recruitmentId) {
@@ -1112,6 +1506,8 @@
       return;
     }
     renderDetail(result.body.data);
+    clearMatchIntentArtifacts(result.body.data && result.body.data.id);
+    if (selectedItem) syncActionAvailability(selectedItem);
     setMessage(detailMessage, nextStepMessage(action, result.body.data), "success");
     await loadList();
   }
@@ -1245,23 +1641,31 @@
     await loadDetail(id);
   });
 
-  document.getElementById("rrqCloseDetail")?.addEventListener("click", () => {
-    selectedId = null;
-    selectedItem = null;
-    renderDetail(null);
-    loadList();
-  });
+  document.getElementById("rrqDecisionTree")?.addEventListener("click", async (event) => {
+    const branchBtn = event.target.closest("[data-rrq-branch]");
+    if (branchBtn) {
+      const intent = branchBtn.getAttribute("data-rrq-branch") === "yes" ? "yes" : "no";
+      persistMatchIntent(selectedId, intent);
+      if (selectedItem) syncActionAvailability(selectedItem);
+      return;
+    }
 
-  document.getElementById("rrqActions")?.addEventListener("click", async (event) => {
-    const btn = event.target.closest("[data-action]");
-    if (!btn || btn.disabled) return;
-    await runAction(btn.getAttribute("data-action"));
-  });
+    if (event.target.closest("[data-rrq-branch-reset]")) {
+      persistMatchIntent(selectedId, null);
+      setAttachSelection("", "");
+      if (selectedItem) syncActionAvailability(selectedItem);
+      return;
+    }
 
-  document.getElementById("rrqNeedsMatchingActions")?.addEventListener("click", async (event) => {
-    const btn = event.target.closest("[data-match-action]");
-    if (!btn || btn.disabled) return;
-    const action = btn.getAttribute("data-match-action");
+    const actionBtn = event.target.closest("[data-action]");
+    if (actionBtn && !actionBtn.disabled) {
+      await runAction(actionBtn.getAttribute("data-action"));
+      return;
+    }
+
+    const matchBtn = event.target.closest("[data-match-action]");
+    if (!matchBtn || matchBtn.disabled) return;
+    const action = matchBtn.getAttribute("data-match-action");
     let recruitmentId = document.getElementById("rrqAttachRecruitmentId")?.value || "";
     if (action === "attach" && !recruitmentId) {
       setMessage(
@@ -1284,6 +1688,21 @@
       }
     }
     await resolveMatching(action, recruitmentId || undefined);
+  });
+
+  document.getElementById("rrqCloseDetail")?.addEventListener("click", () => {
+    const priorId = selectedId;
+    selectedId = null;
+    selectedItem = null;
+    clearMatchIntentArtifacts(priorId);
+    renderDetail(null);
+    loadList();
+  });
+
+  window.addEventListener("popstate", () => {
+    if (!selectedItem) return;
+    restoreMatchIntentForItem(selectedItem);
+    syncActionAvailability(selectedItem);
   });
 
   document.getElementById("rrqCandidateBody")?.addEventListener("click", (event) => {

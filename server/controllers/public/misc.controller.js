@@ -68,14 +68,16 @@ function injectCombinedPreviewMarkers(html, sectionDiff, options = {}) {
   .preview-change-badge{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;vertical-align:middle}
   .preview-change-badge--new{background:#dcfce7;color:#166534}
   .preview-change-badge--changed{background:#fef3c7;color:#92400e}
+  .preview-change-badge--unchanged{background:#f1f5f9;color:#334155}
+  .card[data-preview-change="unchanged"]{outline:1px solid #cbd5e1;outline-offset:2px}
 </style>
 <div class="combined-preview-banner" role="status">
   <strong>Combined Preview — existing published page + pending update</strong>
   This is the final page visitors will see after Manual Publish. Approve does not publish.
   <div class="combined-preview-legend">
-    <span class="combined-preview-pill combined-preview-pill--existing">Existing (unchanged)</span>
-    <span class="combined-preview-pill combined-preview-pill--changed">Changed</span>
-    <span class="combined-preview-pill combined-preview-pill--new">New</span>
+    <span class="combined-preview-pill combined-preview-pill--existing">UNCHANGED</span>
+    <span class="combined-preview-pill combined-preview-pill--changed">CHANGED</span>
+    <span class="combined-preview-pill combined-preview-pill--new">NEW</span>
   </div>
   ${
     options.slug
@@ -98,8 +100,8 @@ function injectCombinedPreviewMarkers(html, sectionDiff, options = {}) {
         .replace(/\s+/g, " ")
         .trim();
       const key = title.toLowerCase();
-      let change = "";
-      let badge = "";
+      let change = "unchanged";
+      let badge = `<span class="preview-change-badge preview-change-badge--unchanged">UNCHANGED</span>`;
       if (added.has(key)) {
         change = "new";
         badge = `<span class="preview-change-badge preview-change-badge--new">NEW</span>`;
@@ -107,7 +109,6 @@ function injectCombinedPreviewMarkers(html, sectionDiff, options = {}) {
         change = "changed";
         badge = `<span class="preview-change-badge preview-change-badge--changed">CHANGED</span>`;
       }
-      if (!change) return full;
       return `<div class="card${cardClass}" data-preview-change="${change}">
         <div class="card-header${headerClass}">
           <h2 class="section-title">

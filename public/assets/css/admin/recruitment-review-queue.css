@@ -231,6 +231,13 @@
   color: var(--admin-brand-hover);
 }
 
+.rrq-verify-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
 .rrq-status {
   text-transform: lowercase;
 }
@@ -412,6 +419,163 @@
   color: var(--admin-muted);
 }
 
+/* Decision-tree workflow (UI-only reorganization) */
+.rrq-decision-tree {
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-4);
+  border: 1px solid color-mix(in srgb, var(--admin-accent, #2563eb) 40%, var(--admin-border));
+  border-radius: var(--admin-radius);
+  background: color-mix(in srgb, var(--admin-accent, #2563eb) 5%, var(--admin-surface));
+}
+
+.rrq-step-context {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+}
+
+.rrq-step-context p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--admin-text);
+}
+
+.rrq-step-context p + p {
+  margin-top: 0.4rem;
+}
+
+.rrq-step-why {
+  color: var(--admin-muted);
+  font-size: 0.84rem;
+}
+
+.rrq-choice-explain {
+  margin: 0 0 0.75rem;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--admin-text-secondary);
+}
+
+.rrq-choice-explain li + li {
+  margin-top: 0.35rem;
+}
+
+.rrq-tree-pipeline {
+  margin: 0 0 0.85rem;
+  flex-wrap: wrap;
+}
+
+.rrq-tree-pipeline .admin-ops-flow__step.is-current {
+  font-weight: 800;
+}
+
+.rrq-step-label {
+  display: inline-block;
+  margin-right: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--admin-accent, #2563eb);
+}
+
+.rrq-tree-step {
+  margin-bottom: 0.85rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface);
+}
+
+.rrq-tree-step h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.rrq-tree-question {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--admin-text);
+}
+
+.rrq-tree-choices {
+  margin-bottom: 0.65rem;
+}
+
+.rrq-tree-hold {
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--admin-border);
+}
+
+.rrq-tree-hold::before {
+  content: "Hold / investigate";
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+}
+
+.rrq-branch-back {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--admin-brand, #2563eb);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rrq-branch-back:hover {
+  color: var(--admin-brand-hover, #1d4ed8);
+}
+
+.rrq-decision-tree .rrq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.rrq-needs-matching {
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-4);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-2);
+}
+
+.rrq-needs-matching h3,
+.rrq-linkage h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--admin-text);
+}
+
+.rrq-linkage {
+  margin-bottom: var(--admin-space-4);
+  padding: var(--admin-space-4);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  background: var(--admin-surface-2);
+}
+
 @media (max-width: 640px) {
   .rrq-detail-grid,
   .rrq-history-grid {
@@ -428,5 +592,9 @@
 
   .rrq-attach-suggestions {
     max-width: 100%;
+  }
+
+  .rrq-tree-choices .header-action-btn {
+    flex: 1 1 100%;
   }
 }
