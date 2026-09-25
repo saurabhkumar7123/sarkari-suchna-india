@@ -1,5 +1,5 @@
 /**
- * Generator SaaS polish — visual layer on top of generator.css.
+ * Generator SaaS polish Ã¢ÂÂ visual layer on top of generator.css.
  * Scoped to body.generator-saas-v2; features unchanged.
  */
 
@@ -171,8 +171,8 @@ body.generator-saas-v2 .generator-drafts-bar__filter.is-active{
 
 body.generator-saas-v2 .generator-drafts-bar__table-wrap{
   width:100%;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
+  max-width:100%;
+  overflow-x:hidden;
   border:1px solid #c7d2fe;
   border-radius:10px;
   background:#fff;
@@ -180,6 +180,7 @@ body.generator-saas-v2 .generator-drafts-bar__table-wrap{
 
 body.generator-saas-v2 .generator-drafts-bar__table{
   width:100%;
+  table-layout:fixed;
   border-collapse:separate;
   border-spacing:0;
   font-size:13px;
@@ -187,10 +188,11 @@ body.generator-saas-v2 .generator-drafts-bar__table{
 
 body.generator-saas-v2 .generator-drafts-bar__table th,
 body.generator-saas-v2 .generator-drafts-bar__table td{
-  padding:10px 12px;
+  padding:8px 12px;
   text-align:left;
-  vertical-align:top;
+  vertical-align:middle;
   border-bottom:1px solid #e2e8f0;
+  min-height:44px;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__table th{
@@ -200,10 +202,39 @@ body.generator-saas-v2 .generator-drafts-bar__table th{
   text-transform:uppercase;
   color:#64748b;
   background:#f8fafc;
+  white-space:nowrap;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(1),
+body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-identity{
+  width:46%;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(2),
+body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-status{
+  width:14%;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(3),
+body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-updated{
+  width:20%;
+  white-space:nowrap;
+  color:#475569;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(4),
+body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-actions{
+  width:20%;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__table tr:last-child td{
   border-bottom:0;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__table tbody tr:hover td{
+  background:#f8fafc;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__row-title{
@@ -212,6 +243,9 @@ body.generator-saas-v2 .generator-drafts-bar__row-title{
   font-weight:750;
   color:#0f172a;
   line-height:1.35;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__cell-identity .generator-drafts-bar__row-meta{
@@ -219,7 +253,9 @@ body.generator-saas-v2 .generator-drafts-bar__cell-identity .generator-drafts-ba
   margin-top:2px;
   font-size:11px;
   color:#64748b;
-  white-space:normal;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__status{
@@ -231,6 +267,7 @@ body.generator-saas-v2 .generator-drafts-bar__status{
   font-size:11px;
   font-weight:750;
   border:1px solid transparent;
+  white-space:nowrap;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__status.is-draft{
@@ -246,7 +283,15 @@ body.generator-saas-v2 .generator-drafts-bar__status.is-published{
 }
 
 body.generator-saas-v2 .generator-drafts-bar__cell-actions .generator-drafts-bar__actions{
-  justify-content:flex-start;
+  display:flex;
+  flex-wrap:nowrap;
+  justify-content:flex-end;
+  gap:6px;
+}
+
+body.generator-saas-v2 .generator-drafts-bar__cell-actions .generator-drafts-bar__btn{
+  flex:0 0 auto;
+  min-width:64px;
 }
 
 body.generator-saas-v2 .generator-drafts-bar__section-empty{
@@ -257,7 +302,34 @@ body.generator-saas-v2 .generator-drafts-bar__section-empty{
   font-size:13px;
 }
 
+/* Tablet: compress columns, allow wrap */
+@media (max-width:1024px) and (min-width:721px){
+  body.generator-saas-v2 .generator-drafts-bar__table th,
+  body.generator-saas-v2 .generator-drafts-bar__table td{
+    padding:8px 10px;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(1),
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-identity{
+    width:40%;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(3),
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-updated{
+    width:22%;
+    white-space:normal;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-actions .generator-drafts-bar__actions{
+    flex-wrap:wrap;
+    justify-content:flex-start;
+  }
+}
+
+/* Mobile ~390px: stacked draft cards, no horizontal overflow */
 @media (max-width:720px){
+  body.generator-saas-v2 .generator-drafts-bar__table-wrap{
+    overflow-x:hidden;
+    border:0;
+    background:transparent;
+  }
   body.generator-saas-v2 .generator-drafts-bar__table thead{
     display:none;
   }
@@ -268,18 +340,67 @@ body.generator-saas-v2 .generator-drafts-bar__section-empty{
     display:block;
     width:100%;
   }
+  body.generator-saas-v2 .generator-drafts-bar__table{
+    table-layout:auto;
+  }
   body.generator-saas-v2 .generator-drafts-bar__table tr{
+    margin:0 0 8px;
     padding:10px 12px;
-    border-bottom:1px solid #e2e8f0;
+    border:1px solid #c7d2fe;
+    border-radius:10px;
+    background:#fff;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__table tr:last-child{
+    margin-bottom:0;
   }
   body.generator-saas-v2 .generator-drafts-bar__table td{
-    padding:4px 0;
+    padding:3px 0;
     border-bottom:0;
+    min-height:0;
   }
-  body.generator-saas-v2 .generator-drafts-bar__cell-updated::before{
-    content:"Updated: ";
+  body.generator-saas-v2 .generator-drafts-bar__table th:nth-child(n),
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-identity,
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-status,
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-updated,
+  body.generator-saas-v2 .generator-drafts-bar__table td.generator-drafts-bar__cell-actions{
+    width:100%;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__row-title,
+  body.generator-saas-v2 .generator-drafts-bar__cell-identity .generator-drafts-bar__row-meta{
+    white-space:normal;
+    overflow:visible;
+    text-overflow:unset;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-status,
+  body.generator-saas-v2 .generator-drafts-bar__cell-updated{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-status::before{
+    content:"Status";
+    font-size:11px;
     font-weight:700;
     color:#64748b;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-updated::before{
+    content:"Updated";
+    font-size:11px;
+    font-weight:700;
+    color:#64748b;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-actions .generator-drafts-bar__actions{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    margin-top:4px;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__cell-actions .generator-drafts-bar__btn{
+    flex:1 1 auto;
+    min-width:0;
+  }
+  body.generator-saas-v2 .generator-drafts-bar__table tbody tr:hover td{
+    background:transparent;
   }
 }
 
@@ -740,7 +861,7 @@ body.generator-saas-v2 .form-accordion > summary::-webkit-details-marker{
 }
 
 body.generator-saas-v2 .form-accordion > summary::after{
-  content:"▾";
+  content:"Ã¢ÂÂ¾";
   margin-left:auto;
   font-size:12px;
   color:var(--saas-muted);
@@ -887,12 +1008,26 @@ body.generator-saas-v2 .editor-toolbar-hint{
 }
 
 body.generator-saas-v2 .content-editor{
+  flex:0 0 auto;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:280px;
+  max-height:min(70vh, 720px);
+  resize:vertical;
+  overflow:auto;
   border:1px solid var(--saas-line-strong);
   border-radius:var(--saas-radius-sm);
   background:#fcfdff;
   padding:14px;
   line-height:1.65;
   box-shadow:inset 0 1px 2px rgba(15,23,42,.04);
+}
+
+body.generator-saas-v2 .section-editor-wrap.is-raw-mode ~ .content-editor,
+body.generator-saas-v2 .editor-panel:has(.section-editor-wrap.is-raw-mode) > .content-editor{
+  resize:vertical;
+  flex:0 0 auto;
 }
 
 body.generator-saas-v2 .content-editor:focus{
@@ -1306,7 +1441,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     opacity:.55;
   }
 
-  /* Expand mode — grouped topbar on mobile (Page / Editor pills + Done / Collapse) */
+  /* Expand mode Ã¢ÂÂ grouped topbar on mobile (Page / Editor pills + Done / Collapse) */
   body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-expand-topbar:not([hidden]){
     position:fixed;
     top:0;
@@ -1573,7 +1708,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     gap:4px;
   }
 
-  /* Expand mode — fixed top row: Preview | Save | Done | SEO | Collapse */
+  /* Expand mode Ã¢ÂÂ fixed top row: Preview | Save | Done | SEO | Collapse */
   body.generator-saas-v2.generator-editor-fullscreen:not(.generator-fs-mobile-groups) .editor-expand-topbar:not([hidden]){
     position:fixed;
     top:0;
@@ -1678,7 +1813,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     gap:6px;
   }
 
-  /* Section toolbar — compact on mobile */
+  /* Section toolbar Ã¢ÂÂ compact on mobile */
   body.generator-saas-v2 .section-editor-toolbar{
     padding:6px 8px;
     gap:4px;
@@ -1742,7 +1877,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     height:28px;
   }
 
-  /* Section card — inline label + field */
+  /* Section card Ã¢ÂÂ inline label + field */
   body.generator-saas-v2 .sec-card__expandable{
     display:grid;
     gap:6px;
@@ -1781,7 +1916,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     font-size:13px;
   }
 
-  /* Dates / links / list rows — label + value side by side */
+  /* Dates / links / list rows Ã¢ÂÂ label + value side by side */
   body.generator-saas-v2 .sec-dates-block--date .sec-row{
     grid-template-columns:minmax(52px,32%) minmax(0,1fr) auto;
     gap:4px;
@@ -2522,18 +2657,38 @@ body.generator-saas-v2 .sec-input--title{
 }
 
 body.generator-saas-v2 .sec-textarea{
-  min-height:72px;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:96px;
+  max-height:min(40vh, 360px);
   resize:vertical;
+  overflow-y:auto;
   line-height:1.5;
 }
 
 body.generator-saas-v2 .sec-textarea--compact{
-  min-height:56px;
+  min-height:72px;
+  max-height:min(36vh, 280px);
+  resize:vertical;
+  overflow-y:auto;
 }
 
 body.generator-saas-v2 .sec-textarea--mono{
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-size:12px;
+  min-height:120px;
+  max-height:min(45vh, 420px);
+}
+
+body.generator-saas-v2 textarea.sec-table-cell-input{
+  min-height:72px;
+  max-height:min(32vh, 240px);
+  resize:vertical;
+  overflow-y:auto;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
 }
 
 body.generator-saas-v2 .sec-rows{
@@ -2963,7 +3118,7 @@ body.generator-saas-v2 .sec-dates-block--list{
     overscroll-behavior:contain;
   }
 
-  /* Expand / fullscreen — edge-to-edge editor on mobile */
+  /* Expand / fullscreen Ã¢ÂÂ edge-to-edge editor on mobile */
   body.generator-saas-v2.generator-editor-fullscreen .editor-panel{
     padding:calc(48px + env(safe-area-inset-top,0px)) 0 calc(8px + env(safe-area-inset-bottom,0px));
     gap:4px;
@@ -3058,8 +3213,9 @@ body.generator-saas-v2 .sec-dates-block--list{
     border-right:none;
     box-sizing:border-box;
     flex:1 1 auto;
-    min-height:0;
+    min-height:240px;
     max-height:none;
+    resize:vertical;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .sec-card{
@@ -3085,11 +3241,15 @@ body.generator-saas-v2 .sec-dates-block--list{
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .sec-textarea{
-    min-height:48px;
+    min-height:72px;
+    max-height:min(36vh, 300px);
+    resize:vertical;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .sec-textarea--compact{
-    min-height:40px;
+    min-height:64px;
+    max-height:min(32vh, 240px);
+    resize:vertical;
   }
 
   body.generator-saas-v2.generator-editor-fullscreen .sec-tool-btn,
@@ -3140,7 +3300,7 @@ body.generator-saas-v2 .sec-dates-block--list{
    Generator UI compact cleanup (presentation only)
    ======================================================================== */
 
-/* Drafts list: default CLOSED — head toggles panel */
+/* Drafts list: default CLOSED Ã¢ÂÂ head toggles panel */
 body.generator-saas-v2 .generator-drafts-bar__collapse{
   display:flex;
   align-items:center;
@@ -3317,7 +3477,7 @@ body.generator-saas-v2 .generator-step{
   }
 }
 
-/* Search: compact icon in header side — expand only on /generator */
+/* Search: compact icon in header side Ã¢ÂÂ expand only on /generator */
 body.generator-saas-v2 .admin-header .admin-right{
   display:flex;
   align-items:flex-start;
@@ -3429,7 +3589,7 @@ body.generator-saas-v2 .page-search-panel label{
   font-size:10px;
 }
 
-/* /generator#drafts — remove all page-title search UI (keep draft list filters) */
+/* /generator#drafts Ã¢ÂÂ remove all page-title search UI (keep draft list filters) */
 body[data-admin-hash="drafts"] .page-search-panel,
 body[data-admin-hash="drafts"] #pageSearchPanel,
 body[data-admin-hash="drafts"] .page-search-toggle,
@@ -3549,4 +3709,495 @@ body.generator-saas-v2 .page-search-panel{
 body.generator-saas-v2 .action-btn__label{
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+/* ÂÂ Section Builder UX improvements (local) ÂÂ */
+body.generator-saas-v2 .section-editor-mode-hint,
+body.generator-saas-v2 .section-editor-raw-hint{
+  margin:0 12px 8px;
+  padding:8px 10px;
+  font-size:12px;
+  line-height:1.45;
+  color:#475569;
+  background:#f8fafc;
+  border:1px solid var(--saas-line, #e2e8f0);
+  border-radius:8px;
+}
+
+body.generator-saas-v2 .section-editor-raw-hint{
+  color:#9a3412;
+  background:#fff7ed;
+  border-color:#fed7aa;
+}
+
+body.generator-saas-v2 .sec-card__foot{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:8px 12px 12px;
+  border-top:1px solid var(--saas-line, #e2e8f0);
+  background:#fafbfc;
+}
+
+body.generator-saas-v2 .sec-card.is-collapsed .sec-card__foot{
+  display:none;
+}
+
+body.generator-saas-v2 .sec-card-foot-btn{
+  min-height:32px;
+  padding:6px 10px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  border-radius:8px;
+  background:#fff;
+  color:#334155;
+  font-size:12px;
+  font-weight:650;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-card-foot-btn:hover{
+  border-color:var(--saas-brand, #2563eb);
+  color:var(--saas-brand, #2563eb);
+  background:var(--saas-brand-soft, #eff6ff);
+}
+
+body.generator-saas-v2 .sec-card-foot-btn--danger{
+  color:#b91c1c;
+}
+
+body.generator-saas-v2 .sec-card-foot-btn--danger:hover{
+  border-color:#fecaca;
+  background:#fef2f2;
+  color:#991b1b;
+}
+
+body.generator-saas-v2 .sec-row--kv{
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) auto;
+  gap:8px;
+  align-items:start;
+}
+
+body.generator-saas-v2 .sec-dates-blocks--fee .sec-dates-block--date{
+  padding:8px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  border-radius:10px;
+  background:#fff;
+}
+
+body.generator-saas-v2 .sec-input--url.is-invalid{
+  border-color:#f87171 !important;
+  background:#fef2f2;
+  box-shadow:0 0 0 2px rgba(248,113,113,.18);
+}
+
+body.generator-saas-v2 .sec-rich-btn--br{
+  font-size:10px;
+  letter-spacing:.02em;
+}
+
+body.generator-saas-v2 .sec-add-section-modal{
+  position:fixed;
+  inset:0;
+  z-index:80;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+
+body.generator-saas-v2 .sec-add-section-modal.is-open{
+  display:flex;
+}
+
+body.generator-saas-v2 .sec-add-section-modal__backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,.45);
+}
+
+body.generator-saas-v2 .sec-add-section-modal__panel{
+  position:relative;
+  z-index:1;
+  width:min(640px,100%);
+  max-height:min(86vh,720px);
+  overflow:auto;
+  background:#fff;
+  border-radius:14px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  box-shadow:0 18px 48px rgba(15,23,42,.22);
+  padding:16px;
+}
+
+body.generator-saas-v2 .sec-add-section-modal__title{
+  margin:0 0 4px;
+  font-size:18px;
+  font-weight:800;
+  color:var(--saas-text, #0f172a);
+}
+
+body.generator-saas-v2 .sec-add-section-modal__hint{
+  margin:0 0 12px;
+  font-size:13px;
+  color:#64748b;
+  line-height:1.4;
+}
+
+body.generator-saas-v2 .sec-add-section-presets{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+
+body.generator-saas-v2 .sec-add-section-preset{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  text-align:left;
+  min-height:58px;
+  padding:10px 12px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  border-radius:10px;
+  background:#f8fafc;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-add-section-preset:hover,
+body.generator-saas-v2 .sec-add-section-preset:focus{
+  outline:none;
+  border-color:var(--saas-brand, #2563eb);
+  background:var(--saas-brand-soft, #eff6ff);
+}
+
+body.generator-saas-v2 .sec-add-section-preset__label{
+  font-size:13px;
+  font-weight:750;
+  color:var(--saas-text, #0f172a);
+}
+
+body.generator-saas-v2 .sec-add-section-preset__desc{
+  font-size:11px;
+  color:#64748b;
+  line-height:1.35;
+}
+
+body.generator-saas-v2 .sec-add-section-modal__actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:12px;
+}
+
+body.generator-saas-v2 .sec-add-section-modal__btn{
+  min-height:36px;
+  padding:8px 14px;
+  border-radius:8px;
+  border:1px solid var(--saas-line, #e2e8f0);
+  background:#fff;
+  font-weight:650;
+  cursor:pointer;
+}
+
+body.generator-saas-v2 .sec-add-section-modal__btn--ghost:hover{
+  background:#f1f5f9;
+}
+
+@media (max-width:768px){
+  body.generator-saas-v2 .sec-add-section-presets{
+    grid-template-columns:1fr;
+  }
+
+  body.generator-saas-v2 .sec-row--kv{
+    grid-template-columns:1fr;
+  }
+
+  body.generator-saas-v2 .sec-row--kv .sec-row-actions{
+    justify-content:flex-end;
+  }
+
+  body.generator-saas-v2 .sec-card__tools{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  body.generator-saas-v2 .sec-card__foot{
+    gap:8px;
+  }
+
+  body.generator-saas-v2 .sec-card-foot-btn{
+    flex:1 1 calc(50% - 8px);
+    min-height:40px;
+  }
+
+  body.generator-saas-v2 .section-editor-toolbar{
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  body.generator-saas-v2 .section-editor-toolbar__actions{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  body.generator-saas-v2 .section-editor-repair-btn,
+  body.generator-saas-v2 .section-editor-add-btn{
+    flex:1 1 auto;
+    min-height:40px;
+  }
+}
+
+@media (max-width:420px){
+  body.generator-saas-v2 .sec-card-foot-btn{
+    flex:1 1 100%;
+  }
+
+  body.generator-saas-v2 .sec-rich-toolbar{
+    flex-wrap:wrap;
+  }
+}
+
+/* ï¿½ï¿½ Generator UI cleanup polish (local) ï¿½ï¿½ */
+body.generator-saas-v2 .content-wrapper > .pdf-extract-panel{
+  order:-1;
+  margin:0;
+  padding:0;
+}
+
+body.generator-saas-v2 .pdf-extract-panel{
+  margin:0;
+  padding:8px;
+  border-radius:var(--saas-radius-sm, 10px);
+}
+
+body.generator-saas-v2 .pdf-extract-bar{
+  margin:0;
+  padding:8px 10px;
+  gap:8px 12px;
+}
+
+body.generator-saas-v2 .pdf-extract-bar__copy strong{
+  font-size:13px;
+}
+
+body.generator-saas-v2 .pdf-extract-bar__copy span{
+  font-size:11px;
+}
+
+body.generator-saas-v2 .generator-hero{
+  margin-bottom:8px;
+  padding:8px 10px;
+}
+
+body.generator-saas-v2 .generator-hero__eyebrow{
+  margin:0 0 2px;
+  font-size:10px;
+}
+
+body.generator-saas-v2 .generator-hero__title{
+  margin:0;
+  font-size:1.15rem;
+}
+
+body.generator-saas-v2 .page-subtitle{
+  margin:4px 0 0;
+  font-size:12px;
+  line-height:1.4;
+}
+
+body.generator-saas-v2 .admin-ops-flow{
+  margin:0 0 8px;
+  padding:6px 8px;
+  font-size:11px;
+}
+
+body.generator-saas-v2 .section-editor-root{
+  max-height:min(62vh,680px);
+}
+
+@media (max-width:768px){
+  body.generator-saas-v2 .pdf-extract-bar{
+    flex-wrap:wrap;
+  }
+
+  body.generator-saas-v2 .pdf-extract-bar__form{
+    width:100%;
+  }
+
+  body.generator-saas-v2 .sec-textarea,
+  body.generator-saas-v2 .sec-textarea--compact,
+  body.generator-saas-v2 textarea.sec-table-cell-input{
+    width:100%;
+    max-width:100%;
+  }
+}
+
+/*  Workflow cleanup: compact steps + search close + space  */
+body.generator-saas-v2 .admin-ops-flow{
+  display:none !important;
+}
+
+body.generator-saas-v2 .generator-hero{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin:0 0 8px;
+  padding:8px 10px;
+}
+
+body.generator-saas-v2 .generator-hero__row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px 12px;
+  flex-wrap:wrap;
+}
+
+body.generator-saas-v2 .generator-hero__title{
+  margin:0;
+  font-size:1.05rem;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
+
+body.generator-saas-v2 .page-subtitle{
+  margin:2px 0 0;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--saas-muted,#64748b);
+}
+
+body.generator-saas-v2 .generator-hero .mode-badge{
+  margin:0;
+  padding:4px 8px;
+  font-size:10px;
+}
+
+body.generator-saas-v2 .generator-hero .generator-steps{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:4px;
+  margin:0;
+  padding:4px;
+  width:100%;
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--saas-line,#e2e8f0);
+  border-radius:10px;
+  background:var(--saas-surface-soft,#f8fafc);
+  box-sizing:border-box;
+}
+
+body.generator-saas-v2 .generator-hero .generator-step{
+  flex:1 1 0;
+  min-width:0;
+  text-align:center;
+  white-space:nowrap;
+  padding:6px 8px;
+  min-height:30px;
+  font-size:12px;
+  font-weight:700;
+  border-radius:8px;
+  border:1px solid transparent;
+  text-decoration:none;
+  color:var(--saas-muted,#64748b);
+  background:transparent;
+}
+
+body.generator-saas-v2 .generator-hero .generator-step:hover{
+  color:var(--saas-brand,#2563eb);
+  background:#fff;
+}
+
+body.generator-saas-v2 .generator-hero .generator-step.is-active{
+  color:#fff;
+  background:var(--saas-brand,#2563eb);
+  border-color:var(--saas-brand,#2563eb);
+}
+
+body.generator-saas-v2 .basic-group-label{
+  display:none;
+}
+
+body.generator-saas-v2 .gen-title-legend{
+  margin:0 0 8px;
+  font-size:11px;
+  line-height:1.4;
+}
+
+body.generator-saas-v2 .field-error{
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  min-height:0 !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+body.generator-saas-v2 .field-error:not(:empty){
+  margin:4px 0 0 !important;
+  color:var(--admin-danger,#b91c1c);
+}
+
+body.generator-saas-v2 .page-search-panel__body-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+
+body.generator-saas-v2 .page-search-close{
+  width:28px;
+  height:28px;
+  border:1px solid var(--saas-line,#e2e8f0);
+  border-radius:8px;
+  background:#fff;
+  color:#64748b;
+  font-size:16px;
+  line-height:1;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+
+body.generator-saas-v2 .page-search-close:hover{
+  border-color:#fca5a5;
+  color:#b91c1c;
+  background:#fef2f2;
+}
+
+body.generator-saas-v2 .admin-header .page-search-panel.is-open{
+  transition: max-width .18s ease, padding .18s ease;
+}
+
+body.generator-saas-v2 .content-wrapper{
+  margin-top:8px;
+  gap:10px;
+}
+
+body.generator-saas-v2 .form-grid{
+  margin-top:6px;
+  gap:8px;
+}
+
+@media (max-width:768px){
+  body.generator-saas-v2 .generator-hero .generator-steps{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    overflow:visible;
+  }
+
+  body.generator-saas-v2 .generator-hero .generator-step{
+    flex:none;
+  }
+}
+
+@media (max-width:420px){
+  body.generator-saas-v2 .generator-hero .generator-step{
+    font-size:11px;
+    padding:6px 4px;
+  }
 }

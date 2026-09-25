@@ -277,9 +277,37 @@ body.admin-saas-v2:has(.er-layout) {
 }
 
 body.admin-saas-v2 .main:has(.er-layout) {
-  width: 100%;
-  max-width: 100%;
+  /* Must respect sidebar offset — width:100% + margin-left overflows the viewport */
+  width: calc(100% - var(--admin-sidebar-current));
+  max-width: none;
   min-width: 0;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
+body.admin-saas-v2 .main:has(.er-layout) > .admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+body.admin-saas-v2 .main:has(.er-layout) .admin-header-actions.rom-header-links {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+}
+
+body.admin-saas-v2 .main:has(.er-layout) #erRefreshBtn {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 body.admin-saas-v2 .main:has(.er-layout) > .admin-page-head {
@@ -565,7 +593,6 @@ body[data-mon-page="updates"] .admin-mini-flow {
 /* No page-level horizontal overflow on these workspaces */
 body[data-mon-page="sources"] .main,
 body[data-mon-page="updates"] .main,
-body.admin-saas-v2 .main:has(.er-layout),
 body.admin-saas-v2 .main:has(.rom-layout) {
   overflow-x: clip;
   max-width: 100%;
@@ -677,7 +704,6 @@ body.admin-saas-v2 .main:has(.rom-layout) .status-badge {
    ============================================================ */
 
 body.admin-saas-v2 .main:has(.rrq-layout),
-body.admin-saas-v2 .main:has(.er-layout),
 body.admin-saas-v2 .main:has(.page-manager) {
   overflow-x: clip;
   max-width: 100%;

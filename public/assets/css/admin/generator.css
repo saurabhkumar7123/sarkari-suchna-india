@@ -917,9 +917,13 @@ textarea{
 }
 
 .content-editor{
-  flex:1;
-  min-height:360px;
-  max-height:520px;
+  flex:0 0 auto;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  min-height:280px;
+  max-height:min(70vh, 720px);
+  resize:vertical;
   overflow:auto;
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-size:13px;
@@ -1191,10 +1195,18 @@ mark{
 }
 
 .field-error{
-  min-height:14px;
-  margin:2px 0 0;
+  min-height:0;
+  margin:0;
+  padding:0;
   font-size:11px;
   color:var(--color-danger);
+  border:0;
+  box-shadow:none;
+  background:transparent;
+}
+
+.field-error:not(:empty){
+  margin:4px 0 0;
 }
 
 .mode-badge{
@@ -2374,8 +2386,9 @@ body.generator-editor-fullscreen .content-wrapper{
 
 body.generator-editor-fullscreen .content-editor{
   flex:1;
-  min-height:0;
+  min-height:240px;
   max-height:none;
+  resize:vertical;
   font-size:16px;
 }
 
@@ -2494,8 +2507,9 @@ body.generator-editor-fullscreen.has-sticky-publish-bar .main-container{
   }
 
   body.generator-page .content-editor{
-    min-height:300px;
+    min-height:260px;
     max-height:min(58vh,560px);
+    resize:vertical;
     font-size:16px;
   }
 
@@ -2661,8 +2675,9 @@ body.generator-quick-mode .action-bar__inner{
   }
 
   body.generator-tablet-layout .content-editor{
-    min-height:400px;
-    max-height:560px;
+    min-height:280px;
+    max-height:min(65vh,560px);
+    resize:vertical;
   }
 
   body.generator-tablet-layout .preview-panel #previewFrame{

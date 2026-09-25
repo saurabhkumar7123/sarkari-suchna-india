@@ -21,15 +21,15 @@
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=9">
-  <link rel="stylesheet" href="/css/admin/generator.css?v=22">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=33">
+  <link rel="stylesheet" href="/css/admin/generator.css?v=25">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=37">
   <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
   <link rel="stylesheet" href="/css/admin/generator-workspace.css?v=3">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
   <link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
   <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
   <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
-<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=27">
   <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css?v=6">
 </head>
 
@@ -48,7 +48,10 @@
         <span class="page-search-toggle__label">Search</span>
       </button>
       <div class="page-search-panel__body" id="pageSearchBody" hidden>
-        <label for="pageSearch">Search Existing Page (edit)</label>
+        <div class="page-search-panel__body-head">
+          <label for="pageSearch">Search existing page</label>
+          <button type="button" id="pageSearchClose" class="page-search-close" aria-label="Close search" title="Close">×</button>
+        </div>
         <div class="search-select">
           <span class="search-input-icon" aria-hidden="true">
             <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 3.5 3.5"/></svg>
@@ -64,34 +67,24 @@
 
 <div class="main-container">
 
-<aside class="adm-wf" data-adm-wf="generator" data-adm-wf-for="generator" aria-label="Generator workflow context"></aside>
-<aside class="adm-wf" data-adm-wf="drafts" data-adm-wf-for="drafts" hidden aria-label="Drafts workflow context"></aside>
 
-<nav class="admin-ops-flow" aria-label="Generator workbench">
-  <span class="admin-ops-flow__step is-current">Source / Input</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step">Extracted Data</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step">Structured Content</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step">Preview</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step">Draft</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step">Review</span>
-  <span class="admin-ops-flow__arrow" aria-hidden="true">→</span>
-  <span class="admin-ops-flow__step is-locked">Manual Publish</span>
-</nav>
 
 <section class="admin-page-head generator-hero" id="generatorHero">
-  <div class="generator-hero__copy">
-    <p class="generator-hero__eyebrow">Content studio</p>
-    <h2 class="generator-hero__title">Page Generator</h2>
-    <p class="page-subtitle">Extract official PDF → structured content → Preview → Manual Publish. Auto Publish is disabled. Draft save is optional.</p>
+  <div class="generator-hero__row">
+    <div class="generator-hero__copy">
+      <h2 class="generator-hero__title">Page Generator</h2>
+      <p class="page-subtitle">PDF → Section Builder → Preview → Publish</p>
+    </div>
+    <div class="generator-hero__aside">
+      <div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create mode · URL editable</div>
+    </div>
   </div>
-  <div class="generator-hero__aside">
-    <div id="generatorModeBadge" class="mode-badge is-create" aria-live="polite">Create mode · URL editable</div>
-  </div>
+  <nav class="generator-steps" aria-label="Form sections">
+    <a href="#gen-step-basic" class="generator-step is-active" data-step="gen-step-basic">1 Basic</a>
+    <a href="#gen-step-advanced" class="generator-step" data-step="gen-step-advanced">2 Settings</a>
+    <a href="#gen-step-content" class="generator-step" data-step="gen-step-content">3 Content</a>
+    <a href="#gen-step-preview" class="generator-step" data-step="gen-step-preview">4 Preview</a>
+  </nav>
 </section>
 
 <section id="drafts" class="admin-page-head" aria-label="Saved Draft Management">
@@ -109,22 +102,12 @@
   <a href="/generator" id="generatorFullModeLink" class="generator-quick-banner__link">Open full generator</a>
 </div>
 
-<nav class="generator-steps" aria-label="Form sections">
-  <a href="#gen-step-basic" class="generator-step is-active" data-step="gen-step-basic">1. Basic</a>
-  <a href="#gen-step-advanced" class="generator-step" data-step="gen-step-advanced">2. Settings</a>
-  <a href="#gen-step-content" class="generator-step" data-step="gen-step-content">3. Content</a>
-  <a href="#gen-step-preview" class="generator-step" data-step="gen-step-preview">4. Preview</a>
-</nav>
 
 <div class="form-grid" id="gen-step-basic">
   <div class="basic-group-label" data-quick-hide>Basic Fields</div>
   <section class="generator-card generator-card--identity" data-quick-keep>
     <h3 class="card-title">Page Identity</h3>
-    <p class="field-hint gen-title-legend">
-      <strong>PUBLIC:</strong> Published page title shown to site visitors.<br>
-      <strong>ADMIN:</strong> Same field is also the draft title while parked.
-      Recruitment name is separate (set on Recruitments) and is not this title.
-    </p>
+    <p class="field-hint gen-title-legend">Public page title (also used as draft title). Recruitment name is separate.</p>
     <div class="card-fields card-fields--title-url">
       <div class="field-group" data-quick-field>
         <label for="title">Public page title <span class="field-label-muted">(also draft title)</span></label>
@@ -355,88 +338,31 @@
    
     <div class="content-wrapper" id="gen-step-content">
 
-  <section id="generatorWorkspace" class="generator-workspace is-collapsed" aria-label="Smart generator workspace">
-    <div class="gw-head">
-      <div class="gw-head__title">
-        <h3>Smart workspace</h3>
-        <span class="gw-head__sub">Advisory review — never changes your content automatically</span>
-      </div>
-      <div class="gw-head__actions">
-        <span id="gwQualityChip" class="gw-quality-chip" hidden></span>
-        <span id="gwValidationChip" class="gw-quality-chip" hidden></span>
-        <button type="button" class="gw-btn" data-gw-action="refresh">Re-check</button>
-        <button type="button" class="gw-btn" data-gw-action="shortcuts" title="Keyboard shortcuts (Shift + ?)">Shortcuts</button>
-        <button type="button" id="gwToggle" class="gw-btn" data-gw-action="toggle" aria-expanded="false" aria-controls="gwBody">Show workspace</button>
-      </div>
-    </div>
-
-    <ol id="gwTimeline" class="gw-timeline" aria-label="Generator processing timeline"></ol>
-
-    <div id="gwError" class="gw-error" role="alert" hidden></div>
-
-    <div id="gwBody" class="gw-body">
-      <aside class="gw-nav" aria-label="Section navigator">
-        <div class="gw-nav__head">
-          <h4>Sections</h4>
-          <span id="gwNavCount" class="gw-count">0</span>
+  <section class="pdf-extract-panel" id="pdfExtractSection" aria-label="PDF Extract">
+    <div class="pdf-extract-bar" id="pdfExtractBar">
+      <div class="pdf-extract-bar__intro">
+        <span class="pdf-extract-bar__icon" aria-hidden="true">PDF</span>
+        <div class="pdf-extract-bar__copy">
+          <strong>PDF Extract</strong>
+          <span>Official PDF → extracted text (separate from AI conversion)</span>
         </div>
-        <p id="gwNavEmpty" class="gw-empty gw-empty--padded">Detected sections appear here after AI conversion. Click one to jump to it in the editor.</p>
-        <ul id="gwNavList" class="gw-nav__list"></ul>
-      </aside>
-
-      <div class="gw-split">
-        <section class="gw-pane gw-pane--source" aria-label="Original PDF source">
-          <div class="gw-pane__head">
-            <h4>Source</h4>
-            <div class="gw-tabs" role="tablist" aria-label="Source view">
-              <button type="button" id="gwSourceTabText" class="gw-tab is-active" role="tab" aria-selected="true" data-gw-action="source-text">Extracted text</button>
-              <button type="button" id="gwSourceTabPdf" class="gw-tab" role="tab" aria-selected="false" data-gw-action="source-pdf">Original PDF</button>
-            </div>
-          </div>
-          <p id="gwSourceHint" class="gw-pane__hint" hidden></p>
-          <div id="gwSourceText" class="gw-pane__scroll"></div>
-          <div id="gwSourcePdf" class="gw-pane__scroll" hidden></div>
-        </section>
-
-        <section class="gw-pane gw-pane--structured" aria-label="Structured preview">
-          <div class="gw-pane__head">
-            <h4>Structured preview</h4>
-          </div>
-          <div id="gwStructured" class="gw-pane__scroll"></div>
-        </section>
       </div>
-    </div>
-
-    <div class="gw-panels">
-      <section class="gw-panel gw-panel--summary" aria-label="Generator summary">
-        <div class="gw-pane__head"><h4>Summary</h4></div>
-        <div id="gwSummary" class="gw-panel__body"></div>
-      </section>
-
-      <section class="gw-panel gw-panel--validation" aria-label="Validation">
-        <div class="gw-pane__head"><h4>Validation</h4></div>
-        <div id="gwValidation" class="gw-panel__body"></div>
-      </section>
-
-      <section class="gw-panel gw-panel--suggestions" aria-label="AI suggestions">
-        <div class="gw-pane__head"><h4>AI suggestions</h4></div>
-        <p class="gw-advisory-note">Advisory only — nothing here is applied automatically.</p>
-        <div id="gwSuggestions" class="gw-panel__body"></div>
-      </section>
+      <form id="pdfExtractForm" class="pdf-extract-bar__form" action="#" autocomplete="off">
+        <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
+        <label for="pdfFile" id="pdfDropZone" class="pdf-extract-drop" title="Choose or drop PDF">
+          <span class="pdf-extract-drop__ico" aria-hidden="true">?</span>
+          <span class="pdf-extract-drop__text pdf-extract-drop__text--desktop">Choose PDF</span>
+          <span class="pdf-extract-drop__text pdf-extract-drop__text--mobile">PDF</span>
+        </label>
+        <div class="pdf-extract-bar__meta">
+          <span id="pdfSelectedName" class="pdf-extract-file" title="Selected file">No file selected</span>
+          <span id="pdfFileSize" class="pdf-extract-size">—</span>
+        </div>
+        <span id="pdfUploadStatus" class="pdf-extract-status" aria-live="polite"></span>
+        <button type="button" id="pdfUploadBtn" class="pdf-extract-btn">Extract text</button>
+      </form>
     </div>
   </section>
-
-  <div id="gwShortcuts" class="gw-modal" role="dialog" aria-modal="true" aria-labelledby="gwShortcutsTitle" hidden>
-    <div class="gw-modal__panel">
-      <div class="gw-modal__head">
-        <h4 id="gwShortcutsTitle">Keyboard shortcuts</h4>
-        <button type="button" class="gw-modal__close" data-gw-action="close-shortcuts" aria-label="Close">—</button>
-      </div>
-      <table>
-        <tbody id="gwShortcutTable"></tbody>
-      </table>
-    </div>
-  </div>
 
   <section class="editor-panel" id="editorPanel">
     <div class="editor-expand-topbar" id="editorExpandTopbar" hidden aria-label="Expanded editor toolbar"></div>
@@ -470,8 +396,8 @@
     <div class="section-editor-wrap" id="sectionEditorWrap">
       <div class="section-editor-toolbar">
         <div class="section-editor-mode" role="tablist" aria-label="Editor mode">
-          <button type="button" id="editorModeVisual" class="section-editor-mode__btn is-active" role="tab" aria-selected="true">Section builder</button>
-          <button type="button" id="editorModeRaw" class="section-editor-mode__btn" role="tab" aria-selected="false">Raw text</button>
+          <button type="button" id="editorModeVisual" class="section-editor-mode__btn is-active" role="tab" aria-selected="true">Section Builder</button>
+          <button type="button" id="editorModeRaw" class="section-editor-mode__btn" role="tab" aria-selected="false">Raw Text — Advanced</button>
         </div>
         <div class="section-editor-toolbar__actions">
           <button type="button" id="sectionEditorRepairBtn" class="section-editor-repair-btn" title="Normalize table markers, color tags, and section headers">
@@ -481,8 +407,22 @@
           <button type="button" id="sectionEditorAddBtn" class="section-editor-add-btn">+ Add Section</button>
         </div>
       </div>
+      <p id="sectionEditorModeHint" class="section-editor-mode-hint">Section Builder is the easy mode — formatting is applied with buttons, not typed tags.</p>
+      <p id="sectionEditorRawHint" class="section-editor-raw-hint" hidden>Use Raw Text when you need direct control over the existing content format. Switching modes compiles Section Builder into the same publish syntax; complex advanced markup may need Raw Text edits.</p>
       <p id="sectionEditorNotice" class="section-editor-notice" hidden aria-live="polite"></p>
       <div id="sectionEditorRoot" class="section-editor-root"></div>
+    </div>
+
+    <div id="secAddSectionModal" class="sec-add-section-modal" hidden aria-hidden="true">
+      <div class="sec-add-section-modal__backdrop" data-add-section-action="cancel" aria-hidden="true"></div>
+      <div class="sec-add-section-modal__panel" role="dialog" aria-modal="true" aria-labelledby="secAddSectionModalTitle">
+        <h4 id="secAddSectionModalTitle" class="sec-add-section-modal__title">Add section</h4>
+        <p class="sec-add-section-modal__hint">Choose a preset. Each option uses the existing publish format — no new backend types.</p>
+        <div id="secAddSectionPresets" class="sec-add-section-presets" role="list"></div>
+        <div class="sec-add-section-modal__actions">
+          <button type="button" class="sec-add-section-modal__btn sec-add-section-modal__btn--ghost" data-add-section-action="cancel">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <div id="secRichLinkModal" class="sec-rich-link-modal" hidden aria-hidden="true">
@@ -508,51 +448,15 @@
       placeholder="Write ShortInfo, Sections, and FAQs here"></textarea>
   </section>
 
-  <section class="preview-panel" id="gen-step-preview">
+  <section class="preview-panel is-preview-collapsed" id="gen-step-preview" aria-hidden="true">
     <div class="panel-head">
       <h3>Live Preview</h3>
-      <span class="preview-hint">Rendered output (same pipeline as publish). UPDATE drafts use Combined Preview (existing + pending).</span>
+      <span class="preview-hint">Rendered output (same pipeline as publish). UPDATE drafts use Combined Preview (existing + pending). Use Preview to open.</span>
       <button type="button" id="mobilePreviewCloseBtn" class="mobile-preview-close" hidden aria-label="Close preview">Close</button>
     </div>
     <iframe id="previewFrame"></iframe>
   </section>
 
-  <details class="content-analysis-panel" id="contentAnalysisPanel" hidden>
-    <summary class="panel-head content-analysis-panel__summary">
-      <span class="content-analysis-panel__title">
-        <h3>Content analysis</h3>
-        <span class="preview-hint" id="contentAnalysisSummary">—</span>
-      </span>
-      <span class="content-analysis-panel__chevron" aria-hidden="true">?</span>
-    </summary>
-    <div id="contentAnalysisBody" class="content-analysis-body"></div>
-  </details>
-
-  <section class="pdf-extract-panel" id="pdfExtractSection" aria-label="PDF Extract">
-    <div class="pdf-extract-bar" id="pdfExtractBar">
-      <div class="pdf-extract-bar__intro">
-        <span class="pdf-extract-bar__icon" aria-hidden="true">PDF</span>
-        <div class="pdf-extract-bar__copy">
-          <strong>PDF Extract</strong>
-          <span>Official PDF → extracted text (separate from AI conversion)</span>
-        </div>
-      </div>
-      <form id="pdfExtractForm" class="pdf-extract-bar__form" action="#" autocomplete="off">
-        <input type="file" id="pdfFile" accept="application/pdf,.pdf" hidden>
-        <label for="pdfFile" id="pdfDropZone" class="pdf-extract-drop" title="Choose or drop PDF">
-          <span class="pdf-extract-drop__ico" aria-hidden="true">?</span>
-          <span class="pdf-extract-drop__text pdf-extract-drop__text--desktop">Choose PDF</span>
-          <span class="pdf-extract-drop__text pdf-extract-drop__text--mobile">PDF</span>
-        </label>
-        <div class="pdf-extract-bar__meta">
-          <span id="pdfSelectedName" class="pdf-extract-file" title="Selected file">No file selected</span>
-          <span id="pdfFileSize" class="pdf-extract-size">—</span>
-        </div>
-        <span id="pdfUploadStatus" class="pdf-extract-status" aria-live="polite"></span>
-        <button type="button" id="pdfUploadBtn" class="pdf-extract-btn">Extract text</button>
-      </form>
-    </div>
-  </section>
 </div>
 
 <div class="action-bar is-sticky-publish">
@@ -591,7 +495,7 @@
 <script src="/js/admin-nav.js?v=31"></script>
 <script src="/js/admin-shell.js?v=17"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-generator-drafts.js?v=8"></script>
+<script src="/js/admin-generator-drafts.js?v=9"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=6"></script>
@@ -600,12 +504,12 @@
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-seo-checklist.js"></script>
-<script src="/js/admin-generator-ui.js?v=5"></script>
+<script src="/js/admin-generator-ui.js?v=7"></script>
 <script src="/js/generator-mobile.js?v=8"></script>
 <script src="/js/jobSectionStructure.js"></script>
-<script src="/js/sectionEditorModel.js?v=8"></script>
-<script src="/js/sectionEditor.js?v=15"></script>
-<script src="/js/generator.js?v=18"></script>
+<script src="/js/sectionEditorModel.js?v=9"></script>
+<script src="/js/sectionEditor.js?v=17"></script>
+<script src="/js/generator.js?v=19"></script>
 <script src="/js/generator-workspace-core.js?v=1"></script>
 <script src="/js/generator-workspace.js?v=3"></script>
 </body>

@@ -12,8 +12,165 @@
   let syncing = false;
   let compileTimer = null;
 
+  /** UI presets only — map to existing CONTENT_TYPES / section titles (no new backend types). */
+  const SECTION_PRESETS = [
+    {
+      id: "text",
+      label: "Text",
+      description: "Short Information / free paragraph",
+      name: "Short Information",
+      contentType: "paragraph",
+      payload: null
+    },
+    {
+      id: "dates",
+      label: "Important Dates",
+      description: "Field + value rows",
+      name: "Important Dates",
+      contentType: "dates",
+      payload: {
+        blocks: [
+          { type: "date", label: "Online Apply Start Date", value: "" },
+          { type: "date", label: "Online Apply Last Date", value: "" },
+          { type: "date", label: "Fee Payment Last Date", value: "" },
+          { type: "date", label: "Exam Date", value: "Later" },
+          { type: "date", label: "Admit Card", value: "Later" },
+          { type: "date", label: "Result Date", value: "Later" }
+        ]
+      }
+    },
+    {
+      id: "fee",
+      label: "Application Fee",
+      description: "Category + fee rows",
+      name: "Application Fee",
+      contentType: "dates",
+      payload: {
+        blocks: [
+          { type: "date", label: "General / EWS / OBC", value: "" },
+          { type: "date", label: "SC / ST / PH", value: "" },
+          { type: "date", label: "Female", value: "" }
+        ]
+      }
+    },
+    {
+      id: "age",
+      label: "Age Limit",
+      description: "Min / max age rows",
+      name: "Age Limit",
+      contentType: "dates",
+      payload: {
+        blocks: [
+          { type: "date", label: "Minimum Age", value: "" },
+          { type: "date", label: "Maximum Age", value: "" }
+        ]
+      }
+    },
+    {
+      id: "vacancy",
+      label: "Vacancy Details",
+      description: "Table section",
+      name: "Vacancy Details",
+      contentType: "table",
+      payload: null,
+      forceTable: true
+    },
+    {
+      id: "eligibility",
+      label: "Eligibility",
+      description: "Paragraph text",
+      name: "Eligibility",
+      contentType: "paragraph",
+      payload: null
+    },
+    {
+      id: "howto",
+      label: "How To Apply",
+      description: "Steps as paragraph + list",
+      name: "How To Apply",
+      contentType: "paragraph_list",
+      payload: null
+    },
+    {
+      id: "selection",
+      label: "Selection Process",
+      description: "List of stages",
+      name: "Selection Process",
+      contentType: "list",
+      payload: null
+    },
+    {
+      id: "links",
+      label: "Important Links",
+      description: "Link name + URL rows",
+      name: "Important Links",
+      contentType: "links",
+      payload: {
+        rows: [
+          { mode: "single", label: "Apply Online", buttonText: "Click Here", url: "", actions: [] },
+          { mode: "single", label: "Official Notification", buttonText: "Click Here", url: "", actions: [] },
+          { mode: "single", label: "Official Website", buttonText: "Click Here", url: "", actions: [] }
+        ]
+      }
+    },
+    {
+      id: "faq",
+      label: "FAQ",
+      description: "Question & answer pairs",
+      name: "Important Questions",
+      contentType: "faq",
+      payload: null
+    },
+    {
+      id: "table",
+      label: "Table",
+      description: "Custom table section",
+      name: "Table",
+      contentType: "table",
+      payload: null,
+      forceTable: true
+    },
+    {
+      id: "custom",
+      label: "Custom",
+      description: "Blank paragraph section",
+      name: "New Section",
+      contentType: "paragraph",
+      payload: null
+    }
+  ];
+
   function el(id) {
     return document.getElementById(id);
+  }
+
+  function isFeeLikeSection(sec) {
+    const n = String(sec?.name || "").toLowerCase();
+    return /fee|fees|application fee/.test(n);
+  }
+
+  function isAgeLikeSection(sec) {
+    return /age\s*limit/i.test(String(sec?.name || ""));
+  }
+
+  function datesFieldLabels(sec) {
+    if (isFeeLikeSection(sec)) return { label: "Category", value: "Fee" };
+    if (isAgeLikeSection(sec)) return { label: "Field", value: "Age" };
+    return { label: "Field", value: "Value" };
+  }
+
+  function isUrlFieldValid(url) {
+    const u = String(url || "").trim();
+    if (!u) return true;
+    return /^(https?:\/\/|www\.|\/)/i.test(u);
+  }
+
+  function markUrlValidity(input) {
+    if (!input || !input.classList.contains("sec-input--url")) return;
+    const ok = isUrlFieldValid(input.value);
+    input.classList.toggle("is-invalid", !ok);
+    input.setAttribute("aria-invalid", ok ? "false" : "true");
+    input.title = ok ? "" : "Enter a valid URL (https://..., www..., or /path)";
   }
 
   function escapeHtml(str) {
@@ -87,14 +244,15 @@
     return `<div class="sec-rich-field${compact}" data-rich-field="${escapeHtml(fieldKey)}">
       <div class="sec-rich-toolbar" role="toolbar" aria-label="Rich formatting">
         <span class="sec-rich-toolbar__label">Format</span>
-        <button type="button" class="sec-rich-btn sec-rich-btn--bold" data-rich-action="bold" title="Bold [b]" aria-label="Bold">B</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--bold" data-rich-action="bold" title="Bold" aria-label="Bold">B</button>
         <button type="button" class="sec-rich-btn sec-rich-btn--highlight" data-rich-action="highlight" title="Highlight" aria-label="Highlight">HL</button>
         <select class="sec-rich-select" data-rich-action="color" title="Text color" aria-label="Text color">
           <option value="">Color</option>
           ${(M().ALLOWED_RICH_COLORS || []).map((c) => `<option value="${c}">${c}</option>`).join("")}
         </select>
-        <button type="button" class="sec-rich-btn sec-rich-btn--link" data-rich-action="link" title="Markdown link" aria-label="Insert link">Link</button>
-        <button type="button" class="sec-rich-btn sec-rich-btn--bullet" data-rich-action="bullet" title="Bullet (- )" aria-label="Bullet list">•</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--link" data-rich-action="link" title="Insert link" aria-label="Insert link">Link</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--br" data-rich-action="br" title="Line break" aria-label="Line break">BR</button>
+        <button type="button" class="sec-rich-btn sec-rich-btn--bullet" data-rich-action="bullet" title="Bullet list" aria-label="Bullet list">•</button>
       </div>
       ${innerHtml}
     </div>`;
@@ -322,6 +480,9 @@
     } else if (action === "link") {
       openRichLinkModal(editable);
       return;
+    } else if (action === "br") {
+      insert = "[br]";
+      cursorPos = start + insert.length;
     } else return;
 
     editable.value = val.slice(0, start) + insert + val.slice(end);
@@ -371,6 +532,11 @@
       rawBtn.classList.toggle("is-active", mode === "raw");
       rawBtn.setAttribute("aria-selected", mode === "raw" ? "true" : "false");
     }
+
+    const modeHint = el("sectionEditorModeHint");
+    const rawHint = el("sectionEditorRawHint");
+    if (modeHint) modeHint.hidden = mode === "raw";
+    if (rawHint) rawHint.hidden = mode !== "raw";
 
     if (mode === "visual") renderAllSections();
     clearEditorNotice();
@@ -445,12 +611,102 @@
     scheduleCompile();
   }
 
-  function addSection() {
-    sections.push(M().createEmptySection("New Section", M().CONTENT_TYPES.PARAGRAPH));
+  function createSectionFromPreset(preset) {
+    const type = preset.contentType || M().CONTENT_TYPES.PARAGRAPH;
+    const sec = M().createEmptySection(preset.name || "New Section", type);
+    if (preset.forceTable) sec.forceTable = true;
+    if (preset.payload) {
+      sec.payload = JSON.parse(JSON.stringify(preset.payload));
+    }
+    return sec;
+  }
+
+  function closeAddSectionModal() {
+    const modal = el("secAddSectionModal");
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    modal.classList.remove("is-open");
+  }
+
+  function openAddSectionModal() {
+    const modal = el("secAddSectionModal");
+    const list = el("secAddSectionPresets");
+    if (!modal || !list) {
+      addSectionFromPreset(SECTION_PRESETS.find((p) => p.id === "custom") || SECTION_PRESETS[0]);
+      return;
+    }
+    list.innerHTML = SECTION_PRESETS.map(
+      (p) => `
+      <button type="button" class="sec-add-section-preset" data-preset-id="${escapeHtml(p.id)}" role="listitem">
+        <span class="sec-add-section-preset__label">${escapeHtml(p.label)}</span>
+        <span class="sec-add-section-preset__desc">${escapeHtml(p.description || "")}</span>
+      </button>`
+    ).join("");
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    modal.classList.add("is-open");
+    list.querySelector("button")?.focus();
+  }
+
+  function initAddSectionModal() {
+    const modal = el("secAddSectionModal");
+    if (!modal || modal.dataset.bound === "1") return;
+    modal.dataset.bound = "1";
+    modal.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-add-section-action='cancel']")) {
+        closeAddSectionModal();
+        return;
+      }
+      const presetBtn = ev.target.closest("[data-preset-id]");
+      if (!presetBtn) return;
+      const preset = SECTION_PRESETS.find((p) => p.id === presetBtn.getAttribute("data-preset-id"));
+      closeAddSectionModal();
+      if (preset) addSectionFromPreset(preset);
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && modal.classList.contains("is-open")) closeAddSectionModal();
+    });
+  }
+
+  function addSectionFromPreset(preset) {
+    const sec = createSectionFromPreset(preset || SECTION_PRESETS[SECTION_PRESETS.length - 1]);
+    sections.push(sec);
     renderAllSections();
     scheduleCompile();
     const root = el("sectionEditorRoot");
-    if (root) root.lastElementChild?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const card = root?.querySelector(`[data-section-id="${sec.id}"]`);
+    card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    card?.querySelector('[data-field="section-name"]')?.focus();
+  }
+
+  function addSection() {
+    openAddSectionModal();
+  }
+
+  function duplicateSection(id) {
+    syncSectionsFromDom();
+    const idx = findSectionIndex(id);
+    if (idx < 0) return;
+    const source = sections[idx];
+    const copy = JSON.parse(JSON.stringify(source));
+    copy.id = M().newSectionId ? M().newSectionId() : `sec_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    copy.collapsed = false;
+    if (copy.name && !/ \(copy\)$/i.test(copy.name)) {
+      copy.name = `${copy.name} (copy)`;
+    }
+    sections.splice(idx + 1, 0, copy);
+    renderAllSections();
+    scheduleCompile();
+  }
+
+  function moveRowInArray(arr, index, delta) {
+    if (!Array.isArray(arr) || arr.length < 2) return false;
+    const next = index + delta;
+    if (next < 0 || next >= arr.length) return false;
+    const [item] = arr.splice(index, 1);
+    arr.splice(next, 0, item);
+    return true;
   }
 
   function onTypeChange(id, newType) {
@@ -481,25 +737,41 @@
   }
 
   function contentTypeOptions(selected) {
-    const labels = M().CONTENT_TYPE_LABELS;
+    const friendly = {
+      [M().CONTENT_TYPES.PARAGRAPH]: "Text",
+      [M().CONTENT_TYPES.DATES]: "Dates / Fee rows",
+      [M().CONTENT_TYPES.LINKS]: "Important Links",
+      [M().CONTENT_TYPES.FAQ]: "FAQ",
+      [M().CONTENT_TYPES.LIST]: "List",
+      [M().CONTENT_TYPES.PARAGRAPH_LIST]: "Text + list",
+      [M().CONTENT_TYPES.TABLE]: "Table",
+      [M().CONTENT_TYPES.BLOCKS]: "Multiple blocks",
+      [M().CONTENT_TYPES.MIXED]: "Advanced / mixed"
+    };
+    const labels = M().CONTENT_TYPE_LABELS || {};
     return Object.keys(labels)
       .map((key) => {
         const sel = key === selected ? " selected" : "";
-        return `<option value="${escapeHtml(key)}"${sel}>${escapeHtml(labels[key])}</option>`;
+        return `<option value="${escapeHtml(key)}"${sel}>${escapeHtml(friendly[key] || labels[key])}</option>`;
       })
       .join("");
   }
 
-  function renderRowActions(extraClass) {
+  function renderRowActions(extraClass, options = {}) {
     const extra = extraClass ? ` ${extraClass}` : "";
-    return `<button type="button" class="sec-row-btn sec-row-btn--add${extra}" title="Add row">+</button>
+    const move =
+      options.withMove !== false
+        ? `<button type="button" class="sec-row-btn sec-row-btn--up${extra}" title="Move up" aria-label="Move up">↑</button>
+      <button type="button" class="sec-row-btn sec-row-btn--down${extra}" title="Move down" aria-label="Move down">↓</button>`
+        : "";
+    return `${move}<button type="button" class="sec-row-btn sec-row-btn--add${extra}" title="Add row">+</button>
       <button type="button" class="sec-row-btn sec-row-btn--remove${extra}" title="Remove row">−</button>`;
   }
 
   function renderParagraphBody(sec) {
     const text = escapeHtml(sec.payload?.text || "");
-    const inner = `<label class="sec-field-label">Paragraph text</label>
-      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="4" placeholder="Supports [b], [highlight], [color], [label](url), bullet (-)">${text}</textarea>`;
+    const inner = `<label class="sec-field-label">Content</label>
+      <textarea class="sec-textarea" data-sec-id="${sec.id}" data-field="paragraph-text" rows="5" placeholder="Write section text. Use Format buttons for bold, color, highlight, and links.">${text}</textarea>`;
     return wrapRichField(inner, "paragraph");
   }
 
@@ -529,12 +801,13 @@
     return blocks;
   }
 
-  function renderDatesBlock(block, index) {
+  function renderDatesBlock(block, index, sec) {
+    const labels = datesFieldLabels(sec);
     if (block.type === "paragraph") {
       const inner = `
       <div class="sec-dates-block sec-dates-block--para" data-block-index="${index}" data-block-type="paragraph">
         <label class="sec-field-label">Paragraph</label>
-        <textarea class="sec-textarea sec-textarea--compact" data-field="dates-para" rows="2" placeholder="Note or extra text">${escapeHtml(block.text)}</textarea>
+        <textarea class="sec-textarea sec-textarea--compact" data-field="dates-para" rows="2" placeholder="Extra note">${escapeHtml(block.text)}</textarea>
         <div class="sec-row-actions sec-row-actions--block">${renderRowActions()}</div>
       </div>`;
       return wrapRichField(inner, "dates-para");
@@ -543,7 +816,7 @@
       const inner = `
       <div class="sec-dates-block sec-dates-block--list" data-block-index="${index}" data-block-type="list">
         <div class="sec-row sec-row--stack">
-          <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="dates-list-text" rows="2" placeholder="List item — [b], [color], [highlight], [label](url)">${escapeHtml(block.text)}</textarea>
+          <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="dates-list-text" rows="2" placeholder="List item">${escapeHtml(block.text)}</textarea>
           <label class="sec-check"><input type="checkbox" data-field="dates-list-ordered" ${block.ordered ? "checked" : ""}> Numbered</label>
           <div class="sec-row-actions">${renderRowActions()}</div>
         </div>
@@ -552,16 +825,16 @@
     }
     const dateInner = `
       <div class="sec-dates-block sec-dates-block--date" data-block-index="${index}" data-block-type="date">
-        <div class="sec-row sec-row--stack">
+        <div class="sec-row sec-row--kv">
           ${wrapRichField(
-            `<label class="sec-field-label">Label</label>
-            <input type="text" class="sec-input" data-rich-input data-field="date-label" placeholder="Label" value="${escapeHtml(block.label)}">`,
+            `<label class="sec-field-label">${escapeHtml(labels.label)}</label>
+            <input type="text" class="sec-input" data-rich-input data-field="date-label" placeholder="${escapeHtml(labels.label)}" value="${escapeHtml(block.label)}">`,
             `dates-label-${index}`,
             { compact: true }
           )}
           ${wrapRichField(
-            `<label class="sec-field-label">Value</label>
-            <input type="text" class="sec-input" data-rich-input data-field="date-value" placeholder="Value — [b], [color], [highlight]" value="${escapeHtml(block.value)}">`,
+            `<label class="sec-field-label">${escapeHtml(labels.value)}</label>
+            <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="date-value" rows="2" placeholder="${escapeHtml(labels.value)}">${escapeHtml(block.value)}</textarea>`,
             `dates-value-${index}`,
             { compact: true }
           )}
@@ -573,11 +846,14 @@
 
   function renderDatesBody(sec) {
     const blocks = ensureDatesBlocks(sec);
-    const blocksHtml = blocks.map((block, i) => renderDatesBlock(block, i)).join("");
+    const feeLike = isFeeLikeSection(sec);
+    const ageLike = isAgeLikeSection(sec);
+    const addLabel = feeLike ? "+ Add fee row" : ageLike ? "+ Add age row" : "+ Add date";
+    const blocksHtml = blocks.map((block, i) => renderDatesBlock(block, i, sec)).join("");
     return `
-      <div class="sec-dates-blocks" data-sec-id="${sec.id}" data-rows-kind="dates-blocks">${blocksHtml}</div>
+      <div class="sec-dates-blocks${feeLike ? " sec-dates-blocks--fee" : ""}" data-sec-id="${sec.id}" data-rows-kind="dates-blocks">${blocksHtml}</div>
       <div class="sec-dates-add-actions">
-        <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="dates">+ Add date</button>
+        <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="dates">${addLabel}</button>
         <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="dates-paragraph">+ Add paragraph</button>
         <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="dates-list">+ Add list item</button>
       </div>`;
@@ -595,10 +871,11 @@
   }
 
   function renderLinkActionRow(action, linkIndex, actionIndex) {
+    const urlInvalid = !isUrlFieldValid(action.url) ? " is-invalid" : "";
     const inner = `
       <div class="sec-link-action" data-link-index="${linkIndex}" data-action-index="${actionIndex}">
-        <input type="text" class="sec-input" data-rich-input data-field="link-action-text" placeholder="Button text — rich tags OK" value="${escapeHtml(action.buttonText)}">
-        <input type="url" class="sec-input sec-input--url" data-field="link-action-url" placeholder="https://..." value="${escapeHtml(action.url)}">
+        <input type="text" class="sec-input" data-rich-input data-field="link-action-text" placeholder="Button text" value="${escapeHtml(action.buttonText)}">
+        <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-action-url" placeholder="https://..." value="${escapeHtml(action.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
         <div class="sec-row-actions">${renderRowActions("sec-row-btn--link-action")}</div>
       </div>`;
     return wrapRichField(inner, `link-action-${linkIndex}-${actionIndex}`, { compact: true });
@@ -616,12 +893,13 @@
     const actionsHtml = actions
       .map((action, actionIndex) => renderLinkActionRow(action, index, actionIndex))
       .join("");
+    const urlInvalid = !isUrlFieldValid(link.url) ? " is-invalid" : "";
 
     return `
       <div class="sec-link-entry" data-row-index="${index}">
         ${wrapRichField(
-          `<label class="sec-field-label">Link label (left text)</label>
-        <input type="text" class="sec-input sec-input--title" data-rich-input data-field="link-label" placeholder="Download PDF — [b], [color], [highlight]" value="${escapeHtml(link.label)}">`,
+          `<label class="sec-field-label">Link name</label>
+        <input type="text" class="sec-input sec-input--title" data-rich-input data-field="link-label" placeholder="e.g. Apply Online" value="${escapeHtml(link.label)}">`,
           `link-label-${index}`,
           { compact: true }
         )}
@@ -637,7 +915,7 @@
             { compact: true }
           )}
           <label class="sec-field-label">URL</label>
-          <input type="url" class="sec-input sec-input--url" data-field="link-url" placeholder="https://..." value="${escapeHtml(link.url)}">
+          <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-url" placeholder="https://..." value="${escapeHtml(link.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
         </div>
         <div class="sec-link-multi${isMulti ? "" : " is-hidden"}">
           <p class="sec-field-hint">Each row = one button (e.g. Hindi, English)</p>
@@ -666,13 +944,13 @@
         <label class="sec-field-label">Question</label>
         <input type="text" class="sec-input" data-field="faq-q" placeholder="When will the result come?" value="${escapeHtml(pair.q)}">
         <label class="sec-field-label">Answer</label>
-        <textarea class="sec-textarea sec-textarea--compact" data-field="faq-a" rows="2" placeholder="The answer will be published soon.">${escapeHtml(pair.a)}</textarea>
+        <textarea class="sec-textarea sec-textarea--compact" data-field="faq-a" rows="3" placeholder="The answer will be published soon.">${escapeHtml(pair.a)}</textarea>
         <div class="sec-row-actions sec-row-actions--block">${renderRowActions()}</div>
       </div>`
       )
       .join("");
     return `<div class="sec-rows" data-sec-id="${sec.id}" data-rows-kind="faq">${rowsHtml}</div>
-      <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="faq">+ Add Q&amp;A</button>`;
+      <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="faq">+ Add Question</button>`;
   }
 
   function renderListBody(sec) {
@@ -681,7 +959,7 @@
       .map((item, i) => {
         const inner = `
       <div class="sec-row sec-row--stack" data-row-index="${i}">
-        <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="list-text" rows="2" placeholder="List item — [b], [color], [highlight], [label](url)">${escapeHtml(item.text)}</textarea>
+        <textarea class="sec-textarea sec-textarea--compact" data-rich-input data-field="list-text" rows="2" placeholder="List item">${escapeHtml(item.text)}</textarea>
         <label class="sec-check"><input type="checkbox" data-field="list-ordered" ${item.ordered ? "checked" : ""}> Numbered</label>
         <div class="sec-row-actions">${renderRowActions()}</div>
       </div>`;
@@ -747,7 +1025,7 @@
     const parsed = M().parseTableCellForEditor(cell);
     const isLink = parsed.mode === "link";
     const textField = wrapRichField(
-      `<textarea class="sec-textarea sec-textarea--compact sec-table-cell-input" data-rich-input data-field="table-cell-text" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" rows="3" placeholder="Text — [b] [color] [highlight]; multiline [list] OK">${escapeHtml(parsed.text)}</textarea>`,
+      `<textarea class="sec-textarea sec-textarea--compact sec-table-cell-input" data-rich-input data-field="table-cell-text" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" rows="3" placeholder="Cell text">${escapeHtml(parsed.text)}</textarea>`,
       `table-cell-${blockIndex}-${rowIndex}-${colIdx}`,
       { compact: true }
     );
@@ -767,7 +1045,7 @@
             </div>
             <div class="sec-table-cell-link-wrap${isLink ? "" : " is-hidden"}">
               ${linkLabelField}
-              <input type="url" class="sec-input sec-table-cell-input sec-input--url" data-field="table-cell-link-url" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.url)}" placeholder="https://...">
+              <input type="url" class="sec-input sec-table-cell-input sec-input--url${!isUrlFieldValid(parsed.url) ? " is-invalid" : ""}" data-field="table-cell-link-url" data-block-index="${blockIndex}" data-row-index="${rowIndex}" data-col-index="${colIdx}" value="${escapeHtml(parsed.url)}" placeholder="https://..." aria-invalid="${!isUrlFieldValid(parsed.url) ? "true" : "false"}">
             </div>
           </td>`;
   }
@@ -858,7 +1136,7 @@
             <button type="button" class="sec-tool-btn sec-tool-btn--danger" data-action="table-remove-block" data-block-index="${blockIndex}" title="Remove" ${totalBlocks <= 1 ? "disabled" : ""}>✕</button>
           </div>
         </div>
-        <p class="sec-field-hint">Row 1 = header. Body cell: tick <strong>Link</strong> for clickable button. Merge: <code>-</code> above, <code>=</code> left, <code>*</code> empty.</p>
+        <p class="sec-field-hint">Row 1 = header. Tick <strong>Link</strong> on a cell for a clickable button. Paste spreadsheet rows (Tab / CSV) into any cell to fill the grid.</p>
         ${renderTableGridEditor(grid, blockIndex, secId)}
       </div>`;
   }
@@ -868,7 +1146,7 @@
     const blocksHtml = blocks.map((block, i) => renderTableBlock(block, i, blocks.length, sec.id)).join("");
     return `
       <div class="sec-table-editor" data-sec-id="${sec.id}">
-        <p class="sec-table-hint">Pehle text/heading, phir table, phir text — kisi bhi order mein. Table cell mein <strong>Link</strong> tick karke button banao.</p>
+        <p class="sec-table-hint">Build tables visually — no need to type <code>| table</code> markers. Add text blocks above/below as needed.</p>
         <div class="sec-table-blocks">${blocksHtml}</div>
         <div class="sec-table-block-actions">
           <button type="button" class="sec-add-row-btn" data-sec-id="${sec.id}" data-add-kind="table-block-text">+ Add text / heading</button>
@@ -951,8 +1229,19 @@
   }
 
   function sectionTypeLabel(contentType) {
+    const friendly = {
+      [M().CONTENT_TYPES.PARAGRAPH]: "Text",
+      [M().CONTENT_TYPES.DATES]: "Dates / Fee",
+      [M().CONTENT_TYPES.LINKS]: "Links",
+      [M().CONTENT_TYPES.FAQ]: "FAQ",
+      [M().CONTENT_TYPES.LIST]: "List",
+      [M().CONTENT_TYPES.PARAGRAPH_LIST]: "Text + list",
+      [M().CONTENT_TYPES.TABLE]: "Table",
+      [M().CONTENT_TYPES.BLOCKS]: "Blocks",
+      [M().CONTENT_TYPES.MIXED]: "Advanced"
+    };
     const labels = M().CONTENT_TYPE_LABELS || {};
-    return labels[contentType] || contentType || "Section";
+    return friendly[contentType] || labels[contentType] || contentType || "Section";
   }
 
   function toggleSectionCollapsed(secId) {
@@ -977,7 +1266,7 @@
     const html = `
       <article class="sec-card${collapsed ? " is-collapsed" : ""}${sec.editorSafe === false ? " is-unsafe" : ""}" data-section-id="${sec.id}">
         <header class="sec-card__head" data-sec-id="${sec.id}">
-          <button type="button" class="sec-toggle-btn" data-action="toggle" data-sec-id="${sec.id}" aria-expanded="${collapsed ? "false" : "true"}" title="${collapsed ? "Open section" : "Close section"}">${collapsed ? "▶" : "▼"}</button>
+          <button type="button" class="sec-toggle-btn" data-action="toggle" data-sec-id="${sec.id}" aria-expanded="${collapsed ? "false" : "true"}" title="${collapsed ? "Expand section" : "Collapse section"}">${collapsed ? "▶" : "▼"}</button>
           <div class="sec-card__head-main">
             <div class="sec-card__collapsed-bar" data-action="toggle" data-sec-id="${sec.id}" role="button" tabindex="0" aria-label="Open section ${escapeHtml(displayName)}">
               <span class="sec-card__collapsed-name">${escapeHtml(displayName)}</span>
@@ -986,22 +1275,29 @@
             </div>
             <div class="sec-card__expandable">
               <div class="sec-card__title-row">
-                <label class="sec-field-label">Section name</label>
-                <input type="text" class="sec-input sec-input--title" data-sec-id="${sec.id}" data-field="section-name" value="${escapeHtml(sec.name)}" placeholder="e.g. Document Required">
+                <label class="sec-field-label">Section title</label>
+                <input type="text" class="sec-input sec-input--title" data-sec-id="${sec.id}" data-field="section-name" value="${escapeHtml(sec.name)}" placeholder="e.g. Important Dates">
               </div>
               <div class="sec-card__meta-row">
-                <label class="sec-field-label">Content type</label>
+                <label class="sec-field-label">Section type</label>
                 <select class="sec-select" data-sec-id="${sec.id}" data-field="content-type">${contentTypeOptions(sec.contentType)}</select>
               </div>
             </div>
           </div>
           <div class="sec-card__tools">
-            <button type="button" class="sec-tool-btn" data-action="up" data-sec-id="${sec.id}" title="Move up">↑</button>
-            <button type="button" class="sec-tool-btn" data-action="down" data-sec-id="${sec.id}" title="Move down">↓</button>
-            <button type="button" class="sec-tool-btn sec-tool-btn--danger" data-action="remove" data-sec-id="${sec.id}" title="Remove section">✕</button>
+            <button type="button" class="sec-tool-btn" data-action="duplicate" data-sec-id="${sec.id}" title="Duplicate section" aria-label="Duplicate">⧉</button>
+            <button type="button" class="sec-tool-btn" data-action="up" data-sec-id="${sec.id}" title="Move up" aria-label="Move up">↑</button>
+            <button type="button" class="sec-tool-btn" data-action="down" data-sec-id="${sec.id}" title="Move down" aria-label="Move down">↓</button>
+            <button type="button" class="sec-tool-btn sec-tool-btn--danger" data-action="remove" data-sec-id="${sec.id}" title="Delete section" aria-label="Delete">✕</button>
           </div>
         </header>
         <div class="sec-card__body">${renderSectionBody(sec)}</div>
+        <footer class="sec-card__foot">
+          <button type="button" class="sec-card-foot-btn" data-action="duplicate" data-sec-id="${sec.id}">Duplicate</button>
+          <button type="button" class="sec-card-foot-btn" data-action="up" data-sec-id="${sec.id}">Move up</button>
+          <button type="button" class="sec-card-foot-btn" data-action="down" data-sec-id="${sec.id}">Move down</button>
+          <button type="button" class="sec-card-foot-btn sec-card-foot-btn--danger" data-action="remove" data-sec-id="${sec.id}">Delete</button>
+        </footer>
       </article>`;
 
     if (existing) {
@@ -1268,6 +1564,10 @@
       if (summary) summary.textContent = target.value.trim() || "Untitled";
     }
 
+    if (target.matches(".sec-input--url")) {
+      markUrlValidity(target);
+    }
+
     syncSectionsFromDom();
     scheduleCompile();
   }
@@ -1443,9 +1743,69 @@
       moveSection(secId, 1);
       return;
     }
+    if (action === "duplicate" && secId) {
+      duplicateSection(secId);
+      return;
+    }
     if (action === "remove" && secId) {
       syncSectionsFromDom();
       removeSection(secId);
+      return;
+    }
+
+    if (btn.classList.contains("sec-row-btn--up") || btn.classList.contains("sec-row-btn--down")) {
+      const delta = btn.classList.contains("sec-row-btn--up") ? -1 : 1;
+      const card = btn.closest(".sec-card");
+      if (!card) return;
+      syncSectionsFromDom();
+      const secId2 = card.getAttribute("data-section-id");
+      const idx = findSectionIndex(secId2);
+      if (idx < 0) return;
+      const sec = sections[idx];
+      let moved = false;
+
+      const datesBlock = btn.closest(".sec-dates-block");
+      if (sec.contentType === M().CONTENT_TYPES.DATES && datesBlock) {
+        ensureDatesBlocks(sec);
+        const blockIdx = Number(datesBlock.getAttribute("data-block-index") || 0);
+        moved = moveRowInArray(sec.payload.blocks, blockIdx, delta);
+      } else if (sec.contentType === M().CONTENT_TYPES.FAQ) {
+        const pair = btn.closest(".sec-faq-pair");
+        const rowIdx = Number(pair?.getAttribute("data-row-index") || 0);
+        moved = moveRowInArray(sec.payload.pairs, rowIdx, delta);
+      } else if (sec.contentType === M().CONTENT_TYPES.LINKS) {
+        const entry = btn.closest(".sec-link-entry");
+        const actionNode = btn.closest(".sec-link-action");
+        if (actionNode && entry) {
+          const rowIdx = Number(entry.getAttribute("data-row-index") || 0);
+          const actionIdx = Number(actionNode.getAttribute("data-action-index") || 0);
+          const linkRow = ensureLinkRow(sec.payload.rows[rowIdx] || {});
+          moved = moveRowInArray(linkRow.actions, actionIdx, delta);
+          sec.payload.rows[rowIdx] = linkRow;
+        } else if (entry) {
+          const rowIdx = Number(entry.getAttribute("data-row-index") || 0);
+          moved = moveRowInArray(sec.payload.rows, rowIdx, delta);
+        }
+      } else if (sec.contentType === M().CONTENT_TYPES.LIST) {
+        const row = btn.closest(".sec-row");
+        const rowIdx = Number(row?.getAttribute("data-row-index") || 0);
+        moved = moveRowInArray(sec.payload.items, rowIdx, delta);
+      } else if (sec.contentType === M().CONTENT_TYPES.PARAGRAPH_LIST) {
+        const para = btn.closest(".sec-para-block");
+        const row = btn.closest(".sec-row");
+        if (para) {
+          const rowIdx = Number(para.getAttribute("data-para-index") || 0);
+          moved = moveRowInArray(sec.payload.paragraphs, rowIdx, delta);
+        } else if (row) {
+          const rowIdx = Number(row.getAttribute("data-row-index") || 0);
+          moved = moveRowInArray(sec.payload.items, rowIdx, delta);
+        }
+      }
+
+      if (moved) {
+        renderSectionCard(sec);
+        scheduleCompile();
+      }
       return;
     }
 
@@ -1648,6 +2008,81 @@
     }
   }
 
+  function parsePastedTableMatrix(text) {
+    const raw = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+    if (!raw) return null;
+    const lines = raw.split("\n").filter((l) => String(l).trim());
+    if (lines.length < 1) return null;
+    const hasTabs = lines.some((l) => l.includes("\t"));
+    const matrix = lines.map((line) => {
+      if (hasTabs) return line.split("\t").map((c) => c.trim());
+      return line.split(",").map((c) => c.trim());
+    });
+    const maxCols = Math.max(...matrix.map((r) => r.length), 1);
+    if (maxCols < 2 && matrix.length < 2) return null;
+    return matrix.map((row) => {
+      const next = row.slice();
+      while (next.length < maxCols) next.push("");
+      return next.slice(0, maxCols);
+    });
+  }
+
+  function applyPasteToTableCell(target, clipboardText) {
+    const cellEl = target.closest(".sec-table-cell");
+    const card = target.closest(".sec-card");
+    if (!cellEl || !card) return false;
+    const matrix = parsePastedTableMatrix(clipboardText);
+    if (!matrix || (matrix.length === 1 && matrix[0].length === 1)) return false;
+
+    syncSectionsFromDom();
+    const secId = card.getAttribute("data-section-id");
+    const idx = findSectionIndex(secId);
+    if (idx < 0) return false;
+    const sec = sections[idx];
+    ensureTableBlocks(sec);
+
+    const startRow = Number(
+      target.getAttribute("data-row-index") ?? cellEl.getAttribute("data-row-index") ?? 0
+    );
+    const startCol = Number(
+      target.getAttribute("data-col-index") ?? cellEl.getAttribute("data-col-index") ?? 0
+    );
+    const blockIdx = Number(target.getAttribute("data-block-index") || 0);
+    const block = sec.payload.blocks[blockIdx];
+    if (!block || block.type !== "table") return false;
+
+    const grid = M().normalizeTableGrid(block.grid);
+    const needRows = startRow + matrix.length;
+    const needCols = startCol + matrix[0].length;
+    while (grid.length < needRows) grid.push(new Array(grid[0].length).fill(""));
+    while (grid[0].length < needCols) {
+      for (const row of grid) row.push("");
+    }
+    for (let r = 0; r < matrix.length; r++) {
+      for (let c = 0; c < matrix[r].length; c++) {
+        grid[startRow + r][startCol + c] = matrix[r][c];
+      }
+    }
+    block.grid = M().normalizeTableGrid(grid);
+    renderSectionCard(sec);
+    scheduleCompile();
+    showEditorNotice(`Pasted ${matrix.length}×${matrix[0].length} table cells`, "info");
+    return true;
+  }
+
+  function handleRootPaste(ev) {
+    const target = ev.target;
+    if (!target?.closest?.("#sectionEditorRoot")) return;
+    if (!target.matches(".sec-table-cell-input, [data-field='table-cell'], [data-field='table-cell-text']")) {
+      return;
+    }
+    const text = ev.clipboardData?.getData("text/plain") || "";
+    if (!text || (!text.includes("\t") && !text.includes("\n") && !text.includes(","))) return;
+    if (applyPasteToTableCell(target, text)) {
+      ev.preventDefault();
+    }
+  }
+
   function isEditingExistingPage() {
     const params = new URLSearchParams(window.location.search);
     const slugParam = String(params.get("slug") || "").trim();
@@ -1712,11 +2147,13 @@
     el("sectionEditorAddBtn")?.addEventListener("click", addSection);
     el("sectionEditorRepairBtn")?.addEventListener("click", runRepairFromTextarea);
     initRichLinkModal();
+    initAddSectionModal();
 
     const root = el("sectionEditorRoot");
     root?.addEventListener("input", handleRootInput);
     root?.addEventListener("change", handleRootChange);
     root?.addEventListener("click", handleRootClick);
+    root?.addEventListener("paste", handleRootPaste);
     root?.addEventListener("keydown", (ev) => {
       if (ev.key !== "Enter" && ev.key !== " ") return;
       const bar = ev.target.closest(".sec-card__collapsed-bar[data-action='toggle']");
@@ -1758,6 +2195,7 @@
     runRepairFromTextarea,
     getMode,
     setMode,
-    addSection
+    addSection,
+    SECTION_PRESETS
   };
 })();

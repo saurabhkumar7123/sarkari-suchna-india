@@ -20,7 +20,7 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(js).toContain("Approve");
     expect(js).toContain("Publish");
     expect(js).toContain("Automation: OFF");
-    expect(js).toContain("Publish: MANUAL ONLY");
+    expect(js).toContain("Manual Publish");
     expect(js).not.toMatch(/enableAutomation|AUTO_PUBLISH_ENABLED\s*=\s*true|setAutoPublish\s*\(\s*true/i);
     expect(js).toContain('/api/admin/automation-control-center/settings');
 
@@ -55,16 +55,15 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(pages.acc.purpose).toMatch(/Ops overview/i);
   });
 
-  test("design system includes compact workflow context styles (mobile-safe)", () => {
+  test("design system hides removed workflow guidance panel (mobile-safe)", () => {
     const css = read("public/assets/css/admin/admin-design-system.css");
-    expect(css).toContain(".adm-wf {");
+    expect(css).toContain(".adm-wf");
     expect(css).toContain(".adm-wf-scenarios");
-    expect(css).toContain(".adm-wf-steps");
-    expect(css).toMatch(/@media \(max-width: 768px\)[\s\S]*\.adm-wf__meta/);
-    expect(css).toMatch(/\.adm-wf-steps__arrow\s*\{\s*display:\s*none/);
+    expect(css).toMatch(/\.adm-wf[^{]*\{[^}]*display:\s*none\s*!important/);
+    expect(css).toMatch(/@media \(max-width: 768px\)[\s\S]*\.adm-wf-scenarios/);
   });
 
-  test("key pages mount workflow context and clarify next steps", () => {
+  test("key pages keep workflow script; guidance panel is not rendered", () => {
     const files = {
       recruitments: "private/admin-recruitments.html",
       rrq: "private/admin-recruitment-review-queue.html",
@@ -82,14 +81,21 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
       expect(html).toMatch(/admin-design-system\.css\?v=\d+/);
     });
 
+    const wfJs = read("public/assets/js/admin-workflow-ia.js");
+    expect(wfJs).toContain("el.remove()");
+    expect(wfJs).not.toContain("<dt>This page</dt>");
+    expect(wfJs).not.toContain("<dt>Before this</dt>");
+    expect(wfJs).not.toContain("<dt>Do here</dt>");
+    expect(wfJs).not.toContain("<dt>Next step</dt>");
+
     expect(read(files.recruitments)).not.toContain('data-adm-wf="recruitments"');
     expect(read(files.recruitments)).not.toContain('data-adm-wf="events"');
+    expect(read(files.recruitments)).not.toContain('id="recruitmentEmpty" class="rom-card rom-empty"');
+    expect(read(files.recruitments)).not.toMatch(/<h2>Select a recruitment<\/h2>/);
     expect(read(files.recruitments)).toContain("Create manual update");
     expect(read(files.recruitments)).toMatch(/Create a recruitment record when this vacancy does not already exist/i);
     expect(read(files.recruitments)).toMatch(/Manual Publish/i);
 
-    expect(read(files.rrq)).toContain('data-adm-wf="reviewCenter"');
-    expect(read(files.rrq)).toContain('data-adm-wf="needsMatching"');
     expect(read(files.rrq)).toMatch(/Needs Matching.*filter/i);
     expect(read(files.rrq)).toMatch(/Approve\s*[≠!=].*publish|Approve ≠ publish/i);
     expect(read(files.rrq)).toContain('id="rrqManualPublishLink"');
@@ -97,41 +103,45 @@ describe("Admin Workflow IA — manual + automatic clarity", () => {
     expect(read(files.rrq)).not.toContain('id="rrqManualPublishLink" href="/admin/page-manager"');
     expect(read(files.rrq)).toContain("Attach to existing Recruitment");
 
-    expect(read(files.editorial)).toContain('data-adm-wf="editorial"');
     expect(read(files.editorial)).toMatch(/APPROVE ≠ PUBLISH|Approve ≠ Publish/i);
     expect(read(files.editorial)).toMatch(/Optional content QA/i);
     expect(read(files.editorial)).toContain("Final manual publishing is done from Generator");
     expect(read(files.editorial)).not.toContain('href="/admin/page-manager" style="text-decoration:none;">Publish Page');
 
-    expect(read(files.drafts)).toContain('data-adm-wf="drafts"');
-    expect(read(files.drafts)).toContain('data-adm-wf="generator"');
-    expect(read(files.drafts)).toMatch(/Draft ≠ Published/i);
+    expect(read(files.drafts)).toContain("Saved Draft Management");
     expect(read(files.drafts)).toMatch(/Manual Publish/i);
     expect(read(files.drafts)).toContain('data-label-desktop="Manual Publish"');
+    expect(read(files.drafts)).toContain('id="savePageBtn"');
+    expect(read(files.drafts)).toContain('id="previewBtn"');
+    expect(read(files.drafts)).toContain('id="saveDraftBtn"');
+    expect(read(files.drafts)).toContain('id="aiConvertBtn"');
+    // Drafts hash hides Preview / Save Draft / AI / Publish — management list only.
+    const draftsCss = read("public/assets/css/admin/admin-design-system.css");
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*#savePageBtn/);
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*#previewBtn/);
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*#saveDraftBtn/);
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*#aiConvertBtn/);
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*\.action-group-tools/);
+    expect(draftsCss).toMatch(/body\[data-admin-hash="drafts"\][\s\S]*display:\s*none\s*!important/);
+    expect(draftsCss).toMatch(/\.admin-breadcrumbs[\s\S]*display:\s*none\s*!important/);
+    expect(draftsCss).toMatch(/\.mon-workspace-head__sub[\s\S]*display:\s*none\s*!important/);
+    expect(draftsCss).toMatch(/\.admin-header \+ \.admin-page-head:not\(\[id\]\)/);
 
-    expect(read(files.pages)).toContain('data-adm-wf="pageManager"');
     expect(read(files.pages)).toMatch(/already published/i);
     expect(read(files.pages)).toMatch(/First-time publishing is done from Generator/i);
 
-    expect(read(files.monitoring)).toContain('data-adm-wf="monitoring"');
-    expect(read(files.updates)).toContain('data-adm-wf="monitoringUpdates"');
-    expect(read(files.acc)).toContain('data-adm-wf="acc"');
-    expect(read(files.acc)).toMatch(/not the primary edit workspace/i);
+    expect(read(files.acc)).toMatch(/Publishing remains manual-only|Manual Publish/i);
   });
 
-  test("dashboard scenario guide covers manual and automatic start points", () => {
+  test("dashboard scenario guide markup remains for safety links; CSS hides explainer block", () => {
     const html = read("private/admin-dashboard.html");
+    const css = read("public/assets/css/admin/admin-design-system.css");
     expect(html).toContain('id="admWfScenarios"');
-    expect(html).toContain("New vacancy");
-    expect(html).toContain("Admit card / result / answer key");
-    expect(html).toContain("Needs Matching");
-    expect(html).toContain("Draft ready");
-    expect(html).toContain("Editorial Review");
-    expect(html).toContain("Automation path (dormant)");
     expect(html).toContain('href="/admin/recruitment-review-queue?status=needs_matching"');
     expect(html).toContain('href="/generator#drafts"');
-    expect(html).toContain("MANUAL ONLY");
+    expect(html).toMatch(/Manual Publish|manual-only/i);
     expect(html).not.toMatch(/Enable automation|Turn on auto.?publish|AUTO_PUBLISH_ENABLED\s*=\s*true/i);
+    expect(css).toMatch(/#admWfScenarios[\s\S]*display:\s*none\s*!important/);
   });
 
   test("nav keeps Review Center canonical; Needs Matching is filter-only (not sidebar)", () => {

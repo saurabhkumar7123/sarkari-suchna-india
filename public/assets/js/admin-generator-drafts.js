@@ -59,7 +59,17 @@
     if (!iso) return "";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function isDraftsHash() {
+    return String(window.location.hash || "").toLowerCase() === "#drafts";
   }
 
   function truncate(s, n) {
@@ -142,10 +152,10 @@
           <table class="generator-drafts-bar__table" aria-label="Saved drafts">
             <thead>
               <tr>
-                <th scope="col">Draft / Recruitment</th>
+                <th scope="col">Draft / Page</th>
                 <th scope="col">Status</th>
                 <th scope="col">Updated</th>
-                <th scope="col">Action</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody id="generatorDraftsBarTableBody"></tbody>
@@ -178,8 +188,8 @@
     bar.dataset.collapseBound = "1";
     const toggle = el("generatorDraftsBarCollapse");
     if (!toggle) return;
-    /* Default CLOSED — open only on user click. */
-    setBarListOpen(bar, false);
+    /* /generator#drafts opens the list immediately; other hashes stay closed until click. */
+    setBarListOpen(bar, isDraftsHash());
     toggle.addEventListener("click", (e) => {
       e.preventDefault();
       const open = toggle.getAttribute("aria-expanded") !== "true";
@@ -687,7 +697,7 @@
     const badgePub = el("generatorDraftsBarBadgePublished");
     if (badgePub) badgePub.textContent = String(published.length);
 
-    const hashDrafts = String(window.location.hash || "") === "#drafts";
+    const hashDrafts = isDraftsHash();
     if (hashDrafts && (!openBarSection || openBarSection === "all")) {
       openBarSection = "all";
     }
@@ -703,6 +713,7 @@
     bar.hidden = total === 0 && !hashDrafts;
     if (hashDrafts) {
       bar.hidden = false;
+      setBarListOpen(bar, true);
     }
   }
 
@@ -738,9 +749,10 @@
       if (!isGeneratorPage()) return;
       const bar = el("generatorDraftsBar");
       if (!bar) return;
-      if (String(window.location.hash || "") === "#drafts") {
+      if (isDraftsHash()) {
         openBarSection = "all";
         bar.hidden = false;
+        setBarListOpen(bar, true);
         bar.querySelectorAll("[data-draft-filter]").forEach((elBtn) => {
           const active = elBtn.getAttribute("data-draft-filter") === "all";
           elBtn.classList.toggle("is-active", active);

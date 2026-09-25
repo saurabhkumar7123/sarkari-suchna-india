@@ -2742,6 +2742,7 @@ function renderContentAnalysis(analysis) {
   const panel = document.getElementById("contentAnalysisPanel");
   const body = document.getElementById("contentAnalysisBody");
   const summaryEl = document.getElementById("contentAnalysisSummary");
+  /* Panel is optional UI — analysis API may still run for callers that use it. */
   if (!panel || !body) return;
 
   if (!analysis || !analysis.sections) {

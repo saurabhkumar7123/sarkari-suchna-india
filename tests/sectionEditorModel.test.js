@@ -255,4 +255,114 @@ Closing note.`;
     expect(sections[0].contentType).toBe(CONTENT_TYPES.TABLE);
     expect(sections[0].payload.blocks.length).toBeGreaterThan(1);
   });
+
+  test("representative recruitment pack round-trips for section builder UX", () => {
+    const text = `[Section: Short Information]
+Railway RRB Technician recruitment overview.
+
+[Section: Important Dates]
+Online Apply Start Date : 30 June 2026
+Online Apply Last Date : 29 July 2026
+Fee Payment Last Date : 29 July 2026
+Exam Date : Later
+Admit Card : Later
+Result Date : Later
+
+[Section: Application Fee]
+General / EWS / OBC : ₹500
+SC / ST / PH : ₹250
+Female : ₹250
+
+[Section: Age Limit]
+Minimum Age : 18 Years
+Maximum Age : 33 Years
+
+[Section: Vacancy Details | table]
+Post Name, No Of Post, Eligibility Criteria
+Railway RRB Technician, 6565, Eligibility text
+
+[Section: How To Apply]
+- Register on the official website
+- Fill the application form
+- Pay the fee and submit
+
+[Section: Selection Process]
+- CBT
+- Document Verification
+- Medical Examination
+
+[Section: Important Links]
+Apply Online=https://example.com/apply
+Official Notification=https://example.com/notification.pdf
+Official Website=https://example.com/
+
+[Section: Important Questions]
+Q: What is the last date?
+A: 29 July 2026
+Q: What is the application fee for SC?
+A: ₹250
+`;
+    const normalized = normalizeEditorText(text);
+    const sections = parseTextToEditorSections(normalized);
+    expect(sections.map((s) => s.name)).toEqual([
+      "Short Information",
+      "Important Dates",
+      "Application Fee",
+      "Age Limit",
+      "Vacancy Details",
+      "How To Apply",
+      "Selection Process",
+      "Important Links",
+      "Important Questions"
+    ]);
+    expect(sections[1].contentType).toBe(CONTENT_TYPES.DATES);
+    expect(sections[2].contentType).toBe(CONTENT_TYPES.DATES);
+    expect(sections[3].contentType).toBe(CONTENT_TYPES.DATES);
+    expect(sections[4].contentType).toBe(CONTENT_TYPES.TABLE);
+    expect(sections[4].forceTable).toBe(true);
+    expect(sections[7].contentType).toBe(CONTENT_TYPES.LINKS);
+    expect(sections[8].contentType).toBe(CONTENT_TYPES.FAQ);
+
+    const out = normalizeEditorText(compileEditorSectionsToText(sections));
+    expect(out).toContain("[Section: Important Dates]");
+    expect(out).toContain("Online Apply Start Date : 30 June 2026");
+    expect(out).toContain("[Section: Application Fee]");
+    expect(out).toContain("General / EWS / OBC : ₹500");
+    expect(out).toContain("[Section: Vacancy Details | table]");
+    expect(out).toContain("Railway RRB Technician, 6565, Eligibility text");
+    expect(out).toContain("Apply Online=https://example.com/apply");
+    expect(out).toContain("Q: What is the last date?");
+    expect(out).toBe(normalized);
+    expect(isVisualEditorSafeForText(normalized)).toBe(true);
+  });
+
+  test("fee and vacancy presets compile to existing publish syntax", () => {
+    const { createEmptySection, defaultPayloadForType } = require("../server/utils/sectionEditorModel");
+    const fee = createEmptySection("Application Fee", CONTENT_TYPES.DATES);
+    fee.payload = {
+      blocks: [
+        { type: "date", label: "General / EWS / OBC", value: "₹500" },
+        { type: "date", label: "SC / ST / PH", value: "₹250" }
+      ]
+    };
+    const vacancy = createEmptySection("Vacancy Details", CONTENT_TYPES.TABLE);
+    vacancy.forceTable = true;
+    vacancy.payload = {
+      blocks: [
+        {
+          type: "table",
+          grid: [
+            ["Post Name", "No Of Post", "Eligibility Criteria"],
+            ["Railway RRB Technician", "6565", "Eligibility text"]
+          ]
+        }
+      ]
+    };
+    const compiled = normalizeEditorText(compileEditorSectionsToText([fee, vacancy]));
+    expect(compiled).toContain("[Section: Application Fee]");
+    expect(compiled).toContain("General / EWS / OBC : ₹500");
+    expect(compiled).toContain("[Section: Vacancy Details | table]");
+    expect(compiled).toContain("Railway RRB Technician, 6565, Eligibility text");
+    expect(defaultPayloadForType(CONTENT_TYPES.FAQ)).toEqual({ pairs: [{ q: "", a: "" }] });
+  });
 });

@@ -89,8 +89,9 @@
     byId("erDetail").hidden = false;
     const rec = data.recruitment || {};
     byId("erRecruitmentTitle").textContent = rec.title || `Review ID: ${rec.id}`;
-    byId("erStatusLine").innerHTML = `${badge(data.workflowState, data.workflowStateLabel)} ${badge(data.bindingStatus, data.bindingStatusLabel)} <span>Source → Draft → Review</span>`;
-    byId("erOpsLink").href = "/admin/recruitments";
+    byId("erStatusLine").innerHTML = `${badge(data.workflowState, data.workflowStateLabel)} ${badge(data.bindingStatus, data.bindingStatusLabel)}`;
+    const opsLink = byId("erOpsLink");
+    if (opsLink) opsLink.href = "/admin/recruitments";
     byId("erRecruitmentMeta").innerHTML = `
       <dt>Recruitment ID</dt><dd>${escapeHtml(rec.id)}</dd>
       <dt>Slug</dt><dd>${escapeHtml(rec.slug || "—")}</dd>
@@ -296,15 +297,23 @@
   }
 
   byId("erWorkflowFilter").addEventListener("change", loadInbox);
-  byId("erRefreshBtn").addEventListener("click", async () => {
-    await loadInbox();
-    if (selectedId) await openWorkspace(selectedId);
-  });
-  byId("erOpenForm").addEventListener("submit", (event) => {
-    event.preventDefault();
-    openWorkspace(byId("erOpenId").value);
-  });
-  byId("erNoteForm").addEventListener("submit", addNote);
+  const refreshBtn = byId("erRefreshBtn");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", async () => {
+      await loadInbox();
+      if (selectedId) await openWorkspace(selectedId);
+    });
+  }
+  const openForm = byId("erOpenForm");
+  if (openForm) {
+    openForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const openId = byId("erOpenId");
+      if (openId) openWorkspace(openId.value);
+    });
+  }
+  const noteForm = byId("erNoteForm");
+  if (noteForm) noteForm.addEventListener("submit", addNote);
 
   const params = new URLSearchParams(window.location.search);
   const fromQuery = params.get("recruitment_id") || params.get("id");
