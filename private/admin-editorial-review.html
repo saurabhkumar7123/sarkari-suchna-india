@@ -13,10 +13,11 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
-<link rel="stylesheet" href="/css/admin/editorial-review.css?v=4">
+<link rel="stylesheet" href="/css/admin/editorial-review.css?v=5">
 <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
 <link rel="stylesheet" href="/css/admin/editorial-workspace.css?v=3">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
+<link rel="stylesheet" href="/css/admin/admin-workspace-polish.css?v=4">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Editorial Review">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -34,20 +35,15 @@
     </div>
     <div class="admin-header-actions rom-header-links">
       <a class="header-action-btn rom-secondary" href="/generator#drafts">Drafts</a>
-      <a class="header-action-btn" href="/admin/recruitments">Recruitments</a>
+      <a class="header-action-btn rom-secondary" href="/admin/recruitments">Recruitments</a>
       <button type="button" class="header-action-btn header-action-btn--ghost" id="erRefreshBtn">Refresh</button>
     </div>
   </div>
 
   <div class="admin-page-head">
     <div>
-      <p class="admin-page-head__eyebrow">Editorial workspace</p>
-      <h1>Editorial Review</h1>
       <p class="er-help">
-        Optional content QA — approval here does not publish the page.
-        Final manual publishing is done from Generator.
-        Not Review Center (matching) and not Drafts list.
-        APPROVE ≠ PUBLISH.
+        Optional content QA — Approve ≠ Publish. Final manual publishing is done from Generator.
       </p>
     </div>
   </div>
@@ -69,7 +65,7 @@
     <section class="er-card er-inbox">
       <div class="er-card__head">
         <div>
-          <h1>Review inbox</h1>
+          <h2>Review inbox</h2>
           <p id="erInboxCount">0 items</p>
         </div>
       </div>
@@ -94,10 +90,7 @@
     </section>
 
     <section class="er-workspace" id="erWorkspace">
-      <div id="erEmpty" class="er-card er-empty">
-        <h2>Select a review item</h2>
-        <p>Choose an inbox entry or open a recruitment by id.</p>
-      </div>
+      <div id="erEmpty" class="er-card er-empty" hidden aria-hidden="true"></div>
 
       <div id="erDetail" hidden>
         <section class="er-card">

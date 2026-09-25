@@ -170,7 +170,7 @@
       const titleShort = truncateText(titleFull, 72);
       return `<tr data-id="${row.id}" class="${selected?.id === row.id ? "is-selected" : ""}">
       <td><input type="checkbox" class="rom-row-check" data-bulk-id="${row.id}" ${checked} aria-label="Select ${escapeHtml(row.title)}"></td>
-      <td class="rom-id-cell"><span class="rom-rec-id" title="Recruitment ID">#${escapeHtml(row.id)}</span></td>
+      <td class="rom-id-cell"><span class="rom-rec-id" title="Recruitment ID">${escapeHtml(row.id)}</span></td>
       <td><strong title="${escapeHtml(titleFull)}">${escapeHtml(titleShort || "—")}</strong><br><small>${escapeHtml(row.slug || "")}</small></td>
       <td>${escapeHtml(row.department || "—")}</td>
       <td>${escapeHtml(row.post_name || "—")}</td>
@@ -389,16 +389,16 @@
         statusEl.textContent = "—";
         statusEl.className = "rom-status";
       }
-      if (advancedHint) advancedHint.textContent = "#—";
+      if (advancedHint) advancedHint.textContent = "—";
       return;
     }
     const org = row.department || "—";
     const post = row.post_name || "—";
     const year = row.cycle_year || "—";
     const status = labelize(row.lifecycle_state || "announced");
-    if (idLabel) idLabel.textContent = `Recruitment #${row.id}`;
+    if (idLabel) idLabel.textContent = `Recruitment ID: ${row.id}`;
     if (titleEl) {
-      const full = row.title || `Recruitment #${row.id}`;
+      const full = row.title || `Recruitment ID: ${row.id}`;
       titleEl.textContent = full;
       titleEl.title = full;
     }
@@ -407,7 +407,7 @@
       statusEl.textContent = status;
       statusEl.className = `rom-status is-${escapeHtml(row.lifecycle_state || "announced")}`;
     }
-    if (advancedHint) advancedHint.textContent = `#${row.id}`;
+    if (advancedHint) advancedHint.textContent = String(row.id);
   }
 
   function closeRecruitmentDetail({ replaceUrl } = {}) {
@@ -485,9 +485,9 @@
         detail:
           "Multiple pages linked. Never guess. Human must select the single canonical public page before publish/update.",
         action: "Unlink extra pages until exactly one canonical page remains.",
-        recruitment: selected.title || `#${selected.id}`,
+        recruitment: selected.title || `Recruitment ID: ${selected.id}`,
         event: activeEvent ? labelize(activeEvent.event_type) : "—",
-        draft: unpublished[0] ? unpublished[0].title || `Draft #${unpublished[0].id}` : "—",
+        draft: unpublished[0] ? unpublished[0].title || `Draft ID: ${unpublished[0].id}` : "—",
         page: canonical.page ? `/${canonical.page.slug}` : "—"
       };
     }
@@ -504,9 +504,9 @@
           detail:
             "Admit Card / Result / Answer Key updates are BLOCKED until the canonical Notification page is linked. Do not create a status-only page.",
           action: "Link the existing Notification public page, or create the first canonical page only for Notification.",
-          recruitment: selected.title || `#${selected.id}`,
+          recruitment: selected.title || `Recruitment ID: ${selected.id}`,
           event: activeEvent ? labelize(activeEvent.event_type) : "—",
-          draft: unpublished[0] ? unpublished[0].title || `Draft #${unpublished[0].id}` : "—",
+          draft: unpublished[0] ? unpublished[0].title || `Draft ID: ${unpublished[0].id}` : "—",
           page: "Not linked"
         };
       }
@@ -554,7 +554,7 @@
     if (metaEl) {
       const org = selected.department || "—";
       const year = selected.cycle_year || "—";
-      metaEl.textContent = `Organization: ${org} · Year: ${year} · Recruitment #${selected.id}`;
+      metaEl.textContent = `Organization: ${org} · Year: ${year} · Recruitment ID: ${selected.id}`;
     }
     if (statusEl) {
       statusEl.textContent = labelize(selected.lifecycle_state || "announced");
@@ -636,7 +636,7 @@
               const event = events.find((e) => Number(e.id) === Number(d.recruitmentEventId));
               const titleFull = d.title || "Untitled draft";
               return `<article class="rom-draft-chip">
-                <p class="rom-rel-ids"><span>Recruitment #${escapeHtml(selected.id)}</span><span>Draft #${escapeHtml(d.id)}</span>${event ? `<span>Event #${escapeHtml(event.id)}</span>` : ""}</p>
+                <p class="rom-rel-ids"><span>Recruitment ID: ${escapeHtml(selected.id)}</span><span>Draft ID: ${escapeHtml(d.id)}</span>${event ? `<span>Event #${escapeHtml(event.id)}</span>` : ""}</p>
                 <strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong>
                 <span>Event: ${escapeHtml(event ? labelize(event.event_type) : "—")}</span>
                 <span class="rom-overview-meta">Status: ${escapeHtml(d.status || "draft")}</span>
@@ -652,7 +652,7 @@
             .map((d) => {
               const titleFull = d.title || "Untitled";
               return `<article class="rom-draft-chip is-published">
-                <p class="rom-rel-ids"><span>Draft #${escapeHtml(d.id)}</span></p>
+                <p class="rom-rel-ids"><span>Draft ID: ${escapeHtml(d.id)}</span></p>
                 <strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong>
                 <span class="rom-overview-meta">Published history</span>
               </article>`;
@@ -664,7 +664,7 @@
               .map((u) => {
                 const titleFull = u.title || "Update";
                 const updateId = u.id != null ? u.id : u.update_id;
-                return `<article class="rom-draft-chip is-published"><p class="rom-rel-ids">${updateId != null ? `<span>Update #${escapeHtml(updateId)}</span>` : ""}</p><strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong><span class="rom-overview-meta">${escapeHtml(labelize(u.recruitmentEventType || u.recruitment_event_type || "update"))}</span></article>`;
+                return `<article class="rom-draft-chip is-published"><p class="rom-rel-ids">${updateId != null ? `<span>Update ID: ${escapeHtml(updateId)}</span>` : ""}</p><strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong><span class="rom-overview-meta">${escapeHtml(labelize(u.recruitmentEventType || u.recruitment_event_type || "update"))}</span></article>`;
               })
               .join("")
           : '<p class="rom-empty">No published history yet</p>';
@@ -832,7 +832,7 @@
     }
     if (bindVisual) {
       const draftLabel = primary
-        ? `${truncateText(primary.title || "Untitled", 48)} (Draft #${primary.id})`
+        ? `${truncateText(primary.title || "Untitled", 48)} (Draft ID: ${primary.id})`
         : "—";
       const eventLabel = primaryEvent
         ? `${labelize(primaryEvent.event_type)} (Event #${primaryEvent.id})`
@@ -845,7 +845,7 @@
         ? labelize(primary.status || "draft")
         : "Not linked";
       bindVisual.innerHTML = `
-        <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">#${escapeHtml(selected.id)} · ${escapeHtml(truncateText(selected.title || "Recruitment", 48))}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">Recruitment ID: ${escapeHtml(selected.id)} · ${escapeHtml(truncateText(selected.title || "Recruitment", 48))}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value" title="${escapeHtml(primary?.title || "")}">${escapeHtml(draftLabel)}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">${escapeHtml(eventLabel)}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">${escapeHtml(pageLabel)}</span></div>
@@ -860,7 +860,7 @@
         const event = events.find((e) => Number(e.id) === Number(draft.recruitmentEventId));
         const isPublished = String(draft.status || "").toLowerCase() === "published";
         return `<tr>
-          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Draft #${escapeHtml(draft.id)}${isPrimary ? " · primary" : ""}</small></td>
+          <td><strong>${escapeHtml(draft.title || "Untitled")}</strong><br><small>Draft ID: ${escapeHtml(draft.id)}${isPrimary ? " · primary" : ""}</small></td>
           <td>${escapeHtml(event ? labelize(event.event_type) : "—")}</td>
           <td>${statusHtml(draft.status || "draft")}</td>
           <td>
@@ -1055,7 +1055,7 @@
             const updateId = row.id != null ? row.id : row.update_id;
             const titleFull = row.title || "—";
             return `<tr>
-            <td><span class="rom-rec-id">Update #${escapeHtml(updateId != null ? updateId : "—")}</span><br><small>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "update"))}</small></td>
+            <td><span class="rom-rec-id">Update ID: ${escapeHtml(updateId != null ? updateId : "—")}</span><br><small>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "update"))}</small></td>
             <td><strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 56))}</strong></td>
             <td>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "—"))}</td>
             <td>${escapeHtml(row.siteName || row.site_id || "—")}</td>
@@ -1073,7 +1073,7 @@
             const reviewId = row.id != null ? row.id : row.review_id;
             const titleFull = row.title || row.update_title || "—";
             return `<tr>
-            <td><a href="/admin/recruitment-review-queue"><span class="rom-rec-id">Review #${escapeHtml(reviewId != null ? reviewId : "—")}</span></a><br><small>${escapeHtml(labelize(row.event_type || "Review"))}</small></td>
+            <td><a href="/admin/recruitment-review-queue"><span class="rom-rec-id">Review ID: ${escapeHtml(reviewId != null ? reviewId : "—")}</span></a><br><small>${escapeHtml(labelize(row.event_type || "Review"))}</small></td>
             <td><span class="rrq-status is-${escapeHtml(String(row.status || "").toLowerCase())}">${escapeHtml(
               row.status || "—"
             )}</span></td>
@@ -1317,7 +1317,7 @@
       }
       message(
         draftId
-          ? `Manual update created — event + draft #${draftId}. Next: Open Generator → Preview → Manual Publish/Update (same permanent page).`
+          ? `Manual update created — event + draft ID: ${draftId}. Next: Open Generator → Preview → Manual Publish/Update (same permanent page).`
           : "Manual update created successfully — event + draft ready. Next: Generator → Preview → Manual Publish (same permanent page)."
       );
       await selectRecruitment(selected.id);

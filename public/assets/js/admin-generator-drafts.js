@@ -269,7 +269,7 @@
     const recruitment = row.recruitmentTitle
       ? row.recruitmentTitle
       : row.recruitmentId
-        ? `Recruitment #${row.recruitmentId}`
+        ? `Recruitment ID: ${row.recruitmentId}`
         : "Not bound";
 
     const identityTd = document.createElement("td");
@@ -277,7 +277,7 @@
     identityTd.innerHTML = `
       <strong class="generator-drafts-bar__row-title" title="${escapeHtml(row.title || "Untitled")}">${escapeHtml(title)}</strong>
       <span class="generator-drafts-bar__row-meta">
-        ${row.id != null ? `Draft #${escapeHtml(String(row.id))} · ` : ""}${escapeHtml(recruitment)}
+        ${row.id != null ? `Draft ID: ${escapeHtml(String(row.id))} · ` : ""}${escapeHtml(recruitment)}
       </span>`;
 
     const statusTd = document.createElement("td");
@@ -415,7 +415,7 @@
   }
 
   async function deleteDraft(id, title) {
-    const ok = window.confirm(`Delete draft #${id}?\n\n"${title}"\n\nThis cannot be undone.`);
+    const ok = window.confirm(`Delete draft ID: ${id}?\n\n"${title}"\n\nThis cannot be undone.`);
     if (!ok) return;
     const delRes = await apiRequest(`/api/admin/generator-drafts/${encodeURIComponent(id)}`, {
       method: "DELETE"
@@ -453,7 +453,7 @@
     const recruitment = row.recruitmentTitle
       ? row.recruitmentTitle
       : row.recruitmentId
-        ? `Recruitment #${row.recruitmentId}`
+        ? `Recruitment ID: ${row.recruitmentId}`
         : "NOT BOUND";
     const eventName = row.eventLabel || "—";
     const pageSlug =
@@ -477,7 +477,7 @@
           ? "Resolve Recruitment"
           : "Open Generator → Preview → Manual Publish");
     meta.innerHTML = [
-      row.id != null ? `<span>Draft #${escapeHtml(String(row.id))}</span>` : "",
+      row.id != null ? `<span>Draft ID: ${escapeHtml(String(row.id))}</span>` : "",
       `<span>Recruitment: ${escapeHtml(recruitment)}</span>`,
       `<span>Event: ${escapeHtml(eventName)}</span>`,
       `<span>Public Page: ${escapeHtml(pageSlug === "—" || pageSlug === "(ambiguous)" ? pageSlug : "/" + String(pageSlug).replace(/^\//, ""))}</span>`,

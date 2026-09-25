@@ -71,7 +71,7 @@
     el.innerHTML = `
       <div class="spv-head">
         <div>
-          <strong>${escapeHtml(rec.title || `Recruitment #${snapshot.recruitmentId}`)}</strong>
+          <strong>${escapeHtml(rec.title || `Recruitment ID: ${snapshot.recruitmentId}`)}</strong>
           <small class="spv-version" data-snapshot-version>${escapeHtml(snapshot.snapshotVersion || "—")}</small>
         </div>
         <button type="button" class="header-action-btn" data-shared-preview-refresh>↻ Refresh preview</button>
@@ -84,7 +84,7 @@
       </div>
       <dl class="spv-grid">
         <dt>Current draft</dt>
-        <dd>${draft ? `#${escapeHtml(draft.id)} ${escapeHtml(draft.title || "Untitled")} (${escapeHtml(draft.status || "—")})` : "None bound"}</dd>
+        <dd>${draft ? `Draft ID: ${escapeHtml(draft.id)} ${escapeHtml(draft.title || "Untitled")} (${escapeHtml(draft.status || "—")})` : "None bound"}</dd>
         <dt>Validation</dt>
         <dd>${escapeHtml(validation.passed ?? 0)}/${escapeHtml(validation.total ?? 0)} checks passed</dd>
         <dt>Linked pages</dt>

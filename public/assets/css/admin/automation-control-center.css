@@ -168,6 +168,18 @@ body.admin-saas-v2 .acc-main *::after {
   border: 1px solid rgba(217, 119, 6, 0.18);
 }
 
+.acc-pill.is-success {
+  background: var(--admin-success-soft, rgba(22, 163, 74, 0.12));
+  color: var(--admin-success, #166534);
+  border: 1px solid color-mix(in srgb, var(--admin-success, #166534) 22%, transparent);
+}
+
+.acc-pill.is-muted {
+  background: var(--admin-surface-2, #f8fafc);
+  color: var(--admin-muted, #64748b);
+  border: 1px solid var(--admin-border, #e2e8f0);
+}
+
 .acc-chip.is-danger,
 .acc-pill.is-danger,
 .acc-flag.is-locked {

@@ -15,7 +15,8 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=19">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=20">
+<link rel="stylesheet" href="/css/admin/admin-workspace-polish.css?v=2">
 <script>
 (function () {
   var map = {
@@ -40,10 +41,7 @@
       <p class="mon-workspace-head__sub">Canonical place to manage official government sources, check health, and run monitoring actions. Automation ON/OFF stays in Automation Control Center → Controls.</p>
     </div>
     <div class="mon-workspace-head__actions">
-      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
-      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
       <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
-      <button type="button" class="header-action-btn header-action-btn--ghost" id="refreshSitesBtn" hidden aria-hidden="true">Refresh ops</button>
     </div>
   </header>
 
@@ -109,47 +107,32 @@
       <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
     </section>
 
-    <!-- 2–3. Official Sources + Source Health / State (registry) -->
-    <section class="acc-kpi-strip" aria-label="Official source summary">
-      <article class="acc-kpi"><span>Total sources</span><strong id="accPageKpiTotal">0</strong></article>
-      <article class="acc-kpi"><span>Healthy</span><strong id="accPageKpiHealthy">0</strong></article>
-      <article class="acc-kpi"><span>Warning / slow</span><strong id="accPageKpiWarning">0</strong></article>
-      <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
-    </section>
-
-    <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health purpose verify">
-      <div class="acc-section__head">
+    <!-- Official Sources registry (canonical) -->
+    <section class="acc-section is-acc-tab-active mon-source-manager" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health purpose verify">
+      <div class="acc-section__head mon-source-manager__head">
         <div>
-          <p class="acc-section__eyebrow">Registry</p>
           <h2 id="acc-sources-title">Official Source Manager</h2>
-          <p class="acc-section__sub">Choose the exact government page you want the bot to monitor. Verify before activating. No crawl / discover / force-activate controls.</p>
+          <p class="acc-section__sub">Choose the exact government page to monitor. Verify before activating — no crawl or discover.</p>
         </div>
         <div class="acc-section__actions">
           <button type="button" class="header-action-btn header-action-btn--primary" id="accAddSourceBtn">Add Official Monitoring Source</button>
         </div>
       </div>
-      <div class="acc-toolbar">
-        <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Name, domain, URL, purpose, selector"></label>
+      <div class="acc-toolbar mon-source-toolbar">
+        <label class="mon-source-toolbar__search"><span class="acc-visually-hidden">Search</span><input id="accSourceSearch" type="search" placeholder="Search name, domain, URL, purpose…"></label>
         <label><span>Status</span><select id="accSourceEnabledFilter"><option value="">All</option><option value="true">Active</option><option value="false">Disabled</option></select></label>
         <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option></select></label>
       </div>
-      <div class="acc-data-table acc-source-table-wrap">
-        <table aria-label="Official source registry" class="acc-source-table acc-wide-table">
-          <thead>
-            <tr>
-              <th>Organization</th>
-              <th>Exact monitoring URL</th>
-              <th>Purpose</th>
-              <th>State</th>
-              <th>Health</th>
-              <th>Priority</th>
-              <th>Last checked</th>
-              <th>Failures</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="accSourceRows"></tbody>
-        </table>
+      <section class="acc-kpi-strip mon-source-kpis" aria-label="Official source summary">
+        <article class="acc-kpi"><span>Total Sources</span><strong id="accPageKpiTotal">0</strong></article>
+        <article class="acc-kpi"><span>Active</span><strong id="accPageKpiActive">0</strong></article>
+        <article class="acc-kpi"><span>Disabled</span><strong id="accPageKpiDisabled">0</strong></article>
+        <article class="acc-kpi"><span>Healthy</span><strong id="accPageKpiHealthy">0</strong></article>
+        <article class="acc-kpi"><span>Warning</span><strong id="accPageKpiWarning">0</strong></article>
+        <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
+      </section>
+      <div class="acc-source-table-wrap mon-source-list-wrap" aria-label="Official source registry">
+        <div id="accSourceRows" class="mon-source-list" role="list"></div>
       </div>
       <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
       <div class="acc-pager" style="margin-top:0.75rem;">
@@ -248,7 +231,7 @@
 <script src="/js/admin-command-palette.js?v=8"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-monitoring.js?v=7"></script>
-<script src="/js/admin-automation-control-center.js?v=14"></script>
+<script src="/js/admin-monitoring.js?v=9"></script>
+<script src="/js/admin-automation-control-center.js?v=15"></script>
 </body>
 </html>

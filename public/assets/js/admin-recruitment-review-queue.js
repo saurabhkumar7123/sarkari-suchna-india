@@ -250,7 +250,7 @@
         el.textContent =
           el.id === "rrqEditDraftLinkPublish"
             ? "Edit Draft / Combined Preview #" + draftId
-            : "Edit Draft #" + draftId;
+            : "Edit Draft ID: " + draftId;
       } else {
         el.hidden = true;
       }
@@ -554,7 +554,7 @@
       const updateId = item && item.update_id;
       if (updateId) {
         focusNote.hidden = false;
-        focusNote.textContent = `Focused from Monitoring update #${updateId}. This detail is the selected review item — not a generic unrelated queue page.`;
+        focusNote.textContent = `Focused from Monitoring update ID: ${updateId}. This detail is the selected review item — not a generic unrelated queue page.`;
       } else {
         focusNote.hidden = true;
         focusNote.textContent = "";
@@ -598,7 +598,7 @@
       );
     } else if (draftId) {
       verifyBits.push(
-        `<a class="header-action-btn header-action-btn--ghost" href="/generator?draftId=${encodeURIComponent(draftId)}">Edit Draft #${escapeHtml(draftId)}</a>`
+        `<a class="header-action-btn header-action-btn--ghost" href="/generator?draftId=${encodeURIComponent(draftId)}">Edit Draft ID: ${escapeHtml(draftId)}</a>`
       );
     }
     grid.innerHTML = `
@@ -713,7 +713,7 @@
       (item.payload && (item.payload.recruitmentTitle || item.payload.recruitment_title));
     if (title) return String(title);
     if (item.recruitment_id != null && item.recruitment_id !== "") {
-      return `Recruitment #${item.recruitment_id}`;
+      return `Recruitment ID: ${item.recruitment_id}`;
     }
     return "Not matched yet";
   }
@@ -748,7 +748,7 @@
     if (idEl) idEl.value = id ? String(id) : "";
     if (labelEl) {
       labelEl.textContent = id
-        ? `Selected: ${title || `Recruitment #${id}`}`
+        ? `Selected: ${title || `Recruitment ID: ${id}`}`
         : "No recruitment selected";
     }
     if (searchEl && title) searchEl.value = title;
@@ -763,12 +763,19 @@
     }
   }
 
+  function resolveUpdateId(item) {
+    if (!item) return null;
+    if (item.update_id != null && item.update_id !== "") return item.update_id;
+    if (item.updateId != null && item.updateId !== "") return item.updateId;
+    return null;
+  }
+
   function renderRows(items) {
     const tbody = document.getElementById("rrqTableBody");
     if (!tbody) return;
 
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="rrq-empty">No review items found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="rrq-empty">No review items found.</td></tr>`;
       return;
     }
 
@@ -776,11 +783,14 @@
       .map((item) => {
         const selected = selectedId === item.id ? " is-selected" : "";
         const recLabel = recruitmentLabel(item);
+        const updateId = resolveUpdateId(item);
         return `<tr data-id="${item.id}" class="${selected}">
+          <td><span class="rrq-cell-id" title="Review ID">${escapeHtml(String(item.id ?? "—"))}</span></td>
+          <td><span class="rrq-cell-id rrq-cell-id--muted" title="Update ID">${escapeHtml(updateId != null ? String(updateId) : "—")}</span></td>
           <td><span class="rrq-cell-title" title="${escapeHtml(item.title || "")}">${escapeHtml(item.title || "—")}</span></td>
-          <td><span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></td>
           <td><span class="rrq-cell-clip" title="${escapeHtml(item.event_type || "")}">${escapeHtml(item.event_type || "—")}</span></td>
           <td><span class="rrq-cell-recruitment" title="${escapeHtml(recLabel)}">${escapeHtml(recLabel)}</span></td>
+          <td><span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></td>
           <td><span class="rrq-cell-clip" title="${escapeHtml(item.confidence || "")}">${escapeHtml(item.confidence || "—")}</span></td>
           <td><span class="rrq-cell-clip" title="${escapeHtml(formatDate(item.created_at))}">${escapeHtml(formatDate(item.created_at))}</span></td>
           <td>${
@@ -1117,7 +1127,7 @@
           <div><dt>Event</dt><dd>${escapeHtml(labelizeEvent(item.event_type) || "—")}</dd></div>
           <div><dt>Draft</dt><dd>${
             draftId
-              ? `<a href="/generator?draftId=${encodeURIComponent(draftId)}">Draft #${escapeHtml(draftId)}</a>`
+              ? `<a href="/generator?draftId=${encodeURIComponent(draftId)}">Draft ID: ${escapeHtml(draftId)}</a>`
               : "—"
           }</dd></div>
           <div><dt>Canonical Page</dt><dd>${escapeHtml(canon)}</dd></div>
@@ -1152,7 +1162,7 @@
     body.innerHTML = candidates
       .map((row) => {
         const rid = row.recruitmentId || row.recruitment_id || (row.kind === "recruitment" ? row.id : "");
-        const title = row.title || (rid ? `Recruitment #${rid}` : "—");
+        const title = row.title || (rid ? `Recruitment ID: ${rid}` : "—");
         const match = row.level || row.matchLevel || row.kind || "—";
         const slug = row.canonicalSlug || row.page_slug || row.slug || "";
         return `<tr>
@@ -1215,11 +1225,11 @@
       <div><dt>Event</dt><dd>${escapeHtml(labelizeEvent(eventType))}</dd></div>
       <div><dt>Draft</dt><dd>${
         draftHref
-          ? `<a href="${escapeHtml(draftHref)}">Draft #${escapeHtml(draftId)}</a> · <a href="${escapeHtml(draftHref)}">Open Draft</a>`
+          ? `<a href="${escapeHtml(draftHref)}">Draft ID: ${escapeHtml(draftId)}</a> · <a href="${escapeHtml(draftHref)}">Open Draft</a>`
           : escapeHtml(draftId)
       }</dd></div>
       <div><dt>Public Page</dt><dd>${escapeHtml(pageSlug ? "/" + String(pageSlug).replace(/^\//, "") : "Same permanent page after Manual Publish")}</dd></div>
-      <div><dt>Review</dt><dd>${escapeHtml(item.title || `#${item.id}`)} · ${escapeHtml(item.status || "—")}</dd></div>
+      <div><dt>Review</dt><dd>${escapeHtml(item.title || `Review ID: ${item.id}`)} · ${escapeHtml(item.status || "—")}</dd></div>
     `;
   }
 
@@ -1292,7 +1302,7 @@
       await loadDetail(deep.reviewId);
       setMessage(
         detailMessage,
-        `Opened review #${deep.reviewId}${deep.updateId ? ` for update #${deep.updateId}` : ""}.`,
+        `Opened review ID: ${deep.reviewId}${deep.updateId ? ` for update ID: ${deep.updateId}` : ""}.`,
         "success"
       );
       return;
@@ -1309,7 +1319,7 @@
       setMessage(
         listMessage,
         (ensure.body && ensure.body.message) ||
-          `Could not open review for update #${deep.updateId}.`,
+          `Could not open review for update ID: ${deep.updateId}.`,
         "error"
       );
       return;
@@ -1320,8 +1330,8 @@
     setMessage(
       detailMessage,
       created
-        ? `Created review for Monitoring update #${deep.updateId}. Decide matching / next action below.`
-        : `Opened existing review for Monitoring update #${deep.updateId}.`,
+        ? `Created review for Monitoring update ID: ${deep.updateId}. Decide matching / next action below.`
+        : `Opened existing review for Monitoring update ID: ${deep.updateId}.`,
       "success"
     );
     // Prefer the focused item's real status over a stale URL status filter
@@ -1368,7 +1378,7 @@
       : " Open Generator when a draft is ready.";
     const messages = {
       attach: `Attached to ${name}. This update is part of that recruitment lifecycle. Next: Edit Draft → Combined Preview → Approve → Manual Publish (same permanent page).${draftHint}`,
-      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (#${item.recruitment_id})` : ""}. Next: Edit Draft → Preview → Approve → Manual Publish (new canonical page once).${draftHint}`,
+      create_parent: `Parent Recruitment created${item && item.recruitment_id ? ` (Recruitment ID: ${item.recruitment_id})` : ""}. Next: Edit Draft → Preview → Approve → Manual Publish (new canonical page once).${draftHint}`,
       standalone:
         "Left standalone — no Recruitment was created or attached. Content remains available. Next: Create Parent or Attach later, or Reject if not needed.",
       reject: "Rejected — will not proceed to publication. No Recruitment or page change from this item."
@@ -1432,10 +1442,12 @@
     const assist = item.assist || null;
     const meta = document.getElementById("rrqDetailMeta");
     if (meta) {
+      const updateId = resolveUpdateId(item);
       meta.innerHTML = `
-        <span>Title: <strong>${escapeHtml(item.title || "—")}</strong></span>
+        <span class="rrq-meta-id"><span class="rrq-meta-label">Review ID</span> <strong>${escapeHtml(String(item.id ?? "—"))}</strong></span>
+        <span class="rrq-meta-id"><span class="rrq-meta-label">Update ID</span> <strong>${escapeHtml(updateId != null ? String(updateId) : "—")}</strong></span>
         <span>Status: <span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></span>
-        <span>Decision: <strong>${escapeHtml(item.decision || "—")}</strong></span>
+        <span>Event: <strong>${escapeHtml(item.event_type || "—")}</strong></span>
         <span>Recruitment: <strong>${escapeHtml(recruitmentLabel(item))}</strong></span>
         <span>Confidence: <strong>${escapeHtml(item.confidence || "—")}</strong></span>
         <span>Created: <strong>${escapeHtml(formatDate(item.created_at))}</strong></span>
@@ -1522,7 +1534,7 @@
     if (!result.ok || !result.body || result.body.success !== true) {
       const tbody = document.getElementById("rrqTableBody");
       if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="7" class="rrq-empty">Could not load review items.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="rrq-empty">Could not load review items.</td></tr>`;
       }
       setMessage(
         listMessage,
@@ -1740,7 +1752,7 @@
     }
     suggestions.innerHTML = rows
       .map((row) => {
-        const title = row.title || `Recruitment #${row.id}`;
+        const title = row.title || `Recruitment ID: ${row.id}`;
         return `<button type="button" class="rrq-attach-option" data-pick-recruitment="${escapeHtml(
           row.id
         )}" data-pick-title="${escapeHtml(title)}">${escapeHtml(title)}</button>`;

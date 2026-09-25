@@ -16,6 +16,7 @@
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=2">
 <link rel="stylesheet" href="/css/admin/recruitment-review-queue.css?v=13">
+<link rel="stylesheet" href="/css/admin/admin-workspace-polish.css?v=4">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Content,Review Center">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -37,10 +38,9 @@
     <aside class="adm-wf" data-adm-wf="reviewCenter" id="admWfReviewCenter" aria-label="Workflow context"></aside>
     <aside class="adm-wf" data-adm-wf="needsMatching" id="admWfNeedsMatching" hidden aria-label="Needs Matching filter context"></aside>
     <p class="rrq-help">
-      Operational decisions: which Recruitment does this update belong to, and what to do next?
-      Detail opens a step-by-step decision tree — only the chosen branch’s actions appear.
+      Operational decisions: which Recruitment does this update belong to?
       <strong>Needs Matching</strong> is a filter here — not a separate workspace.
-      Approve ≠ publish. Next step: Generator → Preview → Manual Publish.
+      Approve ≠ publish — next: Generator → Manual Publish.
     </p>
     <p class="rrq-filter-legend" id="rrqFilterLegend" aria-live="polite">Showing: All review items</p>
 
@@ -113,17 +113,19 @@
           <table class="rrq-table" aria-label="Recruitment review queue">
             <thead>
               <tr>
+                <th>Review ID</th>
+                <th>Update ID</th>
                 <th>Title</th>
-                <th>Status</th>
                 <th>Event</th>
                 <th>Recruitment</th>
+                <th>Status</th>
                 <th>Confidence</th>
                 <th>Created</th>
                 <th>Source</th>
               </tr>
             </thead>
             <tbody id="rrqTableBody">
-              <tr><td colspan="7" class="rrq-empty">Loading…</td></tr>
+              <tr><td colspan="9" class="rrq-empty">Loading…</td></tr>
             </tbody>
           </table>
         </div>
@@ -136,8 +138,8 @@
 
       <section class="rrq-card rrq-card--detail" id="rrqDetailPanel" hidden>
         <div class="rrq-detail-head">
-          <h2>Detail</h2>
-          <button type="button" class="header-action-btn header-action-btn--ghost" id="rrqCloseDetail">Close</button>
+          <h2>Review detail</h2>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="rrqCloseDetail">← Back</button>
         </div>
         <p id="rrqDetailMessage" class="rrq-message" hidden role="status"></p>
 

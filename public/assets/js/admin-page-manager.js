@@ -19,6 +19,36 @@ function normalizeStatusLabel(status) {
   return label || "unknown";
 }
 
+function labelizeEventType(value) {
+  return String(value || "")
+    .trim()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Event is sole lifecycle stage authority.
+ * Never derive stage from page.status / page.title / listing section.
+ */
+function resolveAuthoritativeStageLabel(page) {
+  const eventType = String(page && page.authoritativeEventType || "").trim();
+  if (eventType) return labelizeEventType(eventType);
+  // No valid active/pending Event — neutral, do not guess from page.status.
+  return "Not established";
+}
+
+function pageNeedsRecruitmentRepair(page) {
+  const rid = page && page.recruitment_id != null ? Number(page.recruitment_id) : 0;
+  if (!Number.isInteger(rid) || rid <= 0) return true;
+  const linkage = String(page.recruitmentLinkage || "").toLowerCase();
+  if (linkage === "unbound" || linkage === "orphan") return true;
+  if (page.recruitmentOrphan) return true;
+  if (linkage === "bound") return false;
+  // Legacy payloads without recruitmentLinkage.
+  if (page.recruitmentTitle || page.recruitmentBound) return false;
+  return true;
+}
+
 function getStatusBadgeClass(status) {
   const s = normalizeStatusLabel(status).toLowerCase();
   if (s === "new" || s === "latest job" || s === "new form" || s === "form") return "status-new";
@@ -45,7 +75,7 @@ function buildPagesQuery() {
 
 function pageListSkeletonHtml() {
   return `<div class="page-table page-table--skeleton" aria-hidden="true">
-    <div class="page-head"><div><input type="checkbox" disabled></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div>
+    <div class="page-head"><div><input type="checkbox" disabled></div><div>Title</div><div>Category</div><div>Listing status</div><div>Updated</div><div>Actions</div></div>
     ${Array.from({ length: 6 }).map(() => '<div class="page-row skeleton-row"><div></div><div></div><div></div><div></div><div></div><div></div></div>').join("")}
   </div>`;
 }
@@ -382,7 +412,7 @@ function renderPages(pages) {
   const pageSlugs = pages.map((p) => String(p.slug || "").trim()).filter(Boolean);
   selectedSlugs = new Set(Array.from(selectedSlugs).filter((slug) => pageSlugs.includes(slug)));
   const allSelected = pageSlugs.length > 0 && pageSlugs.every((slug) => selectedSlugs.has(slug));
-  box.innerHTML = `<div class="page-table-wrap"><div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Title</div><div>Category</div><div>Status</div><div>Updated</div><div>Actions</div></div></div></div>`;
+  box.innerHTML = `<div class="page-table-wrap"><div class="page-table"><div class="page-head"><div><input type="checkbox" id="selectAllPages"${allSelected ? " checked" : ""}></div><div>Page</div><div>Category</div><div>Listing status</div><div>Updated</div><div>Actions</div></div></div></div>`;
   const table = box.querySelector(".page-table");
   const frag = document.createDocumentFragment();
   pages.forEach((p) => {
@@ -390,38 +420,74 @@ function renderPages(pages) {
     row.className = "page-row";
     const url = p.url || "/" + (p.slug || "");
     const slug = p.slug || "";
+    // Listing section only — never treat as lifecycle stage.
     const statusLabel = normalizeStatusLabel(p.status);
     const statusClass = getStatusBadgeClass(statusLabel);
     const isChecked = selectedSlugs.has(slug);
     const views = Number(p.views) || 0;
+    const needsRepair = pageNeedsRecruitmentRepair(p);
     const recruitmentLabel =
       p.recruitmentTitle ||
-      (p.recruitment_id ? `Recruitment #${p.recruitment_id}` : "");
-    const stageLabel = normalizeStatusLabel(p.status);
-    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title">${escapeAttr(p.title)}</span><span class="page-row-slug">/${escapeAttr(slug)}</span>${
-      recruitmentLabel
-        ? `<span class="page-row-meta">Recruitment: ${escapeAttr(recruitmentLabel)}</span><span class="page-row-meta">Current Stage: ${escapeAttr(stageLabel)}</span><span class="page-row-meta">Canonical Page: /${escapeAttr(slug)}</span>`
-        : ""
-    }<span class="page-row-flags">${renderQualityFlags(p)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${p.lastDate ? `<span class="page-row-meta">Last: ${escapeAttr(p.lastDate)}</span>` : ""}${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
+      (!needsRepair && p.recruitment_id ? `Recruitment ID: ${p.recruitment_id}` : "");
+    const stageLabel = needsRepair ? "—" : resolveAuthoritativeStageLabel(p);
+    const pageId = Number(p.id);
+    const hasPageId = Number.isInteger(pageId) && pageId > 0;
+    const pageIdLabel = hasPageId ? `Page ID: ${pageId}` : "";
+    const recruitmentMeta = needsRepair
+      ? `<span class="page-row-meta page-row-meta--warn">REPAIR REQUIRED</span><span class="page-row-meta">Recruitment: Not Bound</span><span class="page-row-meta">Canonical Page: /${escapeAttr(slug)}</span>`
+      : `<span class="page-row-meta">${
+          !needsRepair && p.recruitment_id
+            ? `Recruitment ID: ${escapeAttr(p.recruitment_id)}${p.recruitmentTitle ? ` · ${escapeAttr(p.recruitmentTitle)}` : ""}`
+            : recruitmentLabel
+              ? `Recruitment: ${escapeAttr(recruitmentLabel)}`
+              : "Recruitment: —"
+        }</span><span class="page-row-meta">Current Stage: ${escapeAttr(stageLabel)}</span><span class="page-row-meta">Canonical Page: /${escapeAttr(slug)}</span>`;
+    row.innerHTML = `<div><input type="checkbox" class="row-select" data-slug="${escapeAttr(slug)}"${isChecked ? " checked" : ""}></div><div><span class="page-row-title" title="${escapeAttr(p.title || "")}">${escapeAttr(p.title)}</span><span class="page-row-slug" title="/${escapeAttr(slug)}">/${escapeAttr(slug)}</span>${
+      pageIdLabel ? `<span class="page-row-id">${escapeAttr(pageIdLabel)}</span>` : ""
+    }${recruitmentMeta}<span class="page-row-flags">${renderQualityFlags(p)}</span></div><div>${escapeAttr(p.category || "-")}</div><div><span class="badge ${statusClass}" title="Homepage/listing section only">${escapeAttr(statusLabel)}</span></div><div><span class="page-row-meta">${escapeAttr(formatPageDate(pageUpdatedAt(p)))}</span>${p.lastDate ? `<span class="page-row-meta">Last: ${escapeAttr(p.lastDate)}</span>` : ""}${views ? `<span class="page-row-meta">${views} views</span>` : ""}</div><div class="row-actions"></div>`;
     const actions = row.querySelector(".row-actions");
     const edit = document.createElement("a");
     edit.href = "/generator?slug=" + encodeURIComponent(slug);
     edit.className = "row-action-btn row-action-btn--edit";
-    edit.textContent = "Edit Page";
+    edit.textContent = "Edit";
     const view = document.createElement("a");
     view.href = url;
     view.target = "_blank";
     view.rel = "noopener";
     view.className = "row-action-btn row-action-btn--view";
     view.textContent = "View";
-    if (p.recruitment_id) {
+    if (!needsRepair && p.recruitment_id) {
       const openRec = document.createElement("a");
       openRec.href = `/admin/recruitments?recruitment_id=${encodeURIComponent(p.recruitment_id)}`;
       openRec.className = "row-action-btn";
       openRec.textContent = "Open Recruitment";
       actions.append(edit, openRec, view);
     } else {
-      actions.append(edit, view);
+      const repair = document.createElement("a");
+      repair.href = "/admin/recruitments";
+      repair.className = "row-action-btn row-action-btn--repair";
+      repair.textContent = "Bind Recruitment";
+      repair.title = "Human decision required — does not auto-bind";
+      actions.append(edit, repair, view);
+    }
+    if (hasPageId) {
+      const versionsBtn = document.createElement("button");
+      versionsBtn.type = "button";
+      versionsBtn.className = "row-action-btn row-action-btn--versions";
+      versionsBtn.textContent = "Versions";
+      versionsBtn.title = "View version history / restore (requires confirmation)";
+      versionsBtn.addEventListener("click", async () => {
+        await openPageVersionRestore(p);
+      });
+      const restoreBtn = document.createElement("button");
+      restoreBtn.type = "button";
+      restoreBtn.className = "row-action-btn row-action-btn--restore";
+      restoreBtn.textContent = "Restore";
+      restoreBtn.title = "Restore from snapshot — explicit confirmation required";
+      restoreBtn.addEventListener("click", async () => {
+        await openPageVersionRestore(p);
+      });
+      actions.append(versionsBtn, restoreBtn);
     }
     const del = document.createElement("button");
     del.type = "button";
@@ -473,6 +539,83 @@ async function deletePage(slug, triggerEl) {
     await window.AdminUI.withLoading(triggerEl, run, "Deleting...");
   } else {
     await run();
+  }
+}
+
+/**
+ * Admin-only version restore. Never deletes history.
+ * Requires explicit confirmation. Does not auto-run.
+ */
+async function openPageVersionRestore(page) {
+  const pageId = Number(page && page.id);
+  const slug = String((page && page.slug) || "").trim();
+  if (!Number.isInteger(pageId) || pageId <= 0) {
+    window.AdminUI?.toastError("Page id missing — cannot list versions");
+    return;
+  }
+  const list = await window.adminSafeFetch(
+    `/api/admin/enterprise-persistence/versions/page/${encodeURIComponent(pageId)}?limit=20`
+  );
+  if (!list || !list.success) {
+    window.AdminUI?.toastError((list && list.message) || "Could not load page versions");
+    return;
+  }
+  const rows = Array.isArray(list.data)
+    ? list.data
+    : Array.isArray(list.data && list.data.data)
+      ? list.data.data
+      : Array.isArray(list.data && list.data.rows)
+        ? list.data.rows
+        : [];
+  if (!rows.length) {
+    window.AdminUI?.toastError("No version snapshots found for this page");
+    return;
+  }
+  const choices = rows
+    .slice(0, 12)
+    .map((v) => {
+      const ver = v.version != null ? v.version : v.version_number;
+      const when = v.created_at || v.createdAt || "";
+      const summary = v.change_summary || v.changeSummary || "";
+      return `v${ver}${when ? ` · ${when}` : ""}${summary ? ` · ${summary}` : ""}`;
+    })
+    .join("\n");
+  const picked = window.prompt(
+    `RESTORE FROM SNAPSHOT for /${slug} (Page ID: ${pageId})\n\n` +
+      `Current live page will be snapshotted first. History is never deleted.\n\n` +
+      `Available versions:\n${choices}\n\n` +
+      `Enter version number to restore (or Cancel):`
+  );
+  if (picked == null || !String(picked).trim()) return;
+  const version = parseInt(String(picked).replace(/^v/i, "").trim(), 10);
+  if (!Number.isInteger(version) || version <= 0) {
+    window.AdminUI?.toastError("Invalid version number");
+    return;
+  }
+  const ok = await (window.AdminUI && window.AdminUI.simpleConfirm
+    ? window.AdminUI.simpleConfirm({
+        title: "Restore page from snapshot",
+        warnText: "This updates the live public page content from a historical snapshot.",
+        details: `Page ID: ${pageId} /${slug} → restore version ${version}. History is preserved.`,
+        confirmLabel: "Restore"
+      })
+    : Promise.resolve(
+        window.confirm(`Restore /${slug} from version ${version}? History is preserved.`)
+      ));
+  if (!ok) return;
+  const result = await window.adminSafeFetch(
+    `/api/admin/enterprise-persistence/versions/page/${encodeURIComponent(pageId)}/restore/${encodeURIComponent(version)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: true })
+    }
+  );
+  if (result && result.success) {
+    window.AdminUI?.toastSuccess(`Restored /${slug} from v${version}`);
+    await loadPageManager();
+  } else {
+    window.AdminUI?.toastError((result && result.message) || "Restore failed");
   }
 }
 

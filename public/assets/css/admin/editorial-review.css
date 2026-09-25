@@ -194,3 +194,49 @@
     flex: 1 1 auto;
   }
 }
+
+/* v4 polish — denser editorial workspace hierarchy */
+.er-help {
+  margin: 6px 0 0;
+  max-width: 72ch;
+  color: var(--admin-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.er-layout,
+.er-workspace {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.er-decisions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.er-decisions button,
+.er-decisions .header-action-btn {
+  min-height: 40px;
+}
+
+.er-panel,
+.er-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-sm);
+}
+
+body.dark.admin-saas-v2 .er-inbox-item,
+body.dark.admin-saas-v2 .er-panel,
+body.dark.admin-saas-v2 .er-card {
+  background: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}

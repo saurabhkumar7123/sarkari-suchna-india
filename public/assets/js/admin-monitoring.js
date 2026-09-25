@@ -276,6 +276,12 @@ function classifyUpdate(r) {
   return "needs-draft";
 }
 
+function formatLinkedId(value) {
+  if (value === undefined || value === null || value === "") return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
 function buildUpdateMiniFlow(stage) {
   const needsMatching = stage === "needs-matching";
   const steps = needsMatching
@@ -323,19 +329,26 @@ function renderDetectedUpdates(rows) {
   }
   box.innerHTML = list
     .map((r) => {
-      const source = escapeAttr(r.site_name || r.siteName || r.source || "Source");
       const title = escapeAttr(r.summary || r.title || "Update detected");
-      const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at);
-      const href = r.url || r.link ? escapeAttr(r.url || r.link) : "";
-      const siteHref = r.site_url || r.siteUrl ? escapeAttr(r.site_url || r.siteUrl) : "";
-      const isPdf =
-        href && /\.pdf(\?|#|$)/i.test(String(r.url || r.link || ""))
-          ? true
-          : false;
-      const classification = escapeAttr(r.classification || r.event_type || r.category || "—");
-      const recruitment =
-        r.recruitment_title || r.recruitmentTitle || r.recruitment_id || r.recruitmentId || "—";
-      const draftId = r.draft_id || r.draftId || "";
+      const when = formatMonitorTime(r.detected_at || r.detectedAt || r.created_at || r.createdAt);
+      const hrefRaw = r.url || r.link || "";
+      const href = hrefRaw ? escapeAttr(hrefRaw) : "";
+      const siteHrefRaw = r.site_url || r.siteUrl || "";
+      const siteHref = siteHrefRaw ? escapeAttr(siteHrefRaw) : "";
+      const isPdf = Boolean(hrefRaw && /\.pdf(\?|#|$)/i.test(String(hrefRaw)));
+      const classificationRaw = r.classification || r.event_type || r.category || r.recruitmentEventType || "";
+      const classification = classificationRaw ? escapeAttr(classificationRaw) : "";
+      const confidenceRaw = r.confidence ?? r.ai_confidence ?? r.aiConfidence;
+      const confidence =
+        confidenceRaw !== undefined && confidenceRaw !== null && String(confidenceRaw).trim() !== ""
+          ? escapeAttr(String(confidenceRaw))
+          : "";
+      const sourceName = r.site_name || r.siteName || r.source_name || r.sourceName || r.source || "";
+      const sourceId = formatLinkedId(r.site_id ?? r.siteId ?? r.source_id ?? r.sourceId);
+      const updateId = formatLinkedId(r.id);
+      const draftId = formatLinkedId(r.draft_id ?? r.draftId);
+      const reviewId = formatLinkedId(r.review_id ?? r.reviewId);
+      const recruitmentId = formatLinkedId(r.recruitment_id ?? r.recruitmentId);
       const stage = classifyUpdate(r);
       const stageLabel =
         stage === "needs-matching"
@@ -355,14 +368,14 @@ function renderDetectedUpdates(rows) {
               : "muted";
       const statusIco =
         stage === "needs-matching" ? "!" : stage === "reviewed" ? "✓" : stage === "drafted" ? "●" : "○";
-      const idMeta = r.id != null ? `<span class="detected-update__url">ID ${escapeAttr(r.id)}</span>` : "";
+      const reviewStatusLabel = r.review_status
+        ? String(r.review_status).replace(/_/g, " ")
+        : stageLabel;
       const draftBtn = draftId
-        ? `<a class="header-action-btn" href="/generator?draftId=${encodeURIComponent(draftId)}${
-            href && isPdf ? `&pdfUrl=${encodeURIComponent(String(r.url || r.link || ""))}` : ""
-          }">${href && isPdf ? "Open Draft + PDF" : "Open Draft"}</a>`
+        ? `<a class="header-action-btn du-action--primary" href="/generator?draftId=${encodeURIComponent(draftId)}${
+            hrefRaw && isPdf ? `&pdfUrl=${encodeURIComponent(String(hrefRaw))}` : ""
+          }">${hrefRaw && isPdf ? "Draft + PDF" : "Draft"}</a>`
         : "";
-      const updateId = r.id != null ? String(r.id) : "";
-      const reviewId = r.review_id || r.reviewId || "";
       const reviewParams = new URLSearchParams();
       if (updateId) reviewParams.set("update_id", updateId);
       if (reviewId) reviewParams.set("id", String(reviewId));
@@ -370,28 +383,37 @@ function renderDetectedUpdates(rows) {
       const reviewHref = reviewParams.toString()
         ? `/admin/recruitment-review-queue?${reviewParams.toString()}`
         : `/admin/recruitment-review-queue`;
-      const reviewStatusLabel = r.review_status
-        ? String(r.review_status).replace(/_/g, " ")
-        : stageLabel;
+      const identityBits = [];
+      if (updateId) identityBits.push(`<span>Update ID: <strong>${escapeAttr(updateId)}</strong></span>`);
+      if (sourceName) identityBits.push(`<span>Source: <strong>${escapeAttr(String(sourceName))}</strong></span>`);
+      if (sourceId) identityBits.push(`<span>Source ID: <strong>${escapeAttr(sourceId)}</strong></span>`);
+      const linkCell = (label, value) =>
+        `<div class="detected-update__link-cell"><span class="detected-update__link-label">${label}</span><strong class="detected-update__link-value">${
+          value ? escapeAttr(value) : "Not linked"
+        }</strong></div>`;
       return `<article class="detected-update">
-        <div>
-          <strong>${source}</strong>
-          ${idMeta}
+        <div class="detected-update__head">
+          <h3 class="detected-update__title">${title}</h3>
+          <span class="admin-status admin-status--${statusTone}"><span class="admin-status__ico" aria-hidden="true">${statusIco}</span>${escapeAttr(reviewStatusLabel)}</span>
         </div>
-        <div>
-          <div class="detected-update__title">${title}</div>
-          ${href ? `<div class="detected-update__url">${href}</div>` : ""}
-          ${buildUpdateMiniFlow(stage)}
+        ${identityBits.length ? `<div class="detected-update__identity">${identityBits.join("")}</div>` : ""}
+        <div class="detected-update__links" aria-label="Linked workflow objects">
+          ${linkCell("Update", updateId)}
+          ${linkCell("Draft", draftId)}
+          ${linkCell("Review", reviewId)}
+          ${linkCell("Recruitment", recruitmentId)}
         </div>
-        <span>${escapeAttr(when)}</span>
-        <span class="admin-status admin-status--${statusTone}"><span class="admin-status__ico" aria-hidden="true">${statusIco}</span>${escapeAttr(reviewStatusLabel)}</span>
+        ${buildUpdateMiniFlow(stage)}
+        <div class="detected-update__meta">
+          ${classification ? `<span class="badge">Event: ${classification}</span>` : ""}
+          ${confidence ? `<span class="badge">Confidence: ${confidence}</span>` : ""}
+          ${when ? `<span class="detected-update__when">Created: ${escapeAttr(when)}</span>` : ""}
+        </div>
         <div class="detected-update__actions">
-          <span class="badge">Class: ${classification}</span>
-          <span class="badge">Recruitment: ${escapeAttr(String(recruitment))}</span>
-          ${siteHref ? `<a class="header-action-btn" href="${siteHref}" target="_blank" rel="noopener">Open Official Site</a>` : ""}
-          ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">${isPdf ? "Open Official PDF" : "Open Official Notice"}</a>` : ""}
+          ${siteHref ? `<a class="header-action-btn" href="${siteHref}" target="_blank" rel="noopener">Site</a>` : ""}
+          ${href ? `<a class="header-action-btn" href="${href}" target="_blank" rel="noopener">${isPdf ? "PDF" : "Notice"}</a>` : ""}
           ${draftBtn}
-          <a class="header-action-btn" href="${reviewHref}">Open Review</a>
+          <a class="header-action-btn du-action--primary" href="${reviewHref}">Open Review</a>
         </div>
       </article>`;
     })

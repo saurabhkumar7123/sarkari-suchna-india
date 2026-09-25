@@ -102,7 +102,7 @@
     if (!site) return "—";
     if (site.name) return site.name;
     if (site.url) return site.url;
-    if (site.id != null) return `Site #${site.id}`;
+    if (site.id != null) return `Site ID: ${site.id}`;
     return "—";
   }
 

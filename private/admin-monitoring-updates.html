@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-workspace-polish.css?v=2">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Detected Updates" data-mon-page="updates">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
@@ -26,7 +27,7 @@
     <div class="mon-workspace-head__copy">
       <p class="mon-workspace-head__eyebrow">Monitoring</p>
       <h1 class="mon-workspace-head__title">Detected Updates</h1>
-      <p class="mon-workspace-head__sub">Notices discovered by monitoring. With automation off these still list stored detections — convert via Generator or Manual Update on the matching recruitment.</p>
+      <p class="mon-workspace-head__sub">Notices discovered by monitoring. Convert via Generator or open Review when a draft exists.</p>
     </div>
     <div class="mon-workspace-head__actions">
       <button type="button" class="header-action-btn header-action-btn--ghost" id="refreshSitesBtn">Refresh</button>
@@ -35,7 +36,7 @@
 
   <nav class="mon-switcher" aria-label="Monitoring sections" data-mon-switcher>
     <div class="mon-switcher__menu" id="monSwitcherMenu" role="listbox">
-      <a class="mon-switcher__option" href="/admin/monitoring">Source Health</a>
+      <a class="mon-switcher__option" href="/admin/monitoring">Official Sources</a>
       <a class="mon-switcher__option is-active" href="/admin/monitoring/updates" aria-current="page">Detected Updates</a>
       <a class="mon-switcher__option" href="/admin/monitoring/activity">Activity</a>
     </div>
@@ -57,11 +58,11 @@
       <span class="admin-ops-flow__step is-locked">Manual Publish</span>
     </nav>
 
-    <div class="recent" id="recentUpdates">
+    <div class="recent mon-updates-panel" id="recentUpdates">
       <div class="admin-page-head">
         <div>
           <h2>Detected Updates</h2>
-          <p class="manager-hint">What the monitoring system found. One update maps to one draft when converted.</p>
+          <p class="manager-hint">One update maps to one draft when converted. IDs help confirm the exact object.</p>
         </div>
       </div>
       <div class="admin-filter-row" role="group" aria-label="Detected update filters">
@@ -85,6 +86,6 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-monitoring.js?v=6"></script>
+<script src="/js/admin-monitoring.js?v=9"></script>
 </body>
 </html>

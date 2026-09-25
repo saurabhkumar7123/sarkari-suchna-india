@@ -489,10 +489,10 @@
         refsHost.innerHTML = refs.map((ref) => `
           <tr>
             <td>${escapeHtml(ref.title || "")}</td>
-            <td>${escapeHtml(ref.recruitmentId != null ? `Recruitment #${ref.recruitmentId}` : "—")}</td>
-            <td>${escapeHtml(ref.updateId != null ? `Update #${ref.updateId}` : "—")}</td>
-            <td>${escapeHtml(ref.reviewId != null ? `Review #${ref.reviewId}` : "—")}</td>
-            <td>${escapeHtml(ref.draftId != null ? `Draft #${ref.draftId}` : "—")}</td>
+            <td>${escapeHtml(ref.recruitmentId != null ? `Recruitment ID: ${ref.recruitmentId}` : "—")}</td>
+            <td>${escapeHtml(ref.updateId != null ? `Update ID: ${ref.updateId}` : "—")}</td>
+            <td>${escapeHtml(ref.reviewId != null ? `Review ID: ${ref.reviewId}` : "—")}</td>
+            <td>${escapeHtml(ref.draftId != null ? `Draft ID: ${ref.draftId}` : "—")}</td>
             <td>${escapeHtml(ref.event || "—")}</td>
           </tr>
         `).join("");
@@ -513,21 +513,21 @@
     for (const ref of refs) {
       if (ref.reviewId != null) {
         push(`review-${ref.reviewId}`, {
-          what: ref.title || `Review #${ref.reviewId}`,
+          what: ref.title || `Review ID: ${ref.reviewId}`,
           why: "Needs review",
           action: "Open Review",
           href: "/admin/recruitment-review-queue"
         });
       } else if (ref.draftId != null) {
         push(`draft-${ref.draftId}`, {
-          what: `Draft #${ref.draftId}`,
+          what: `Draft ID: ${ref.draftId}`,
           why: ref.title ? `${ref.title} — awaiting generator / manual publish path` : "Draft waiting",
           action: "Open Generator",
           href: `/generator?draftId=${encodeURIComponent(ref.draftId)}`
         });
       } else if (ref.updateId != null) {
         push(`update-${ref.updateId}`, {
-          what: `Update #${ref.updateId}`,
+          what: `Update ID: ${ref.updateId}`,
           why: ref.title ? `${ref.title} — needs review` : "Needs review",
           action: "Open Review",
           href: "/admin/monitoring/updates"
@@ -917,33 +917,81 @@
     empty.hidden = rows.length > 0;
     body.innerHTML = rows.map((source) => {
       const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
-      const stateLabel = source.operationalState || (source.enabled ? "ACTIVE" : "DISABLED");
-      const quality = source.qualityGrade || (source.enabled ? "GREEN" : "YELLOW");
+      const stateLabel = source.enabled ? "Active" : "Disabled";
+      const stateClass = source.enabled ? "is-success" : "is-muted";
+      const healthRaw = String(source.healthStatus || "unknown").toLowerCase();
+      const healthClass =
+        healthRaw === "healthy"
+          ? "is-success"
+          : healthRaw === "warning" || healthRaw === "slow"
+            ? "is-warning"
+            : healthRaw === "offline"
+              ? "is-danger"
+              : "is-muted";
+      const lastChecked = source.lastCheckedAt || source.lastVisit || "—";
+      const urlDisplay =
+        monitoringUrl.length > 56 ? `${monitoringUrl.slice(0, 55)}…` : monitoringUrl || "—";
+      const orgTitle = `${source.name || ""}${source.officialDomain ? ` · ${source.officialDomain}` : ""}`;
+      const purpose = source.purposeLabel || source.purpose || "—";
+      const siteId = source.id != null ? String(source.id) : "—";
       return `
-      <tr>
-        <td data-label="Organization">
-          <strong>${escapeHtml(source.name)}</strong><br>
-          <small>${escapeHtml(source.officialDomain || "-")}</small>
-        </td>
-        <td class="acc-url-cell" data-label="Exact monitoring URL"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></td>
-        <td data-label="Purpose">${escapeHtml(source.purposeLabel || source.purpose || "—")}</td>
-        <td data-label="State"><span class="acc-pill">${escapeHtml(stateLabel)}</span><br><small>Quality: ${escapeHtml(quality)}</small><br><small>${source.enabled ? "Active" : "Disabled"}</small></td>
-        <td data-label="Health"><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
-        <td data-label="Priority"><span class="acc-pill">${escapeHtml(source.priority || "P1")}</span></td>
-        <td data-label="Last checked">
-          <small>Checked: ${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</small><br>
-          <small>OK: ${escapeHtml(source.lastSuccessfulCheck || "-")}</small><br>
-          <small>Change: ${escapeHtml(source.lastDetectedChange || "-")}</small>
-        </td>
-        <td data-label="Failures">${escapeHtml(source.failCount ?? 0)}</td>
-        <td class="acc-source-actions" data-label="Actions">
-          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="view">View</button>
-          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
-          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="verify">Verify</button>
-          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="${source.enabled ? "disable" : "enable"}">${source.enabled ? "Disable" : "Enable"}</button>
-          <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="run-check">Run Check</button>
-        </td>
-      </tr>`;
+      <article class="mon-source-card" data-source-id="${escapeHtml(source.id)}">
+        <div class="mon-source-card__row mon-source-card__row--primary">
+          <div class="mon-source-card__field mon-source-card__field--id">
+            <span class="mon-source-card__label">Site ID</span>
+            <strong class="mon-source-card__value">${escapeHtml(siteId)}</strong>
+          </div>
+          <div class="mon-source-card__field mon-source-card__field--org">
+            <span class="mon-source-card__label">Organization</span>
+            <strong class="mon-cell-clamp" title="${escapeHtml(orgTitle)}">${escapeHtml(source.name || "—")}</strong>
+            <small class="mon-cell-clamp" title="${escapeHtml(source.officialDomain || "")}">${escapeHtml(source.officialDomain || "—")}</small>
+          </div>
+          <div class="mon-source-card__field mon-source-card__field--url">
+            <span class="mon-source-card__label">Monitoring URL</span>
+            ${
+              monitoringUrl
+                ? `<a class="mon-source-card__url" href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(urlDisplay)}</a>`
+                : "<span>—</span>"
+            }
+          </div>
+          <div class="mon-source-card__field mon-source-card__field--purpose">
+            <span class="mon-source-card__label">Purpose</span>
+            <span class="mon-cell-clamp" title="${escapeHtml(purpose)}">${escapeHtml(purpose)}</span>
+          </div>
+        </div>
+        <div class="mon-source-card__row mon-source-card__row--meta">
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">State</span>
+            <span class="acc-pill ${stateClass}">${escapeHtml(stateLabel)}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Health</span>
+            <span class="acc-pill ${healthClass}">${escapeHtml(formatHealthLabel(source.healthStatus))}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Priority</span>
+            <span class="acc-pill">${escapeHtml(source.priority || "P1")}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Last Checked</span>
+            <span class="mon-cell-clamp" title="${escapeHtml(String(lastChecked))}">${escapeHtml(String(lastChecked))}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Failures</span>
+            <strong>${escapeHtml(source.failCount ?? 0)}</strong>
+          </div>
+          <div class="mon-source-card__field mon-source-card__field--actions acc-source-actions" data-label="Actions">
+            <span class="mon-source-card__label">Actions</span>
+            <div class="mon-source-card__actions">
+              <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="view">View</button>
+              <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="edit">Edit</button>
+              <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="verify">Verify</button>
+              <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="${source.enabled ? "disable" : "enable"}">${source.enabled ? "Disable" : "Enable"}</button>
+              <button type="button" class="header-action-btn header-action-btn--sm" data-source-id="${escapeHtml(source.id)}" data-action="run-check">Run Check</button>
+            </div>
+          </div>
+        </div>
+      </article>`;
     }).join("");
     const total = Number(state.sourcesPagination.total || 0);
     const page = Number(state.sourcesPagination.page || 1);
@@ -954,6 +1002,19 @@
     const next = qs("accSourcesNextBtn");
     if (prev) prev.disabled = page <= 1;
     if (next) next.disabled = page >= maxPage;
+    if (getAccPageId() === "sources") {
+      const active = rows.filter((item) => item.enabled).length;
+      const disabled = rows.filter((item) => !item.enabled).length;
+      const healthy = rows.filter((item) => item.healthStatus === "healthy").length;
+      const warning = rows.filter((item) => ["warning", "slow"].includes(String(item.healthStatus || ""))).length;
+      const offline = rows.filter((item) => item.healthStatus === "offline").length;
+      setText("accPageKpiTotal", total || rows.length);
+      setText("accPageKpiActive", active);
+      setText("accPageKpiDisabled", disabled);
+      setText("accPageKpiHealthy", healthy);
+      setText("accPageKpiWarning", warning);
+      setText("accPageKpiOffline", offline);
+    }
   }
 
   function deriveDomainFromUrl(url) {
@@ -1319,7 +1380,7 @@
         item.recruitment_title ||
         item.recruitmentTitle ||
         (item.recruitment_id || item.recruitmentId
-          ? `Recruitment #${item.recruitment_id || item.recruitmentId}`
+          ? `Recruitment ID: ${item.recruitment_id || item.recruitmentId}`
           : "Not linked");
       const created = item.created_at || item.createdAt || item.updated_at || item.updatedAt || "Not available";
       return `
@@ -1630,7 +1691,11 @@
     const runtime = state.dashboard?.runtime || {};
 
     if (page === "sources") {
-      setText("accPageKpiTotal", state.sources.length);
+      const active = state.sources.filter((item) => item.enabled).length;
+      const disabled = state.sources.filter((item) => !item.enabled).length;
+      setText("accPageKpiTotal", Number(state.sourcesPagination?.total || state.sources.length));
+      setText("accPageKpiActive", active);
+      setText("accPageKpiDisabled", disabled);
       setText("accPageKpiHealthy", sourcesOnline);
       setText("accPageKpiWarning", sourcesWarning);
       setText("accPageKpiOffline", sourcesOffline);

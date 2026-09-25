@@ -56,10 +56,17 @@
       host.innerHTML = '<p class="er-empty" style="padding:1rem 0;">No editorial reviews yet. Attach a draft in Recruitment Operations, then submit for review.</p>';
       return;
     }
-    host.innerHTML = rows.map((row) => `<button type="button" class="er-inbox-item ${Number(selectedId) === Number(row.recruitmentId) ? "is-selected" : ""}" data-id="${row.recruitmentId}">
-      <strong>${escapeHtml(row.recruitmentTitle || `Recruitment #${row.recruitmentId}`)}</strong>
-      <small>${badge(row.workflowState, row.workflowStateLabel)} · ${escapeHtml(row.bindingStatusLabel)} · #${row.recruitmentId}</small>
-    </button>`).join("");
+    host.innerHTML = rows.map((row) => {
+      const title = row.recruitmentTitle || `Recruitment ID: ${row.recruitmentId}`;
+      const eventLabel = row.eventTypeLabel || row.eventType || row.bindingStatusLabel || "";
+      return `<button type="button" class="er-inbox-item ${Number(selectedId) === Number(row.recruitmentId) ? "is-selected" : ""}" data-id="${row.recruitmentId}">
+      <span class="er-inbox-item__id">Recruitment ID: ${escapeHtml(row.recruitmentId)}</span>
+      <strong title="${escapeHtml(title)}">${escapeHtml(title)}</strong>
+      <small class="er-inbox-item__meta">${badge(row.workflowState, row.workflowStateLabel)}${
+        eventLabel ? ` · ${escapeHtml(eventLabel)}` : ""
+      }</small>
+    </button>`;
+    }).join("");
     host.querySelectorAll("[data-id]").forEach((btn) => {
       btn.addEventListener("click", () => openWorkspace(btn.dataset.id));
     });
@@ -81,11 +88,11 @@
     byId("erEmpty").hidden = true;
     byId("erDetail").hidden = false;
     const rec = data.recruitment || {};
-    byId("erRecruitmentTitle").textContent = rec.title || `Review #${rec.id}`;
+    byId("erRecruitmentTitle").textContent = rec.title || `Review ID: ${rec.id}`;
     byId("erStatusLine").innerHTML = `${badge(data.workflowState, data.workflowStateLabel)} ${badge(data.bindingStatus, data.bindingStatusLabel)} <span>Source → Draft → Review</span>`;
     byId("erOpsLink").href = "/admin/recruitments";
     byId("erRecruitmentMeta").innerHTML = `
-      <dt>ID</dt><dd>${escapeHtml(rec.id)}</dd>
+      <dt>Recruitment ID</dt><dd>${escapeHtml(rec.id)}</dd>
       <dt>Slug</dt><dd>${escapeHtml(rec.slug || "—")}</dd>
       <dt>Department</dt><dd>${escapeHtml(rec.department || "—")}</dd>
       <dt>Lifecycle</dt><dd>${escapeHtml(rec.lifecycle_state || "—")}</dd>
@@ -94,7 +101,7 @@
 
     const draft = data.draft;
     byId("erDraftPanel").innerHTML = draft
-      ? `<p><strong>#${escapeHtml(draft.id)}</strong> ${escapeHtml(draft.title || "Untitled")}</p>
+      ? `<p><strong>Draft ID: ${escapeHtml(draft.id)}</strong> ${escapeHtml(draft.title || "Untitled")}</p>
          <p><small>Slug hint: ${escapeHtml(draft.slugHint || "—")} · Status: ${escapeHtml(draft.status)}</small></p>
          <pre style="white-space:pre-wrap;max-height:14rem;overflow:auto;background:#f8fafc;padding:.75rem;border-radius:8px;font-size:.78rem;">${escapeHtml(JSON.stringify(draft.payload || {}, null, 2).slice(0, 4000))}</pre>`
       : '<p class="er-empty" style="padding:1rem 0;">No draft attached. Use Recruitment Operations to attach one.</p>';
@@ -233,7 +240,7 @@
       await loadInbox();
       // Package 4D — shared preview panel (same model as Recruitment Operations).
       if (window.AdminSharedPreview) await window.AdminSharedPreview.show(id);
-      message(`Opened review for recruitment #${id}.`);
+      message(`Opened review for recruitment ID: ${id}.`);
     } catch (err) {
       message(err.message, true);
     }
@@ -256,7 +263,7 @@
       message(`Decision applied: ${DECISION_LABELS[decision] || decision}.`);
       window.AdminOpsNotifications?.push({
         type: window.AdminOpsNotifications.TYPES.REVIEW_COMPLETED,
-        text: `Review ${DECISION_LABELS[decision] || decision} for recruitment #${selectedId}`,
+        text: `Review ${DECISION_LABELS[decision] || decision} for recruitment ID: ${selectedId}`,
         href: `/admin/editorial-review?recruitment_id=${encodeURIComponent(selectedId)}`
       });
       if (decision === "request_changes" || decision === "reject") {
