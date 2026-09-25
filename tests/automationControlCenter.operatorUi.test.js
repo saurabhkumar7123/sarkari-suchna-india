@@ -23,6 +23,7 @@ describe("Automation Control Center operator UI", () => {
     const order = [
       'id="accSystemStatus"',
       'id="accSafetyGate"',
+      'id="accLiveReadiness"',
       'id="accHumanAction"',
       'id="accMonitoringSection"',
       'id="accPipelineSection"',
@@ -40,6 +41,27 @@ describe("Automation Control Center operator UI", () => {
       expect(index).toBeGreaterThan(cursor);
       cursor = index;
     }
+  });
+
+  test("overview exposes LIVE readiness and security block visibility", () => {
+    expect(overview).toContain('id="accLiveReadiness"');
+    expect(overview).toContain("NOT READY");
+    expect(overview).toContain("Does not activate LIVE");
+    expect(overview).toContain("Ready does not mean Live");
+    expect(overview).toContain('id="accSecurityBlocks"');
+    expect(overview).toContain("BLOCKED_HTTP_METHOD");
+    expect(overview).toContain("AUTOMATION_KILL_SWITCH");
+    expect(overview).toContain("DRY-RUN is NOT LIVE");
+    expect(overview).toContain('id="accDryRunResults"');
+    expect(overview).toContain('id="accSafetyLive"');
+    expect(client).toContain("renderLiveReadiness");
+    expect(client).toContain("renderSecurityBlocks");
+    expect(client).toContain("ensureGlobalStatusBar");
+    expect(client).toContain("renderDryRunResults");
+    expect(service).toContain("buildLiveReadinessChecklist");
+    expect(service).toContain("getSecurityBlockSummary");
+    expect(service).toContain("Create audit records");
+    expect(service).toContain("READY FOR HUMAN APPROVAL");
   });
 
   test("overview uses short summaries and links instead of full child copies", () => {

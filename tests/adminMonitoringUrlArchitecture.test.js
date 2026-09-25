@@ -102,16 +102,18 @@ describe("Monitoring URL / information architecture", () => {
     const updates = read("private/admin-monitoring-updates.html");
     const activity = read("private/admin-monitoring-activity.html");
 
+    expect(sources).toContain('id="accSourceRows"');
+    expect(sources).toContain("Official Source Manager");
     expect(sources).toContain('id="sitesTable"');
     expect(sources).not.toContain('id="recentUpdatesList"');
     expect(sources).not.toContain('id="queueFailedList"');
 
     expect(updates).toContain('id="recentUpdatesList"');
-    expect(updates).not.toContain('id="sitesTable"');
+    expect(updates).not.toContain('id="accSourceRows"');
     expect(updates).not.toContain('id="queueFailedList"');
 
     expect(activity).toContain('id="queueFailedList"');
-    expect(activity).not.toContain('id="sitesTable"');
+    expect(activity).not.toContain('id="accSourceRows"');
     expect(activity).not.toContain('id="recentUpdatesList"');
   });
 });

@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=21">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=24">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Automation Logs" data-acc-page="logs">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
@@ -69,17 +69,30 @@
     </div>
     <div class="acc-toolbar">
       <label><span>Search logs</span><input id="accAuditSearch" type="search" placeholder="Search event, source, entity"></label>
-      <label><span>Category</span><select id="accAuditCategoryFilter"><option value="">All</option></select></label>
+      <label><span>Filter</span>
+        <select id="accAuditCategoryFilter">
+          <option value="">ALL</option>
+          <option value="EXECUTION">EXECUTION</option>
+          <option value="BLOCKED">BLOCKED</option>
+          <option value="CONTROL">CONTROL</option>
+          <option value="ERROR">ERROR</option>
+          <option value="SECURITY">SECURITY</option>
+        </select>
+      </label>
     </div>
     <div class="acc-data-table">
       <table aria-label="Audit center" class="acc-wide-table">
         <thead>
           <tr>
             <th>Time</th>
-            <th>Category</th>
+            <th>Source</th>
             <th>Event</th>
-            <th>Entity</th>
-            <th>Summary</th>
+            <th>Method</th>
+            <th>Result</th>
+            <th>Reason</th>
+            <th>Duration</th>
+            <th>Mode</th>
+            <th>Filter</th>
           </tr>
         </thead>
         <tbody id="accAuditRows"></tbody>
@@ -98,6 +111,6 @@
 <script src="/js/admin-notifications.js?v=2"></script>
 <script src="/js/admin-command-palette.js?v=6"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=13"></script>
+<script src="/js/admin-automation-control-center.js?v=19"></script>
 </body>
 </html>

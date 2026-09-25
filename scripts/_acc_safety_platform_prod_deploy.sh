@@ -13,6 +13,9 @@ cd "$ROOT"
 FILES=(
   # ACC UI
   private/admin-automation-control-center.html
+  private/admin-automation-controls.html
+  private/admin-automation-logs.html
+  private/admin-monitoring.html
   public/assets/css/admin/automation-control-center.css
   public/assets/js/admin-automation-control-center.js
   # Control plane / kill switch / flags
@@ -38,6 +41,7 @@ FILES=(
   # Deploy helper
   scripts/_acc_safety_platform_prod_deploy.sh
   scripts/_acc_safety_prod_predeploy_audit.sh
+  scripts/_acc_safety_prod_postcheck.sh
 )
 
 TS="$(date +%Y%m%d_%H%M%S)"

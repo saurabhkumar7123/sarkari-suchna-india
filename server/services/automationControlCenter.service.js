@@ -27,6 +27,7 @@ const recruitmentService = require("./recruitment.service");
 const generatorDraftService = require("./generatorDraft.service");
 const recruitmentReviewService = require("./recruitmentReview.service");
 const { listActivity } = require("./adminActivity.service");
+const auditEnterpriseRepository = require("../repositories/enterprise/auditEnterprise.repository");
 const automationSettingsRepository = require("../repositories/automationSettings.repository");
 const {
   getAutomationFlags,
@@ -302,7 +303,8 @@ function getPublishingControlState() {
         "Read approved official public URLs",
         "Use GET",
         "Detect changes",
-        "Process approved content",
+        "Perform permitted internal processing",
+        "Create audit records",
         "Prepare internal results / drafts"
       ],
       botCannot: [
@@ -314,7 +316,9 @@ function getPublishingControlState() {
         "Submit forms",
         "Bypass CAPTCHA",
         "Bypass authentication",
+        "Bypass robots / security",
         "Crawl recursively",
+        "Proxy rotation",
         "Visit unapproved hosts",
         "Follow unsafe redirects",
         "Modify government websites",
@@ -1613,6 +1617,23 @@ async function getDashboardSummary() {
   };
   const publishingControls = getPublishingControlState();
   const notificationGatewayStatus = notificationGateway.getChannelStatus();
+  const [securityBlocks, lastDryRun] = await Promise.all([
+    getSecurityBlockSummary().catch(() => ({ counts: {}, total: 0, recent: [] })),
+    getLastDryRunSummary().catch(() => ({ available: false, ranAt: null, count: 0, results: [] }))
+  ]);
+  const liveReadiness = await buildLiveReadinessChecklist({
+    publishingControls,
+    sources: sourceRows,
+    flags,
+    runtime,
+    lastDryRun
+  }).catch(() => ({
+    checks: [],
+    readyForHumanApproval: false,
+    verdict: "NOT READY",
+    liveArmed: false,
+    note: "Readiness unavailable"
+  }));
   const operatorOverview = buildOperatorOverview({
     flags,
     runtime,
@@ -1646,6 +1667,9 @@ async function getDashboardSummary() {
     operatorOverview,
     enterprise: enterpriseSnapshot,
     readiness,
+    liveReadiness,
+    securityBlocks,
+    lastDryRun,
     notificationGateway: notificationGatewayStatus,
     totals: {
       sources: sourceRows.length,
@@ -1697,22 +1721,356 @@ async function listWorkflowItems(query = {}) {
   return paginate(combined, query.page, query.limit);
 }
 
+const SECURITY_BLOCK_TYPES = Object.freeze([
+  SECURITY_EVENT_TYPES.BLOCKED_HTTP_METHOD,
+  SECURITY_EVENT_TYPES.UNSAFE_REDIRECT,
+  SECURITY_EVENT_TYPES.UNAPPROVED_HOST,
+  SECURITY_EVENT_TYPES.RESPONSE_TOO_LARGE,
+  SECURITY_EVENT_TYPES.POLICY_REJECTION,
+  SECURITY_EVENT_TYPES.UNSUPPORTED_PROTOCOL,
+  SECURITY_EVENT_TYPES.INVALID_URL,
+  SECURITY_EVENT_TYPES.AUTOMATION_KILL_SWITCH
+]);
+
+function classifyAuditFilterBucket(row) {
+  const eventType = String(row.eventType || row.event_type || "").toUpperCase();
+  const status = String(row.status || "").toLowerCase();
+  const category = String(row.category || "").toLowerCase();
+  if (
+    SECURITY_BLOCK_TYPES.includes(eventType) ||
+    eventType.includes("UNSAFE") ||
+    eventType.includes("UNAPPROVED") ||
+    eventType.includes("KILL_SWITCH")
+  ) {
+    return "SECURITY";
+  }
+  if (status === "blocked" || eventType.startsWith("BLOCKED_") || eventType.includes("POLICY_REJECTION")) {
+    return "BLOCKED";
+  }
+  if (
+    category === "controls" ||
+    eventType === SECURITY_EVENT_TYPES.CONFIG_CHANGED ||
+    eventType === SECURITY_EVENT_TYPES.SOURCE_ENABLED ||
+    eventType === SECURITY_EVENT_TYPES.SOURCE_DISABLED
+  ) {
+    return "CONTROL";
+  }
+  if (
+    status === "error" ||
+    eventType.includes("FAILURE") ||
+    eventType.includes("ERROR") ||
+    eventType === SECURITY_EVENT_TYPES.SELECTOR_MISS
+  ) {
+    return "ERROR";
+  }
+  if (
+    eventType === SECURITY_EVENT_TYPES.DRY_RUN_EXECUTION ||
+    eventType === SECURITY_EVENT_TYPES.MONITORING_EXECUTION ||
+    category === "dry_run" ||
+    category === "monitoring"
+  ) {
+    return "EXECUTION";
+  }
+  return "OTHER";
+}
+
+function mapEnterpriseAuditRow(row) {
+  const detail =
+    row.detail_json && typeof row.detail_json === "object"
+      ? row.detail_json
+      : row.detail && typeof row.detail === "object"
+        ? row.detail
+        : {};
+  const eventType = String(row.event_type || row.eventType || row.action || "event");
+  const filterBucket = classifyAuditFilterBucket({
+    eventType,
+    status: row.status,
+    category: row.category
+  });
+  return {
+    id: row.id != null ? row.id : null,
+    time: row.created_at || row.time || null,
+    category: filterBucket === "OTHER" || filterBucket === "ALL" ? String(row.category || "system").toUpperCase() : filterBucket,
+    filterBucket,
+    event: eventType,
+    entity:
+      row.entity_id != null
+        ? `${row.entity_type || "entity"}:${row.entity_id}`
+        : row.entity_type || row.actor || "-",
+    source: detail.sourceName || detail.siteId || row.entity_id || null,
+    method: detail.requestedMethod || null,
+    result: detail.result || row.status || null,
+    reason: detail.reason || null,
+    durationMs: detail.durationMs != null ? Number(detail.durationMs) : null,
+    mode: detail.dryRun === true ? "DRY_RUN" : detail.mode || null,
+    websiteContacted: detail.websiteContacted,
+    processContext: detail.process || null,
+    summary: [
+      eventType,
+      detail.reason ? `reason=${detail.reason}` : null,
+      detail.result ? `result=${detail.result}` : null,
+      row.actor ? `by ${row.actor}` : null
+    ]
+      .filter(Boolean)
+      .join(" · ")
+  };
+}
+
+async function listSecurityAuditEvents(limit = 200) {
+  try {
+    const result = await auditEnterpriseRepository.listEvents({ page: 1, limit });
+    return Array.isArray(result.data) ? result.data : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getSecurityBlockSummary() {
+  const rows = await listSecurityAuditEvents(500);
+  const counts = {};
+  for (const type of SECURITY_BLOCK_TYPES) counts[type] = 0;
+  const recent = [];
+  for (const row of rows) {
+    const eventType = String(row.event_type || "");
+    if (SECURITY_BLOCK_TYPES.includes(eventType)) {
+      counts[eventType] = (counts[eventType] || 0) + 1;
+      if (recent.length < 25) recent.push(mapEnterpriseAuditRow(row));
+    }
+  }
+  return {
+    counts,
+    total: Object.values(counts).reduce((sum, n) => sum + n, 0),
+    recent
+  };
+}
+
+async function getLastDryRunSummary() {
+  const rows = await listSecurityAuditEvents(200);
+  const dryRuns = rows.filter(
+    (row) => String(row.event_type || "") === SECURITY_EVENT_TYPES.DRY_RUN_EXECUTION
+  );
+  if (!dryRuns.length) {
+    return {
+      available: false,
+      ranAt: null,
+      count: 0,
+      results: [],
+      note: "No dry-run execution audit recorded yet. Dry-run is not LIVE."
+    };
+  }
+  const results = dryRuns.slice(0, 10).map((row) => {
+    const mapped = mapEnterpriseAuditRow(row);
+    const detail = row.detail_json || {};
+    return {
+      source: mapped.source || detail.sourceName || mapped.entity,
+      mode: "DRY_RUN",
+      requestMethod: mapped.method || "GET",
+      websiteContacted: detail.websiteContacted !== false,
+      result: mapped.result || "OK",
+      selector: detail.selectorStatus || null,
+      health: detail.healthStatus || null,
+      published: false,
+      draft: false,
+      telegram: false,
+      auditEvent: mapped.event,
+      reason: mapped.reason,
+      durationMs: mapped.durationMs,
+      time: mapped.time
+    };
+  });
+  return {
+    available: true,
+    ranAt: results[0]?.time || null,
+    count: results.length,
+    results,
+    note: "DRY-RUN is NOT LIVE. Nothing was published or delivered."
+  };
+}
+
+/**
+ * Read-only LIVE readiness checklist. Does NOT arm LIVE.
+ * Verdict is for human approval visibility only.
+ */
+async function buildLiveReadinessChecklist({
+  publishingControls,
+  sources = [],
+  flags,
+  runtime,
+  lastDryRun
+} = {}) {
+  const plane = publishingControls?.controlPlane || getControlPlaneSnapshot();
+  const master = publishingControls?.master || {};
+  const safetyGate = publishingControls?.safetyGate || {};
+  const greenSources = sources.filter((row) => row.qualityGrade === "GREEN" && row.enabled === true);
+  const enabledSources = sources.filter((row) => row.enabled === true);
+  const governanceOk =
+    enabledSources.length === 0 ||
+    enabledSources.every((row) => {
+      const host = row.officialHost || row.officialDomain || row.governance?.hostApproved;
+      const url = row.approvedUrl || row.monitoringUrl;
+      return Boolean(host && url);
+    });
+
+  let auditPass = false;
+  try {
+    auditPass = (await auditEnterpriseRepository.isReady()) === true;
+    if (!auditPass) {
+      // File-store fallback still records events.
+      await auditEnterpriseRepository.listEvents({ page: 1, limit: 1 });
+      auditPass = true;
+    }
+  } catch {
+    auditPass = false;
+  }
+
+  const dryRunPass = lastDryRun?.available === true && Number(lastDryRun.count || 0) > 0;
+  const telegramOff = flags?.TELEGRAM_DELIVERY_ENABLED !== true && runtime?.telegramActive !== true;
+  const autoPublishLocked = isAutoPublishBlocked() === true;
+  const schedulerSafe =
+    flags?.SCHEDULER_ACTIVATION_ENABLED !== true || plane.mode !== AUTOMATION_MODES.LIVE;
+  const workerSafe =
+    flags?.WORKER_ACTIVATION_ENABLED !== true || plane.mode !== AUTOMATION_MODES.LIVE;
+  const killSwitchPass = master.emergencyStop === true || master.emergencyStop === false;
+  const controlPlanePass = Boolean(plane && plane.mode);
+  const safetyFirewallPass = safetyGate.active === true || publishingControls?.hardRestrictions != null;
+
+  const checks = [
+    {
+      id: "safety_firewall",
+      label: "Safety Firewall",
+      status: safetyFirewallPass ? "PASS" : "FAIL",
+      detail: safetyFirewallPass ? "Hard policy + safety gate present" : "Safety gate unavailable"
+    },
+    {
+      id: "exact_url_governance",
+      label: "Exact URL Governance",
+      status: governanceOk ? "PASS" : "FAIL",
+      detail: governanceOk
+        ? enabledSources.length
+          ? `${enabledSources.length} enabled source(s) have approved URL/host binding`
+          : "No enabled sources yet"
+        : "One or more enabled sources lack approved URL/host binding"
+    },
+    {
+      id: "kill_switch",
+      label: "Kill Switch",
+      status: killSwitchPass ? "PASS" : "FAIL",
+      detail: master.emergencyStop
+        ? "Emergency stop ACTIVE (blocks execution)"
+        : "Emergency stop READY"
+    },
+    {
+      id: "audit",
+      label: "Audit",
+      status: auditPass ? "PASS" : "FAIL",
+      detail: auditPass ? "Audit recording available" : "Audit store unavailable"
+    },
+    {
+      id: "green_sources",
+      label: "GREEN Sources",
+      status: greenSources.length > 0 ? "PASS" : "FAIL",
+      detail: `${greenSources.length}`,
+      count: greenSources.length
+    },
+    {
+      id: "real_dry_run",
+      label: "Real Dry-Run",
+      status: dryRunPass ? "PASS" : "FAIL",
+      detail: dryRunPass
+        ? `Last dry-run audit at ${lastDryRun.ranAt || "recorded"}`
+        : "No real dry-run execution recorded yet"
+    },
+    {
+      id: "scheduler_safety",
+      label: "Scheduler Safety",
+      status: schedulerSafe ? "PASS" : "FAIL",
+      detail: schedulerSafe
+        ? "Scheduler is not in LIVE continuous mode"
+        : "Scheduler safety gate failed"
+    },
+    {
+      id: "worker_safety",
+      label: "Worker Safety",
+      status: workerSafe ? "PASS" : "FAIL",
+      detail: workerSafe ? "Worker is not LIVE-armed" : "Worker safety gate failed"
+    },
+    {
+      id: "telegram_gate",
+      label: "Telegram Gate",
+      status: telegramOff ? "PASS" : "FAIL",
+      detail: telegramOff ? "Telegram delivery OFF" : "Telegram delivery is armed"
+    },
+    {
+      id: "auto_publish_lock",
+      label: "Auto-Publish Lock",
+      status: autoPublishLocked ? "PASS" : "FAIL",
+      detail: autoPublishLocked ? "LOCKED" : "Auto-publish is not locked"
+    },
+    {
+      id: "acc_control_plane",
+      label: "ACC Control Plane",
+      status: controlPlanePass ? "PASS" : "FAIL",
+      detail: controlPlanePass ? `Mode ${plane.mode}` : "Control plane unavailable"
+    }
+  ];
+
+  const allPass = checks.every((row) => row.status === "PASS");
+  return {
+    checks,
+    readyForHumanApproval: allPass,
+    verdict: allPass ? "READY FOR HUMAN APPROVAL" : "NOT READY",
+    liveArmed: false,
+    note: "Readiness indicator only. Does not activate LIVE. Ready ≠ Live."
+  };
+}
+
 async function listAuditEntries(query = {}) {
-  const activity = await listActivity({
-    page: query.page || 1,
-    limit: query.limit || 50,
-    action: query.search || ""
-  }).catch(() => ({ data: [], pagination: { page: 1, limit: 50, total: 0 } }));
-  const data = (activity.data || []).map((row) => ({
-    time: row.timestamp,
-    category: row.status || "system",
-    event: row.action,
-    entity: row.target || row.admin,
-    summary: `${row.action} by ${row.admin}`
-  }));
+  const filter = String(query.filter || query.category || "").trim().toUpperCase();
+  const search = String(query.search || "").trim().toLowerCase();
+  const enterpriseRows = await listSecurityAuditEvents(Number(query.limit) || 100);
+  let data = enterpriseRows.map(mapEnterpriseAuditRow);
+
+  if (!data.length) {
+    const activity = await listActivity({
+      page: query.page || 1,
+      limit: query.limit || 50,
+      action: query.search || ""
+    }).catch(() => ({ data: [], pagination: { page: 1, limit: 50, total: 0 } }));
+    data = (activity.data || []).map((row) => ({
+      time: row.timestamp,
+      category: String(row.status || "system").toUpperCase(),
+      filterBucket: "OTHER",
+      event: row.action,
+      entity: row.target || row.admin,
+      summary: `${row.action} by ${row.admin}`,
+      method: null,
+      result: row.status || null,
+      reason: null,
+      durationMs: null,
+      mode: null,
+      source: null,
+      processContext: null
+    }));
+  }
+
+  if (filter && filter !== "ALL") {
+    data = data.filter((row) => String(row.filterBucket || row.category || "").toUpperCase() === filter);
+  }
+  if (search) {
+    data = data.filter((row) =>
+      `${row.event || ""} ${row.entity || ""} ${row.summary || ""} ${row.source || ""} ${row.reason || ""}`
+        .toLowerCase()
+        .includes(search)
+    );
+  }
+
   return {
     data,
-    pagination: activity.pagination
+    pagination: {
+      page: Number(query.page) || 1,
+      limit: Number(query.limit) || data.length,
+      total: data.length
+    }
   };
 }
 
@@ -1768,6 +2126,9 @@ module.exports = {
   runDryRunBatch: (options) => monitoringDryRun.runDryRunBatch(options),
   runSourceDryRun: (siteOrId, options) => monitoringDryRun.runSourceDryRun(siteOrId, options),
   getDryRunStatus: () => monitoringDryRun.getDryRunStatus(),
+  getSecurityBlockSummary,
+  getLastDryRunSummary,
+  buildLiveReadinessChecklist,
   buildActiveOfficialSources,
   buildManualWorkflow,
   buildRecentPipelineActivity,

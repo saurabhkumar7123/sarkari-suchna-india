@@ -30,11 +30,11 @@ describe("ACC URL / information architecture", () => {
     }
   });
 
-  test("unknown ACC nested path is not mapped in the section page table", () => {
+  test("ACC /sources redirects to /admin/monitoring (bookmark compatibility)", () => {
     const source = read("server/app.js");
-    expect(source).toContain("ACC_SECTION_PAGES");
-    expect(source).toContain("if (!file) return next()");
-    expect(source).not.toMatch(/ACC_SECTION_PAGES\[[^\]]+\]\s*\|\|\s*["']admin-automation-control-center/);
+    expect(source).toContain('"/admin/automation-control-center/sources"');
+    expect(source).toContain('res.redirect(302, "/admin/monitoring")');
+    expect(source).not.toMatch(/sources:\s*"admin-automation-sources\.html"/);
   });
 
   test("global sidebar has a single ACC entry; child ACC URLs live in-page", () => {
@@ -51,14 +51,23 @@ describe("ACC URL / information architecture", () => {
     expect(nav).not.toContain("#accSettings");
 
     const drafts = read("private/admin-automation-drafts.html");
-    expect(drafts).toContain('href="/admin/automation-control-center/sources"');
+    expect(drafts).not.toContain('href="/admin/automation-control-center/sources"');
     expect(drafts).toContain('href="/admin/automation-control-center/drafts"');
     expect(drafts).toContain('href="/admin/automation-control-center/controls"');
     expect(drafts).toContain("acc-switcher");
-    expect(drafts).toContain("acc-switcher__value");
+    expect(drafts).toContain("acc-switcher__menu");
+    expect(drafts).toContain("acc-switcher__option");
+    expect(drafts).not.toContain("acc-switcher__value");
+    expect(drafts).not.toContain("Switch section");
     expect(drafts).toContain('id="accContent"');
     expect(drafts).toContain('aria-current="page"');
     expect(drafts).not.toContain("acc-section-nav");
+
+    const css = read("public/assets/css/admin/automation-control-center.css");
+    expect(css).toMatch(/\.acc-switcher__bar[\s\S]*display:\s*none\s*!important/);
+    expect(css).toMatch(/\.acc-switcher__menu[\s\S]*flex-wrap:\s*wrap/);
+    expect(css).not.toMatch(/\.acc-source-table\s*\{\s*min-width:\s*980px/);
+    expect(css).toMatch(/minmax\(0,\s*1fr\)/);
   });
 
   test("ACC client supports compact switcher and subtle content enter", () => {
@@ -111,17 +120,20 @@ describe("ACC URL / information architecture", () => {
     const drafts = read("private/admin-automation-drafts.html");
     const controls = read("private/admin-automation-controls.html");
     expect(overview).toContain("acc-workspace-head");
-    expect(overview).toContain("Control overview");
+    expect(overview).toContain("Overview");
     expect(overview).toContain("acc-switcher");
     expect(drafts).toContain("acc-workspace-head");
-    expect(drafts).toContain("Draft snapshot");
-    expect(controls).toContain("Publishing controls — AUTO PUBLISH");
+    expect(drafts).toContain("Drafts");
+    expect(controls).toContain("acc-workspace-head");
+    expect(controls).toContain("Only place for automation ON/OFF actions");
     expect(controls).toContain("LOCKED OFF");
   });
 
-  test("command palette points at dedicated ACC URLs", () => {
+  test("command palette points at dedicated ACC URLs and Monitoring for sources", () => {
     const palette = read("public/assets/js/admin-command-palette.js");
-    expect(palette).toContain("/admin/automation-control-center/sources");
+    expect(palette).toContain("/admin/monitoring");
+    expect(palette).toContain("Open Source Manager");
+    expect(palette).not.toContain("/admin/automation-control-center/sources");
     expect(palette).toContain("/admin/automation-control-center/insights");
     expect(palette).toContain("/admin/automation-control-center/logs");
     expect(palette).toContain("/admin/automation-control-center/controls");

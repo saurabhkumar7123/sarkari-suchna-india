@@ -9,6 +9,7 @@ const {
   extractLatestItems,
   extractSourceItems
 } = require("../server/services/updates/siteChecker");
+const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
 
 const HTML_SITE = {
   id: 2,
@@ -26,11 +27,29 @@ const SSC_SITE = {
   lastContent: ""
 };
 
+function mockAxiosGet(handler) {
+  axios.get.mockImplementation(async (url, config) => {
+    if (String(url).includes("robots.txt")) {
+      return { status: 200, headers: {}, data: "User-agent: *\nAllow: /\n" };
+    }
+    return handler(url, config);
+  });
+}
+
 describe("minimal hybrid source adapter", () => {
   const originalFlag = process.env.SSC_USE_API;
+  const originalMaster = process.env.AUTOMATION_MASTER_ENABLED;
+
+  beforeEach(() => {
+    process.env.AUTOMATION_MASTER_ENABLED = "1";
+    clearRobotsPolicyCache();
+  });
 
   afterEach(() => {
     process.env.SSC_USE_API = originalFlag;
+    if (originalMaster === undefined) delete process.env.AUTOMATION_MASTER_ENABLED;
+    else process.env.AUTOMATION_MASTER_ENABLED = originalMaster;
+    clearRobotsPolicyCache();
     jest.resetAllMocks();
   });
 
@@ -55,9 +74,11 @@ describe("minimal hybrid source adapter", () => {
     process.env.SSC_USE_API = "1";
     expect(resolveSourceMethod(HTML_SITE)).toBe(SOURCE_METHODS.HTML_SELECTOR);
 
-    axios.get.mockResolvedValue({
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
       data: `<html><body><a href="/notice/example.pdf">UPSC Latest Notice Title Here</a></body></html>`
-    });
+    }));
 
     const extracted = await extractSourceItems(HTML_SITE);
     expect(extracted.method).toBe(SOURCE_METHODS.HTML_SELECTOR);
@@ -73,20 +94,21 @@ describe("minimal hybrid source adapter", () => {
     expect(result.establishBaseline).toBe(true);
     expect(axios.get).toHaveBeenCalledWith(
       "https://upsc.gov.in/",
-      expect.objectContaining({ timeout: 25000 })
+      expect.objectContaining({ timeout: 25000, method: "GET" })
     );
-    expect(axios.get).not.toHaveBeenCalledWith(
-      "https://ssc.gov.in/api/general-website/portal/notice-boards",
-      expect.anything()
-    );
+    expect(
+      axios.get.mock.calls.some((c) => String(c[0]).includes("/api/general-website/portal/notice-boards"))
+    ).toBe(false);
   });
 
   test("SSC_USE_API=1 uses SSC_JSON with the common item shape", async () => {
     process.env.SSC_USE_API = "1";
     expect(resolveSourceMethod(SSC_SITE)).toBe(SOURCE_METHODS.SSC_JSON);
 
-    axios.get.mockResolvedValue({
-      data: {
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({
         statusCode: "200",
         data: [
           {
@@ -94,8 +116,8 @@ describe("minimal hybrid source adapter", () => {
             attachments: [{ path: "uploads/masterData/NoticeBoards/result.pdf" }]
           }
         ]
-      }
-    });
+      })
+    }));
 
     const extracted = await extractSourceItems(SSC_SITE);
     expect(extracted.method).toBe(SOURCE_METHODS.SSC_JSON);
@@ -125,7 +147,7 @@ describe("minimal hybrid source adapter", () => {
   test("SSC_USE_API=0 uses existing HTML path including selector_miss", async () => {
     process.env.SSC_USE_API = "0";
     expect(resolveSourceMethod(SSC_SITE)).toBe(SOURCE_METHODS.HTML_SELECTOR);
-    axios.get.mockResolvedValue({ data: "<html><body></body></html>" });
+    mockAxiosGet(async () => ({ status: 200, headers: {}, data: "<html><body></body></html>" }));
 
     const result = await checkSite(SSC_SITE);
     expect(result.invalid).toBe(true);
@@ -133,7 +155,7 @@ describe("minimal hybrid source adapter", () => {
     expect(result.reason).toBe("selector_miss");
     expect(axios.get).toHaveBeenCalledWith(
       "https://ssc.gov.in/",
-      expect.objectContaining({ timeout: 25000 })
+      expect.objectContaining({ timeout: 25000, method: "GET" })
     );
   });
 
@@ -144,12 +166,14 @@ describe("minimal hybrid source adapter", () => {
       "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/result.pdf";
     const fingerprint = buildSignature(`${title} ${link}`);
 
-    axios.get.mockResolvedValue({
-      data: {
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({
         statusCode: "200",
         data: [{ headline: title, attachments: [{ path: "uploads/masterData/NoticeBoards/result.pdf" }] }]
-      }
-    });
+      })
+    }));
 
     const result = await checkSite({ ...SSC_SITE, lastContent: fingerprint });
     expect(result.changed).toBe(false);
@@ -160,9 +184,11 @@ describe("minimal hybrid source adapter", () => {
 
   test("SSC JSON failure does not fabricate an update", async () => {
     process.env.SSC_USE_API = "1";
-    axios.get.mockResolvedValue({
-      data: { statusCode: "203", error: "Invalid attributes in request" }
-    });
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({ statusCode: "203", error: "Invalid attributes in request" })
+    }));
 
     const result = await checkSite({ ...SSC_SITE, lastContent: "sig:abc" });
     expect(result.invalid).toBe(true);

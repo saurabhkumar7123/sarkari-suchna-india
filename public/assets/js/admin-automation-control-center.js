@@ -26,7 +26,10 @@
     selectedReviewId: null,
     workflowSelected: new Set(),
     lastVerifyReport: null,
-    detailSourceId: null
+    detailSourceId: null,
+    lastDryRun: null,
+    auditFilter: "",
+    auditSearch: ""
   };
 
   const LEGACY_HASH_REDIRECTS = {
@@ -153,7 +156,7 @@
     if (!body) return;
     const list = Array.isArray(rows) ? rows.slice(0, 25) : [];
     if (!list.length) {
-      body.innerHTML = `<tr class="acc-empty-row"><td colspan="6">No sources loaded.</td></tr>`;
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="6">No sources loaded.</td></tr>`;
       return;
     }
     body.innerHTML = list
@@ -176,22 +179,165 @@
 
   function renderAuditSummary(auditRows) {
     const rows = Array.isArray(auditRows) ? auditRows : [];
-    if (!rows.length) {
+    const blocks = state.dashboard?.securityBlocks || {};
+    const counts = blocks.counts || {};
+    if (Object.keys(counts).length) {
+      setText("accAuditBlocked", Number(blocks.total) || 0);
+      setText("accAuditRedirects", counts.UNSAFE_REDIRECT || 0);
+      setText("accAuditPolicy", counts.POLICY_REJECTION || 0);
+      const errors = rows.filter((r) => String(r.filterBucket || r.category || "").toUpperCase() === "ERROR").length;
+      setText("accAuditErrors", errors || "0");
+    } else if (!rows.length) {
       setText("accAuditBlocked", "Not available");
       setText("accAuditRedirects", "Not available");
       setText("accAuditPolicy", "Not available");
       setText("accAuditErrors", "Not available");
       return;
+    } else {
+      const textOf = (row) => `${row.event || ""} ${row.category || ""} ${row.summary || ""}`.toUpperCase();
+      const blocked = rows.filter((r) => /BLOCK|UNSAFE|POLICY|KILL/.test(textOf(r))).length;
+      const redirects = rows.filter((r) => /REDIRECT/.test(textOf(r))).length;
+      const policy = rows.filter((r) => /POLICY|UNAPPROVED|INVALID/.test(textOf(r))).length;
+      const errors = rows.filter((r) => /ERROR|FAIL/.test(textOf(r))).length;
+      setText("accAuditBlocked", blocked);
+      setText("accAuditRedirects", redirects);
+      setText("accAuditPolicy", policy);
+      setText("accAuditErrors", errors);
     }
-    const textOf = (row) => `${row.event || ""} ${row.category || ""} ${row.summary || ""}`.toUpperCase();
-    const blocked = rows.filter((r) => /BLOCK|UNSAFE|POLICY|KILL/.test(textOf(r))).length;
-    const redirects = rows.filter((r) => /REDIRECT/.test(textOf(r))).length;
-    const policy = rows.filter((r) => /POLICY|UNAPPROVED|INVALID/.test(textOf(r))).length;
-    const errors = rows.filter((r) => /ERROR|FAIL/.test(textOf(r))).length;
-    setText("accAuditBlocked", blocked);
-    setText("accAuditRedirects", redirects);
-    setText("accAuditPolicy", policy);
-    setText("accAuditErrors", errors);
+    renderSecurityBlocks();
+  }
+
+  function renderSecurityBlocks() {
+    const host = qs("accSecurityBlockCounts");
+    if (!host) return;
+    const counts = state.dashboard?.securityBlocks?.counts || {};
+    host.querySelectorAll("[data-block]").forEach((el) => {
+      const key = el.getAttribute("data-block");
+      el.textContent = String(counts[key] != null ? counts[key] : 0);
+    });
+    const body = qs("accSecurityBlockRows");
+    if (!body) return;
+    const recent = state.dashboard?.securityBlocks?.recent || [];
+    if (!recent.length) {
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="5">No security block events.</td></tr>`;
+      return;
+    }
+    body.innerHTML = recent
+      .map(
+        (row) => `
+      <tr>
+        <td data-label="Time">${escapeHtml(row.time || "-")}</td>
+        <td data-label="Event">${escapeHtml(row.event || "-")}</td>
+        <td data-label="Result">${escapeHtml(row.result || "-")}</td>
+        <td data-label="Reason">${escapeHtml(row.reason || "-")}</td>
+        <td data-label="Source">${escapeHtml(row.source || row.entity || "-")}</td>
+      </tr>`
+      )
+      .join("");
+  }
+
+  function renderLiveReadiness() {
+    const host = qs("accLiveReadyChecks");
+    const readiness = state.dashboard?.liveReadiness;
+    if (!host || !readiness) return;
+    const checks = Array.isArray(readiness.checks) ? readiness.checks : [];
+    if (checks.length) {
+      host.innerHTML = checks
+        .map((check) => {
+          const pass = check.status === "PASS";
+          const value =
+            check.id === "green_sources"
+              ? String(check.count != null ? check.count : check.detail || "0")
+              : check.status;
+          return `<article class="acc-live-ready-item ${pass ? "is-pass" : "is-fail"}" title="${escapeHtml(check.detail || "")}">
+            <span>${escapeHtml(check.label)}</span>
+            <strong>${escapeHtml(value)}</strong>
+          </article>`;
+        })
+        .join("");
+    }
+    const verdict = readiness.verdict || "NOT READY";
+    setText("accLiveReadyVerdictLabel", verdict);
+    setText("accLiveReadyVerdictNote", readiness.note || "Does not activate LIVE.");
+    const verdictEl = qs("accLiveReadyVerdict");
+    if (verdictEl) {
+      verdictEl.classList.toggle("is-ready", readiness.readyForHumanApproval === true);
+      verdictEl.classList.toggle("is-not-ready", readiness.readyForHumanApproval !== true);
+    }
+  }
+
+  function renderDryRunResults(override) {
+    const last = override || state.lastDryRun || state.dashboard?.lastDryRun;
+    const meta = qs("accDryRunResultsMeta");
+    const body = qs("accDryRunResultRows");
+    if (!body) return;
+    if (!last || !last.available || !Array.isArray(last.results) || !last.results.length) {
+      if (meta) meta.textContent = last?.note || "No dry-run execution recorded yet.";
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="11">No dry-run results.</td></tr>`;
+      return;
+    }
+    if (meta) {
+      meta.textContent = `${last.note || "DRY-RUN is NOT LIVE."} · ${last.count || last.results.length} result(s)${
+        last.ranAt ? ` · ${last.ranAt}` : ""
+      }`;
+    }
+    body.innerHTML = last.results
+      .map((row) => {
+        const check = row.check || {};
+        return `
+      <tr>
+        <td data-label="Source">${escapeHtml(row.sourceName || row.source || row.siteId || "-")}</td>
+        <td data-label="Mode">${escapeHtml(row.mode || "DRY_RUN")}</td>
+        <td data-label="Method">${escapeHtml(row.requestMethod || "GET")}</td>
+        <td data-label="Website contacted">${row.websiteContacted === false ? "No" : "Yes"}</td>
+        <td data-label="Result">${escapeHtml(row.result || check.reason || (check.changed ? "CHANGED" : "OK"))}</td>
+        <td data-label="Selector">${escapeHtml(row.selector || row.health?.selectorStatus || "-")}</td>
+        <td data-label="Health">${escapeHtml(row.health?.healthStatus || row.health || "-")}</td>
+        <td data-label="Published">${row.published === true ? "Yes" : "No"}</td>
+        <td data-label="Draft">${row.draft === true || row.draftCreated === true ? "Yes" : "No"}</td>
+        <td data-label="Telegram">${row.telegram === true || row.telegramSent === true ? "Yes" : "No"}</td>
+        <td data-label="Audit event">${escapeHtml(row.auditEvent || "DRY_RUN_EXECUTION")}</td>
+      </tr>`;
+      })
+      .join("");
+  }
+
+  function ensureGlobalStatusBar() {
+    if (qs("accGlobalStatusBar")) return qs("accGlobalStatusBar");
+    const main = document.querySelector(".acc-main") || document.querySelector(".main");
+    if (!main) return null;
+    const bar = document.createElement("div");
+    bar.id = "accGlobalStatusBar";
+    bar.className = "acc-global-status-bar";
+    bar.setAttribute("aria-label", "Automation status");
+    bar.innerHTML = `
+      <span><em>AUTOMATION</em> <strong id="accBarMode">DORMANT</strong></span>
+      <span><em>MASTER</em> <strong id="accBarMaster">OFF</strong></span>
+      <span><em>LIVE</em> <strong id="accBarLive">OFF</strong></span>
+      <span><em>TELEGRAM</em> <strong id="accBarTelegram">OFF</strong></span>
+      <span><em>AUTO-PUBLISH</em> <strong id="accBarAutoPublish">LOCKED</strong></span>
+    `;
+    const switcher = main.querySelector(".acc-switcher") || main.querySelector(".mon-switcher");
+    const head = main.querySelector(".acc-workspace-head") || main.querySelector(".mon-workspace-head");
+    const anchor = switcher || head;
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(bar, anchor.nextSibling);
+    } else {
+      main.insertBefore(bar, main.firstChild);
+    }
+    return bar;
+  }
+
+  function renderGlobalStatusBar() {
+    ensureGlobalStatusBar();
+    const safety = state.dashboard?.operatorOverview?.safety || {};
+    const mode = safety.mode || (safety.dryRun ? "DRY_RUN" : state.dashboard?.isDormant ? "DORMANT" : "DORMANT");
+    const liveOn = safety.live === true && safety.masterEnabled === true && !safety.emergencyStop;
+    setText("accBarMode", mode);
+    setText("accBarMaster", safety.masterEnabled ? "ON" : "OFF");
+    setText("accBarLive", liveOn ? "ON" : "OFF");
+    setText("accBarTelegram", safety.dryRun ? "OFF" : state.dashboard?.operatorOverview?.statusStrip?.telegram?.state || "OFF");
+    setText("accBarAutoPublish", "LOCKED");
   }
 
   function formatHealthLabel(value) {
@@ -225,6 +371,7 @@
       state.workflow = Array.isArray(snapshot.workflow) ? snapshot.workflow : [];
       state.audit = Array.isArray(snapshot.audit) ? snapshot.audit : [];
       state.settings = snapshot.settings || FALLBACK_SETTINGS;
+      state.lastDryRun = snapshot.dashboard?.lastDryRun || null;
       if (getAccPageId() === "sources") {
         await loadSourcesPage(state.sourcesPagination.page);
       }
@@ -457,13 +604,22 @@
     const modeLabel = safety.mode || (safety.dryRun ? "DRY_RUN" : "DORMANT");
     setText("accSafetyMode", modeLabel);
     const masterLabel = safety.masterEnabled ? "ON" : "OFF";
-    const emergencyLabel = safety.emergencyStop ? "ENGAGED" : "READY";
+    const emergencyLabel = safety.emergencyStop ? "ACTIVE" : "READY";
+    const liveLabel =
+      safety.live === true && safety.masterEnabled === true && !safety.emergencyStop ? "ON" : "OFF";
     setText("accSafetyMaster", masterLabel);
     setText("accSafetyMasterMirror", masterLabel);
     setText("accMasterControlState", masterLabel);
+    setText("accSafetyLive", liveLabel);
     setText("accSafetyEmergency", emergencyLabel);
     setText("accSafetyEmergencyMirror", emergencyLabel);
     setText("accEmergencyControlState", emergencyLabel);
+    setText(
+      "accEmergencyExplain",
+      safety.emergencyStop
+        ? "ACTIVE — blocks monitoring execution, dry-run batches, scheduler, and worker automation."
+        : "READY — engages to block monitoring execution, dry-run batches, scheduler, and worker automation."
+    );
     setText("accSafetyAutoPublish", "LOCKED / HUMAN REQUIRED");
     setText("accSafetyHumanPublish", "REQUIRED");
     setText("accSafetyMutation", safety.productionMutation || "BLOCKED");
@@ -486,18 +642,27 @@
 
     renderSourceHealthTable(state.sources || []);
     renderAuditSummary(state.audit || []);
+    renderLiveReadiness();
+    renderDryRunResults();
+    renderGlobalStatusBar();
 
     const sources = Array.isArray(state.sources) ? state.sources : [];
     setText("accOpsSourceTotal", sources.length);
+    // Prefer governance health when present so legacy "healthy" cannot inflate both Healthy and Degraded.
     setText(
       "accOpsSourceHealthy",
-      sources.filter((s) => String(s.governanceHealthStatus || s.healthStatus || "").toUpperCase() === "HEALTHY" || s.healthStatus === "healthy").length
+      sources.filter((s) => {
+        const gov = String(s.governanceHealthStatus || "").trim().toUpperCase();
+        if (gov) return gov === "HEALTHY";
+        return String(s.healthStatus || "").toLowerCase() === "healthy";
+      }).length
     );
     setText(
       "accOpsSourceDegraded",
       sources.filter((s) => {
-        const h = String(s.governanceHealthStatus || "").toUpperCase();
-        return h === "DEGRADED" || h === "UNKNOWN" || s.healthStatus === "warning";
+        const gov = String(s.governanceHealthStatus || "").trim().toUpperCase();
+        if (gov) return gov === "DEGRADED" || gov === "UNKNOWN";
+        return String(s.healthStatus || "").toLowerCase() === "warning";
       }).length
     );
     setText(
@@ -1117,8 +1282,16 @@
             <span class="acc-pill ${stateClass}">${escapeHtml(stateLabel)}</span>
           </div>
           <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Grade</span>
+            <span class="acc-pill">${escapeHtml(source.qualityGrade || "—")}</span>
+          </div>
+          <div class="mon-source-card__field">
             <span class="mon-source-card__label">Health</span>
-            <span class="acc-pill ${healthClass}">${escapeHtml(formatHealthLabel(source.healthStatus))}</span>
+            <span class="acc-pill ${healthClass}">${escapeHtml(source.governanceHealthStatus || formatHealthLabel(source.healthStatus))}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Poll</span>
+            <span>${escapeHtml(source.pollIntervalMinutes != null ? `${source.pollIntervalMinutes}m` : "—")}</span>
           </div>
           <div class="mon-source-card__field">
             <span class="mon-source-card__label">Priority</span>
@@ -1127,6 +1300,10 @@
           <div class="mon-source-card__field">
             <span class="mon-source-card__label">Last Checked</span>
             <span class="mon-cell-clamp" title="${escapeHtml(String(lastChecked))}">${escapeHtml(String(lastChecked))}</span>
+          </div>
+          <div class="mon-source-card__field">
+            <span class="mon-source-card__label">Next check</span>
+            <span class="mon-cell-clamp" title="${escapeHtml(String(source.nextEligibleCheck || "—"))}">${escapeHtml(String(source.nextEligibleCheck || "—"))}</span>
           </div>
           <div class="mon-source-card__field">
             <span class="mon-source-card__label">Failures</span>
@@ -1245,15 +1422,24 @@
     if (!source) return;
     state.detailSourceId = source.id;
     const body = qs("accSourceDetailBody");
-    const monitoringUrl = source.monitoringUrl || source.notificationUrl || "";
+    const monitoringUrl = source.monitoringUrl || source.notificationUrl || source.approvedUrl || "";
+    const gov = source.governance || {};
+    const health = source.health || {};
+    const pollLabel =
+      source.pollIntervalMinutes != null
+        ? `${source.pollIntervalMinutes} min`
+        : gov.pollIntervalMinutes != null
+          ? `${gov.pollIntervalMinutes} min`
+          : "—";
     if (body) {
       body.innerHTML = `
         <section>
-          <h4>Source</h4>
+          <h4>Identity</h4>
           <dl class="acc-detail-dl">
-            <div><dt>Name</dt><dd>${escapeHtml(source.name || "-")}</dd></div>
-            <div><dt>Official host</dt><dd>${escapeHtml(source.officialDomain || "-")}</dd></div>
-            <div><dt>Exact URL</dt><dd class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(monitoringUrl || "-")}</a></dd></div>
+            <div><dt>Organization</dt><dd>${escapeHtml(source.name || "-")}</dd></div>
+            <div><dt>Source ID</dt><dd>${escapeHtml(source.id != null ? source.id : "-")}</dd></div>
+            <div><dt>Exact approved URL</dt><dd class="acc-url-cell"><a href="${escapeHtml(monitoringUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.approvedUrl || monitoringUrl || "-")}</a></dd></div>
+            <div><dt>Approved host</dt><dd>${escapeHtml(source.officialHost || source.officialDomain || "-")}</dd></div>
             <div><dt>Purpose</dt><dd>${escapeHtml(source.purposeLabel || source.purpose || "—")}</dd></div>
             <div><dt>Priority</dt><dd>${escapeHtml(source.priority || "P1")}</dd></div>
           </dl>
@@ -1262,31 +1448,39 @@
           <h4>Monitoring</h4>
           <dl class="acc-detail-dl">
             <div><dt>CSS selector</dt><dd><code>${escapeHtml(source.selector || "—")}</code></dd></div>
-            <div><dt>Active</dt><dd>${source.enabled ? "On" : "Off"}</dd></div>
+            <div><dt>Health</dt><dd>${escapeHtml(source.governanceHealthStatus || formatHealthLabel(source.healthStatus))}</dd></div>
+            <div><dt>Grade</dt><dd>${escapeHtml(source.qualityGrade || "-")}</dd></div>
+            <div><dt>Enabled</dt><dd>${source.enabled ? "Enabled" : "Disabled"}</dd></div>
             <div><dt>State</dt><dd>${escapeHtml(source.operationalState || "-")}</dd></div>
-            <div><dt>Quality</dt><dd>${escapeHtml(source.qualityGrade || "-")}</dd></div>
+            <div><dt>Polling interval</dt><dd>${escapeHtml(pollLabel)}</dd></div>
             <div><dt>Last check</dt><dd>${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</dd></div>
-            <div><dt>Last successful check</dt><dd>${escapeHtml(source.lastSuccessfulCheck || "-")}</dd></div>
-            <div><dt>Next eligible check</dt><dd>${escapeHtml(source.nextEligibleCheck || "-")}</dd></div>
-            <div><dt>Health</dt><dd>${escapeHtml(formatHealthLabel(source.healthStatus))}</dd></div>
-            <div><dt>Failure count</dt><dd>${escapeHtml(source.failCount ?? 0)}</dd></div>
-            <div><dt>Selector status</dt><dd>${escapeHtml(source.selectorStatus || "configured")}</dd></div>
+            <div><dt>Next check</dt><dd>${escapeHtml(source.nextEligibleCheck || "-")}</dd></div>
+            <div><dt>Last success</dt><dd>${escapeHtml(source.lastSuccessfulCheck || "-")}</dd></div>
+            <div><dt>Last failure</dt><dd>${escapeHtml(source.lastError || health.lastError || "-")}</dd></div>
+            <div><dt>Consecutive failures</dt><dd>${escapeHtml(health.consecutiveFailures ?? source.failCount ?? 0)}</dd></div>
+            <div><dt>Response time</dt><dd>${escapeHtml(health.responseTimeMs != null ? `${health.responseTimeMs} ms` : "—")}</dd></div>
+            <div><dt>Selector status</dt><dd>${escapeHtml(source.selectorStatus || health.selectorStatus || "configured")}</dd></div>
           </dl>
         </section>
         <section>
-          <h4>Policy</h4>
+          <h4>Governance</h4>
           <p class="acc-section__sub">Policy is evaluated on Verify / Enable. There is no force-activate or robots bypass.</p>
           <dl class="acc-detail-dl">
-            <div><dt>Official host validation</dt><dd>Enforced on save/activate</dd></div>
-            <div><dt>robots / access</dt><dd>Fail-closed (use Verify for live status)</dd></div>
+            <div><dt>Exact URL binding</dt><dd>${escapeHtml(source.approvedUrl || monitoringUrl || "-")}</dd></div>
+            <div><dt>Robots policy</dt><dd>${gov.robotsPolicy?.bypassAllowed === false ? "Must comply · bypass forbidden" : "Fail-closed"}</dd></div>
+            <div><dt>Redirect policy</dt><dd>${gov.redirectPolicy?.sameHostFamilyOnly === true ? "Same-host family only" : "Safe redirect policy"} · max ${escapeHtml(gov.redirectPolicy?.maxHops != null ? gov.redirectPolicy.maxHops : 5)} hops</dd></div>
+            <div><dt>GET-only policy</dt><dd>Enforced</dd></div>
+            <div><dt>Host policy</dt><dd>${gov.hostApproved === false ? "Not approved" : "Approved official host required"}</dd></div>
+            <div><dt>Response size policy</dt><dd>${escapeHtml(gov.maxResponseBytes != null ? `${gov.maxResponseBytes} bytes max` : "Enforced")}</dd></div>
           </dl>
         </section>
         <section>
-          <h4>Activity</h4>
+          <h4>Detection</h4>
           <dl class="acc-detail-dl">
-            <div><dt>Latest check</dt><dd>${escapeHtml(source.lastCheckedAt || source.lastVisit || "-")}</dd></div>
-            <div><dt>Latest detection</dt><dd>${escapeHtml(source.lastDetectedChange || "-")}</dd></div>
-            <div><dt>Latest error signal</dt><dd>${source.broken ? `Broken / fail count ${escapeHtml(source.failCount ?? 0)}` : "None recorded"}</dd></div>
+            <div><dt>Last detection</dt><dd>${escapeHtml(source.lastDetectedChange || "-")}</dd></div>
+            <div><dt>Result</dt><dd>${source.broken ? "Failure signal" : source.lastDetectedChange ? "Change recorded" : "No detection recorded"}</dd></div>
+            <div><dt>Reason</dt><dd>${escapeHtml(source.lastError || (source.broken ? "Source marked broken" : "—"))}</dd></div>
+            <div><dt>Selector result</dt><dd>${escapeHtml(source.selectorStatus || health.selectorStatus || "—")}</dd></div>
           </dl>
         </section>
       `;
@@ -1740,22 +1934,60 @@
     `).join("");
   }
 
+  function getFilteredAuditRows() {
+    let rows = Array.isArray(state.audit) ? state.audit.slice() : [];
+    const filter = String(state.auditFilter || qs("accAuditCategoryFilter")?.value || "")
+      .trim()
+      .toUpperCase();
+    const search = String(state.auditSearch || qs("accAuditSearch")?.value || "")
+      .trim()
+      .toLowerCase();
+    if (filter && filter !== "ALL") {
+      rows = rows.filter((row) => String(row.filterBucket || row.category || "").toUpperCase() === filter);
+    }
+    if (search) {
+      rows = rows.filter((row) =>
+        `${row.event || ""} ${row.entity || ""} ${row.summary || ""} ${row.source || ""} ${row.reason || ""}`
+          .toLowerCase()
+          .includes(search)
+      );
+    }
+    return rows;
+  }
+
   function renderAudit() {
     const body = qs("accAuditRows");
     if (!body) return;
-    if (!state.audit.length) {
-      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="5"><div class="acc-empty">No automation audit events in the current snapshot.</div></td></tr>`;
+    const rows = getFilteredAuditRows();
+    if (!rows.length) {
+      body.innerHTML = `<tr class="acc-table-empty-row"><td colspan="9"><div class="acc-empty">No automation audit events in the current snapshot.</div></td></tr>`;
       return;
     }
-    body.innerHTML = state.audit.map((item) => `
+    body.innerHTML = rows
+      .map(
+        (item) => `
       <tr>
         <td data-label="Time">${escapeHtml(item.time || "-")}</td>
-        <td data-label="Category">${escapeHtml(item.category || "-")}</td>
+        <td data-label="Source">${escapeHtml(item.source || item.entity || "-")}</td>
         <td data-label="Event">${escapeHtml(item.event || "-")}</td>
-        <td data-label="Entity">${escapeHtml(item.entity || "-")}</td>
-        <td data-label="Summary">${escapeHtml(item.summary || "-")}</td>
+        <td data-label="Method">${escapeHtml(item.method || "-")}</td>
+        <td data-label="Result">${escapeHtml(item.result || "-")}</td>
+        <td data-label="Reason">${escapeHtml(item.reason || "-")}</td>
+        <td data-label="Duration">${item.durationMs != null ? `${escapeHtml(item.durationMs)} ms` : "—"}</td>
+        <td data-label="Mode">${escapeHtml(item.mode || "-")}</td>
+        <td data-label="Filter">${escapeHtml(formatAuditFilterBucket(item))}</td>
       </tr>
-    `).join("");
+    `
+      )
+      .join("");
+  }
+
+  function formatAuditFilterBucket(item) {
+    const bucket = String(item?.filterBucket || "").trim().toUpperCase();
+    if (bucket && bucket !== "ALL") return bucket;
+    const category = String(item?.category || "").trim().toUpperCase();
+    if (category && category !== "ALL" && category !== "SYSTEM") return category;
+    return "—";
   }
 
   function renderInsights() {
@@ -1910,6 +2142,7 @@
     const page = getAccPageId();
     renderDashboard();
     renderPageKpis();
+    renderGlobalStatusBar();
     if (page === "sources") renderSources();
     if (page === "recruitments") {
       renderRecruitments();
@@ -1964,25 +2197,60 @@
         body: JSON.stringify({ limit: 2 })
       })
         .then((data) => {
-          toastSuccess(`Dry-run complete: ${data && data.count != null ? data.count : 0} source(s). Nothing published.`);
+          const mapped = {
+            available: true,
+            ranAt: new Date().toISOString(),
+            count: data && data.count != null ? data.count : (data?.results || []).length,
+            note: "DRY-RUN is NOT LIVE. Nothing was published or delivered.",
+            results: Array.isArray(data?.results)
+              ? data.results.map((row) => ({
+                  source: row.sourceName || row.siteId,
+                  sourceName: row.sourceName,
+                  siteId: row.siteId,
+                  mode: data.mode || "DRY_RUN",
+                  requestMethod: "GET",
+                  websiteContacted: true,
+                  result: row.check?.invalid
+                    ? "INVALID"
+                    : row.check?.changed
+                      ? "CHANGED"
+                      : "OK",
+                  selector: row.health?.selectorStatus || null,
+                  health: row.health,
+                  published: false,
+                  draft: false,
+                  telegram: false,
+                  draftCreated: row.draftCreated === true,
+                  telegramSent: row.telegramSent === true,
+                  auditEvent: "DRY_RUN_EXECUTION",
+                  check: row.check
+                }))
+              : []
+          };
+          state.lastDryRun = mapped;
+          renderDryRunResults(mapped);
+          toastSuccess(`Dry-run complete: ${mapped.count} source(s). Nothing published.`);
           return loadSnapshot();
         })
         .then(() => renderAll())
         .catch((err) => toastError(err.message || "Dry-run batch failed"));
     });
     qs("accBtnEmergencyStop")?.addEventListener("click", () => {
-      if (!window.confirm("Engage emergency stop? This disables master and forces DORMANT across this host.")) {
+      if (!window.confirm("Engage Emergency Stop? This disables master and forces DORMANT across this host. Monitoring execution will be blocked.")) {
         return;
       }
       apiFetch("/api/admin/automation-control-center/emergency-stop", { method: "POST", body: "{}" })
         .then(() => loadSnapshot())
         .then(() => {
           renderAll();
-          toastSuccess("Emergency stop engaged.");
+          toastSuccess("Emergency stop ACTIVE.");
         })
         .catch((err) => toastError(err.message || "Emergency stop failed"));
     });
     qs("accBtnClearEmergency")?.addEventListener("click", () => {
+      if (!window.confirm("Restore from Emergency Stop? Master remains OFF until explicitly enabled. LIVE stays locked.")) {
+        return;
+      }
       apiFetch("/api/admin/automation-control-center/emergency-stop/clear", { method: "POST", body: "{}" })
         .then(() => loadSnapshot())
         .then(() => {
@@ -1993,6 +2261,14 @@
     });
 
     qs("accOpenPaletteBtn")?.addEventListener("click", () => window.AdminCommandPalette?.open?.());
+    qs("accAuditSearch")?.addEventListener("input", (event) => {
+      state.auditSearch = event.target.value || "";
+      renderAudit();
+    });
+    qs("accAuditCategoryFilter")?.addEventListener("change", (event) => {
+      state.auditFilter = event.target.value || "";
+      renderAudit();
+    });
     qs("accSourceSearch")?.addEventListener("input", () => {
       loadSourcesPage(1).then(renderSources).catch((err) => toastError(err.message || "Filter failed"));
     });

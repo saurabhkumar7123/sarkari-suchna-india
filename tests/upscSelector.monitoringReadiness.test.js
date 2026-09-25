@@ -87,8 +87,7 @@ jest.mock("../server/services/file.service", () => ({
 const {
   extractLatestItems,
   checkSite,
-  buildSignature,
-  isUpscOfficialSite
+  buildSignature
 } = jest.requireActual("../server/services/updates/siteChecker");
 const {
   isApprovedOfficialMonitoringUrl,
@@ -110,37 +109,34 @@ const UPSC_HTML = `<html><body>
   <a href="/sites/default/files/Notice-PrncplVPrncplOBC-CAF-Engl-050826.pdf">Important Notice PDF</a>
 </body></html>`;
 
-describe("UPSC stored selector case-insensitive fallback", () => {
-  test("is restricted to official UPSC hosts", () => {
-    expect(isUpscOfficialSite(UPSC_SITE)).toBe(true);
-    expect(isUpscOfficialSite({ url: "https://ssc.gov.in/" })).toBe(false);
-    expect(isUpscOfficialSite({ url: "https://www.sarkariresult.com/" })).toBe(false);
+describe("UPSC exact selector policy (no case-insensitive guessing)", () => {
+  test("wrong-case href*= selector does not guess — selector_miss", () => {
+    const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
+    expect(extracted).toEqual({ invalid: true, reason: "selector_miss" });
   });
 
-  test("official homepage Notice hrefs extract instead of selector_miss", () => {
-    const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
+  test("exact-case Notice selector extracts without fallback", () => {
+    const extracted = extractLatestItems(UPSC_HTML, {
+      ...UPSC_SITE,
+      selector: 'a[href*="Notice"]'
+    });
     expect(extracted.invalid).toBeUndefined();
     expect(extracted.items.length).toBeGreaterThanOrEqual(1);
-    expect(extracted.items[0].title).toMatch(/Engineering Services/i);
-    expect(extracted.items[0].link).toBe(
-      "https://www.upsc.gov.in/whats-new/Engineering%20Services%20(Main)%20Examination,%202026/Notice"
-    );
-    expect(extracted.items[0].fingerprint).toMatch(/^sig:[a-f0-9]{40}:/i);
-    expect(extracted.items.some((item) => /\.pdf$/i.test(item.link))).toBe(true);
+    expect(extracted.items[0].title).toMatch(/Engineering Services|Important Notice/i);
     expect(extracted.items.map((item) => item.link).every((link) => /upsc\.gov\.in/i.test(link))).toBe(
       true
     );
   });
 
-  test("calendar-only page without notice href still selector_miss", () => {
+  test("calendar-only page without matching selector still selector_miss", () => {
     const extracted = extractLatestItems(
       `<html><body><a href="/examinations/exam-calendar">Calendar</a></body></html>`,
-      UPSC_SITE
+      { ...UPSC_SITE, selector: 'a[href*="Notice"]' }
     );
     expect(extracted).toEqual({ invalid: true, reason: "selector_miss" });
   });
 
-  test("SSC does not receive the UPSC case-insensitive fallback", () => {
+  test("SSC wrong-case selector also selector_miss (no host special-case)", () => {
     const extracted = extractLatestItems(
       `<html><body><a href="/notice/example.pdf">Delhi Police Result Notice</a></body></html>`,
       {
@@ -154,28 +150,38 @@ describe("UPSC stored selector case-insensitive fallback", () => {
     expect(extracted.reason).toBe("selector_miss");
   });
 
-  test("non href-contains UPSC selector is not broadened", () => {
+  test("non-matching UPSC selector is not broadened", () => {
     const extracted = extractLatestItems(UPSC_HTML, { ...UPSC_SITE, selector: ".missing-class" });
     expect(extracted).toEqual({ invalid: true, reason: "selector_miss" });
   });
 });
 
 describe("UPSC/SSC change detection", () => {
+  const UPSC_EXACT = { ...UPSC_SITE, selector: 'a[href*="Notice"]' };
+
+  beforeEach(() => {
+    process.env.AUTOMATION_MASTER_ENABLED = "1";
+  });
+
+  afterEach(() => {
+    delete process.env.AUTOMATION_MASTER_ENABLED;
+  });
+
   test("same official Notice content twice is no_change", async () => {
-    const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
+    const extracted = extractLatestItems(UPSC_HTML, UPSC_EXACT);
     const top = extracted.items[0];
     const axios = require("axios");
     const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
     clearRobotsPolicyCache();
     jest.spyOn(axios, "get").mockImplementation(async (url) => {
       if (String(url).includes("robots.txt")) {
-        return { status: 200, data: "User-agent: *\nAllow: /\n" };
+        return { status: 200, data: "User-agent: *\nAllow: /\n", headers: {} };
       }
-      return { status: 200, data: UPSC_HTML };
+      return { status: 200, data: UPSC_HTML, headers: {} };
     });
 
-    const first = await checkSite({ ...UPSC_SITE, lastContent: top.fingerprint });
-    const second = await checkSite({ ...UPSC_SITE, lastContent: top.fingerprint });
+    const first = await checkSite({ ...UPSC_EXACT, lastContent: top.fingerprint });
+    const second = await checkSite({ ...UPSC_EXACT, lastContent: top.fingerprint });
     expect(first).toMatchObject({ changed: false, reason: "no_change", items: [] });
     expect(second).toEqual(first);
     axios.get.mockRestore();
@@ -183,19 +189,19 @@ describe("UPSC/SSC change detection", () => {
   });
 
   test("changed official Notice content yields exactly one changed item set", async () => {
-    const extracted = extractLatestItems(UPSC_HTML, UPSC_SITE);
+    const extracted = extractLatestItems(UPSC_HTML, UPSC_EXACT);
     const axios = require("axios");
     const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
     clearRobotsPolicyCache();
     jest.spyOn(axios, "get").mockImplementation(async (url) => {
       if (String(url).includes("robots.txt")) {
-        return { status: 200, data: "User-agent: *\nAllow: /\n" };
+        return { status: 200, data: "User-agent: *\nAllow: /\n", headers: {} };
       }
-      return { status: 200, data: UPSC_HTML };
+      return { status: 200, data: UPSC_HTML, headers: {} };
     });
 
     const result = await checkSite({
-      ...UPSC_SITE,
+      ...UPSC_EXACT,
       lastContent: buildSignature("previous official notice https://www.upsc.gov.in/old")
     });
     expect(result.changed).toBe(true);

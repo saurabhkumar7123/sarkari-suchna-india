@@ -12,7 +12,12 @@
  */
 
 const logger = require("../../utils/logger");
-const { fetchSites, getSiteById } = require("./updates.repository");
+const {
+  fetchSites,
+  getSiteById,
+  saveSiteBaseline,
+  markSiteChecked
+} = require("./updates.repository");
 const { checkSite } = require("./siteChecker");
 const {
   buildSourcePolicy,
@@ -158,6 +163,23 @@ async function runSourceDryRun(siteOrId, options = {}) {
         ? SELECTOR_STATUS.UNKNOWN
         : SELECTOR_STATUS.OK;
 
+  // Persist local check evidence only (baseline / last_checked_at). Never publishes.
+  if (result && !result.invalid && !result.policySkip && !result.blocked) {
+    try {
+      if (result.establishBaseline) {
+        await saveSiteBaseline(site.id, result.baselineFingerprint || "");
+      } else {
+        await markSiteChecked(site.id);
+      }
+      site = (await getSiteById(site.id)) || site;
+    } catch (persistErr) {
+      logger.warn("monitoring-dry-run: failed to persist local check evidence", {
+        siteId: site.id,
+        message: persistErr && persistErr.message ? persistErr.message : String(persistErr)
+      });
+    }
+  }
+
   if (selectorStatus === SELECTOR_STATUS.MISS) {
     await recordExecutionAudit({
       eventType: SECURITY_EVENT_TYPES.SELECTOR_MISS,
@@ -203,12 +225,13 @@ async function runSourceDryRun(siteOrId, options = {}) {
     durationMs
   });
 
+  const refreshedPolicy = buildSourcePolicy(site);
   return {
     dryRun: true,
     siteId: site.id,
-    sourceName: policy.sourceName,
-    officialHost: policy.officialHost,
-    approvedUrl: policy.approvedUrl,
+    sourceName: refreshedPolicy.sourceName,
+    officialHost: refreshedPolicy.officialHost,
+    approvedUrl: refreshedPolicy.approvedUrl,
     durationMs,
     check: {
       changed: Boolean(result && result.changed),
@@ -217,7 +240,11 @@ async function runSourceDryRun(siteOrId, options = {}) {
       policySkip: Boolean(result && result.policySkip),
       establishBaseline: Boolean(result && result.establishBaseline)
     },
-    health: deriveSourceHealth(site, { policy, selectorStatus }),
+    health: deriveSourceHealth(site, {
+      policy: refreshedPolicy,
+      selectorStatus,
+      hasSuccessfulCheck: true
+    }),
     published: false,
     telegramSent: false,
     draftCreated: false,

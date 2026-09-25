@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=22">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=24">
 <script>
 (function () {
   var map = {
@@ -92,6 +92,7 @@
       </div>
       <div class="acc-ops-banner__pills" role="list">
         <span class="acc-ops-pill" role="listitem"><span>Master</span><strong id="accSafetyMaster">OFF</strong></span>
+        <span class="acc-ops-pill" role="listitem"><span>LIVE</span><strong id="accSafetyLive">OFF</strong></span>
         <span class="acc-ops-pill" role="listitem"><span>Emergency</span><strong id="accSafetyEmergency">READY</strong></span>
         <span class="acc-ops-pill is-locked" role="listitem"><span>Auto Publish</span><strong>LOCKED</strong></span>
         <span class="acc-ops-pill" role="listitem"><span>Telegram</span><strong id="accTopTelegramState">OFF</strong></span>
@@ -200,9 +201,10 @@
         <p class="acc-policy-card__hint">Read-only monitoring only</p>
         <ul class="acc-policy-list" id="accBotCanList">
           <li>Read approved official public URLs</li>
-          <li>Use GET</li>
+          <li>Use GET requests</li>
           <li>Detect changes</li>
-          <li>Process approved content</li>
+          <li>Perform permitted internal processing</li>
+          <li>Create audit records</li>
           <li>Prepare internal results / drafts</li>
         </ul>
       </article>
@@ -213,7 +215,9 @@
           <li>POST / PUT / PATCH / DELETE</li>
           <li>Login or submit forms</li>
           <li>Bypass CAPTCHA or authentication</li>
+          <li>Bypass robots / security</li>
           <li>Crawl recursively</li>
+          <li>Proxy rotation</li>
           <li>Visit unapproved hosts</li>
           <li>Follow unsafe redirects</li>
           <li>Modify government websites</li>
@@ -231,9 +235,10 @@
       <article class="acc-ops-control-card acc-ops-control-card--emergency">
         <span>Emergency stop</span>
         <strong id="accEmergencyControlState">READY</strong>
+        <small id="accEmergencyExplain">Blocks monitoring execution, dry-run batches, scheduler, and worker automation until cleared.</small>
         <div class="acc-ops-control-card__actions">
-          <button type="button" class="header-action-btn acc-btn-danger" id="accBtnEmergencyStop">Engage Emergency Stop</button>
-          <button type="button" class="header-action-btn header-action-btn--ghost" id="accBtnClearEmergency">Clear</button>
+          <button type="button" class="header-action-btn acc-btn-danger" id="accBtnEmergencyStop">Emergency Stop</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="accBtnClearEmergency">Restore</button>
         </div>
       </article>
     </div>
@@ -243,6 +248,7 @@
         <h3 id="accDryRunHeading">Controlled dry-run</h3>
         <strong class="acc-state is-off" id="accDryRunStateBadge">INACTIVE</strong>
       </div>
+      <p class="acc-dryrun-banner" id="accDryRunNotLiveBanner" role="status">DRY-RUN is NOT LIVE. No publish · No Telegram · No draft creation.</p>
       <dl class="acc-dryrun-meta">
         <div><dt>Purpose</dt><dd>Verify real monitoring without publishing or notifications.</dd></div>
         <div><dt>Scope</dt><dd>1–2 approved GREEN official sources only</dd></div>
@@ -255,10 +261,61 @@
         <button type="button" class="header-action-btn" id="accBtnDryRunBatch">Run Dry-Run (max 2)</button>
         <span class="acc-note" id="accControlPlaneNote">Control plane is durable on this host via shared JSON file.</span>
       </div>
+      <div class="acc-dryrun-results" id="accDryRunResults" aria-label="Last dry-run results">
+        <h4 class="acc-subhead">Last dry-run</h4>
+        <p class="acc-note" id="accDryRunResultsMeta">No dry-run execution recorded yet.</p>
+        <div class="acc-table-wrap">
+          <table class="acc-data-table" aria-label="Dry-run result rows">
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Mode</th>
+                <th>Method</th>
+                <th>Website contacted</th>
+                <th>Result</th>
+                <th>Selector</th>
+                <th>Health</th>
+                <th>Published</th>
+                <th>Draft</th>
+                <th>Telegram</th>
+                <th>Audit event</th>
+              </tr>
+            </thead>
+            <tbody id="accDryRunResultRows">
+              <tr class="acc-table-empty-row"><td colspan="11">No dry-run results.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <p class="acc-path-line">Monitoring → AI/Draft → Human Review → Approve → Generator → Manual Publish</p>
     <p class="acc-note">LIVE arming requires separate human approval. Backend safety remains authoritative.</p>
+  </section>
+
+  <!-- 2b. LIVE READINESS (read-only; does not activate LIVE) -->
+  <section class="acc-clean-section" id="accLiveReadiness" aria-labelledby="accLiveReadinessHeading">
+    <div class="acc-clean-section__head">
+      <h2 id="accLiveReadinessHeading">LIVE readiness</h2>
+      <p class="acc-clean-section__sub">Read-only checklist from backend state. Ready does not mean Live.</p>
+    </div>
+    <div class="acc-live-ready-verdict" id="accLiveReadyVerdict" role="status">
+      <strong id="accLiveReadyVerdictLabel">NOT READY</strong>
+      <span id="accLiveReadyVerdictNote">Does not activate LIVE.</span>
+    </div>
+    <div class="acc-live-ready-grid" id="accLiveReadyChecks" aria-label="LIVE readiness checks">
+      <article class="acc-live-ready-item"><span>Safety Firewall</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Exact URL Governance</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Kill Switch</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Audit</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>GREEN Sources</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Real Dry-Run</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Scheduler Safety</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Worker Safety</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Telegram Gate</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>Auto-Publish Lock</span><strong>—</strong></article>
+      <article class="acc-live-ready-item"><span>ACC Control Plane</span><strong>—</strong></article>
+    </div>
   </section>
 
   <!-- 3. REQUIRES YOUR ACTION -->
@@ -293,7 +350,7 @@
             </tr>
           </thead>
           <tbody id="accSourceHealthRows">
-            <tr class="acc-empty-row"><td colspan="6">No sources loaded.</td></tr>
+            <tr class="acc-table-empty-row"><td colspan="6">No sources loaded.</td></tr>
           </tbody>
         </table>
       </div>
@@ -339,11 +396,10 @@
       <div class="acc-clean-section__head">
         <h2 id="accSchedulerHeading">Scheduler</h2>
       </div>
-      <p class="acc-note">Status: <strong class="acc-state is-off" id="accSchedulerCardStatus">OFF</strong> · Last cycle: <strong id="accSchedulerLastRun">Not available</strong></p>
+      <p class="acc-note">Status: <strong class="acc-state is-off" id="accSchedulerCardStatus">OFF</strong> · Last cycle: <strong id="accSchedulerLastRun">Not available</strong> · Next: <strong id="accSchedulerNextRun">Not available</strong></p>
+      <p class="acc-note">Cycles/errors: <strong id="accSchedulerCyclesErrors">Not available</strong> · Overlap protection: enforced by control plane</p>
       <div class="acc-visually-hidden" aria-hidden="true">
         <strong id="accSchedulerDetailStatus">OFF</strong>
-        <strong id="accSchedulerNextRun">Not available</strong>
-        <strong id="accSchedulerCyclesErrors">Not available</strong>
       </div>
     </article>
 
@@ -351,29 +407,23 @@
       <div class="acc-clean-section__head">
         <h2 id="accNotifyHeading">Telegram / Notification</h2>
       </div>
-      <p class="acc-note">Telegram <strong id="accTelegramDeliveryState">OFF</strong> · Gateway <strong id="accGatewayState">OFF</strong></p>
-      <div class="acc-visually-hidden" aria-hidden="true">
-        <strong id="accTelegramPending">Not available</strong>
-        <strong id="accTelegramSent">Not available</strong>
-        <strong id="accTelegramFailed">Not available</strong>
-        <strong id="accTelegramLastError">Not available</strong>
-      </div>
+      <p class="acc-note">Telegram <strong id="accTelegramDeliveryState">OFF</strong> · Gateway <strong id="accGatewayState">OFF</strong> · Pending <strong id="accTelegramPending">Not available</strong> · Sent <strong id="accTelegramSent">Not available</strong> · Failures <strong id="accTelegramFailed">Not available</strong></p>
+      <p class="acc-note">Last error: <strong id="accTelegramLastError">Not available</strong></p>
     </article>
 
     <article class="acc-clean-section" id="accWorkerSection">
       <div class="acc-clean-section__head">
         <h2 id="accWorkerHeading">Worker</h2>
       </div>
-      <p class="acc-note">Status: <strong class="acc-state is-off" id="accWorkerCardState">OFF</strong> · Heartbeat: <strong id="accWorkerHeartbeat">Not available</strong></p>
+      <p class="acc-note">Status: <strong class="acc-state is-off" id="accWorkerCardState">OFF</strong> · Heartbeat: <strong id="accWorkerHeartbeat">Not available</strong> · Last job: <strong id="accWorkerLastJob">Not available</strong></p>
+      <p class="acc-note">Last error: <strong id="accWorkerLastError">Not available</strong> · Jobs are not started from this view.</p>
       <div class="acc-visually-hidden" aria-hidden="true">
         <strong id="accWorkerDetailStatus">OFF</strong>
-        <strong id="accWorkerLastJob">Not available</strong>
-        <strong id="accWorkerLastError">Not available</strong>
       </div>
     </article>
   </section>
 
-  <!-- 10. ERRORS / WARNINGS -->
+  <!-- 10. ERRORS / WARNINGS + SECURITY BLOCKS -->
   <section class="acc-clean-section" id="accErrorsSection" aria-labelledby="accErrorsHeading">
     <div class="acc-clean-section__head">
       <h2 id="accErrorsHeading">Errors / Warnings</h2>
@@ -383,6 +433,30 @@
       <article><span>Unsafe redirects</span><strong id="accAuditRedirects">Not available</strong></article>
       <article><span>Policy blocks</span><strong id="accAuditPolicy">Not available</strong></article>
       <article><span>Recent errors</span><strong id="accAuditErrors">Not available</strong></article>
+    </div>
+    <div class="acc-security-blocks" id="accSecurityBlocks" aria-labelledby="accSecurityBlocksHeading">
+      <h3 class="acc-subhead" id="accSecurityBlocksHeading">Security blocks</h3>
+      <p class="acc-note">Read-only counts from automation audit. Secrets are never shown.</p>
+      <div class="acc-security-block-grid" id="accSecurityBlockCounts">
+        <article><span>BLOCKED_HTTP_METHOD</span><strong data-block="BLOCKED_HTTP_METHOD">0</strong></article>
+        <article><span>UNSAFE_REDIRECT</span><strong data-block="UNSAFE_REDIRECT">0</strong></article>
+        <article><span>UNAPPROVED_HOST</span><strong data-block="UNAPPROVED_HOST">0</strong></article>
+        <article><span>RESPONSE_TOO_LARGE</span><strong data-block="RESPONSE_TOO_LARGE">0</strong></article>
+        <article><span>POLICY_REJECTION</span><strong data-block="POLICY_REJECTION">0</strong></article>
+        <article><span>UNSUPPORTED_PROTOCOL</span><strong data-block="UNSUPPORTED_PROTOCOL">0</strong></article>
+        <article><span>INVALID_URL</span><strong data-block="INVALID_URL">0</strong></article>
+        <article><span>AUTOMATION_KILL_SWITCH</span><strong data-block="AUTOMATION_KILL_SWITCH">0</strong></article>
+      </div>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table" aria-label="Recent security block events">
+          <thead>
+            <tr><th>Time</th><th>Event</th><th>Result</th><th>Reason</th><th>Source</th></tr>
+          </thead>
+          <tbody id="accSecurityBlockRows">
+            <tr class="acc-table-empty-row"><td colspan="5">No security block events.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <div class="acc-error-groups" id="accErrorsGroups">
       <div>
@@ -482,6 +556,6 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-automation-control-center.js?v=16"></script>
+<script src="/js/admin-automation-control-center.js?v=19"></script>
 </body>
 </html>
