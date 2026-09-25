@@ -18,6 +18,12 @@ const {
   getAutomationFlags
 } = require("../../config/automationFlags");
 const { isApprovedOfficialMonitoringUrl } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
+const { buildSourcePolicy } = require("./sourceGovernancePolicy");
+const { isDryRunMode } = require("../../config/automationFlags");
+const {
+  recordBlockedSecurityEvent,
+  SECURITY_EVENT_TYPES
+} = require("./monitoringSecurityAudit");
 
 const MIN_INTERVAL = 5;
 const MAX_INTERVAL = 10;
@@ -141,8 +147,33 @@ function shouldCheckSiteThisCycle(site) {
     const retryAt = new Date(site.nextRetryAt);
     if (!Number.isNaN(retryAt.getTime()) && retryAt.getTime() > Date.now()) return false;
   }
+
+  // Per-source poll interval from governance policy (failure-isolated).
+  try {
+    const policy = buildSourcePolicy(site);
+    const intervalMs = Math.max(MIN_INTERVAL, policy.pollIntervalMinutes || DEFAULT_INTERVAL) * 60 * 1000;
+    if (site.lastCheckedAt) {
+      const last = new Date(site.lastCheckedAt).getTime();
+      if (Number.isFinite(last) && Date.now() - last < intervalMs) {
+        return false;
+      }
+    }
+  } catch (policyErr) {
+    logger.warn("updates: source policy evaluation failed; skipping site", {
+      siteId: site.id,
+      message: policyErr && policyErr.message ? policyErr.message : String(policyErr)
+    });
+    recordBlockedSecurityEvent({
+      eventType: SECURITY_EVENT_TYPES.SCHEDULER_FAILURE,
+      reason: "source_policy_evaluation_failed",
+      siteId: site.id,
+      action: "SCHEDULER_SKIP_SITE"
+    }).catch(() => null);
+    return false;
+  }
+
   const p = Number(site.priority || 1);
-  // High priority checked every cycle; normal priority every second cycle.
+  // High priority checked every eligible cycle; normal priority every second cycle.
   if (p >= HIGH_PRIORITY_VALUE) return true;
   return cycleCounter % 2 === 0;
 }
@@ -171,6 +202,22 @@ async function runOnce() {
     });
 
     if (!canEnqueueLiveCrawlerJobs()) {
+      if (isDryRunMode()) {
+        logger.info("updates: dry-run mode active — live enqueue suppressed (use ACC dry-run runner)", {
+          enqueue: false,
+          dryRun: true,
+          publish: false,
+          telegramAttempted: false
+        });
+        return {
+          mode: "dry_run_scheduler",
+          enqueued: 0,
+          crawled: false,
+          telegramAttempted: false,
+          published: false,
+          dryRun: true
+        };
+      }
       logger.warn("updates: live crawler blocked; scheduler-only cycle", {
         enqueue: false,
         cleanup: false,

@@ -244,7 +244,10 @@ describe("runSourceCheck exact-URL safety", () => {
     });
     checkSite.mockResolvedValue({ changed: false, reason: "no_change" });
     const out = await automationControlCenterService.runSourceCheck(4);
-    expect(checkSite).toHaveBeenCalledWith(expect.objectContaining({ url: exact }));
+    expect(checkSite).toHaveBeenCalledWith(
+      expect.objectContaining({ url: exact }),
+      expect.objectContaining({ allowWhenAutomationDormant: true })
+    );
     expect(out.exactUrlUsed).toBe(exact);
     expect(out.monitoringUrl).toBe(exact);
     expect(markSiteChecked).toHaveBeenCalledWith(4);

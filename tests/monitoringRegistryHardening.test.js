@@ -231,36 +231,38 @@ describe("robotsAccessPolicy integration with robots-parser", () => {
   test("200 Disallow blocks path", async () => {
     jest.spyOn(axios, "get").mockResolvedValue({
       status: 200,
+      headers: {},
       data: "User-agent: *\nDisallow: /private\nAllow: /\n"
     });
     const denied = await robotsPolicy.evaluateRobotsAccessPolicy(
       "https://example.gov.in/private/page",
-      { bypassCache: true }
+      { bypassCache: true, allowWhenAutomationDormant: true }
     );
     expect(denied.allowed).toBe(false);
     expect(denied.reason).toBe("robots_disallow");
 
     const allowed = await robotsPolicy.evaluateRobotsAccessPolicy("https://example.gov.in/public", {
-      bypassCache: true
+      bypassCache: true,
+      allowWhenAutomationDormant: true
     });
-    // host cache may retain parser body — force separate host via query on robots host is same
-    // Use bypass and same host: path allow should work with cached parserBody
     expect(allowed.allowed).toBe(true);
   });
 
   test("404 robots.txt treated as no crawler rules (allow)", async () => {
-    jest.spyOn(axios, "get").mockResolvedValue({ status: 404, data: "Not Found" });
+    jest.spyOn(axios, "get").mockResolvedValue({ status: 404, headers: {}, data: "Not Found" });
     const decision = await robotsPolicy.evaluateRobotsAccessPolicy("https://unique404.gov.in/jobs", {
-      bypassCache: true
+      bypassCache: true,
+      allowWhenAutomationDormant: true
     });
     expect(decision.allowed).toBe(true);
     expect(decision.reason).toBe("robots_not_found");
   });
 
   test("403 robots.txt fail closed", async () => {
-    jest.spyOn(axios, "get").mockResolvedValue({ status: 403, data: "Forbidden" });
+    jest.spyOn(axios, "get").mockResolvedValue({ status: 403, headers: {}, data: "Forbidden" });
     const decision = await robotsPolicy.evaluateRobotsAccessPolicy("https://unique403.gov.in/jobs", {
-      bypassCache: true
+      bypassCache: true,
+      allowWhenAutomationDormant: true
     });
     expect(decision.allowed).toBe(false);
     expect(decision.reason).toBe("robots_forbidden");
@@ -269,7 +271,8 @@ describe("robotsAccessPolicy integration with robots-parser", () => {
   test("timeout / network fail closed", async () => {
     jest.spyOn(axios, "get").mockRejectedValue(Object.assign(new Error("timeout"), { code: "ECONNABORTED" }));
     const decision = await robotsPolicy.evaluateRobotsAccessPolicy("https://uniqueto.gov.in/jobs", {
-      bypassCache: true
+      bypassCache: true,
+      allowWhenAutomationDormant: true
     });
     expect(decision.allowed).toBe(false);
     expect(decision.failClosed).toBe(true);
@@ -478,7 +481,17 @@ describe("safety invariants in siteChecker module source", () => {
 
   test("no POST to monitored targets", () => {
     expect(src).not.toMatch(/axios\.post\s*\(/);
-    expect(src).toMatch(/method:\s*"GET"/);
+    expect(src).toMatch(/monitoringSafeGet/);
+  });
+
+  test("uses central monitoring HTTP safety layer", () => {
+    expect(src).toMatch(/monitoringHttpSafety/);
+    expect(src).not.toMatch(/maxRedirects:\s*5/);
+  });
+
+  test("no UPSC selector guessing fallback", () => {
+    expect(src).not.toMatch(/case-insensitively/);
+    expect(src).not.toMatch(/isUpscOfficialSite/);
   });
 
   test("no credentials/cookies sent", () => {

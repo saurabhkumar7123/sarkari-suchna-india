@@ -6,20 +6,20 @@
  * Does not activate sources and never bypasses policy.
  */
 
-const axios = require("axios");
 const cheerio = require("cheerio");
 const {
   assertSafeOfficialMonitoringUrl,
-  isPrivateOrInternalHostname,
   createHttpError
 } = require("./monitoringUrlSafety");
-const { isApprovedOfficialMonitoringUrl, extractHostname } = require(
-  "../../lib/contentIntelligence/sourceIntelligence/officialDomains"
-);
+const { extractHostname } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 const { evaluateRobotsAccessPolicy, MONITORING_BOT_UA } = require("./robotsAccessPolicy");
 const { findDuplicateMonitoringUrl } = require("./monitoringSiteWriteGuard");
 const { withHostPoliteness } = require("./hostPoliteness");
 const { classifyMonitoringHttpError } = require("./monitoringFetchErrors");
+const {
+  fetchWithSafeRedirects,
+  MonitoringHttpSafetyError
+} = require("./monitoringHttpSafety");
 
 const PURPOSE_VALUES = Object.freeze([
   "recruitment",
@@ -42,7 +42,6 @@ const PURPOSE_LABELS = Object.freeze({
 });
 
 const VERIFY_TIMEOUT_MS = 20000;
-const MAX_SAFE_REDIRECTS = 5;
 
 function pass(detail) {
   return { status: "PASS", detail: detail || "ok" };
@@ -89,107 +88,58 @@ function checkResult(status, detail) {
   return fail(detail);
 }
 
-/**
- * Follow redirects manually so each hop stays on an approved official host.
- */
-async function fetchWithSafeRedirects(url) {
-  let current = String(url || "").trim();
-  const chain = [];
-  for (let hop = 0; hop <= MAX_SAFE_REDIRECTS; hop += 1) {
-    let response;
-    try {
-      response = await axios.get(current, {
-        timeout: VERIFY_TIMEOUT_MS,
-        maxRedirects: 0,
-        responseType: "text",
-        transformResponse: [(data) => data],
-        validateStatus: () => true,
-        headers: {
-          "User-Agent": MONITORING_BOT_UA,
-          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-        },
-        method: "GET"
-      });
-    } catch (err) {
-      const classification = classifyMonitoringHttpError(err);
-      const error = createHttpError(
-        400,
-        classification.kind === "timeout"
-          ? "URL network unavailable (timeout)."
-          : "URL network unavailable.",
-        "MONITORING_URL_UNREACHABLE"
-      );
-      error.classification = classification;
-      throw error;
-    }
-
-    const status = Number(response.status || 0);
-    chain.push({ url: current, status });
-
-    if (status >= 300 && status < 400) {
-      const location = response.headers && response.headers.location;
-      if (!location) {
-        const err = createHttpError(
-          400,
-          `Redirect missing Location header (HTTP ${status}).`,
-          "MONITORING_REDIRECT_INVALID"
-        );
-        err.httpStatus = status;
-        err.redirectChain = chain;
-        throw err;
-      }
-      let nextUrl;
+    /**
+     * Admin verification fetch — uses central safety layer (GET-only, hop-safe redirects).
+     * Allowed while automation is dormant (operator pre-activation verify).
+     * method: "GET" is enforced inside fetchWithSafeRedirects / monitoringSafeRequest.
+     */
+    async function verifyFetchWithSafeRedirects(url) {
       try {
-        nextUrl = new URL(String(location), current).toString();
-      } catch {
-        const err = createHttpError(400, "Redirect target is malformed.", "MONITORING_REDIRECT_INVALID");
-        err.httpStatus = status;
-        err.redirectChain = chain;
-        throw err;
-      }
-      const nextHost = extractHostname(nextUrl);
-      if (!nextHost || isPrivateOrInternalHostname(nextHost)) {
-        const err = createHttpError(
-          400,
-          "Redirect leads to a private or internal host.",
-          "MONITORING_REDIRECT_PRIVATE"
-        );
-        err.httpStatus = status;
-        err.redirectChain = chain;
-        err.finalUrl = nextUrl;
-        throw err;
-      }
-      if (!isApprovedOfficialMonitoringUrl(nextUrl)) {
-        const err = createHttpError(
-          400,
-          "Redirect leads to an unapproved host.",
-          "MONITORING_REDIRECT_NOT_OFFICIAL"
-        );
-        err.httpStatus = status;
-        err.redirectChain = chain;
-        err.finalUrl = nextUrl;
-        throw err;
-      }
-      if (hop === MAX_SAFE_REDIRECTS) {
-        const err = createHttpError(400, "Too many redirects.", "MONITORING_REDIRECT_LIMIT");
-        err.httpStatus = status;
-        err.redirectChain = chain;
-        throw err;
-      }
-      current = nextUrl;
-      continue;
-    }
-
+        const response = await fetchWithSafeRedirects(url, {
+          timeout: VERIFY_TIMEOUT_MS,
+          allowWhenAutomationDormant: true,
+          requireOfficialHost: true,
+          userAgent: MONITORING_BOT_UA,
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          responseType: "text",
+          transformResponse: [(data) => data],
+          method: "GET"
+        });
     return {
-      status,
+      status: response.status,
       html: typeof response.data === "string" ? response.data : String(response.data || ""),
-      finalUrl: current,
-      redirectChain: chain
+      finalUrl: response.finalUrl,
+      redirectChain: response.redirectChain || []
     };
+  } catch (err) {
+    if (err instanceof MonitoringHttpSafetyError) {
+      const mapped = createHttpError(
+        err.statusCode || 400,
+        err.message,
+        err.code === "UNSAFE_REDIRECT"
+          ? "MONITORING_REDIRECT_NOT_OFFICIAL"
+          : err.code === "UNAPPROVED_HOST"
+            ? "MONITORING_REDIRECT_NOT_OFFICIAL"
+            : err.code === "RESPONSE_TOO_LARGE"
+              ? "MONITORING_RESPONSE_TOO_LARGE"
+              : "MONITORING_URL_UNREACHABLE"
+      );
+      mapped.redirectChain = [];
+      mapped.finalUrl = err.destinationUrl || null;
+      mapped.httpStatus = err.statusCode || null;
+      throw mapped;
+    }
+    const classification = classifyMonitoringHttpError(err);
+    const error = createHttpError(
+      400,
+      classification.kind === "timeout"
+        ? "URL network unavailable (timeout)."
+        : "URL network unavailable.",
+      "MONITORING_URL_UNREACHABLE"
+    );
+    error.classification = classification;
+    throw error;
   }
-  const err = createHttpError(400, "Too many redirects.", "MONITORING_REDIRECT_LIMIT");
-  err.redirectChain = chain;
-  throw err;
 }
 
 function extractSelectorPreview(html, selector, pageUrl) {
@@ -352,7 +302,7 @@ async function verifyMonitoringSource(input = {}) {
     }
   }
 
-  robots = await evaluateRobotsAccessPolicy(exactUrl);
+  robots = await evaluateRobotsAccessPolicy(exactUrl, { allowWhenAutomationDormant: true });
   if (!robots.allowed) {
     const detail =
       robots.reason === "robots_disallow"
@@ -398,7 +348,7 @@ async function verifyMonitoringSource(input = {}) {
   }
 
   try {
-    const fetched = await withHostPoliteness(exactUrl, () => fetchWithSafeRedirects(exactUrl), {
+    const fetched = await withHostPoliteness(exactUrl, () => verifyFetchWithSafeRedirects(exactUrl), {
       crawlDelayMs: Number(robots && robots.crawlDelayMs) || 0
     });
     httpStatus = fetched.status;
@@ -516,6 +466,6 @@ module.exports = {
   purposeLabel,
   verifyMonitoringSource,
   assertSafeToActivateMonitoringSource,
-  fetchWithSafeRedirects,
+  fetchWithSafeRedirects: verifyFetchWithSafeRedirects,
   extractSelectorPreview
 };

@@ -1,10 +1,8 @@
 "use strict";
 
-const axios = require("axios");
 const cheerio = require("cheerio");
 const crypto = require("crypto");
 const logger = require("../../utils/logger");
-const { extractHostname } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 const {
   isSscApiEnabled,
   isSscApiSite,
@@ -20,6 +18,19 @@ const {
   classifyMonitoringHttpError,
   createMonitoringFetchError
 } = require("./monitoringFetchErrors");
+const {
+  monitoringSafeGet,
+  MonitoringHttpSafetyError,
+  MONITORING_BOT_UA: SAFETY_UA
+} = require("./monitoringHttpSafety");
+const {
+  buildSourcePolicy,
+  assertExactUrlBinding
+} = require("./sourceGovernancePolicy");
+const {
+  recordBlockedSecurityEvent,
+  SECURITY_EVENT_TYPES
+} = require("./monitoringSecurityAudit");
 
 const SOURCE_METHODS = Object.freeze({
   HTML_SELECTOR: "HTML_SELECTOR",
@@ -28,7 +39,7 @@ const SOURCE_METHODS = Object.freeze({
 
 const FETCH_TIMEOUT_MS = 25000;
 const FETCH_HEADERS = Object.freeze({
-  "User-Agent": MONITORING_BOT_UA,
+  "User-Agent": MONITORING_BOT_UA || SAFETY_UA,
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
 });
 
@@ -84,39 +95,12 @@ function itemMatchesBaseline(itemFingerprint, baseline) {
   return String(itemFingerprint || "") === baseline.fingerprint;
 }
 
-function isUpscOfficialSite(site) {
-  const host = extractHostname(site && site.url);
-  return host === "upsc.gov.in" || Boolean(host && host.endsWith(".upsc.gov.in"));
-}
-
-function parseHrefContainsSelector(selector) {
-  const raw = String(selector || "").trim();
-  const match = raw.match(/^a\[href\*=["']([^"']+)["']\]$/i);
-  return match ? match[1] : null;
-}
-
+/**
+ * Select nodes using the exact configured selector only.
+ * No host-specific guessing/fallback — selector miss stays UNKNOWN.
+ */
 function selectLatestRoots($, site) {
-  const roots = $(site.selector);
-  if (roots.length) return roots;
-  if (!isUpscOfficialSite(site)) return roots;
-
-  const needle = parseHrefContainsSelector(site.selector);
-  if (!needle) return roots;
-
-  const lower = needle.toLowerCase();
-  const matched = $("a[href]").filter((_, el) =>
-    String($(el).attr("href") || "")
-      .toLowerCase()
-      .includes(lower)
-  );
-  if (matched.length) {
-    logger.info("updates: UPSC href selector matched case-insensitively", {
-      siteId: site && site.id,
-      selector: site && site.selector,
-      matched: matched.length
-    });
-  }
-  return matched;
+  return $(site.selector);
 }
 
 function absolutizeLink(siteUrl, href) {
@@ -129,17 +113,43 @@ function absolutizeLink(siteUrl, href) {
   }
 }
 
-async function axiosGetReadOnly(url, axiosConfig = {}) {
+/**
+ * Live monitoring GET via central HTTP safety layer (GET-only, safe redirects, size limit).
+ * @param {string} url
+ * @param {object} [axiosConfig]
+ * @param {{ allowWhenAutomationDormant?: boolean, siteId?: number|null }} [safetyOptions]
+ */
+async function axiosGetReadOnly(url, axiosConfig = {}, safetyOptions = {}) {
   try {
-    const response = await axios.get(url, {
+    const response = await monitoringSafeGet(url, {
       timeout: FETCH_TIMEOUT_MS,
-      maxRedirects: 5,
       headers: { ...FETCH_HEADERS, ...(axiosConfig.headers || {}) },
-      ...axiosConfig,
-      method: "GET"
+      responseType: axiosConfig.responseType || "text",
+      transformResponse: axiosConfig.transformResponse || [(data) => data],
+      params: axiosConfig.params,
+      allowWhenAutomationDormant: safetyOptions.allowWhenAutomationDormant === true,
+      siteId: safetyOptions.siteId != null ? safetyOptions.siteId : null,
+      requireOfficialHost: true
     });
-    return response;
+
+    const status = Number(response.status || 0);
+    if (status < 200 || status >= 300) {
+      const err = new Error(`Request failed with status code ${status}`);
+      err.response = { status, headers: response.headers || {}, data: response.data };
+      throw err;
+    }
+
+    return {
+      status,
+      data: response.data,
+      headers: response.headers || {},
+      finalUrl: response.finalUrl,
+      redirectChain: response.redirectChain
+    };
   } catch (err) {
+    if (err instanceof MonitoringHttpSafetyError) {
+      throw err;
+    }
     const classification = classifyMonitoringHttpError(err);
     if (classification.rateLimited) {
       noteHostRateLimited(
@@ -157,11 +167,17 @@ async function fetchHtml(url, options = {}) {
   return withHostPoliteness(
     url,
     async () => {
-      const response = await axiosGetReadOnly(url, {
-        responseType: "text",
-        transformResponse: [(data) => data],
-        validateStatus: (status) => status >= 200 && status < 300
-      });
+      const response = await axiosGetReadOnly(
+        url,
+        {
+          responseType: "text",
+          transformResponse: [(data) => data]
+        },
+        {
+          allowWhenAutomationDormant: options.allowWhenAutomationDormant === true,
+          siteId: options.siteId != null ? options.siteId : null
+        }
+      );
       const data = response.data;
       return typeof data === "string" ? data : String(data || "");
     },
@@ -203,11 +219,14 @@ function extractLatestItems(html, site) {
   return { items };
 }
 
-async function extractSourceItems(site) {
+async function extractSourceItems(site, options = {}) {
   const method = resolveSourceMethod(site);
+  const allowWhenAutomationDormant = options.allowWhenAutomationDormant === true;
   if (method === SOURCE_METHODS.SSC_JSON) {
     logger.info("updates: using SSC API handler", { siteId: site.id, name: site.name, method });
-    const robots = await evaluateRobotsAccessPolicy(site.url);
+    const robots = await evaluateRobotsAccessPolicy(site.url, {
+      allowWhenAutomationDormant
+    });
     if (!robots.allowed) {
       return {
         method,
@@ -220,7 +239,8 @@ async function extractSourceItems(site) {
     noteHostCrawlDelay(site.url, robots.crawlDelayMs || 0);
     const extracted = await withHostPoliteness(
       site.url,
-      async () => extractSscNoticeItems(site, { buildSignature, normalizeText }),
+      async () =>
+        extractSscNoticeItems(site, { buildSignature, normalizeText }, { allowWhenAutomationDormant }),
       { crawlDelayMs: robots.crawlDelayMs || 0 }
     );
     return extracted
@@ -228,7 +248,7 @@ async function extractSourceItems(site) {
       : { method, invalid: true, reason: "selector_miss" };
   }
 
-  const robots = await evaluateRobotsAccessPolicy(site.url);
+  const robots = await evaluateRobotsAccessPolicy(site.url, { allowWhenAutomationDormant });
   if (!robots.allowed) {
     logger.warn("updates: skip fetch; robots/policy denied", {
       siteId: site.id,
@@ -245,7 +265,11 @@ async function extractSourceItems(site) {
   }
   noteHostCrawlDelay(site.url, robots.crawlDelayMs || 0);
 
-  const html = await fetchHtml(site.url, { crawlDelayMs: robots.crawlDelayMs || 0 });
+  const html = await fetchHtml(site.url, {
+    crawlDelayMs: robots.crawlDelayMs || 0,
+    allowWhenAutomationDormant,
+    siteId: site && site.id
+  });
   logger.info("updates: fetched html", { siteId: site.id, bytes: html.length, method });
   const extracted = extractLatestItems(html, site);
   return extracted ? { method, ...extracted } : { method, invalid: true, reason: "selector_miss" };
@@ -253,8 +277,9 @@ async function extractSourceItems(site) {
 
 /**
  * @param {object} site — full row including lastContent
+ * @param {{ allowWhenAutomationDormant?: boolean }} [options]
  */
-async function checkSite(site) {
+async function checkSite(site, options = {}) {
   logger.info("updates: checking site", {
     siteId: site.id,
     name: site.name,
@@ -262,7 +287,28 @@ async function checkSite(site) {
   });
 
   try {
-    const extracted = await extractSourceItems(site);
+    const policy = buildSourcePolicy(site);
+    // URL binding only here — enablement is enforced by scheduler/worker/ACC gates.
+    const binding = assertExactUrlBinding(policy, policy.approvedUrl, { requireEnabled: false });
+    if (!binding.allowed) {
+      await recordBlockedSecurityEvent({
+        eventType: binding.code || SECURITY_EVENT_TYPES.POLICY_REJECTION,
+        reason: binding.reason,
+        action: "SOURCE_URL_BINDING",
+        requestedMethod: "GET",
+        requestedUrl: policy.approvedUrl,
+        siteId: site.id
+      }).catch(() => null);
+      return {
+        changed: false,
+        invalid: true,
+        reason: binding.code || "policy_rejection",
+        policySkip: true,
+        blocked: true
+      };
+    }
+
+    const extracted = await extractSourceItems(site, options);
     if (!extracted) {
       return { changed: false, reason: "selector_miss", invalid: true };
     }
@@ -315,6 +361,21 @@ async function checkSite(site) {
       items: filteredItems
     };
   } catch (err) {
+    if (err instanceof MonitoringHttpSafetyError) {
+      logger.warn("updates: monitoring HTTP safety blocked fetch", {
+        siteId: site && site.id,
+        code: err.code,
+        message: err.message
+      });
+      return {
+        changed: false,
+        invalid: true,
+        reason: err.code || "policy_blocked",
+        policySkip: true,
+        blocked: true,
+        safetyCode: err.code
+      };
+    }
     if (err && err.code === "MONITORING_FETCH_ERROR" && err.classification) {
       const classification = err.classification;
       logger.warn("updates: classified fetch failure", {
@@ -347,7 +408,6 @@ module.exports = {
   resolveSourceMethod,
   extractLatestItems,
   extractSourceItems,
-  isUpscOfficialSite,
   fetchHtml,
   axiosGetReadOnly
 };

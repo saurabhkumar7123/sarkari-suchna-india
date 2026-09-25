@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=21">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=22">
 <script>
 (function () {
   var map = {
@@ -80,10 +80,36 @@
       <h2 id="accSystemStatusHeading">System status</h2>
       <p class="acc-clean-section__sub" id="accOverallExplain">All activation flags are OFF. System is dormant and safe.</p>
     </div>
-    <p class="acc-overall-line">
-      <span class="acc-op-dot is-safe" id="accOverallDot" aria-hidden="true"></span>
-      <strong id="accOverallState">DORMANT / SAFE</strong>
-    </p>
+
+    <div class="acc-ops-banner" aria-label="Primary automation status">
+      <div class="acc-ops-banner__mode">
+        <span class="acc-op-dot is-safe" id="accOverallDot" aria-hidden="true"></span>
+        <div>
+          <span class="acc-ops-banner__label">Mode</span>
+          <strong id="accOverallState">DORMANT / SAFE</strong>
+          <strong class="acc-visually-hidden" id="accSafetyMode">DORMANT</strong>
+        </div>
+      </div>
+      <div class="acc-ops-banner__pills" role="list">
+        <span class="acc-ops-pill" role="listitem"><span>Master</span><strong id="accSafetyMaster">OFF</strong></span>
+        <span class="acc-ops-pill" role="listitem"><span>Emergency</span><strong id="accSafetyEmergency">READY</strong></span>
+        <span class="acc-ops-pill is-locked" role="listitem"><span>Auto Publish</span><strong>LOCKED</strong></span>
+        <span class="acc-ops-pill" role="listitem"><span>Telegram</span><strong id="accTopTelegramState">OFF</strong></span>
+      </div>
+      <div class="acc-ops-banner__sources" aria-label="Source counts">
+        <span><strong id="accOpsSourceTotal">0</strong> configured</span>
+        <span><strong id="accOpsSourceHealthy">0</strong> healthy</span>
+        <span><strong id="accOpsSourceDegraded">0</strong> degraded</span>
+        <span><strong id="accOpsSourceDisabled">0</strong> disabled</span>
+      </div>
+    </div>
+
+    <div class="acc-mode-strip" aria-label="Automation modes">
+      <span class="acc-mode-chip is-active" data-mode="DORMANT" id="accModeChipDormant">DORMANT</span>
+      <span class="acc-mode-chip" data-mode="DRY_RUN" id="accModeChipDryRun">DRY RUN</span>
+      <span class="acc-mode-chip is-risk is-locked" data-mode="LIVE" id="accModeChipLive" title="LIVE requires separate human approval">LIVE / LOCKED</span>
+    </div>
+
     <div class="acc-status-grid" id="accTopStatusStrip" aria-label="Feature status">
       <article class="acc-status-tile" data-status="monitoring">
         <span>Monitoring / Bot</span>
@@ -109,7 +135,6 @@
       <article class="acc-status-tile" data-status="telegram">
         <span>Telegram</span>
         <strong class="acc-state is-off" id="accTelegramStatusBadge">OFF</strong>
-        <strong class="acc-visually-hidden" id="accTopTelegramState">OFF</strong>
         <small id="accTopTelegramExplain">Telegram delivery is OFF.</small>
       </article>
       <article class="acc-status-tile" data-status="gateway">
@@ -145,10 +170,19 @@
     <div class="acc-clean-section__head">
       <h2 id="accSafetyHeading">Safety / Publish gate</h2>
     </div>
+
     <div class="acc-safety-row" aria-label="AUTOMATION STATUS">
       <article>
         <span>Automation</span>
         <strong id="accSafetyActivation">OFF / DORMANT</strong>
+      </article>
+      <article>
+        <span>Master</span>
+        <strong id="accSafetyMasterMirror">OFF</strong>
+      </article>
+      <article>
+        <span>Emergency stop</span>
+        <strong id="accSafetyEmergencyMirror">READY</strong>
       </article>
       <article>
         <span>Auto Publish</span>
@@ -159,8 +193,72 @@
         <strong id="accSafetyHumanPublish">REQUIRED</strong>
       </article>
     </div>
+
+    <div class="acc-policy-grid" id="accHardPolicyPanel" aria-label="Hard policy restrictions">
+      <article class="acc-policy-card acc-policy-card--can">
+        <h3>BOT CAN</h3>
+        <p class="acc-policy-card__hint">Read-only monitoring only</p>
+        <ul class="acc-policy-list" id="accBotCanList">
+          <li>Read approved official public URLs</li>
+          <li>Use GET</li>
+          <li>Detect changes</li>
+          <li>Process approved content</li>
+          <li>Prepare internal results / drafts</li>
+        </ul>
+      </article>
+      <article class="acc-policy-card acc-policy-card--cannot">
+        <h3>BOT CANNOT</h3>
+        <p class="acc-policy-card__hint">Hard safety boundaries — not toggles</p>
+        <ul class="acc-policy-list" id="accBotCannotList">
+          <li>POST / PUT / PATCH / DELETE</li>
+          <li>Login or submit forms</li>
+          <li>Bypass CAPTCHA or authentication</li>
+          <li>Crawl recursively</li>
+          <li>Visit unapproved hosts</li>
+          <li>Follow unsafe redirects</li>
+          <li>Modify government websites</li>
+          <li>Auto-publish</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="acc-ops-control-row" aria-label="Master and emergency controls">
+      <article class="acc-ops-control-card">
+        <span>Master</span>
+        <strong id="accMasterControlState">OFF</strong>
+        <small>Capability flags alone cannot arm LIVE.</small>
+      </article>
+      <article class="acc-ops-control-card acc-ops-control-card--emergency">
+        <span>Emergency stop</span>
+        <strong id="accEmergencyControlState">READY</strong>
+        <div class="acc-ops-control-card__actions">
+          <button type="button" class="header-action-btn acc-btn-danger" id="accBtnEmergencyStop">Engage Emergency Stop</button>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="accBtnClearEmergency">Clear</button>
+        </div>
+      </article>
+    </div>
+
+    <div class="acc-dryrun-panel" id="accDryRunPanel" aria-labelledby="accDryRunHeading">
+      <div class="acc-dryrun-panel__head">
+        <h3 id="accDryRunHeading">Controlled dry-run</h3>
+        <strong class="acc-state is-off" id="accDryRunStateBadge">INACTIVE</strong>
+      </div>
+      <dl class="acc-dryrun-meta">
+        <div><dt>Purpose</dt><dd>Verify real monitoring without publishing or notifications.</dd></div>
+        <div><dt>Scope</dt><dd>1–2 approved GREEN official sources only</dd></div>
+        <div><dt>Publishing</dt><dd>LOCKED</dd></div>
+        <div><dt>Telegram</dt><dd>OFF</dd></div>
+      </dl>
+      <div class="acc-control-actions" id="accControlPlaneActions">
+        <button type="button" class="header-action-btn" id="accBtnDryRunEnable">Enable Dry-Run</button>
+        <button type="button" class="header-action-btn header-action-btn--ghost" id="accBtnDryRunDisable">Disable Dry-Run</button>
+        <button type="button" class="header-action-btn" id="accBtnDryRunBatch">Run Dry-Run (max 2)</button>
+        <span class="acc-note" id="accControlPlaneNote">Control plane is durable on this host via shared JSON file.</span>
+      </div>
+    </div>
+
     <p class="acc-path-line">Monitoring → AI/Draft → Human Review → Approve → Generator → Manual Publish</p>
-    <p class="acc-note">Activation requires explicit authorization. Backend safety remains authoritative.</p>
+    <p class="acc-note">LIVE arming requires separate human approval. Backend safety remains authoritative.</p>
   </section>
 
   <!-- 3. REQUIRES YOUR ACTION -->
@@ -182,6 +280,23 @@
       </div>
       <p class="acc-note">Status: <strong id="accTopMonitoringStateMirror">OFF</strong> · Official Sources <strong id="accMonEnabled">0</strong> · Healthy <strong id="accMonHealthy">0</strong> · Needs attention <strong id="accMonBlocked">0</strong> · Updates <strong id="accMonUpdates">0</strong></p>
       <p class="acc-note">Last activity: <strong id="accMonLastCycle">Not available</strong></p>
+      <div class="acc-source-health-wrap">
+        <table class="acc-source-health-table" aria-label="Source health">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Status</th>
+              <th>Interval</th>
+              <th>Last check</th>
+              <th>Last change</th>
+              <th>Last error</th>
+            </tr>
+          </thead>
+          <tbody id="accSourceHealthRows">
+            <tr class="acc-empty-row"><td colspan="6">No sources loaded.</td></tr>
+          </tbody>
+        </table>
+      </div>
       <div class="acc-visually-hidden" aria-hidden="true">
         <strong id="accMonWarning">0</strong>
         <tbody id="accMonitoringSourceRows"></tbody>
@@ -262,6 +377,12 @@
   <section class="acc-clean-section" id="accErrorsSection" aria-labelledby="accErrorsHeading">
     <div class="acc-clean-section__head">
       <h2 id="accErrorsHeading">Errors / Warnings</h2>
+    </div>
+    <div class="acc-audit-summary" aria-label="Audit summary">
+      <article><span>Blocked actions</span><strong id="accAuditBlocked">Not available</strong></article>
+      <article><span>Unsafe redirects</span><strong id="accAuditRedirects">Not available</strong></article>
+      <article><span>Policy blocks</span><strong id="accAuditPolicy">Not available</strong></article>
+      <article><span>Recent errors</span><strong id="accAuditErrors">Not available</strong></article>
     </div>
     <div class="acc-error-groups" id="accErrorsGroups">
       <div>

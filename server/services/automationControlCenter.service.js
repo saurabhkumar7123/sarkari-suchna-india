@@ -37,8 +37,28 @@ const {
   canStartMonitoringScheduler,
   canAutoDraft,
   isAutoPublishBlocked,
-  isAutomationDormant
+  isAutomationDormant,
+  isDryRunMode
 } = require("../config/automationFlags");
+const {
+  getControlPlaneSnapshot,
+  writeControlPlane,
+  engageEmergencyStop,
+  clearEmergencyStop,
+  setMasterEnabled,
+  setDryRunMode,
+  AUTOMATION_MODES
+} = require("../config/automationControlPlane");
+const {
+  buildSourcePolicy,
+  deriveSourceHealth,
+  HEALTH_STATUS
+} = require("./updates/sourceGovernancePolicy");
+const {
+  recordControlAudit,
+  SECURITY_EVENT_TYPES
+} = require("./updates/monitoringSecurityAudit");
+const monitoringDryRun = require("./updates/monitoringDryRun");
 const { getPlatformSnapshot } = require("./enterprise/enterprisePersistence.service");
 const { evaluateActivationReadiness } = require("../lib/recruitment/productionRuntime/activationReadiness");
 const notificationGateway = require("../lib/enterprise/notificationGateway");
@@ -89,6 +109,7 @@ function latestTimestamp(rows, fields) {
 
 function getPublishingControlState() {
   const flags = getAutomationFlags();
+  const controlPlane = getControlPlaneSnapshot();
   const schedulerArmed = canStartMonitoringScheduler();
   const telegramOn = canDeliverTelegram();
   const telegramConfigured = isTelegramConfigured();
@@ -267,9 +288,53 @@ function getPublishingControlState() {
     },
     publishingMode: "MANUAL REVIEW ONLY",
     dormant: isAutomationDormant() === true,
+    dryRun: isDryRunMode() === true,
+    controlPlane,
+    master: {
+      enabled: controlPlane.masterEnabled === true,
+      emergencyStop: controlPlane.emergencyStop === true,
+      executionPermitted: controlPlane.executionPermitted === true,
+      mode: controlPlane.mode,
+      note: controlPlane.note
+    },
+    hardRestrictions: {
+      botCan: [
+        "Read approved official public URLs",
+        "Use GET",
+        "Detect changes",
+        "Process approved content",
+        "Prepare internal results / drafts"
+      ],
+      botCannot: [
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "Login",
+        "Submit forms",
+        "Bypass CAPTCHA",
+        "Bypass authentication",
+        "Crawl recursively",
+        "Visit unapproved hosts",
+        "Follow unsafe redirects",
+        "Modify government websites",
+        "Auto-publish"
+      ],
+      toggleable: false
+    },
+    safetyGate: {
+      active: true,
+      label: "ACTIVE",
+      liveActivationAvailable: false,
+      liveLockedReason: "LIVE requires separate human approval after pre-LIVE readiness"
+    },
     flags,
     components
   };
+}
+
+function getHardPolicyRestrictions() {
+  return getPublishingControlState().hardRestrictions;
 }
 
 function rejectAutoPublishEnable(input = {}) {
@@ -295,34 +360,19 @@ function updatePublishingControls(input = {}) {
   const before = getPublishingControlState();
   const flags = getAutomationFlags();
 
-  if (input.productionMonitoringEnabled === true) {
-    setEnvFlag("PRODUCTION_MONITORING_ENABLED", true);
-  } else if (input.productionMonitoringEnabled === false) {
-    setEnvFlag("PRODUCTION_MONITORING_ENABLED", false);
-  }
-
-  if (input.liveCrawlerEnabled === true) {
-    setEnvFlag("LIVE_CRAWLER_ENABLED", true);
-  } else if (input.liveCrawlerEnabled === false) {
-    setEnvFlag("LIVE_CRAWLER_ENABLED", false);
-  }
-
-  if (input.schedulerEnabled === true) {
-    setEnvFlag("SCHEDULER_ACTIVATION_ENABLED", true);
-  } else if (input.schedulerEnabled === false) {
-    setEnvFlag("SCHEDULER_ACTIVATION_ENABLED", false);
-  }
-
-  if (input.autoDraftEnabled === true) {
-    setEnvFlag("AUTO_DRAFT_ENABLED", true);
-  } else if (input.autoDraftEnabled === false) {
-    setEnvFlag("AUTO_DRAFT_ENABLED", false);
-  }
-
-  if (input.notificationGatewayEnabled === true) {
-    setEnvFlag("NOTIFICATION_GATEWAY_ENABLED", true);
-  } else if (input.notificationGatewayEnabled === false) {
-    setEnvFlag("NOTIFICATION_GATEWAY_ENABLED", false);
+  // LIVE is never an ordinary ACC control flip. Require explicit master + promoteToLive.
+  const requestedMode = input.mode !== undefined ? String(input.mode).trim().toUpperCase() : "";
+  if (requestedMode === AUTOMATION_MODES.LIVE) {
+    const promoteOk =
+      input.promoteToLive === true &&
+      (input.masterEnabled === true || getControlPlaneSnapshot().masterEnabled === true);
+    if (!promoteOk) {
+      const err = new Error(
+        "LIVE mode requires separate human approval (masterEnabled + promoteToLive). Use DORMANT or DRY_RUN from ACC."
+      );
+      err.statusCode = 403;
+      throw err;
+    }
   }
 
   if (input.telegramEnabled === true) {
@@ -330,22 +380,56 @@ function updatePublishingControls(input = {}) {
       input.notificationGatewayEnabled === true ||
       (input.notificationGatewayEnabled !== false &&
         (flags.NOTIFICATION_GATEWAY_ENABLED === true ||
-          process.env.NOTIFICATION_GATEWAY_ENABLED === "true"));
+          getControlPlaneSnapshot().capabilities.NOTIFICATION_GATEWAY_ENABLED === true));
     if (!gatewayReady) {
       const err = new Error("Telegram requires Notification Gateway to be ON");
       err.statusCode = 409;
       throw err;
     }
-    setEnvFlag("TELEGRAM_DELIVERY_ENABLED", true);
-  } else if (input.telegramEnabled === false) {
-    setEnvFlag("TELEGRAM_DELIVERY_ENABLED", false);
   }
 
-  if (input.workerEnabled === true) {
-    setEnvFlag("WORKER_ACTIVATION_ENABLED", true);
-  } else if (input.workerEnabled === false) {
-    setEnvFlag("WORKER_ACTIVATION_ENABLED", false);
+  // Strip LIVE from ordinary durable writes; promote path handled via setMasterEnabled below.
+  const planeInput = { ...input, updatedBy: input.updatedBy || "acc_controls" };
+  if (requestedMode === AUTOMATION_MODES.LIVE) {
+    delete planeInput.mode;
   }
+
+  // Durable shared control plane (file) — readable by web + worker on this host.
+  writeControlPlane(planeInput);
+
+  // Master / emergency / dry-run are separate durable controls.
+  if (input.emergencyStop === true) {
+    engageEmergencyStop({ updatedBy: input.updatedBy || "acc_controls" });
+  } else if (input.emergencyStop === false) {
+    clearEmergencyStop({ updatedBy: input.updatedBy || "acc_controls" });
+  }
+
+  if (input.masterEnabled === true || input.masterEnabled === false) {
+    setMasterEnabled(input.masterEnabled === true, {
+      updatedBy: input.updatedBy || "acc_controls",
+      promoteToLive: input.masterEnabled === true && input.promoteToLive === true
+    });
+  } else if (requestedMode === AUTOMATION_MODES.LIVE && input.promoteToLive === true) {
+    setMasterEnabled(true, {
+      updatedBy: input.updatedBy || "acc_controls",
+      promoteToLive: true
+    });
+  }
+
+  if (input.dryRunEnabled === true || input.mode === AUTOMATION_MODES.DRY_RUN) {
+    setDryRunMode(true, { updatedBy: input.updatedBy || "acc_controls" });
+  } else if (input.dryRunEnabled === false) {
+    setDryRunMode(false, { updatedBy: input.updatedBy || "acc_controls" });
+  } else if (input.mode === AUTOMATION_MODES.DORMANT) {
+    writeControlPlane({ mode: AUTOMATION_MODES.DORMANT, updatedBy: input.updatedBy || "acc_controls" });
+  }
+
+  recordControlAudit({
+    eventType: SECURITY_EVENT_TYPES.CONFIG_CHANGED,
+    action: "ACC_CONTROLS_UPDATE",
+    actor: input.updatedBy || "acc_controls",
+    detail: { inputKeys: Object.keys(input || {}) }
+  }).catch(() => null);
 
   const after = getPublishingControlState();
   return {
@@ -353,6 +437,8 @@ function updatePublishingControls(input = {}) {
     change: {
       beforeFlags: before.flags,
       afterFlags: after.flags,
+      beforeMode: before.controlPlane && before.controlPlane.mode,
+      afterMode: after.controlPlane && after.controlPlane.mode,
       input: { ...input }
     }
   };
@@ -883,7 +969,15 @@ function buildOperatorOverview({
       publishingMode: publishingControls?.publishingMode || "MANUAL REVIEW ONLY",
       why: safetyWhy,
       activationDecision: readiness?.decision || "NO-GO",
-      blockers: Array.isArray(readiness?.blockers) ? readiness.blockers : []
+      blockers: Array.isArray(readiness?.blockers) ? readiness.blockers : [],
+      mode: (publishingControls && publishingControls.controlPlane && publishingControls.controlPlane.mode) || "DORMANT",
+      live: publishingControls?.controlPlane?.live === true,
+      masterEnabled: publishingControls?.master?.enabled === true,
+      emergencyStop: publishingControls?.master?.emergencyStop === true,
+      dryRun: publishingControls?.dryRun === true,
+      hardRestrictions: publishingControls?.hardRestrictions || null,
+      controlPlaneNote: publishingControls?.master?.note || null,
+      safetyGate: publishingControls?.safetyGate || null
     },
     monitoring: {
       status: monitoringOn ? "ON" : "OFF",
@@ -1066,17 +1160,31 @@ function normalizeSourceRow(site) {
   }
   const broken = Number(site.broken) === 1;
   const active = Number(site.active) === 1 || site.enabled === true;
-  const healthStatus = broken ? "offline" : active ? "healthy" : "warning";
   const selector = String(site.selector || "").trim();
   const monitoringUrl = String(site.url || "");
   const purpose = normalizePurpose(site.purpose);
   const failCount = Number(site.failCount || 0);
+
+  const policy = buildSourcePolicy(site);
+  const governanceHealth = deriveSourceHealth(site, { policy });
+  const governanceStatus = governanceHealth.healthStatus || HEALTH_STATUS.UNKNOWN;
+
+  // Legacy ACC display strings (preserved) + truthful governance enum.
+  let healthStatus = "warning";
+  if (governanceStatus === HEALTH_STATUS.HEALTHY) healthStatus = "healthy";
+  else if (governanceStatus === HEALTH_STATUS.ERROR || governanceStatus === HEALTH_STATUS.BLOCKED) {
+    healthStatus = "offline";
+  } else if (broken) healthStatus = "offline";
+  else if (active) healthStatus = "healthy";
+
   let operationalState = "DRAFT";
-  if (broken) {
+  if (governanceStatus === HEALTH_STATUS.BLOCKED) {
+    operationalState = "BLOCKED";
+  } else if (broken || governanceStatus === HEALTH_STATUS.ERROR) {
     operationalState = failCount > 0 ? "ERROR" : "BLOCKED";
   } else if (active) {
     operationalState = "ACTIVE";
-  } else if (site.lastCheckedAt) {
+  } else if (site.lastCheckedAt || governanceStatus === HEALTH_STATUS.DISABLED) {
     operationalState = "DISABLED";
   } else {
     operationalState = "DRAFT";
@@ -1085,7 +1193,7 @@ function normalizeSourceRow(site) {
   // Human-curation quality hint (derived; no schema change).
   // Homepage + bare/generic `a` selectors stay YELLOW even if enabled (not auto-promoted GREEN).
   let qualityGrade = "YELLOW";
-  if (broken) {
+  if (broken || governanceStatus === HEALTH_STATUS.BLOCKED) {
     qualityGrade = "BLOCKED";
   } else if (active && selector && !/^body$/i.test(selector)) {
     let pathname = "/";
@@ -1096,21 +1204,37 @@ function normalizeSourceRow(site) {
     }
     const isHomepage = pathname === "/" || pathname === "";
     if (isHomepage && /^a(\[|$)/i.test(selector)) qualityGrade = "YELLOW";
-    else qualityGrade = "GREEN";
+    else if (governanceStatus === HEALTH_STATUS.DEGRADED || governanceStatus === HEALTH_STATUS.UNKNOWN) {
+      qualityGrade = "YELLOW";
+    } else qualityGrade = "GREEN";
   }
 
   return {
     id: Number(site.id),
     name: String(site.name || ""),
     priority: `P${Math.max(0, Math.min(3, Number(site.priority || 1) - 1))}`,
-    officialDomain,
+    officialDomain: policy.officialHost || officialDomain,
+    officialHost: policy.officialHost || officialDomain,
+    approvedUrl: policy.approvedUrl || monitoringUrl,
     monitoringUrl,
     notificationUrl: monitoringUrl,
     selector,
     purpose,
     purposeLabel: purposeLabel(purpose) || "",
     healthStatus,
-    healthStatusSource: "derived",
+    healthStatusSource: "governance",
+    governanceHealthStatus: governanceStatus,
+    governance: {
+      pollIntervalMinutes: policy.pollIntervalMinutes,
+      timeoutMs: policy.timeoutMs,
+      rateLimitMs: policy.rateLimitMs,
+      maxResponseBytes: policy.maxResponseBytes,
+      hostApproved: policy.hostApproved,
+      selectorPolicy: policy.selectorPolicy,
+      robotsPolicy: policy.robotsPolicy,
+      redirectPolicy: policy.redirectPolicy
+    },
+    health: governanceHealth,
     operationalState,
     qualityGrade,
     enabled: active,
@@ -1120,8 +1244,12 @@ function normalizeSourceRow(site) {
     lastCheckedAt: site.lastCheckedAt || null,
     lastSuccessfulCheck: broken ? null : site.lastCheckedAt || null,
     lastDetectedChange: site.lastAlertAt || null,
+    lastError: governanceHealth.lastError || null,
     nextEligibleCheck: site.nextRetryAt || null,
-    selectorStatus: !selector ? "missing" : /^body$/i.test(selector) ? "too_broad" : "configured",
+    pollIntervalMinutes: policy.pollIntervalMinutes,
+    selectorStatus:
+      governanceHealth.selectorStatus ||
+      (!selector ? "missing" : /^body$/i.test(selector) ? "too_broad" : "configured"),
     version: Number(site.version || 1)
   };
 }
@@ -1388,7 +1516,7 @@ async function runSourceCheck(id) {
     active: row.active
   };
 
-  const result = await checkSite(site);
+  const result = await checkSite(site, { allowWhenAutomationDormant: true });
   if (result && result.establishBaseline) {
     await saveSiteBaseline(sourceId, result.baselineFingerprint || "");
   } else {
@@ -1607,7 +1735,9 @@ async function getAccSnapshot() {
     audit: audit.data,
     recruitments: recruitments.data || [],
     drafts: drafts.drafts || [],
-    reviews: reviews.data || []
+    reviews: reviews.data || [],
+    controls: getPublishingControlState(),
+    controlPlane: getControlPlaneSnapshot()
   };
 }
 
@@ -1629,6 +1759,15 @@ module.exports = {
   getAccSnapshot,
   getPublishingControlState,
   updatePublishingControls,
+  getHardPolicyRestrictions,
+  engageEmergencyStop: (input) => engageEmergencyStop(input),
+  clearEmergencyStop: (input) => clearEmergencyStop(input),
+  setMasterEnabled: (enabled, input) => setMasterEnabled(enabled, input),
+  setDryRunMode: (enabled, input) => setDryRunMode(enabled, input),
+  getControlPlaneSnapshot: () => getControlPlaneSnapshot(),
+  runDryRunBatch: (options) => monitoringDryRun.runDryRunBatch(options),
+  runSourceDryRun: (siteOrId, options) => monitoringDryRun.runSourceDryRun(siteOrId, options),
+  getDryRunStatus: () => monitoringDryRun.getDryRunStatus(),
   buildActiveOfficialSources,
   buildManualWorkflow,
   buildRecentPipelineActivity,

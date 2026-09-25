@@ -92,6 +92,108 @@
     if (el) el.textContent = String(value ?? "");
   }
 
+  function renderPolicyLists(hardRestrictions) {
+    const canEl = qs("accBotCanList");
+    const cannotEl = qs("accBotCannotList");
+    if (!canEl || !cannotEl) return;
+    const can = (hardRestrictions && hardRestrictions.botCan) || [
+      "Read approved official public URLs",
+      "Use GET",
+      "Detect changes",
+      "Process approved content",
+      "Prepare internal results / drafts"
+    ];
+    const cannot = (hardRestrictions && hardRestrictions.botCannot) || [
+      "POST / PUT / PATCH / DELETE",
+      "Login or submit forms",
+      "Bypass CAPTCHA or authentication",
+      "Crawl recursively",
+      "Visit unapproved hosts",
+      "Follow unsafe redirects",
+      "Modify government websites",
+      "Auto-publish"
+    ];
+    canEl.innerHTML = can.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+    cannotEl.innerHTML = cannot.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  }
+
+  function formatShortTime(value) {
+    if (!value) return "—";
+    try {
+      return new Date(value).toLocaleString();
+    } catch {
+      return String(value);
+    }
+  }
+
+  function healthBadgeClass(status) {
+    const s = String(status || "UNKNOWN").toUpperCase();
+    if (s === "HEALTHY") return "is-healthy";
+    if (s === "DEGRADED" || s === "UNKNOWN") return s === "UNKNOWN" ? "is-unknown" : "is-degraded";
+    if (s === "ERROR" || s === "BLOCKED") return s === "BLOCKED" ? "is-blocked" : "is-error";
+    if (s === "DISABLED") return "is-disabled";
+    if (s === "healthy") return "is-healthy";
+    if (s === "warning") return "is-degraded";
+    if (s === "offline") return "is-error";
+    return "is-unknown";
+  }
+
+  function resolveGovernanceStatus(row) {
+    if (row && row.governanceHealthStatus) return String(row.governanceHealthStatus).toUpperCase();
+    const legacy = String((row && row.healthStatus) || "").toLowerCase();
+    if (legacy === "healthy") return "HEALTHY";
+    if (legacy === "warning") return "DEGRADED";
+    if (legacy === "offline") return "ERROR";
+    if (row && row.enabled === false) return "DISABLED";
+    return "UNKNOWN";
+  }
+
+  function renderSourceHealthTable(rows) {
+    const body = qs("accSourceHealthRows");
+    if (!body) return;
+    const list = Array.isArray(rows) ? rows.slice(0, 25) : [];
+    if (!list.length) {
+      body.innerHTML = `<tr class="acc-empty-row"><td colspan="6">No sources loaded.</td></tr>`;
+      return;
+    }
+    body.innerHTML = list
+      .map((row) => {
+        const status = resolveGovernanceStatus(row);
+        const name = escapeHtml(row.name || `Source ${row.id}`);
+        const host = escapeHtml(row.officialHost || row.officialDomain || "");
+        const interval = row.pollIntervalMinutes != null ? `${row.pollIntervalMinutes}m` : "—";
+        return `<tr>
+          <td data-label="Source"><strong>${name}</strong><div class="acc-note">${host}</div></td>
+          <td data-label="Status"><span class="acc-health-badge ${healthBadgeClass(status)}">${escapeHtml(status)}</span></td>
+          <td data-label="Interval">${escapeHtml(interval)}</td>
+          <td data-label="Last check">${escapeHtml(formatShortTime(row.lastCheckedAt || row.lastVisit))}</td>
+          <td data-label="Last change">${escapeHtml(formatShortTime(row.lastDetectedChange))}</td>
+          <td data-label="Last error">${escapeHtml(row.lastError || "—")}</td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function renderAuditSummary(auditRows) {
+    const rows = Array.isArray(auditRows) ? auditRows : [];
+    if (!rows.length) {
+      setText("accAuditBlocked", "Not available");
+      setText("accAuditRedirects", "Not available");
+      setText("accAuditPolicy", "Not available");
+      setText("accAuditErrors", "Not available");
+      return;
+    }
+    const textOf = (row) => `${row.event || ""} ${row.category || ""} ${row.summary || ""}`.toUpperCase();
+    const blocked = rows.filter((r) => /BLOCK|UNSAFE|POLICY|KILL/.test(textOf(r))).length;
+    const redirects = rows.filter((r) => /REDIRECT/.test(textOf(r))).length;
+    const policy = rows.filter((r) => /POLICY|UNAPPROVED|INVALID/.test(textOf(r))).length;
+    const errors = rows.filter((r) => /ERROR|FAIL/.test(textOf(r))).length;
+    setText("accAuditBlocked", blocked);
+    setText("accAuditRedirects", redirects);
+    setText("accAuditPolicy", policy);
+    setText("accAuditErrors", errors);
+  }
+
   function formatHealthLabel(value) {
     return String(value || "unknown").replace(/^\w/, (char) => char.toUpperCase());
   }
@@ -176,7 +278,7 @@
     setText("accRecruitmentsProcessing", processing);
     setText("accDraftQueue", state.drafts.length);
     setText("accReviewQueue", state.reviews.length);
-    setText("accTodayUpdates", state.audit.length);
+    setText("accTodayUpdates", Number(state.dashboard?.operatorOverview?.monitoring?.updatesDetected ?? state.audit.length) || 0);
     setText("accPendingReviews", state.reviews.length);
     setText("accPublishedToday", 0);
     setText("accAverageConfidence", `${avgConfidence}%`);
@@ -346,13 +448,62 @@
 
     setText(
       "accSafetyActivation",
-      state.dashboard?.isDormant ? "OFF / DORMANT" : (safety.automationActivation || "OFF")
+      state.dashboard?.isDormant && !safety.dryRun
+        ? "OFF / DORMANT"
+        : safety.dryRun
+          ? "DRY RUN"
+          : (safety.automationActivation || "OFF")
     );
+    const modeLabel = safety.mode || (safety.dryRun ? "DRY_RUN" : "DORMANT");
+    setText("accSafetyMode", modeLabel);
+    const masterLabel = safety.masterEnabled ? "ON" : "OFF";
+    const emergencyLabel = safety.emergencyStop ? "ENGAGED" : "READY";
+    setText("accSafetyMaster", masterLabel);
+    setText("accSafetyMasterMirror", masterLabel);
+    setText("accMasterControlState", masterLabel);
+    setText("accSafetyEmergency", emergencyLabel);
+    setText("accSafetyEmergencyMirror", emergencyLabel);
+    setText("accEmergencyControlState", emergencyLabel);
     setText("accSafetyAutoPublish", "LOCKED / HUMAN REQUIRED");
     setText("accSafetyHumanPublish", "REQUIRED");
     setText("accSafetyMutation", safety.productionMutation || "BLOCKED");
     setText("accPublishingModeStatus", "MANUAL REVIEW ONLY");
     setText("accPublishingModeBadge", "Publishing Mode: MANUAL REVIEW ONLY");
+    setText("accDryRunStateBadge", safety.dryRun ? "ACTIVE" : "INACTIVE");
+    setStateBadge("accDryRunStateBadge", safety.dryRun ? "ON" : "OFF");
+
+    qs("accModeChipDormant")?.classList.toggle("is-active", modeLabel === "DORMANT" && !safety.dryRun && !safety.live);
+    qs("accModeChipDryRun")?.classList.toggle("is-active", modeLabel === "DRY_RUN" || safety.dryRun === true);
+    // LIVE chip never lights as an ordinary mode; only when backend reports true live execution.
+    const liveArmed = safety.live === true && safety.masterEnabled === true && !safety.emergencyStop;
+    qs("accModeChipLive")?.classList.toggle("is-active", liveArmed);
+    qs("accModeChipLive")?.classList.toggle("is-locked", !liveArmed);
+
+    renderPolicyLists(safety.hardRestrictions);
+    if (safety.controlPlaneNote) {
+      setText("accControlPlaneNote", safety.controlPlaneNote);
+    }
+
+    renderSourceHealthTable(state.sources || []);
+    renderAuditSummary(state.audit || []);
+
+    const sources = Array.isArray(state.sources) ? state.sources : [];
+    setText("accOpsSourceTotal", sources.length);
+    setText(
+      "accOpsSourceHealthy",
+      sources.filter((s) => String(s.governanceHealthStatus || s.healthStatus || "").toUpperCase() === "HEALTHY" || s.healthStatus === "healthy").length
+    );
+    setText(
+      "accOpsSourceDegraded",
+      sources.filter((s) => {
+        const h = String(s.governanceHealthStatus || "").toUpperCase();
+        return h === "DEGRADED" || h === "UNKNOWN" || s.healthStatus === "warning";
+      }).length
+    );
+    setText(
+      "accOpsSourceDisabled",
+      sources.filter((s) => !s.enabled || String(s.governanceHealthStatus || "").toUpperCase() === "DISABLED").length
+    );
 
     const actionsHost = qs("accHumanActionList");
     if (actionsHost) {
@@ -637,7 +788,8 @@
     setText("accPublishingModeStatus", publishingMode);
     setText("accPublishingModeBadge", `Publishing Mode: ${publishingMode}`);
     setStateBadge("accSafetyAutomationState", automationLabel);
-    setText("accSafetyGateState", "ACTIVE");
+    const gate = controls.safetyGate || {};
+    setText("accSafetyGateState", gate.label || (gate.active === false ? "INACTIVE" : "ACTIVE"));
     setText("accLockPanelStatus", "LOCKED");
 
     setSwitch("accSchedulerToggle", "accSchedulerToggleLabel", scheduler.enabled === true);
@@ -1781,6 +1933,65 @@
       renderAll();
       toastSuccess("ACC refreshed.");
     });
+
+    qs("accBtnDryRunEnable")?.addEventListener("click", () => {
+      apiFetch("/api/admin/automation-control-center/controls", {
+        method: "PATCH",
+        body: JSON.stringify({ dryRunEnabled: true })
+      })
+        .then(() => loadSnapshot())
+        .then(() => {
+          renderAll();
+          toastSuccess("Dry-run mode enabled (read-only; no publish/Telegram).");
+        })
+        .catch((err) => toastError(err.message || "Dry-run enable failed"));
+    });
+    qs("accBtnDryRunDisable")?.addEventListener("click", () => {
+      apiFetch("/api/admin/automation-control-center/controls", {
+        method: "PATCH",
+        body: JSON.stringify({ dryRunEnabled: false })
+      })
+        .then(() => loadSnapshot())
+        .then(() => {
+          renderAll();
+          toastSuccess("Dry-run mode disabled.");
+        })
+        .catch((err) => toastError(err.message || "Dry-run disable failed"));
+    });
+    qs("accBtnDryRunBatch")?.addEventListener("click", () => {
+      apiFetch("/api/admin/automation-control-center/dry-run/run", {
+        method: "POST",
+        body: JSON.stringify({ limit: 2 })
+      })
+        .then((data) => {
+          toastSuccess(`Dry-run complete: ${data && data.count != null ? data.count : 0} source(s). Nothing published.`);
+          return loadSnapshot();
+        })
+        .then(() => renderAll())
+        .catch((err) => toastError(err.message || "Dry-run batch failed"));
+    });
+    qs("accBtnEmergencyStop")?.addEventListener("click", () => {
+      if (!window.confirm("Engage emergency stop? This disables master and forces DORMANT across this host.")) {
+        return;
+      }
+      apiFetch("/api/admin/automation-control-center/emergency-stop", { method: "POST", body: "{}" })
+        .then(() => loadSnapshot())
+        .then(() => {
+          renderAll();
+          toastSuccess("Emergency stop engaged.");
+        })
+        .catch((err) => toastError(err.message || "Emergency stop failed"));
+    });
+    qs("accBtnClearEmergency")?.addEventListener("click", () => {
+      apiFetch("/api/admin/automation-control-center/emergency-stop/clear", { method: "POST", body: "{}" })
+        .then(() => loadSnapshot())
+        .then(() => {
+          renderAll();
+          toastSuccess("Emergency stop cleared (master remains OFF until explicitly enabled).");
+        })
+        .catch((err) => toastError(err.message || "Clear emergency stop failed"));
+    });
+
     qs("accOpenPaletteBtn")?.addEventListener("click", () => window.AdminCommandPalette?.open?.());
     qs("accSourceSearch")?.addEventListener("input", () => {
       loadSourcesPage(1).then(renderSources).catch((err) => toastError(err.message || "Filter failed"));

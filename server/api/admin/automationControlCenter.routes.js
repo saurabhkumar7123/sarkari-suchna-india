@@ -12,7 +12,8 @@ const {
   automationSettingsUpdateSchema,
   automationWorkflowListQuerySchema,
   automationAuditListQuerySchema,
-  automationControlsUpdateSchema
+  automationControlsUpdateSchema,
+  automationDryRunBatchSchema
 } = require("../../validations/admin.validation");
 
 const router = express.Router();
@@ -66,6 +67,11 @@ router.post(
   adminSensitiveLimiter,
   asyncHandler(controller.runSourceCheckHandler)
 );
+router.post(
+  "/automation-control-center/sources/:id/dry-run",
+  adminSensitiveLimiter,
+  asyncHandler(controller.runSourceDryRunHandler)
+);
 router.delete(
   "/automation-control-center/sources/:id",
   adminSensitiveLimiter,
@@ -97,6 +103,30 @@ router.patch(
   adminSensitiveLimiter,
   validateJoi(automationControlsUpdateSchema, "body"),
   asyncHandler(controller.updateControlsHandler)
+);
+router.get(
+  "/automation-control-center/control-plane",
+  asyncHandler(controller.getControlPlaneHandler)
+);
+router.post(
+  "/automation-control-center/emergency-stop",
+  adminSensitiveLimiter,
+  asyncHandler(controller.emergencyStopHandler)
+);
+router.post(
+  "/automation-control-center/emergency-stop/clear",
+  adminSensitiveLimiter,
+  asyncHandler(controller.clearEmergencyStopHandler)
+);
+router.get(
+  "/automation-control-center/dry-run",
+  asyncHandler(controller.getDryRunStatusHandler)
+);
+router.post(
+  "/automation-control-center/dry-run/run",
+  adminSensitiveLimiter,
+  validateJoi(automationDryRunBatchSchema, "body"),
+  asyncHandler(controller.runDryRunBatchHandler)
 );
 
 module.exports = router;

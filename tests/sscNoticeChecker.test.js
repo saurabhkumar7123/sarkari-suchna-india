@@ -13,6 +13,7 @@ const {
   mapNoticeRow,
   extractSscNoticeItems
 } = require("../server/services/updates/sscNoticeChecker");
+const { clearRobotsPolicyCache } = require("../server/services/updates/robotsAccessPolicy");
 
 const helpers = {
   buildSignature,
@@ -22,11 +23,29 @@ const helpers = {
       .trim()
 };
 
+function mockAxiosGet(handler) {
+  axios.get.mockImplementation(async (url, config) => {
+    if (String(url).includes("robots.txt")) {
+      return { status: 200, headers: {}, data: "User-agent: *\nAllow: /\n" };
+    }
+    return handler(url, config);
+  });
+}
+
 describe("sscNoticeChecker", () => {
   const originalFlag = process.env.SSC_USE_API;
+  const originalMaster = process.env.AUTOMATION_MASTER_ENABLED;
+
+  beforeEach(() => {
+    process.env.AUTOMATION_MASTER_ENABLED = "1";
+    clearRobotsPolicyCache();
+  });
 
   afterEach(() => {
     process.env.SSC_USE_API = originalFlag;
+    if (originalMaster === undefined) delete process.env.AUTOMATION_MASTER_ENABLED;
+    else process.env.AUTOMATION_MASTER_ENABLED = originalMaster;
+    clearRobotsPolicyCache();
     jest.resetAllMocks();
   });
 
@@ -72,28 +91,34 @@ describe("sscNoticeChecker", () => {
   });
 
   test("extractSscNoticeItems returns ssc_api_error on bad API status", async () => {
-    axios.get.mockResolvedValue({
-      data: { statusCode: "203", error: "Invalid attributes in request" }
-    });
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({ statusCode: "203", error: "Invalid attributes in request" })
+    }));
 
-    const result = await extractSscNoticeItems({ id: 1 }, helpers);
+    const result = await extractSscNoticeItems({ id: 1, url: "https://ssc.gov.in/" }, helpers);
     expect(result.invalid).toBe(true);
     expect(result.reason).toBe("ssc_api_error");
   });
 
   test("extractSscNoticeItems returns ssc_api_empty when no usable rows", async () => {
-    axios.get.mockResolvedValue({
-      data: { statusCode: "200", data: [{ headline: "   " }] }
-    });
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({ statusCode: "200", data: [{ headline: "   " }] })
+    }));
 
-    const result = await extractSscNoticeItems({ id: 1 }, helpers);
+    const result = await extractSscNoticeItems({ id: 1, url: "https://ssc.gov.in/" }, helpers);
     expect(result.invalid).toBe(true);
     expect(result.reason).toBe("ssc_api_empty");
   });
 
   test("extractSscNoticeItems maps API rows", async () => {
-    axios.get.mockResolvedValue({
-      data: {
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({
         statusCode: "200",
         data: [
           {
@@ -101,10 +126,10 @@ describe("sscNoticeChecker", () => {
             attachments: [{ path: "uploads/masterData/NoticeBoards/a.pdf" }]
           }
         ]
-      }
-    });
+      })
+    }));
 
-    const result = await extractSscNoticeItems({ id: 1 }, helpers);
+    const result = await extractSscNoticeItems({ id: 1, url: "https://ssc.gov.in/" }, helpers);
     expect(result.items).toHaveLength(1);
     expect(result.items[0]).toMatchObject({
       title: "Notice A",
@@ -116,15 +141,24 @@ describe("sscNoticeChecker", () => {
 
 describe("checkSite SSC API branch", () => {
   const originalFlag = process.env.SSC_USE_API;
+  const originalMaster = process.env.AUTOMATION_MASTER_ENABLED;
+
+  beforeEach(() => {
+    process.env.AUTOMATION_MASTER_ENABLED = "1";
+    clearRobotsPolicyCache();
+  });
 
   afterEach(() => {
     process.env.SSC_USE_API = originalFlag;
+    if (originalMaster === undefined) delete process.env.AUTOMATION_MASTER_ENABLED;
+    else process.env.AUTOMATION_MASTER_ENABLED = originalMaster;
+    clearRobotsPolicyCache();
     jest.resetAllMocks();
   });
 
   test("SSC with flag off uses HTML path and can selector_miss", async () => {
     process.env.SSC_USE_API = "0";
-    axios.get.mockResolvedValue({ data: "<html><body></body></html>" });
+    mockAxiosGet(async () => ({ status: 200, headers: {}, data: "<html><body></body></html>" }));
 
     const result = await checkSite({
       id: 1,
@@ -138,22 +172,29 @@ describe("checkSite SSC API branch", () => {
     expect(result.reason).toBe("selector_miss");
     expect(axios.get).toHaveBeenCalledWith(
       "https://ssc.gov.in/",
-      expect.objectContaining({ timeout: 25000 })
+      expect.objectContaining({ timeout: 25000, method: "GET" })
     );
   });
 
   test("SSC with flag on uses API and establishes baseline without alert", async () => {
     process.env.SSC_USE_API = "1";
-    axios.get.mockResolvedValue({
-      data: {
-        statusCode: "200",
-        data: [
-          {
-            headline: "Delhi Police Result Notice",
-            attachments: [{ path: "uploads/masterData/NoticeBoards/result.pdf" }]
-          }
-        ]
+    mockAxiosGet(async (url) => {
+      if (String(url).includes("/api/general-website/portal/notice-boards")) {
+        return {
+          status: 200,
+          headers: {},
+          data: JSON.stringify({
+            statusCode: "200",
+            data: [
+              {
+                headline: "Delhi Police Result Notice",
+                attachments: [{ path: "uploads/masterData/NoticeBoards/result.pdf" }]
+              }
+            ]
+          })
+        };
       }
+      return { status: 200, headers: {}, data: "<html></html>" };
     });
 
     const result = await checkSite({
@@ -176,13 +217,15 @@ describe("checkSite SSC API branch", () => {
 
   test("UPSC with SSC flag on still uses HTML path", async () => {
     process.env.SSC_USE_API = "1";
-    axios.get.mockResolvedValue({
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
       data: `
         <html><body>
           <a href="/notice/example.pdf">UPSC Latest Notice Title Here</a>
         </body></html>
       `
-    });
+    }));
 
     const result = await checkSite({
       id: 2,
@@ -196,12 +239,11 @@ describe("checkSite SSC API branch", () => {
     expect(result.reason).toBe("baseline_established");
     expect(axios.get).toHaveBeenCalledWith(
       "https://upsc.gov.in/",
-      expect.objectContaining({ timeout: 25000 })
+      expect.objectContaining({ timeout: 25000, method: "GET" })
     );
-    expect(axios.get).not.toHaveBeenCalledWith(
-      "https://ssc.gov.in/api/general-website/portal/notice-boards",
-      expect.anything()
-    );
+    expect(
+      axios.get.mock.calls.some((c) => String(c[0]).includes("/api/general-website/portal/notice-boards"))
+    ).toBe(false);
   });
 
   test("SSC baseline path suppresses alert when top item unchanged", async () => {
@@ -211,12 +253,14 @@ describe("checkSite SSC API branch", () => {
     const fingerprint = buildSignature(`${title} ${link}`);
     const baseline = normalizeStoredBaseline(fingerprint);
 
-    axios.get.mockResolvedValue({
-      data: {
+    mockAxiosGet(async () => ({
+      status: 200,
+      headers: {},
+      data: JSON.stringify({
         statusCode: "200",
         data: [{ headline: title, attachments: [{ path: "uploads/masterData/NoticeBoards/result.pdf" }] }]
-      }
-    });
+      })
+    }));
 
     const result = await checkSite({
       id: 1,

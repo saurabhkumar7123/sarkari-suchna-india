@@ -21,11 +21,11 @@
  * require a successful policy decision (404 = explicit "no robots rules").
  */
 
-const axios = require("axios");
 const robotsParser = require("robots-parser");
 const logger = require("../../utils/logger");
 const { extractHostname } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
 const { createHttpError } = require("./monitoringUrlSafety");
+const { monitoringSafeGet, MonitoringHttpSafetyError } = require("./monitoringHttpSafety");
 
 const MONITORING_BOT_UA =
   process.env.UPDATE_BOT_USER_AGENT ||
@@ -63,18 +63,18 @@ function setCached(hostKey, decision) {
   robotsCache.set(hostKey, { expiresAt: Date.now() + ROBOTS_CACHE_TTL_MS, decision });
 }
 
-async function fetchRobotsTxt(robotsUrl) {
+async function fetchRobotsTxt(robotsUrl, options = {}) {
   try {
-    const response = await axios.get(robotsUrl, {
+    const response = await monitoringSafeGet(robotsUrl, {
       timeout: ROBOTS_TIMEOUT_MS,
       maxRedirects: 3,
-      validateStatus: () => true,
+      maxBytes: 256 * 1024,
+      allowWhenAutomationDormant: options.allowWhenAutomationDormant === true,
+      requireOfficialHost: true,
+      accept: "text/plain,*/*",
+      userAgent: MONITORING_BOT_UA,
       responseType: "text",
-      transformResponse: [(data) => data],
-      headers: {
-        Accept: "text/plain,*/*",
-        "User-Agent": MONITORING_BOT_UA
-      }
+      transformResponse: [(data) => data]
     });
     return {
       ok: true,
@@ -82,6 +82,15 @@ async function fetchRobotsTxt(robotsUrl) {
       body: typeof response.data === "string" ? response.data : String(response.data || "")
     };
   } catch (err) {
+    if (err instanceof MonitoringHttpSafetyError) {
+      return {
+        ok: false,
+        status: 0,
+        body: "",
+        errorCode: err.code || "POLICY_BLOCKED",
+        errorMessage: err.message
+      };
+    }
     const code = err && err.code ? String(err.code) : "";
     const message = err && err.message ? String(err.message) : String(err);
     return {
@@ -185,7 +194,9 @@ async function evaluateRobotsAccessPolicy(targetUrl, options = {}) {
   }
 
   const robotsUrl = robotsUrlFor(parsed.toString());
-  const fetched = await fetchRobotsTxt(robotsUrl);
+  const fetched = await fetchRobotsTxt(robotsUrl, {
+    allowWhenAutomationDormant: options.allowWhenAutomationDormant === true
+  });
 
   if (!fetched.ok) {
     const decision = {
@@ -309,8 +320,10 @@ async function evaluateRobotsAccessPolicy(targetUrl, options = {}) {
 /**
  * Hard gate for create / enable / restore. Throws HTTP error on deny.
  */
-async function assertRobotsAllowsMonitoring(targetUrl) {
-  const decision = await evaluateRobotsAccessPolicy(targetUrl);
+async function assertRobotsAllowsMonitoring(targetUrl, options = {}) {
+  const decision = await evaluateRobotsAccessPolicy(targetUrl, {
+    allowWhenAutomationDormant: options.allowWhenAutomationDormant !== false
+  });
   if (decision.allowed === true) return decision;
 
   const message =

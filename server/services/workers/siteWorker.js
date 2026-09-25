@@ -25,14 +25,25 @@ const {
   buildBatchUpdateMessage,
   buildPreDisableWarningMessage
 } = require("../updates/telegramNotifier");
-const { isRecruitmentPipelineEnabled } = require("../../config/recruitmentPipeline");
-const { getAutomationFlags } = require("../../config/automationFlags");
+const { getAutomationFlags, canRunAutomationWorkers } = require("../../config/automationFlags");
+const automationFlags = require("../../config/automationFlags");
 const {
   runProductionDetectionPipeline,
   isProductionRuntimeEnabled
 } = require("../../lib/recruitment/productionRuntime");
-const { canRunAutomationWorkers } = require("../../config/automationFlags");
 const { isApprovedOfficialMonitoringUrl } = require("../../lib/contentIntelligence/sourceIntelligence/officialDomains");
+const {
+  buildSourcePolicy,
+  assertExactUrlBinding
+} = require("../updates/sourceGovernancePolicy");
+const {
+  recordBlockedSecurityEvent,
+  SECURITY_EVENT_TYPES
+} = require("../updates/monitoringSecurityAudit");
+
+function isDryRunModeSafe() {
+  return typeof automationFlags.isDryRunMode === "function" && automationFlags.isDryRunMode() === true;
+}
 const {
   lookupRecruitmentCandidatesForRuntime
 } = require("../recruitmentCandidateLookup.service");
@@ -138,6 +149,12 @@ async function runAmp4bForNotice({
 }
 
 async function processSiteJob(job) {
+  if (isDryRunModeSafe()) {
+    logger.info("updates-worker: live queue job skipped — dry-run mode uses dedicated runner", {
+      jobId: job && job.id ? job.id : null
+    });
+    return { skipped: true, reason: "dry_run_mode", dryRun: true };
+  }
   if (!canRunAutomationWorkers()) {
     logger.warn("updates-worker: job skipped by automation flags", {
       jobId: job && job.id ? job.id : null
@@ -168,6 +185,20 @@ async function processSiteJob(job) {
       url: row.url
     });
     return { skipped: true, reason: "unapproved_source" };
+  }
+
+  const policy = buildSourcePolicy(row);
+  const binding = assertExactUrlBinding(policy, policy.approvedUrl, { requireEnabled: true });
+  if (!binding.allowed) {
+    await recordBlockedSecurityEvent({
+      eventType: binding.code || SECURITY_EVENT_TYPES.POLICY_REJECTION,
+      reason: binding.reason,
+      action: "WORKER_URL_BINDING",
+      requestedMethod: "GET",
+      requestedUrl: policy.approvedUrl,
+      siteId
+    }).catch(() => null);
+    return { skipped: true, reason: binding.code || "policy_rejection", blocked: true };
   }
 
   const site = {
@@ -313,7 +344,8 @@ async function processSiteJob(job) {
     const pendingBatch = [];
     const revisionCandidates = [];
     let savedCount = 0;
-    const recruitmentPipelineEnabled = isRecruitmentPipelineEnabled();
+    // Durable plane / getAutomationFlags — never env-only helper (pre-LIVE consistency).
+    const recruitmentPipelineEnabled = getAutomationFlags().RECRUITMENT_PIPELINE_ENABLED === true;
     const runtimeOn = isProductionRuntimeEnabled();
 
     for (const item of newItems) {

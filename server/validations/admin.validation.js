@@ -768,7 +768,13 @@ const automationControlsUpdateSchema = Joi.object({
   autoDraftEnabled: Joi.boolean().optional(),
   notificationGatewayEnabled: Joi.boolean().optional(),
   telegramEnabled: Joi.boolean().optional(),
-  workerEnabled: Joi.boolean().optional()
+  workerEnabled: Joi.boolean().optional(),
+  masterEnabled: Joi.boolean().optional(),
+  emergencyStop: Joi.boolean().optional(),
+  dryRunEnabled: Joi.boolean().optional(),
+  promoteToLive: Joi.boolean().optional(),
+  mode: Joi.string().valid("DORMANT", "DRY_RUN", "LIVE").optional(),
+  updatedBy: Joi.string().max(128).optional()
 })
   .or(
     "productionMonitoringEnabled",
@@ -777,10 +783,19 @@ const automationControlsUpdateSchema = Joi.object({
     "autoDraftEnabled",
     "notificationGatewayEnabled",
     "telegramEnabled",
-    "workerEnabled"
+    "workerEnabled",
+    "masterEnabled",
+    "emergencyStop",
+    "dryRunEnabled",
+    "mode"
   )
   .required()
   .unknown(false);
+
+const automationDryRunBatchSchema = Joi.object({
+  limit: Joi.number().integer().min(1).max(100).optional(),
+  siteIds: Joi.array().items(Joi.number().integer().positive()).max(100).optional()
+}).unknown(false);
 
 module.exports = {
   adminPagePayloadSchema,
@@ -826,6 +841,7 @@ module.exports = {
   automationWorkflowListQuerySchema,
   automationAuditListQuerySchema,
   automationControlsUpdateSchema,
+  automationDryRunBatchSchema,
   ALLOWED_BADGE_CODES,
   MAX_BADGES_PER_PAGE
 };

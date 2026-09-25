@@ -114,18 +114,58 @@ function getControlsHandler(_req, res) {
 }
 
 async function updateControlsHandler(req, res) {
-  const body = req.body || {};
+  const body = { ...(req.body || {}), updatedBy: adminUsername(req) };
   const before = automationControlCenterService.getPublishingControlState();
   const data = automationControlCenterService.updatePublishingControls(body);
   const changed = Object.keys(body || {})
-    .filter((key) => body[key] !== undefined)
+    .filter((key) => body[key] !== undefined && key !== "updatedBy")
     .map((key) => `${key}=${body[key]}`)
     .join(",");
   await logAction(
     req,
     "automation_controls_update",
-    `publishing_controls:${changed || "none"};dormant:${before.dormant}->${data.dormant}`
+    `publishing_controls:${changed || "none"};dormant:${before.dormant}->${data.dormant};mode:${
+      (before.controlPlane && before.controlPlane.mode) || "?"
+    }->${(data.controlPlane && data.controlPlane.mode) || "?"}`
   );
+  res.json({ success: true, data });
+}
+
+function getControlPlaneHandler(_req, res) {
+  const data = automationControlCenterService.getControlPlaneSnapshot();
+  res.json({ success: true, data });
+}
+
+async function emergencyStopHandler(req, res) {
+  const data = automationControlCenterService.engageEmergencyStop({
+    updatedBy: adminUsername(req)
+  });
+  await logAction(req, "automation_emergency_stop", "engaged");
+  res.json({ success: true, data });
+}
+
+async function clearEmergencyStopHandler(req, res) {
+  const data = automationControlCenterService.clearEmergencyStop({
+    updatedBy: adminUsername(req)
+  });
+  await logAction(req, "automation_emergency_stop", "cleared");
+  res.json({ success: true, data });
+}
+
+function getDryRunStatusHandler(_req, res) {
+  const data = automationControlCenterService.getDryRunStatus();
+  res.json({ success: true, data });
+}
+
+async function runDryRunBatchHandler(req, res) {
+  const data = await automationControlCenterService.runDryRunBatch(req.body || {});
+  await logAction(req, "automation_dry_run_batch", `count=${data.count || 0}`);
+  res.json({ success: true, data });
+}
+
+async function runSourceDryRunHandler(req, res) {
+  const data = await automationControlCenterService.runSourceDryRun(req.params.id);
+  await logAction(req, "automation_dry_run_source", req.params.id);
   res.json({ success: true, data });
 }
 
@@ -147,5 +187,11 @@ module.exports = {
   listWorkflowHandler,
   listAuditHandler,
   getControlsHandler,
-  updateControlsHandler
+  updateControlsHandler,
+  getControlPlaneHandler,
+  emergencyStopHandler,
+  clearEmergencyStopHandler,
+  getDryRunStatusHandler,
+  runDryRunBatchHandler,
+  runSourceDryRunHandler
 };

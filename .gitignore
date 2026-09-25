@@ -18,6 +18,13 @@ data/related-analytics.json
 # Package 4C editorial review file store (local human workflow state)
 server/data/editorial-reviews.json
 server/data/editorial-reviews.json.tmp
+# Durable automation control plane (runtime; never commit live state)
+server/data/automation-master-control.json
+server/data/automation-master-control.json.tmp
+server/data/automation-control-plane.json
+server/data/automation-control-plane.json.tmp
+server/data/source-policies.json
+server/data/source-policies.json.tmp
 !server/data/.gitkeep
 
 # Generator PDF extract temp uploads (multerPdfExtract)
@@ -30,6 +37,9 @@ audit-screenshots/
 
 # Uploaded PDFs (runtime user content)
 storage/uploads/
+
+# Local disposable MySQL datadir for E2E (never production)
+.local-mysql/
 
 # Local OCR traineddata (runtime; do not commit large binaries)
 eng.traineddata

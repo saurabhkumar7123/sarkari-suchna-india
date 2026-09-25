@@ -1,5 +1,7 @@
-const axios = require("axios");
+"use strict";
+
 const logger = require("../../utils/logger");
+const { monitoringSafeGet, MonitoringHttpSafetyError } = require("./monitoringHttpSafety");
 
 const SSC_NOTICE_API_URL = "https://ssc.gov.in/api/general-website/portal/notice-boards";
 const SSC_ATTACHMENT_BASE = "https://ssc.gov.in/api/attachment/";
@@ -50,7 +52,7 @@ function mapNoticeRow(row, helpers) {
   };
 }
 
-async function fetchSscNotices() {
+async function fetchSscNotices(options = {}) {
   const params = {
     language: "english",
     attributes: "id,headline,createdAt",
@@ -63,27 +65,39 @@ async function fetchSscNotices() {
     contentType: "notice-boards"
   };
 
-  const { data } = await axios.get(SSC_NOTICE_API_URL, {
+  const response = await monitoringSafeGet(SSC_NOTICE_API_URL, {
     params,
     timeout: 25000,
-    headers: {
-      Accept: "application/json",
-      "User-Agent":
-        process.env.UPDATE_BOT_USER_AGENT ||
-        "SarkariSuchnaMonitor/1.0 (+https://sarkarisuchna.in; read-only official monitoring)"
-    }
+    accept: "application/json",
+    allowWhenAutomationDormant: options.allowWhenAutomationDormant === true,
+    siteId: options.siteId != null ? options.siteId : null,
+    requireOfficialHost: true,
+    responseType: "text",
+    transformResponse: [(data) => data]
   });
 
-  return data;
+  const raw = response.data;
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
 }
 
 /**
  * @param {object} site
  * @param {{ buildSignature: Function, normalizeText: Function }} helpers
+ * @param {{ allowWhenAutomationDormant?: boolean }} [options]
  */
-async function extractSscNoticeItems(site, helpers) {
+async function extractSscNoticeItems(site, helpers, options = {}) {
   try {
-    const body = await fetchSscNotices();
+    const body = await fetchSscNotices({
+      allowWhenAutomationDormant: options.allowWhenAutomationDormant === true,
+      siteId: site && site.id
+    });
 
     if (!body || String(body.statusCode) !== "200") {
       logger.warn("updates: SSC API bad response", {
@@ -116,6 +130,14 @@ async function extractSscNoticeItems(site, helpers) {
 
     return { items };
   } catch (err) {
+    if (err instanceof MonitoringHttpSafetyError) {
+      logger.warn("updates: SSC API blocked by HTTP safety", {
+        siteId: site && site.id,
+        code: err.code,
+        message: err.message
+      });
+      return { invalid: true, reason: err.code || "ssc_api_error", policySkip: true };
+    }
     logger.warn("updates: SSC API request failed", {
       siteId: site && site.id,
       message: err && err.message ? err.message : String(err)
