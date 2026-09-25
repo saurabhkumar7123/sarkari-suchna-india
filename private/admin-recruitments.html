@@ -1,4 +1,4 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <title>Recruitment Operations</title>
@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
 <link rel="stylesheet" href="/css/admin/recruitment-module.css?v=3">
-<link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=8">
+<link rel="stylesheet" href="/css/admin/recruitment-operations.css?v=10">
 <link rel="stylesheet" href="/css/admin/shared-preview.css?v=2">
 </head>
 <body class="admin-saas-v2" data-admin-breadcrumbs="Recruitments,All Recruitments">
@@ -88,7 +88,7 @@
       </div>
       <div class="rom-table-wrap">
         <table class="rom-table">
-          <thead><tr><th class="rom-check-col"></th><th>Recruitment Name</th><th>Organization</th><th>Exam / post</th><th>Year</th><th>Status</th></tr></thead>
+          <thead><tr><th class="rom-check-col"></th><th class="rom-id-col">Recruitment ID</th><th>Recruitment Name</th><th>Organization</th><th>Exam / post</th><th>Year</th><th>Status</th></tr></thead>
           <tbody id="recruitmentRows"></tbody>
         </table>
       </div>
@@ -103,212 +103,329 @@
       <div id="recruitmentEmpty" hidden aria-hidden="true"></div>
 
       <div id="recruitmentEditor" hidden>
-        <section class="rom-card rom-lifecycle-overview" id="recruitmentLifecycleOverview" hidden aria-label="Recruitment lifecycle overview">
-          <div class="rom-card__head">
-            <div>
-              <h2 id="lifecycleOverviewTitle">Recruitment</h2>
-              <p class="rom-section-purpose" id="lifecycleOverviewMeta">Open a row from Recruitment records to see page, stage, events, and drafts.</p>
-            </div>
-            <span id="lifecycleOverviewStatus" class="rom-status">—</span>
+        <header class="rom-detail-header" id="romDetailHeader">
+          <div class="rom-detail-header__main">
+            <p class="rom-detail-id" id="romDetailIdLabel">Recruitment #—</p>
+            <h2 class="rom-detail-title" id="romDetailTitle">—</h2>
+            <p class="rom-detail-meta" id="romDetailMetaLine">—</p>
+            <p class="rom-detail-status-line">Status: <span id="romDetailStatusText" class="rom-status">—</span></p>
           </div>
-          <div id="lifecycleRepairBanner" class="rom-repair-banner" hidden aria-live="polite"></div>
-          <div class="rom-overview-grid">
-            <div class="rom-overview-block">
-              <h3>Canonical Public Page</h3>
-              <p id="lifecycleCanonicalPage" class="rom-overview-value">Not linked</p>
-              <p id="lifecycleCanonicalStatus" class="rom-overview-meta">—</p>
-              <div class="rom-form-actions" id="lifecycleCanonicalActions" hidden>
-                <a id="lifecycleOpenPage" class="header-action-btn rom-secondary" href="#" target="_blank" rel="noopener" style="text-decoration:none;">Open Page</a>
-                <a id="lifecycleEditPage" class="header-action-btn rom-secondary" href="/generator" style="text-decoration:none;">Edit Page</a>
-              </div>
-            </div>
-            <div class="rom-overview-block">
-              <h3>Current Stage</h3>
-              <p id="lifecycleCurrentStage" class="rom-overview-value">—</p>
-              <p class="rom-overview-meta">Authority = latest active Event. Status field below is a cached projection only.</p>
-            </div>
-            <div class="rom-overview-block rom-overview-block--wide">
-              <h3>Event Timeline</h3>
-              <ul id="lifecycleStageChecklist" class="rom-stage-checklist"></ul>
-            </div>
-            <div class="rom-overview-block">
-              <h3>Pending Drafts</h3>
-              <div id="lifecyclePendingDrafts" class="rom-overview-list"><p class="rom-empty">None</p></div>
-            </div>
-            <div class="rom-overview-block">
-              <h3>Published History</h3>
-              <div id="lifecyclePublishedHistory" class="rom-overview-list"><p class="rom-empty">None</p></div>
-            </div>
-          </div>
-          <div class="rom-form-actions">
-            <button type="button" class="header-action-btn" id="lifecycleManualUpdateBtn">Manual Update</button>
-            <button type="button" class="header-action-btn rom-secondary" id="lifecycleAddEventBtn">Add Event</button>
-          </div>
-        </section>
+          <button type="button" class="header-action-btn rom-secondary rom-detail-close" id="closeRecruitmentDetailBtn">← Back to Recruitments</button>
+        </header>
 
-        <section class="rom-card">
-          <div class="rom-card__head">
-            <div>
-              <h2 id="recruitmentFormTitle">New Recruitment</h2>
-              <p class="rom-section-purpose" id="recruitmentFormPurpose">Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.</p>
-            </div>
-            <button type="button" class="header-action-btn rom-danger" id="archiveRecruitmentBtn">Archive</button>
-          </div>
-          <p class="rom-title-legend">
-            <strong>Recruitment Name</strong> = identity of this recruitment record (admin).<br>
-            It is separate from Draft Title and Published Page Title. Matching names helps operators, but they may differ.
-          </p>
-          <form id="recruitmentForm" class="rom-form">
-            <input id="recruitmentId" type="hidden">
-            <label class="rom-span-2">Recruitment Name<input id="recruitmentTitle" required maxlength="500" placeholder="UP Police Constable Recruitment 2026"></label>
-            <label>Slug<input id="recruitmentSlug" required maxlength="255"></label>
-            <label>Organization / Department<input id="recruitmentDepartment" maxlength="128"></label>
-            <label class="rom-span-2">Exam / post name<input id="recruitmentPostName" maxlength="512"></label>
-            <label>Advertisement no.<input id="recruitmentAdvertisement" maxlength="128"></label>
-            <label>Cycle year<input id="recruitmentCycleYear" type="number" min="1900" max="9999"></label>
-            <label>Status (cached projection)
-              <select id="recruitmentLifecycle" title="Cached projection — Event timeline is authoritative">
-                <option value="announced">Announced</option><option value="open">Open</option>
-                <option value="exam_scheduled">Exam scheduled</option><option value="post_exam">Post exam</option>
-                <option value="results">Results</option><option value="closed">Closed</option>
-              </select>
-            </label>
-            <div class="rom-form-actions rom-span-2">
-              <button type="submit" class="header-action-btn">Save recruitment</button>
-              <button type="button" class="header-action-btn rom-secondary" id="cancelRecruitmentBtn">Cancel</button>
-            </div>
-          </form>
-        </section>
+        <div id="lifecycleRepairBanner" class="rom-repair-banner" hidden aria-live="polite"></div>
 
-        <section class="rom-card rom-events-card" id="recruitmentEventsSection">
-          <div class="rom-card__head">
-            <div>
-              <h2>Event Timeline</h2>
-              <p class="rom-section-purpose">Milestones for the selected recruitment only. For Admit Card / Result / Answer Key with content, use Manual Update below — do not create another recruitment or page.</p>
-            </div>
-            <button type="button" class="header-action-btn" id="addEventBtn">+ Timeline event</button>
-          </div>
-          <form id="eventForm" class="rom-inline-form" hidden>
-            <input id="eventId" type="hidden">
-            <label>Event type<select id="eventType" required></select></label>
-            <label>Order<input id="eventOrder" type="number" min="0" max="65535" value="0"></label>
-            <label>Status<select id="eventStatus"><option>pending</option><option>active</option><option>superseded</option><option>cancelled</option></select></label>
-            <div class="rom-form-actions"><button type="submit" class="header-action-btn">Save</button><button type="button" class="header-action-btn rom-secondary" id="cancelEventBtn">Cancel</button></div>
-          </form>
-          <ol id="eventTimeline" class="rom-timeline"></ol>
-        </section>
+        <div class="rom-acc-group" id="romAccordionGroup" data-rom-accordion="exclusive">
+          <details class="rom-acc" data-rom-acc="overview" open>
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Overview</span>
+              <span class="rom-acc__hint">Identity, stage, status</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card rom-lifecycle-overview" id="recruitmentLifecycleOverview" hidden aria-label="Recruitment lifecycle overview">
+                <div class="rom-card__head rom-card__head--compact">
+                  <div>
+                    <h3 id="lifecycleOverviewTitle" class="rom-visually-sync">Recruitment</h3>
+                    <p class="rom-section-purpose" id="lifecycleOverviewMeta">Open a row from Recruitment records to see page, stage, events, and drafts.</p>
+                  </div>
+                  <span id="lifecycleOverviewStatus" class="rom-status">—</span>
+                </div>
+                <div class="rom-overview-grid rom-overview-grid--identity">
+                  <div class="rom-overview-block">
+                    <h3>Current Stage</h3>
+                    <p id="lifecycleCurrentStage" class="rom-overview-value">—</p>
+                    <p class="rom-overview-meta">Authority = latest active Event. Status field below is a cached projection only.</p>
+                  </div>
+                </div>
+              </section>
 
-        <section class="rom-card">
-          <div class="rom-card__head">
-            <div>
-              <h2>Recruitment Page</h2>
-              <p class="rom-section-purpose">Link the permanent published page for this recruitment (already published via Generator). Prefer one page per recruitment — lifecycle updates reuse that same page/slug.</p>
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2 id="recruitmentFormTitle">Recruitment Identity</h2>
+                    <p class="rom-section-purpose" id="recruitmentFormPurpose">Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.</p>
+                  </div>
+                  <div class="rom-identity-head-actions">
+                    <button type="button" class="header-action-btn" id="editRecruitmentIdentityBtn" hidden>Edit</button>
+                    <button type="button" class="header-action-btn rom-danger" id="archiveRecruitmentBtn">Archive</button>
+                  </div>
+                </div>
+                <p class="rom-title-legend">
+                  <strong>Recruitment Name</strong> = identity of this recruitment record (admin).<br>
+                  It is separate from Draft Title and Published Page Title. Matching names helps operators, but they may differ.
+                </p>
+                <form id="recruitmentForm" class="rom-form rom-form--readonly" data-identity-mode="view">
+                  <input id="recruitmentId" type="hidden">
+                  <label class="rom-span-2">Recruitment Name<input id="recruitmentTitle" required maxlength="500" placeholder="UP Police Constable Recruitment 2026" readonly></label>
+                  <label>Slug<input id="recruitmentSlug" required maxlength="255" readonly></label>
+                  <label>Organization / Department<input id="recruitmentDepartment" maxlength="128" readonly></label>
+                  <label class="rom-span-2">Exam / post name<input id="recruitmentPostName" maxlength="512" readonly></label>
+                  <label>Advertisement no.<input id="recruitmentAdvertisement" maxlength="128" readonly></label>
+                  <label>Cycle year<input id="recruitmentCycleYear" type="number" min="1900" max="9999" readonly></label>
+                  <label>Status (cached projection)
+                    <select id="recruitmentLifecycle" title="Cached projection — Event timeline is authoritative" disabled>
+                      <option value="announced">Announced</option><option value="open">Open</option>
+                      <option value="exam_scheduled">Exam scheduled</option><option value="post_exam">Post exam</option>
+                      <option value="results">Results</option><option value="closed">Closed</option>
+                    </select>
+                  </label>
+                  <div class="rom-form-actions rom-span-2" id="recruitmentIdentityEditActions" hidden>
+                    <button type="button" class="header-action-btn rom-secondary" id="cancelRecruitmentBtn">Cancel</button>
+                    <button type="submit" class="header-action-btn" id="saveRecruitmentBtn">Save recruitment</button>
+                  </div>
+                </form>
+              </section>
             </div>
-          </div>
-          <form id="pageLinkForm" class="rom-link-form">
-            <label>Page slug<input id="pageLinkSlug" required maxlength="255" placeholder="ssc-cgl-2026"></label>
-            <label>Event (optional)<select id="pageLinkEvent"><option value="">Recruitment-level link</option></select></label>
-            <button type="button" class="header-action-btn rom-secondary" id="validatePageBtn">Validate</button>
-            <button type="submit" class="header-action-btn">Attach page</button>
-          </form>
-          <p id="pageValidationStatus" class="rom-validation" hidden></p>
-          <div class="rom-table-wrap">
-            <table class="rom-table">
-              <thead><tr><th>Page</th><th>Attached event</th><th>Link status</th><th></th></tr></thead>
-              <tbody id="pageLinkRows"></tbody>
-            </table>
-          </div>
-        </section>
+          </details>
 
-        <section class="rom-card">
-          <div class="rom-card__head">
-            <div>
-              <h2>Generator Draft Binding</h2>
-              <p class="rom-section-purpose">Attach parked draft content to this recruitment (and optional event). Binding does not publish. Open in Generator uses <code>?draftId=</code>.</p>
-            </div>
-            <span id="draftBindingStatus" class="rom-status">No Draft</span>
-          </div>
-          <div id="romBindingVisual" class="rom-bind" aria-live="polite">
-            <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value">—</span></div>
-            <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">—</span></div>
-            <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">—</span></div>
-            <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">—</span></div>
-            <div class="rom-bind__row"><span class="rom-bind__label">Status</span><span class="rom-bind__value">Not linked</span></div>
-          </div>
-          <p id="draftWorkflowLine" class="rom-validation">Workflow: Draft Created</p>
-          <form id="draftBindForm" class="rom-link-form">
-            <label>Available draft
-              <select id="draftBindSelect" required>
-                <option value="">Select an unbound draft</option>
-              </select>
-            </label>
-            <label>Event (optional)
-              <select id="draftBindEventSelect">
-                <option value="">Recruitment-level (no event)</option>
-              </select>
-            </label>
-            <button type="button" class="header-action-btn rom-secondary" id="refreshDraftsBtn">Refresh drafts</button>
-            <button type="submit" class="header-action-btn" id="attachDraftBtn">Attach draft</button>
-            <button type="button" class="header-action-btn" id="replaceDraftBtn">Replace linked</button>
-          </form>
-          <div class="rom-table-wrap">
-            <table class="rom-table">
-              <thead><tr><th>Draft</th><th>Event</th><th>Status</th><th></th></tr></thead>
-              <tbody id="draftBindingRows"></tbody>
-            </table>
-          </div>
-          <div class="rom-form-actions" style="margin-top:.75rem;">
-            <a id="openEditorialReviewBtn" class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review (optional QA)</a>
-            <a id="openBoundDraftGeneratorBtn" class="header-action-btn" href="/generator" style="text-decoration:none;">Open in Generator</a>
-          </div>
-        </section>
+          <details class="rom-acc" data-rom-acc="lifecycle">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Lifecycle</span>
+              <span class="rom-acc__hint">Event timeline &amp; stage checklist</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Stage checklist</h2>
+                    <p class="rom-section-purpose">Milestone progress for this recruitment.</p>
+                  </div>
+                </div>
+                <ul id="lifecycleStageChecklist" class="rom-stage-checklist"></ul>
+              </section>
 
-        <section class="rom-card">
-          <div class="rom-card__head">
-            <div>
-              <h2>Linked Updates &amp; Reviews</h2>
-              <p class="rom-section-purpose">View updates, drafts and review items associated with this recruitment. Review Center = matching/ops; Editorial Review = optional QA; Generator = Manual Publish.</p>
+              <section class="rom-card rom-events-card" id="recruitmentEventsSection">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Event Timeline</h2>
+                    <p class="rom-section-purpose">Milestones for the selected recruitment only. For Admit Card / Result / Answer Key with content, use Manual Update in Actions — do not create another recruitment or page.</p>
+                  </div>
+                  <button type="button" class="header-action-btn" id="addEventBtn">+ Timeline event</button>
+                </div>
+                <form id="eventForm" class="rom-inline-form" hidden>
+                  <input id="eventId" type="hidden">
+                  <label>Event type<select id="eventType" required></select></label>
+                  <label>Order<input id="eventOrder" type="number" min="0" max="65535" value="0"></label>
+                  <label>Status<select id="eventStatus"><option>pending</option><option>active</option><option>superseded</option><option>cancelled</option></select></label>
+                  <div class="rom-form-actions"><button type="submit" class="header-action-btn">Save</button><button type="button" class="header-action-btn rom-secondary" id="cancelEventBtn">Cancel</button></div>
+                </form>
+                <ol id="eventTimeline" class="rom-timeline"></ol>
+              </section>
             </div>
-          </div>
-          <div class="rom-table-wrap">
-            <table class="rom-table">
-              <thead><tr><th>Update</th><th>Title</th><th>Event</th><th>Source</th></tr></thead>
-              <tbody id="lifecycleUpdateRows"></tbody>
-            </table>
-          </div>
-          <div class="rom-table-wrap" style="margin-top:.75rem;">
-            <table class="rom-table">
-              <thead><tr><th>Review</th><th>Status</th><th>Event</th><th>Update</th></tr></thead>
-              <tbody id="lifecycleReviewRows"></tbody>
-            </table>
-          </div>
-          <form id="manualUpdateForm" class="rom-link-form" style="margin-top:.75rem;">
-            <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Manual Update: Admit Card / Result / Answer Key on this recruitment. Creates event + draft — then open that draft in Generator → Preview → Manual Publish/Update. Same permanent page (not a second recruitment).</p>
-            <label>Event type
-              <select id="manualUpdateEventType" required>
-                <option value="admit_card">Admit Card</option>
-                <option value="answer_key">Answer Key</option>
-                <option value="result">Result</option>
-                <option value="final_result">Final Result</option>
-                <option value="exam_date">Exam Date</option>
-                <option value="correction">Correction</option>
-              </select>
-            </label>
-            <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Admit Card Released"></label>
-            <button type="submit" class="header-action-btn">Create manual update</button>
-            <a id="manualUpdateOpenGenerator" class="header-action-btn" href="/generator" hidden style="text-decoration:none;">Open Generator (this draft)</a>
-          </form>
-        </section>
+          </details>
 
-        <section class="rom-card">
-          <div class="rom-card__head">
-            <div>
-              <h2>Shared Runtime Preview</h2>
-              <p class="rom-section-purpose">Ops/Editorial snapshot for this recruitment (not the public page HTML preview). Refresh manually. Final publish stays in Generator; Page Manager manages already-published pages.</p>
+          <details class="rom-acc" data-rom-acc="drafts">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Drafts</span>
+              <span class="rom-acc__hint">Pending drafts &amp; generator binding</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Pending Drafts</h2>
+                    <p class="rom-section-purpose">Unpublished drafts attached to this recruitment.</p>
+                  </div>
+                </div>
+                <div id="lifecyclePendingDrafts" class="rom-overview-list"><p class="rom-empty">None</p></div>
+              </section>
+
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Generator Draft Binding</h2>
+                    <p class="rom-section-purpose">Attach parked draft content to this recruitment (and optional event). Binding does not publish. Open in Generator uses <code>?draftId=</code>.</p>
+                  </div>
+                  <span id="draftBindingStatus" class="rom-status">No Draft</span>
+                </div>
+                <div id="romBindingVisual" class="rom-bind" aria-live="polite">
+                  <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value">—</span></div>
+                  <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">—</span></div>
+                  <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">—</span></div>
+                  <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">—</span></div>
+                  <div class="rom-bind__row"><span class="rom-bind__label">Status</span><span class="rom-bind__value">Not linked</span></div>
+                </div>
+                <p id="draftWorkflowLine" class="rom-validation">Workflow: Draft Created</p>
+                <form id="draftBindForm" class="rom-link-form">
+                  <label>Available draft
+                    <select id="draftBindSelect" required>
+                      <option value="">Select an unbound draft</option>
+                    </select>
+                  </label>
+                  <label>Event (optional)
+                    <select id="draftBindEventSelect">
+                      <option value="">Recruitment-level (no event)</option>
+                    </select>
+                  </label>
+                  <button type="button" class="header-action-btn rom-secondary" id="refreshDraftsBtn">Refresh drafts</button>
+                  <button type="submit" class="header-action-btn" id="attachDraftBtn">Attach draft</button>
+                  <button type="button" class="header-action-btn" id="replaceDraftBtn">Replace linked</button>
+                </form>
+                <div class="rom-table-wrap">
+                  <table class="rom-table">
+                    <thead><tr><th>Draft</th><th>Event</th><th>Status</th><th></th></tr></thead>
+                    <tbody id="draftBindingRows"></tbody>
+                  </table>
+                </div>
+              </section>
             </div>
-          </div>
-          <div id="sharedPreviewPanel" class="spv-panel"></div>
-        </section>
+          </details>
+
+          <details class="rom-acc" data-rom-acc="page">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Page</span>
+              <span class="rom-acc__hint">Canonical page, linking, published history</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Canonical Public Page</h2>
+                    <p class="rom-section-purpose">Permanent published page for this recruitment.</p>
+                  </div>
+                </div>
+                <p id="lifecycleCanonicalPage" class="rom-overview-value">Not linked</p>
+                <p id="lifecycleCanonicalStatus" class="rom-overview-meta">—</p>
+                <div class="rom-form-actions" id="lifecycleCanonicalActions" hidden>
+                  <a id="lifecycleOpenPage" class="header-action-btn rom-secondary" href="#" target="_blank" rel="noopener" style="text-decoration:none;">Open Page</a>
+                  <a id="lifecycleEditPage" class="header-action-btn rom-secondary" href="/generator" style="text-decoration:none;">Edit Page</a>
+                </div>
+              </section>
+
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Recruitment Page</h2>
+                    <p class="rom-section-purpose">Link the permanent published page for this recruitment (already published via Generator). Prefer one page per recruitment — lifecycle updates reuse that same page/slug.</p>
+                  </div>
+                </div>
+                <form id="pageLinkForm" class="rom-link-form">
+                  <label>Page slug<input id="pageLinkSlug" required maxlength="255" placeholder="ssc-cgl-2026"></label>
+                  <label>Event (optional)<select id="pageLinkEvent"><option value="">Recruitment-level link</option></select></label>
+                  <button type="button" class="header-action-btn rom-secondary" id="validatePageBtn">Validate</button>
+                  <button type="submit" class="header-action-btn">Attach page</button>
+                </form>
+                <p id="pageValidationStatus" class="rom-validation" hidden></p>
+                <div class="rom-table-wrap">
+                  <table class="rom-table">
+                    <thead><tr><th>Page</th><th>Attached event</th><th>Link status</th><th></th></tr></thead>
+                    <tbody id="pageLinkRows"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Published History</h2>
+                    <p class="rom-section-purpose">Published drafts / updates for this recruitment.</p>
+                  </div>
+                </div>
+                <div id="lifecyclePublishedHistory" class="rom-overview-list"><p class="rom-empty">None</p></div>
+              </section>
+            </div>
+          </details>
+
+          <details class="rom-acc" data-rom-acc="updates">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Updates &amp; Reviews</span>
+              <span class="rom-acc__hint">Linked updates and review items</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Linked Updates &amp; Reviews</h2>
+                    <p class="rom-section-purpose">View updates, drafts and review items associated with this recruitment. Review Center = matching/ops; Editorial Review = optional QA; Generator = Manual Publish.</p>
+                  </div>
+                </div>
+                <div class="rom-table-wrap">
+                  <table class="rom-table">
+                    <thead><tr><th>Update</th><th>Title</th><th>Event</th><th>Source</th></tr></thead>
+                    <tbody id="lifecycleUpdateRows"></tbody>
+                  </table>
+                </div>
+                <div class="rom-table-wrap" style="margin-top:.75rem;">
+                  <table class="rom-table">
+                    <thead><tr><th>Review</th><th>Status</th><th>Event</th><th>Update</th></tr></thead>
+                    <tbody id="lifecycleReviewRows"></tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <details class="rom-acc" data-rom-acc="actions">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Actions</span>
+              <span class="rom-acc__hint">Manual update, events, generator, preview</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Operator actions</h2>
+                    <p class="rom-section-purpose">Common next steps for this recruitment.</p>
+                  </div>
+                </div>
+                <div class="rom-form-actions rom-actions-row">
+                  <button type="button" class="header-action-btn" id="lifecycleManualUpdateBtn">Manual Update</button>
+                  <button type="button" class="header-action-btn rom-secondary" id="lifecycleAddEventBtn">Add Event</button>
+                  <a id="openBoundDraftGeneratorBtn" class="header-action-btn" href="/generator" style="text-decoration:none;">Open in Generator</a>
+                  <a id="openEditorialReviewBtn" class="header-action-btn rom-secondary" href="/admin/editorial-review" style="text-decoration:none;">Editorial Review (optional QA)</a>
+                </div>
+                <form id="manualUpdateForm" class="rom-link-form" style="margin-top:.75rem;">
+                  <p class="manager-hint" style="grid-column:1/-1;margin:0 0 4px;">Manual Update: Admit Card / Result / Answer Key on this recruitment. Creates event + draft — then open that draft in Generator → Preview → Manual Publish/Update. Same permanent page (not a second recruitment).</p>
+                  <label>Event type
+                    <select id="manualUpdateEventType" required>
+                      <option value="admit_card">Admit Card</option>
+                      <option value="answer_key">Answer Key</option>
+                      <option value="result">Result</option>
+                      <option value="final_result">Final Result</option>
+                      <option value="exam_date">Exam Date</option>
+                      <option value="correction">Correction</option>
+                    </select>
+                  </label>
+                  <label>Title<input id="manualUpdateTitle" required maxlength="500" placeholder="Admit Card Released"></label>
+                  <button type="submit" class="header-action-btn">Create manual update</button>
+                  <a id="manualUpdateOpenGenerator" class="header-action-btn" href="/generator" hidden style="text-decoration:none;">Open Generator (this draft)</a>
+                </form>
+              </section>
+
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Shared Runtime Preview</h2>
+                    <p class="rom-section-purpose">Ops/Editorial snapshot for this recruitment (not the public page HTML preview). Refresh manually. Final publish stays in Generator; Page Manager manages already-published pages.</p>
+                  </div>
+                </div>
+                <div id="sharedPreviewPanel" class="spv-panel"></div>
+              </section>
+            </div>
+          </details>
+
+          <details class="rom-acc" data-rom-acc="advanced">
+            <summary class="rom-acc__summary">
+              <span class="rom-acc__title">Advanced / Technical</span>
+              <span class="rom-acc__hint">Integrity notes &amp; projections</span>
+            </summary>
+            <div class="rom-acc__body">
+              <section class="rom-card">
+                <div class="rom-card__head">
+                  <div>
+                    <h2>Technical notes</h2>
+                    <p class="rom-section-purpose">Cached projections and integrity context. Event timeline remains authoritative for stage.</p>
+                  </div>
+                </div>
+                <ul class="rom-guide">
+                  <li><strong>Recruitment ID</strong> is the primary key shown as <span id="romAdvancedIdHint">#—</span>.</li>
+                  <li><strong>Status</strong> on the form is a cached projection — Events decide current stage.</li>
+                  <li><strong>Repair banners</strong> (if any) appear above the accordion when canonical page linkage needs operator attention.</li>
+                </ul>
+              </section>
+            </div>
+          </details>
+        </div>
       </div>
     </section>
   </div>
@@ -326,6 +443,6 @@
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
 <script src="/js/admin-shared-preview.js?v=1"></script>
-<script src="/js/admin-recruitment-operations.js?v=9"></script>
+<script src="/js/admin-recruitment-operations.js?v=12"></script>
 </body>
 </html>

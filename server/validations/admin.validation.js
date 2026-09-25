@@ -762,10 +762,23 @@ const automationAuditListQuerySchema = Joi.object({
   .unknown(false);
 
 const automationControlsUpdateSchema = Joi.object({
+  productionMonitoringEnabled: Joi.boolean().optional(),
+  liveCrawlerEnabled: Joi.boolean().optional(),
   schedulerEnabled: Joi.boolean().optional(),
-  telegramEnabled: Joi.boolean().optional()
+  autoDraftEnabled: Joi.boolean().optional(),
+  notificationGatewayEnabled: Joi.boolean().optional(),
+  telegramEnabled: Joi.boolean().optional(),
+  workerEnabled: Joi.boolean().optional()
 })
-  .or("schedulerEnabled", "telegramEnabled")
+  .or(
+    "productionMonitoringEnabled",
+    "liveCrawlerEnabled",
+    "schedulerEnabled",
+    "autoDraftEnabled",
+    "notificationGatewayEnabled",
+    "telegramEnabled",
+    "workerEnabled"
+  )
   .required()
   .unknown(false);
 

@@ -115,8 +115,17 @@ function getControlsHandler(_req, res) {
 
 async function updateControlsHandler(req, res) {
   const body = req.body || {};
+  const before = automationControlCenterService.getPublishingControlState();
   const data = automationControlCenterService.updatePublishingControls(body);
-  await logAction(req, "automation_controls_update", "publishing_controls");
+  const changed = Object.keys(body || {})
+    .filter((key) => body[key] !== undefined)
+    .map((key) => `${key}=${body[key]}`)
+    .join(",");
+  await logAction(
+    req,
+    "automation_controls_update",
+    `publishing_controls:${changed || "none"};dormant:${before.dormant}->${data.dormant}`
+  );
   res.json({ success: true, data });
 }
 

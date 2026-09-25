@@ -8,7 +8,6 @@
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
 <link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=9">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
@@ -16,7 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=16">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=21">
 <script>
 (function () {
   var map = {
@@ -24,12 +23,12 @@
     accPublishingControls: "/admin/automation-control-center/controls",
     accAudit: "/admin/automation-control-center/logs",
     accSettings: "/admin/automation-control-center/controls",
-    accSources: "/admin/automation-control-center/sources",
+    accSources: "/admin/monitoring",
     accInsights: "/admin/automation-control-center/insights",
     accWorkflow: "/admin/automation-control-center/queue",
     accReview: "/admin/automation-control-center/reviews",
     accRecruitments: "/admin/automation-control-center/recruitments",
-    accMonitoring: "/admin/automation-control-center/health",
+    accMonitoring: "/admin/monitoring",
     accDashboard: "/admin/automation-control-center"
   };
   var hash = String(location.hash || "").replace(/^#/, "");
@@ -37,7 +36,7 @@
 })();
 </script>
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Control overview" data-acc-page="overview">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Overview" data-acc-page="overview">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -46,15 +45,13 @@
   </div>
 </div>
 <div class="main acc-main">
-  <header class="acc-workspace-head" aria-label="Control overview">
+  <header class="acc-workspace-head" aria-label="Overview">
     <div class="acc-workspace-head__copy">
       <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
-      <h1 class="acc-workspace-head__title">Control overview</h1>
-      <p class="acc-workspace-head__sub">Ops cockpit and safety flags — not the primary edit workspace. Deep work stays on Recruitments, Review Center, Drafts, Editorial, and Generator. Publishing remains manual-only.</p>
+      <h1 class="acc-workspace-head__title">Overview</h1>
+      <p class="acc-workspace-head__sub">One operator view for status, safety, and human work. Publishing remains manual-only.</p>
     </div>
     <div class="acc-workspace-head__actions">
-      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
-      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
       <button type="button" class="header-action-btn" id="accOpenPaletteBtn">Command Menu</button>
       <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
     </div>
@@ -62,217 +59,295 @@
 
   <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
     <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox">
-      <a class="acc-switcher__option is-active" href="/admin/automation-control-center" aria-current="page">Control overview</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/sources">Official sources</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Review snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center" aria-current="page">Overview</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitments</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Reviews</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Drafts</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue</a>
       <a class="acc-switcher__option" href="/admin/automation-control-center/insights">Insights</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Controls</a>
     </div>
   </nav>
-  <div class="acc-content" id="accContent">
 
+  <div class="acc-content acc-content--clean" id="accContent">
   <aside class="adm-wf" data-adm-wf="acc" aria-label="Workflow context"></aside>
 
-  <section class="acc-status-strip-row" aria-label="Runtime posture">
-    <div class="acc-status-pill is-safe" id="accWorkerStatusPill">Worker: Off</div>
-    <div class="acc-status-pill is-safe" id="accPipelineStatusPill">Pipeline: Off</div>
-    <div class="acc-status-pill is-safe" id="accPublishStatusPill">Publishing: Manual only</div>
-    <div class="acc-status-pill is-safe" id="accTelegramStatusPill">Telegram: Off</div>
-    <div class="acc-status-pill" id="accPipelineFlagLabel">RECRUITMENT_PIPELINE_ENABLED = OFF</div>
-  </section>
-
-  <section class="acc-publishing acc-publishing--summary" id="accOverviewStatus" aria-label="Automation status summary">
-    <div class="acc-section__head">
-      <div>
-        <p class="acc-section__eyebrow">Safety</p>
-        <h2>Automation status</h2>
-        <p class="manager-hint" style="margin:8px 0 0;">Safety posture: <strong>AUTO PUBLISH</strong> = locked · <strong>MANUAL ONLY</strong> · <strong>DISABLED</strong>.</p>
-      </div>
-      <div class="acc-section__actions">
-        <span class="acc-guardrail" id="accPublishingModeBadge">Publishing Mode: MANUAL REVIEW ONLY</span>
-        <a href="/admin/automation-control-center/controls" class="header-action-btn" style="text-decoration:none;">Open control flags</a>
-      </div>
+  <!-- 1. SYSTEM STATUS -->
+  <section class="acc-clean-section" id="accSystemStatus" aria-labelledby="accSystemStatusHeading">
+    <div class="acc-clean-section__head">
+      <h2 id="accSystemStatusHeading">System status</h2>
+      <p class="acc-clean-section__sub" id="accOverallExplain">All activation flags are OFF. System is dormant and safe.</p>
     </div>
-    <div class="acc-status-board" aria-label="Automation status">
-      <article class="acc-status-card">
-        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
-        <h3>Scheduler</h3>
+    <p class="acc-overall-line">
+      <span class="acc-op-dot is-safe" id="accOverallDot" aria-hidden="true"></span>
+      <strong id="accOverallState">DORMANT / SAFE</strong>
+    </p>
+    <div class="acc-status-grid" id="accTopStatusStrip" aria-label="Feature status">
+      <article class="acc-status-tile" data-status="monitoring">
+        <span>Monitoring / Bot</span>
+        <strong id="accTopMonitoringState">OFF</strong>
+        <small id="accTopMonitoringExplain">Official sources are not being monitored automatically.</small>
+      </article>
+      <article class="acc-status-tile" data-status="scheduler">
+        <span>Scheduler</span>
         <strong class="acc-state is-off" id="accSchedulerStatusBadge">OFF</strong>
+        <strong class="acc-visually-hidden" id="accTopSchedulerState">OFF</strong>
+        <small id="accTopSchedulerExplain">No automatic monitoring cycle is running.</small>
       </article>
-      <article class="acc-status-card">
-        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
-        <h3>Telegram Gateway</h3>
+      <article class="acc-status-tile" data-status="ai">
+        <span>AI Draft</span>
+        <strong id="accTopAiState">OFF</strong>
+        <small id="accTopAiExplain">AI processing is not running automatically.</small>
+      </article>
+      <article class="acc-status-tile" data-status="review-pipeline">
+        <span>Review Pipeline</span>
+        <strong id="accTopReviewPipelineState">OFF</strong>
+        <small id="accTopReviewPipelineExplain">Recruitment pipeline is not authorized.</small>
+      </article>
+      <article class="acc-status-tile" data-status="telegram">
+        <span>Telegram</span>
         <strong class="acc-state is-off" id="accTelegramStatusBadge">OFF</strong>
+        <strong class="acc-visually-hidden" id="accTopTelegramState">OFF</strong>
+        <small id="accTopTelegramExplain">Telegram delivery is OFF.</small>
       </article>
-      <article class="acc-status-card acc-status-card--locked">
+      <article class="acc-status-tile" data-status="gateway">
+        <span>Notification Gateway</span>
+        <strong id="accTopGatewayState">OFF</strong>
+        <small id="accTopGatewayExplain">Notification gateway is OFF.</small>
+      </article>
+      <article class="acc-status-tile" data-status="worker">
+        <span>Worker</span>
+        <strong id="accTopWorkerState">OFF</strong>
+        <small id="accTopWorkerExplain">Worker is not authorized to run automation jobs.</small>
+      </article>
+      <article class="acc-status-tile is-blocked" data-status="auto-publish">
         <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
-        <h3>Auto Publish</h3>
+        <span>Auto Publish</span>
         <strong class="acc-state is-locked" id="accAutoPublishStatusBadge">LOCKED OFF</strong>
+        <strong class="acc-visually-hidden" id="accTopAutoPublishState">LOCKED</strong>
+        <small id="accTopAutoPublishExplain">Human publish is required.</small>
       </article>
-      <article class="acc-status-card">
-        <span class="acc-status-card__kicker">AUTOMATION STATUS</span>
-        <h3>Publishing Mode</h3>
-        <strong class="acc-state is-ready" id="accPublishingModeStatus">MANUAL REVIEW ONLY</strong>
+    </div>
+    <!-- Compatibility hooks for existing ACC tests / shared JS -->
+    <span class="acc-visually-hidden" id="accWorkerStatusPill">Worker: Off</span>
+    <span class="acc-visually-hidden" id="accPipelineStatusPill">Pipeline: Off</span>
+    <span class="acc-visually-hidden" id="accPublishStatusPill">Publishing: Manual only</span>
+    <span class="acc-visually-hidden" id="accTelegramStatusPill">Telegram: Off</span>
+    <span class="acc-visually-hidden" id="accPipelineFlagLabel">RECRUITMENT_PIPELINE_ENABLED = OFF</span>
+    <span class="acc-visually-hidden" id="accPublishingModeStatus">MANUAL REVIEW ONLY</span>
+    <span class="acc-visually-hidden" id="accPublishingModeBadge">Publishing Mode: MANUAL REVIEW ONLY</span>
+  </section>
+
+  <!-- 2. SAFETY / PUBLISH GATE -->
+  <section class="acc-clean-section acc-clean-section--safety" id="accSafetyGate" aria-labelledby="accSafetyHeading">
+    <div class="acc-clean-section__head">
+      <h2 id="accSafetyHeading">Safety / Publish gate</h2>
+    </div>
+    <div class="acc-safety-row" aria-label="AUTOMATION STATUS">
+      <article>
+        <span>Automation</span>
+        <strong id="accSafetyActivation">OFF / DORMANT</strong>
       </article>
+      <article>
+        <span>Auto Publish</span>
+        <strong id="accSafetyAutoPublish">LOCKED / HUMAN REQUIRED</strong>
+      </article>
+      <article>
+        <span>Manual Publish</span>
+        <strong id="accSafetyHumanPublish">REQUIRED</strong>
+      </article>
+    </div>
+    <p class="acc-path-line">Monitoring → AI/Draft → Human Review → Approve → Generator → Manual Publish</p>
+    <p class="acc-note">Activation requires explicit authorization. Backend safety remains authoritative.</p>
+  </section>
+
+  <!-- 3. REQUIRES YOUR ACTION -->
+  <section class="acc-clean-section acc-clean-section--action" id="accHumanAction" aria-labelledby="accHumanActionHeading">
+    <div class="acc-clean-section__head">
+      <h2 id="accHumanActionHeading">Requires your action</h2>
+    </div>
+    <div class="acc-action-cards" id="accHumanActionList">
+      <p class="acc-empty">Nothing requires your action right now.</p>
     </div>
   </section>
 
-  <section class="acc-section is-acc-tab-active" id="accDashboard" aria-labelledby="accOverviewHeading">
-    <div class="acc-section__head">
+  <!-- 4–9 SHORT SUMMARIES → canonical child pages -->
+  <section class="acc-summary-grid" aria-label="Canonical area summaries">
+    <article class="acc-clean-section" id="accMonitoringSection">
+      <div class="acc-clean-section__head">
+        <h2 id="accMonitoringHeading">Monitoring</h2>
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
+      </div>
+      <p class="acc-note">Status: <strong id="accTopMonitoringStateMirror">OFF</strong> · Official Sources <strong id="accMonEnabled">0</strong> · Healthy <strong id="accMonHealthy">0</strong> · Needs attention <strong id="accMonBlocked">0</strong> · Updates <strong id="accMonUpdates">0</strong></p>
+      <p class="acc-note">Last activity: <strong id="accMonLastCycle">Not available</strong></p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <strong id="accMonWarning">0</strong>
+        <tbody id="accMonitoringSourceRows"></tbody>
+        <ul id="accRecentUpdatesList"></ul>
+      </div>
+    </article>
+
+    <article class="acc-clean-section" id="accPipelineSection">
+      <div class="acc-clean-section__head">
+        <h2 id="accPipelineHeading">Update → Review → Draft pipeline</h2>
+      </div>
+      <p class="acc-note">Updates <strong id="accPipeUpdateCount">0</strong> · Drafts <strong id="accPipeDraftCount">0</strong> · Reviews <strong id="accPipeReviewCount">0</strong> · Approved <strong id="accPipeApproveCount">0</strong> · Published <strong id="accPipePublishCount">0</strong></p>
+      <p class="acc-note">AI prepares; humans approve &amp; manually publish.</p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <ol id="accPipelineStages"></ol>
+        <strong id="accPipeSourceCount">—</strong>
+        <strong id="accPipeExtractCount">Not available</strong>
+        <strong id="accPipeAiCount">Not available</strong>
+        <strong id="accPipeMatchCount">0</strong>
+        <strong id="accPipeGeneratorCount">0</strong>
+      </div>
+    </article>
+
+    <article class="acc-clean-section" id="accAiSection">
+      <div class="acc-clean-section__head">
+        <h2 id="accAiHeading">AI processing</h2>
+      </div>
+      <p class="acc-note">State: <strong class="acc-state is-off" id="accAiConversionState">OFF</strong> · Latest conversion: <strong id="accAiLatestConversion">Not available</strong></p>
+      <p class="acc-note">AI can prepare/assist. Human must approve/publish.</p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <strong id="accAiLatestExtraction">Not available</strong>
+        <strong id="accAiSuccessful">Not available</strong>
+        <strong id="accAiWeak">Not available</strong>
+        <strong id="accAiBlocked">Not available</strong>
+        <strong id="accAiNeedsManual">Not available</strong>
+      </div>
+    </article>
+
+    <article class="acc-clean-section" id="accSchedulerSection">
+      <div class="acc-clean-section__head">
+        <h2 id="accSchedulerHeading">Scheduler</h2>
+      </div>
+      <p class="acc-note">Status: <strong class="acc-state is-off" id="accSchedulerCardStatus">OFF</strong> · Last cycle: <strong id="accSchedulerLastRun">Not available</strong></p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <strong id="accSchedulerDetailStatus">OFF</strong>
+        <strong id="accSchedulerNextRun">Not available</strong>
+        <strong id="accSchedulerCyclesErrors">Not available</strong>
+      </div>
+    </article>
+
+    <article class="acc-clean-section" id="accNotifySection">
+      <div class="acc-clean-section__head">
+        <h2 id="accNotifyHeading">Telegram / Notification</h2>
+      </div>
+      <p class="acc-note">Telegram <strong id="accTelegramDeliveryState">OFF</strong> · Gateway <strong id="accGatewayState">OFF</strong></p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <strong id="accTelegramPending">Not available</strong>
+        <strong id="accTelegramSent">Not available</strong>
+        <strong id="accTelegramFailed">Not available</strong>
+        <strong id="accTelegramLastError">Not available</strong>
+      </div>
+    </article>
+
+    <article class="acc-clean-section" id="accWorkerSection">
+      <div class="acc-clean-section__head">
+        <h2 id="accWorkerHeading">Worker</h2>
+      </div>
+      <p class="acc-note">Status: <strong class="acc-state is-off" id="accWorkerCardState">OFF</strong> · Heartbeat: <strong id="accWorkerHeartbeat">Not available</strong></p>
+      <div class="acc-visually-hidden" aria-hidden="true">
+        <strong id="accWorkerDetailStatus">OFF</strong>
+        <strong id="accWorkerLastJob">Not available</strong>
+        <strong id="accWorkerLastError">Not available</strong>
+      </div>
+    </article>
+  </section>
+
+  <!-- 10. ERRORS / WARNINGS -->
+  <section class="acc-clean-section" id="accErrorsSection" aria-labelledby="accErrorsHeading">
+    <div class="acc-clean-section__head">
+      <h2 id="accErrorsHeading">Errors / Warnings</h2>
+    </div>
+    <div class="acc-error-groups" id="accErrorsGroups">
       <div>
-        <p class="acc-section__eyebrow">Overview</p>
-        <h2 id="accOverviewHeading">Section summaries</h2>
+        <h3 class="acc-subhead">Critical</h3>
+        <ul class="acc-compact-list" id="accErrorsCritical"><li class="acc-empty">None</li></ul>
+      </div>
+      <div>
+        <h3 class="acc-subhead">Warning</h3>
+        <ul class="acc-compact-list" id="accErrorsWarning"><li class="acc-empty">None</li></ul>
+      </div>
+      <div>
+        <h3 class="acc-subhead">Info</h3>
+        <ul class="acc-compact-list" id="accErrorsInfo"><li class="acc-empty">None</li></ul>
       </div>
     </div>
-
-    <div class="acc-overview-grid" aria-label="Section summaries">
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Official source status</h3><span id="accOverviewSourcesMeta">0 sources</span></div>
-        <p>Official source registry coverage and health.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/sources" class="header-action-btn" style="text-decoration:none;">View details</a>
-          <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Recruitment snapshot</h3><span id="accOverviewRecruitmentsMeta">0 tracked</span></div>
-        <p>Live recruitment processing summary.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/recruitments" class="header-action-btn" style="text-decoration:none;">View details</a>
-          <a href="/admin/recruitments" class="header-action-btn" style="text-decoration:none;">Open recruitments</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Review snapshot</h3><span id="accOverviewReviewsMeta">0 pending</span></div>
-        <p>Human-review workload awaiting approval.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/reviews" class="header-action-btn" style="text-decoration:none;">View details</a>
-          <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open review queue</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Draft snapshot</h3><span id="accOverviewDraftsMeta">0 drafts</span></div>
-        <p>Generator and conversion drafts waiting for review.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/drafts" class="header-action-btn" style="text-decoration:none;">View details</a>
-          <a href="/generator#drafts" class="header-action-btn" style="text-decoration:none;">Open Drafts</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Queue snapshot</h3><span id="accOverviewQueueMeta">0 items</span></div>
-        <p>Automation workflow queue status.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/queue" class="header-action-btn" style="text-decoration:none;">View details</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Health summary</h3><span id="accOverviewHealthMeta">Unknown</span></div>
-        <p>Source health and automation runtime posture.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/health" class="header-action-btn" style="text-decoration:none;">View details</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Insights</h3><span>Quality signals</span></div>
-        <p>Confidence, recovery, and recommendation analytics.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/insights" class="header-action-btn" style="text-decoration:none;">View details</a>
-        </div>
-      </article>
-      <article class="acc-panel acc-overview-card">
-        <div class="acc-panel__head"><h3>Control flags</h3><span id="accOverviewFlagsMeta">Flags OFF</span></div>
-        <p>Current control and feature-flag state. AUTO PUBLISH stays locked.</p>
-        <div class="acc-overview-card__actions">
-          <a href="/admin/automation-control-center/controls" class="header-action-btn" style="text-decoration:none;">View details</a>
-        </div>
-      </article>
-    </div>
-
-    <div class="acc-panels-grid acc-panels-grid--workflows">
-      <section class="acc-panel" aria-label="Manual publish workflow">
-        <div class="acc-panel__head"><h3>MANUAL PUBLISH WORKFLOW</h3><span>Live backend counts</span></div>
-        <ol class="acc-flow" id="accManualWorkflow"></ol>
-      </section>
-      <section class="acc-panel" aria-label="Automated pipeline">
-        <div class="acc-panel__head"><h3>AUTOMATED PIPELINE</h3><span>Read-only</span></div>
-        <ol class="acc-flow acc-flow--pipeline" id="accAutomatedPipeline">
-          <li class="acc-flow__step"><span class="acc-flow__label">Official Sources</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Monitoring</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Change Detection</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Update</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Document Resolution</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">PDF/OCR</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">AI Convert</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Draft</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Review Queue</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Telegram Notification</span></li>
-          <li class="acc-flow__step"><span class="acc-flow__label">Human Review</span></li>
-          <li class="acc-flow__branch" aria-label="Publishing branch">
-            <div class="acc-flow__branch-card is-ready">
-              <span class="acc-state is-ready">READY</span>
-              <strong>MANUAL APPROVAL</strong>
-              <span class="acc-flow__arrow" aria-hidden="true">↓</span>
-              <strong>MANUAL PUBLISH</strong>
-            </div>
-            <div class="acc-flow__branch-card is-locked" aria-disabled="true">
-              <span class="acc-state is-locked">LOCKED</span>
-              <strong class="acc-flow__not-path">AUTO PUBLISH</strong>
-              <small>Not a publishing path</small>
-            </div>
-          </li>
-        </ol>
-      </section>
-    </div>
-
-    <div class="acc-panels-grid acc-panels-grid--ops">
-      <section class="acc-panel" aria-label="Active official sources">
-        <div class="acc-panel__head">
-          <h3>Active official sources</h3>
-          <span id="accActiveSourceCount">Active official sources: 0</span>
-        </div>
-        <div class="acc-source-pills" id="accActiveSources"></div>
-      </section>
-      <section class="acc-panel" id="accRecentActivityPanel" hidden aria-label="Recent pipeline activity">
-        <div class="acc-panel__head">
-          <h3>Recent automation activity</h3>
-          <a href="/admin/automation-control-center/logs" class="header-action-btn" style="text-decoration:none;">Open logs</a>
-        </div>
-        <dl class="acc-activity-list" id="accRecentActivity"></dl>
-      </section>
-    </div>
-
-    <div class="acc-stats-grid" id="accStatsGrid">
-      <article class="acc-stat-card"><span>Official Sources</span><strong id="accTotalSources">0</strong><small>Registry coverage</small></article>
-      <article class="acc-stat-card"><span>Sources Online</span><strong id="accSourcesOnline">0</strong><small>Healthy responses</small></article>
-      <article class="acc-stat-card"><span>Sources Offline</span><strong id="accSourcesOffline">0</strong><small>Needs attention</small></article>
-      <article class="acc-stat-card"><span>Recruitments Processing</span><strong id="accRecruitmentsProcessing">0</strong><small>Live workflow queue</small></article>
-      <article class="acc-stat-card"><span>Draft Queue</span><strong id="accDraftQueue">0</strong><small>Generator and review drafts</small></article>
-      <article class="acc-stat-card"><span>Review Queue</span><strong id="accReviewQueue">0</strong><small>Human review only</small></article>
-      <article class="acc-stat-card"><span>Today's Updates</span><strong id="accTodayUpdates">0</strong><small>Combined system activity</small></article>
-      <article class="acc-stat-card"><span>Pending Reviews</span><strong id="accPendingReviews">0</strong><small>Review center workload</small></article>
-      <article class="acc-stat-card"><span>Published Today</span><strong id="accPublishedToday">0</strong><small>Manual publish only</small></article>
-      <article class="acc-stat-card"><span>Average Confidence</span><strong id="accAverageConfidence">0%</strong><small>AI signal health</small></article>
-      <article class="acc-stat-card"><span>System Health</span><strong id="accSystemHealth">Unknown</strong><small>API, DB, queue posture</small></article>
-      <article class="acc-stat-card"><span>Automation Health</span><strong id="accAutomationHealth">Dormant</strong><small id="accAutomationHealthSub">Live runtime status</small></article>
-    </div>
-    <div class="acc-panels-grid acc-panels-grid--dashboard">
-      <section class="acc-panel">
-        <div class="acc-panel__head"><h3>Daily Detection</h3><span>Last 7 days</span></div>
-        <div class="acc-chart-wrap"><canvas id="accDailyDetectionChart" height="140"></canvas></div>
-      </section>
-      <section class="acc-panel">
-        <div class="acc-panel__head"><h3>Workflow Trend</h3><span>Stage movement</span></div>
-        <div class="acc-chart-wrap"><canvas id="accWorkflowTrendChart" height="140"></canvas></div>
-      </section>
-    </div>
-    <span id="accLastScanHero" class="acc-visually-hidden">Last scan: Manual refresh only</span>
-    <span id="accNextScanHero" class="acc-visually-hidden">Next planned scan: Not scheduled</span>
   </section>
+
+  <!-- 11. HOW THE SYSTEM WORKS -->
+  <details class="acc-how" id="accHowDetails">
+    <summary>How the system works</summary>
+    <p class="acc-path-line">Official Source → Monitoring → Update → AI Processing → Draft → Human Review → Approve → Generator → Manual Publish</p>
+    <p class="acc-note">Automation is currently OFF. No public page is published automatically.</p>
+  </details>
+
+  <!-- 12. ADVANCED -->
+  <details class="acc-advanced" id="accAdvancedDetails">
+    <summary>Advanced / Technical details</summary>
+    <div class="acc-advanced__body">
+      <div class="acc-metric-row acc-metric-row--compact">
+        <article><span>Last cycle ID</span><strong id="accAdvCycleId">Not available</strong></article>
+        <article><span>Activation decision</span><strong id="accAdvActivation">NO-GO</strong></article>
+        <article><span>Production mutation</span><strong id="accSafetyMutation">BLOCKED</strong></article>
+      </div>
+      <pre class="acc-advanced__flags" id="accAdvFlags" aria-label="Feature flags">Flags loading…</pre>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table" aria-label="Entity IDs">
+          <thead>
+            <tr><th>Title</th><th>Recruitment</th><th>Update</th><th>Review</th><th>Draft</th><th>Event</th></tr>
+          </thead>
+          <tbody id="accAdvRefs">
+            <tr><td colspan="6" class="acc-empty">No entity IDs available.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="acc-related-links">
+        <h3 class="acc-subhead">Related workspaces</h3>
+        <p>
+          <a href="/admin/monitoring">Monitoring</a> ·
+          <a href="/admin/recruitment-review-queue">Review queue</a> ·
+          <a href="/admin/recruitments">Recruitments</a> ·
+          <a href="/admin/monitoring/updates">Monitoring updates</a> ·
+          <a href="/generator#drafts">Generator</a>
+        </p>
+      </div>
+    </div>
+  </details>
+
+  <!-- Hidden legacy hosts so shared render helpers stay safe -->
+  <div class="acc-visually-hidden" aria-hidden="true">
+    <ol id="accManualWorkflow"></ol>
+    <div id="accActiveSources"></div>
+    <span id="accActiveSourceCount"></span>
+    <div id="accRecentActivityPanel" hidden><dl id="accRecentActivity"></dl></div>
+    <span id="accOverviewSourcesMeta"></span>
+    <span id="accOverviewRecruitmentsMeta"></span>
+    <span id="accOverviewReviewsMeta"></span>
+    <span id="accOverviewDraftsMeta"></span>
+    <span id="accOverviewQueueMeta"></span>
+    <span id="accOverviewHealthMeta"></span>
+    <span id="accOverviewFlagsMeta"></span>
+    <span id="accTotalSources"></span>
+    <span id="accSourcesOnline"></span>
+    <span id="accSourcesOffline"></span>
+    <span id="accRecruitmentsProcessing"></span>
+    <span id="accDraftQueue"></span>
+    <span id="accReviewQueue"></span>
+    <span id="accTodayUpdates"></span>
+    <span id="accPendingReviews"></span>
+    <span id="accPublishedToday"></span>
+    <span id="accAverageConfidence"></span>
+    <span id="accSystemHealth"></span>
+    <span id="accAutomationHealth"></span>
+    <span id="accAutomationHealthSub"></span>
+    <span id="accLastScanHero"></span>
+    <span id="accNextScanHero"></span>
+  </div>
   </div>
 </div>
 
@@ -286,6 +361,6 @@
 <script src="/js/admin-command-palette.js?v=7"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-automation-control-center.js?v=13"></script>
+<script src="/js/admin-automation-control-center.js?v=16"></script>
 </body>
 </html>

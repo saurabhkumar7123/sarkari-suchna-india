@@ -16,12 +16,30 @@
   let linkedReviews = [];
   let draftBinding = null;
   const selectedIds = new Set();
+  let identityEditMode = false;
+  const IDENTITY_FIELD_IDS = [
+    "recruitmentTitle",
+    "recruitmentSlug",
+    "recruitmentDepartment",
+    "recruitmentPostName",
+    "recruitmentAdvertisement",
+    "recruitmentCycleYear",
+    "recruitmentLifecycle"
+  ];
 
   const byId = (id) => document.getElementById(id);
   const escapeHtml = (value) => String(value ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const labelize = (value) => String(value || "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const statusHtml = (status) => `<span class="rom-status is-${escapeHtml(status)}">${escapeHtml(labelize(status))}</span>`;
+  const truncateText = (value, max) => {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    if (text.length <= max) return text;
+    return `${text.slice(0, Math.max(0, max - 1))}…`;
+  };
+  let syncingUrl = false;
+  let accordionWired = false;
 
   function message(text, isError) {
     const el = byId("operationsMessage");
@@ -142,15 +160,18 @@
   function renderRecruitments(rows) {
     const host = byId("recruitmentRows");
     if (!rows.length) {
-      host.innerHTML = '<tr><td colspan="6" class="rom-empty">No recruitments found.</td></tr>';
+      host.innerHTML = '<tr><td colspan="7" class="rom-empty">No recruitments found.</td></tr>';
       updateBulkBar();
       return;
     }
     host.innerHTML = rows.map((row) => {
       const checked = selectedIds.has(Number(row.id)) ? "checked" : "";
+      const titleFull = String(row.title || "");
+      const titleShort = truncateText(titleFull, 72);
       return `<tr data-id="${row.id}" class="${selected?.id === row.id ? "is-selected" : ""}">
       <td><input type="checkbox" class="rom-row-check" data-bulk-id="${row.id}" ${checked} aria-label="Select ${escapeHtml(row.title)}"></td>
-      <td><strong>${escapeHtml(row.title)}</strong><br><small>${escapeHtml(row.slug || "")}</small></td>
+      <td class="rom-id-cell"><span class="rom-rec-id" title="Recruitment ID">#${escapeHtml(row.id)}</span></td>
+      <td><strong title="${escapeHtml(titleFull)}">${escapeHtml(titleShort || "—")}</strong><br><small>${escapeHtml(row.slug || "")}</small></td>
       <td>${escapeHtml(row.department || "—")}</td>
       <td>${escapeHtml(row.post_name || "—")}</td>
       <td>${escapeHtml(row.cycle_year || "—")}</td>
@@ -267,8 +288,7 @@
       selectedIds.clear();
       byId("bulkActionSelect").value = "";
       if (action === "delete" && selected && ids.includes(Number(selected.id))) {
-        selected = null;
-        setEditorVisible(false);
+        closeRecruitmentDetail({ replaceUrl: true });
       }
       await loadRecruitments();
     } catch (err) {
@@ -288,6 +308,124 @@
     if (editor) editor.hidden = !visible;
     if (detail) detail.hidden = !visible;
     if (layout) layout.classList.toggle("rom-layout--list-only", !visible);
+    if (visible) {
+      resetAccordionToOverview();
+      const header = byId("romDetailHeader");
+      if (header) header.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function accordionSections() {
+    return Array.from(document.querySelectorAll("#romAccordionGroup details.rom-acc[data-rom-acc]"));
+  }
+
+  function openAccordionSection(name) {
+    const sections = accordionSections();
+    if (!sections.length) return;
+    sections.forEach((el) => {
+      el.open = el.getAttribute("data-rom-acc") === name;
+    });
+  }
+
+  function resetAccordionToOverview() {
+    openAccordionSection("overview");
+  }
+
+  function wireExclusiveAccordion() {
+    if (accordionWired) return;
+    const group = byId("romAccordionGroup");
+    if (!group) return;
+    accordionWired = true;
+    group.addEventListener("click", (event) => {
+      const summary = event.target && event.target.closest
+        ? event.target.closest("summary.rom-acc__summary")
+        : null;
+      if (!summary || !group.contains(summary)) return;
+      const section = summary.closest("details.rom-acc");
+      if (!section) return;
+      // Browser toggles open state after this click handler; enforce exclusivity next tick.
+      setTimeout(() => {
+        if (!section.open) return;
+        accordionSections().forEach((el) => {
+          if (el !== section) el.open = false;
+        });
+      }, 0);
+    });
+  }
+
+  function syncRecruitmentUrl(id, { replace } = {}) {
+    if (syncingUrl) return;
+    const url = new URL(window.location.href);
+    if (id) {
+      url.searchParams.delete("id");
+      url.searchParams.set("recruitment_id", String(id));
+    } else {
+      url.searchParams.delete("recruitment_id");
+      url.searchParams.delete("id");
+    }
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next === current) return;
+    syncingUrl = true;
+    try {
+      if (replace) window.history.replaceState({ recruitmentId: id || null }, "", next);
+      else window.history.pushState({ recruitmentId: id || null }, "", next);
+    } finally {
+      syncingUrl = false;
+    }
+  }
+
+  function updateDetailHeader(row) {
+    const idLabel = byId("romDetailIdLabel");
+    const titleEl = byId("romDetailTitle");
+    const metaEl = byId("romDetailMetaLine");
+    const statusEl = byId("romDetailStatusText");
+    const advancedHint = byId("romAdvancedIdHint");
+    if (!row?.id) {
+      if (idLabel) idLabel.textContent = "New Recruitment";
+      if (titleEl) titleEl.textContent = "Create recruitment record";
+      if (metaEl) metaEl.textContent = "Fill identity fields below. Creating a record does not publish.";
+      if (statusEl) {
+        statusEl.textContent = "—";
+        statusEl.className = "rom-status";
+      }
+      if (advancedHint) advancedHint.textContent = "#—";
+      return;
+    }
+    const org = row.department || "—";
+    const post = row.post_name || "—";
+    const year = row.cycle_year || "—";
+    const status = labelize(row.lifecycle_state || "announced");
+    if (idLabel) idLabel.textContent = `Recruitment #${row.id}`;
+    if (titleEl) {
+      const full = row.title || `Recruitment #${row.id}`;
+      titleEl.textContent = full;
+      titleEl.title = full;
+    }
+    if (metaEl) metaEl.textContent = `${org} · ${post} · ${year}`;
+    if (statusEl) {
+      statusEl.textContent = status;
+      statusEl.className = `rom-status is-${escapeHtml(row.lifecycle_state || "announced")}`;
+    }
+    if (advancedHint) advancedHint.textContent = `#${row.id}`;
+  }
+
+  function closeRecruitmentDetail({ replaceUrl } = {}) {
+    selected = null;
+    events = [];
+    linkedPages = [];
+    linkedUpdates = [];
+    linkedReviews = [];
+    draftBinding = null;
+    setEditorVisible(false);
+    fillRecruitmentForm(null);
+    renderEvents();
+    renderLinks();
+    renderLifecycleLinks();
+    renderDraftBinding();
+    if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
+    syncRecruitmentUrl(null, { replace: Boolean(replaceUrl) });
+    loadRecruitments();
   }
 
   function canonicalPageResolution() {
@@ -404,9 +542,11 @@
     if (!host) return;
     if (!selected?.id) {
       host.hidden = true;
+      updateDetailHeader(null);
       return;
     }
     host.hidden = false;
+    updateDetailHeader(selected);
     const titleEl = byId("lifecycleOverviewTitle");
     const metaEl = byId("lifecycleOverviewMeta");
     const statusEl = byId("lifecycleOverviewStatus");
@@ -414,7 +554,7 @@
     if (metaEl) {
       const org = selected.department || "—";
       const year = selected.cycle_year || "—";
-      metaEl.textContent = `Organization: ${org} · Year: ${year} · ID #${selected.id}`;
+      metaEl.textContent = `Organization: ${org} · Year: ${year} · Recruitment #${selected.id}`;
     }
     if (statusEl) {
       statusEl.textContent = labelize(selected.lifecycle_state || "announced");
@@ -469,14 +609,15 @@
         const done = Boolean(ev);
         const mark = done ? "✓" : "○";
         const status = ev ? labelize(ev.status) : "not started";
-        return `<li class="${done ? "is-done" : "is-pending"}"><span class="rom-stage-mark">${mark}</span> ${escapeHtml(labelize(type))} <small>${escapeHtml(status)}</small></li>`;
+        const idMeta = ev ? ` · Event #${ev.id}` : "";
+        return `<li class="${done ? "is-done" : "is-pending"}"><span class="rom-stage-mark">${mark}</span> ${escapeHtml(labelize(type))} <small>${escapeHtml(status)}${escapeHtml(idMeta)}</small></li>`;
       });
       const extras = events.filter(
         (e) => !milestoneTypes.includes(String(e.event_type || "").toLowerCase())
       );
       extras.forEach((ev) => {
         rows.push(
-          `<li class="is-done"><span class="rom-stage-mark">✓</span> ${escapeHtml(labelize(ev.event_type))} <small>${escapeHtml(labelize(ev.status))}</small></li>`
+          `<li class="is-done"><span class="rom-stage-mark">✓</span> ${escapeHtml(labelize(ev.event_type))} <small>${escapeHtml(labelize(ev.status))} · Event #${escapeHtml(ev.id)}</small></li>`
         );
       });
       checklist.innerHTML = rows.join("") || '<li class="rom-empty">No events yet</li>';
@@ -493,10 +634,12 @@
         ? pending
             .map((d) => {
               const event = events.find((e) => Number(e.id) === Number(d.recruitmentEventId));
+              const titleFull = d.title || "Untitled draft";
               return `<article class="rom-draft-chip">
-                <strong>${escapeHtml(d.title || "Untitled draft")}</strong>
+                <p class="rom-rel-ids"><span>Recruitment #${escapeHtml(selected.id)}</span><span>Draft #${escapeHtml(d.id)}</span>${event ? `<span>Event #${escapeHtml(event.id)}</span>` : ""}</p>
+                <strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong>
                 <span>Event: ${escapeHtml(event ? labelize(event.event_type) : "—")}</span>
-                <span class="rom-overview-meta">Draft #${escapeHtml(d.id)} · ${escapeHtml(d.status || "draft")}</span>
+                <span class="rom-overview-meta">Status: ${escapeHtml(d.status || "draft")}</span>
                 <a class="rom-row-btn" href="/generator?draftId=${encodeURIComponent(d.id)}" style="text-decoration:none;">Open Draft</a>
               </article>`;
             })
@@ -507,19 +650,22 @@
       publishedHost.innerHTML = published.length
         ? published
             .map((d) => {
+              const titleFull = d.title || "Untitled";
               return `<article class="rom-draft-chip is-published">
-                <strong>${escapeHtml(d.title || "Untitled")}</strong>
-                <span class="rom-overview-meta">Published history · Draft #${escapeHtml(d.id)}</span>
+                <p class="rom-rel-ids"><span>Draft #${escapeHtml(d.id)}</span></p>
+                <strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong>
+                <span class="rom-overview-meta">Published history</span>
               </article>`;
             })
             .join("")
         : linkedUpdates.length
           ? linkedUpdates
               .slice(0, 5)
-              .map(
-                (u) =>
-                  `<article class="rom-draft-chip is-published"><strong>${escapeHtml(u.title || "Update")}</strong><span class="rom-overview-meta">${escapeHtml(labelize(u.recruitmentEventType || u.recruitment_event_type || "update"))}</span></article>`
-              )
+              .map((u) => {
+                const titleFull = u.title || "Update";
+                const updateId = u.id != null ? u.id : u.update_id;
+                return `<article class="rom-draft-chip is-published"><p class="rom-rel-ids">${updateId != null ? `<span>Update #${escapeHtml(updateId)}</span>` : ""}</p><strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 64))}</strong><span class="rom-overview-meta">${escapeHtml(labelize(u.recruitmentEventType || u.recruitment_event_type || "update"))}</span></article>`;
+              })
               .join("")
           : '<p class="rom-empty">No published history yet</p>';
     }
@@ -538,6 +684,56 @@
         .join("");
   }
 
+  function setIdentityEditMode(editing) {
+    identityEditMode = Boolean(editing);
+    const form = byId("recruitmentForm");
+    const hasId = Boolean(byId("recruitmentId")?.value);
+    const isCreate = !hasId;
+
+    if (form) {
+      form.classList.toggle("rom-form--readonly", !identityEditMode);
+      form.dataset.identityMode = identityEditMode ? "edit" : "view";
+    }
+
+    IDENTITY_FIELD_IDS.forEach((id) => {
+      const el = byId(id);
+      if (!el) return;
+      if (el.tagName === "SELECT") {
+        el.disabled = !identityEditMode;
+      } else {
+        el.readOnly = !identityEditMode;
+      }
+    });
+
+    const editBtn = byId("editRecruitmentIdentityBtn");
+    const actions = byId("recruitmentIdentityEditActions");
+    if (editBtn) {
+      // Existing records: Edit only in view mode. Create flow stays in edit mode (no Edit button).
+      editBtn.hidden = isCreate || identityEditMode;
+    }
+    if (actions) {
+      actions.hidden = !identityEditMode;
+    }
+  }
+
+  function enterIdentityEditMode() {
+    if (!byId("recruitmentId")?.value && !selected?.id) {
+      setIdentityEditMode(true);
+      return;
+    }
+    setIdentityEditMode(true);
+    byId("recruitmentTitle")?.focus();
+  }
+
+  function cancelIdentityEdit() {
+    if (selected?.id) {
+      fillRecruitmentForm(selected);
+      setIdentityEditMode(false);
+      return;
+    }
+    closeRecruitmentDetail({ replaceUrl: true });
+  }
+
   function fillRecruitmentForm(row) {
     byId("recruitmentId").value = row?.id || "";
     byId("recruitmentTitle").value = row?.title || "";
@@ -547,16 +743,19 @@
     byId("recruitmentAdvertisement").value = row?.advertisement_no || "";
     byId("recruitmentCycleYear").value = row?.cycle_year || "";
     byId("recruitmentLifecycle").value = row?.lifecycle_state || "announced";
-    byId("recruitmentFormTitle").textContent = row?.id ? row.title : "New Recruitment";
+    byId("recruitmentFormTitle").textContent = row?.id ? "Recruitment Identity" : "New Recruitment";
     byId("archiveRecruitmentBtn").hidden = !row?.id || row.lifecycle_state === "closed";
     const purpose = byId("recruitmentFormPurpose");
     if (purpose) {
       purpose.textContent = row?.id
-        ? "Edit this recruitment identity. Lifecycle updates use Manual Update below — same permanent page/slug."
+        ? "Admin identity for this recruitment record. Click Edit to change fields. Lifecycle updates use Manual Update in Actions — same permanent page/slug."
         : "Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.";
     }
     const overview = byId("recruitmentLifecycleOverview");
     if (overview) overview.hidden = !row?.id;
+    updateDetailHeader(row);
+    // Existing recruitment → read-only by default. New recruitment → editable.
+    setIdentityEditMode(!row?.id);
   }
 
   function updateWorkflow() {
@@ -632,8 +831,12 @@
       }
     }
     if (bindVisual) {
-      const draftLabel = primary ? primary.title || `Draft #${primary.id}` : "—";
-      const eventLabel = primaryEvent ? labelize(primaryEvent.event_type) : "—";
+      const draftLabel = primary
+        ? `${truncateText(primary.title || "Untitled", 48)} (Draft #${primary.id})`
+        : "—";
+      const eventLabel = primaryEvent
+        ? `${labelize(primaryEvent.event_type)} (Event #${primaryEvent.id})`
+        : "—";
       const pageLabel =
         canonical.status === "none"
           ? "Not linked"
@@ -642,8 +845,8 @@
         ? labelize(primary.status || "draft")
         : "Not linked";
       bindVisual.innerHTML = `
-        <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value">${escapeHtml(draftLabel)}</span></div>
-        <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">${escapeHtml(selected.title || "Recruitment")}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Recruitment</span><span class="rom-bind__value">#${escapeHtml(selected.id)} · ${escapeHtml(truncateText(selected.title || "Recruitment", 48))}</span></div>
+        <div class="rom-bind__row"><span class="rom-bind__label">Draft</span><span class="rom-bind__value" title="${escapeHtml(primary?.title || "")}">${escapeHtml(draftLabel)}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Event</span><span class="rom-bind__value">${escapeHtml(eventLabel)}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Canonical Public Page</span><span class="rom-bind__value">${escapeHtml(pageLabel)}</span></div>
         <div class="rom-bind__row"><span class="rom-bind__label">Status</span><span class="rom-bind__value">${escapeHtml(statusLabel)}</span></div>`;
@@ -803,7 +1006,7 @@
       const done = ["active", "superseded"].includes(String(event.status || "").toLowerCase());
       return `<li data-event-id="${event.id}" class="${done ? "is-done" : "is-pending"}">
       <span class="rom-timeline__order">${done ? "✓" : "○"} ${escapeHtml(event.sequence_order)}</span>
-      <span><strong>${escapeHtml(labelize(event.event_type))}</strong><br>${statusHtml(event.status)}</span>
+      <span><strong>${escapeHtml(labelize(event.event_type))}</strong><br>${statusHtml(event.status)}<br><small class="rom-overview-meta">Event #${escapeHtml(event.id)}</small></span>
       <span class="rom-row-actions">
         <button type="button" class="rom-row-btn" data-edit-event="${event.id}">Edit</button>
         <button type="button" class="rom-row-btn is-danger" data-delete-event="${event.id}">Delete</button>
@@ -848,14 +1051,16 @@
         updateRows.innerHTML = '<tr><td colspan="4" class="rom-empty">No linked updates.</td></tr>';
       } else {
         updateRows.innerHTML = linkedUpdates
-          .map(
-            (row) => `<tr>
-            <td>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "update"))}</td>
-            <td><strong>${escapeHtml(row.title || "—")}</strong></td>
+          .map((row) => {
+            const updateId = row.id != null ? row.id : row.update_id;
+            const titleFull = row.title || "—";
+            return `<tr>
+            <td><span class="rom-rec-id">Update #${escapeHtml(updateId != null ? updateId : "—")}</span><br><small>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "update"))}</small></td>
+            <td><strong title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 56))}</strong></td>
             <td>${escapeHtml(labelize(row.recruitmentEventType || row.recruitment_event_type || "—"))}</td>
             <td>${escapeHtml(row.siteName || row.site_id || "—")}</td>
-          </tr>`
-          )
+          </tr>`;
+          })
           .join("");
       }
     }
@@ -864,22 +1069,25 @@
         reviewRows.innerHTML = '<tr><td colspan="4" class="rom-empty">No linked reviews.</td></tr>';
       } else {
         reviewRows.innerHTML = linkedReviews
-          .map(
-            (row) => `<tr>
-            <td><a href="/admin/recruitment-review-queue">${escapeHtml(labelize(row.event_type || "Review"))}</a></td>
+          .map((row) => {
+            const reviewId = row.id != null ? row.id : row.review_id;
+            const titleFull = row.title || row.update_title || "—";
+            return `<tr>
+            <td><a href="/admin/recruitment-review-queue"><span class="rom-rec-id">Review #${escapeHtml(reviewId != null ? reviewId : "—")}</span></a><br><small>${escapeHtml(labelize(row.event_type || "Review"))}</small></td>
             <td><span class="rrq-status is-${escapeHtml(String(row.status || "").toLowerCase())}">${escapeHtml(
               row.status || "—"
             )}</span></td>
             <td>${escapeHtml(labelize(row.event_type || "—"))}</td>
-            <td>${escapeHtml(row.title || row.update_title || "—")}</td>
-          </tr>`
-          )
+            <td title="${escapeHtml(titleFull)}">${escapeHtml(truncateText(titleFull, 48))}</td>
+          </tr>`;
+          })
           .join("");
       }
     }
   }
 
   function focusEventTimeline() {
+    openAccordionSection("lifecycle");
     const section = byId("recruitmentEventsSection") || byId("eventTimeline");
     if (!section) return;
     section.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -895,7 +1103,7 @@
     message("Select a recruitment to view its Event Timeline.", false);
   }
 
-  async function selectRecruitment(id) {
+  async function selectRecruitment(id, { syncUrl } = {}) {
     try {
       const body = await api(`/api/admin/recruitments/${id}/detail?limit=50`);
       selected = body.data.recruitment;
@@ -912,6 +1120,7 @@
       await loadAvailableDrafts();
       await loadRecruitments();
       if (window.AdminSharedPreview) await window.AdminSharedPreview.show(selected.id);
+      if (syncUrl !== false) syncRecruitmentUrl(selected.id);
       if (String(window.location.hash || "").replace(/^#/, "") === "eventTimeline") {
         focusEventTimeline();
       }
@@ -929,11 +1138,13 @@
     draftBinding = null;
     setEditorVisible(true);
     fillRecruitmentForm(null);
+    setIdentityEditMode(true);
     renderEvents();
     renderLinks();
     renderLifecycleLinks();
     renderDraftBinding();
     if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
+    syncRecruitmentUrl(null, { replace: true });
     byId("recruitmentTitle").focus();
   }
 
@@ -951,6 +1162,7 @@
 
   async function saveRecruitment(event) {
     event.preventDefault();
+    if (!identityEditMode) return;
     try {
       const id = byId("recruitmentId").value;
       const payload = recruitmentPayload();
@@ -966,6 +1178,7 @@
         );
       }
       await selectRecruitment(body.data.id);
+      setIdentityEditMode(false);
     } catch (err) {
       message(`Failed: ${err.message}`, true);
     }
@@ -1115,10 +1328,15 @@
 
   byId("eventType").innerHTML = EVENT_TYPES.map((type) => `<option value="${type}">${escapeHtml(labelize(type))}</option>`).join("");
   byId("newRecruitmentBtn").addEventListener("click", newRecruitment);
+  byId("closeRecruitmentDetailBtn")?.addEventListener("click", () => closeRecruitmentDetail());
   byId("recruitmentForm").addEventListener("submit", saveRecruitment);
   byId("archiveRecruitmentBtn").addEventListener("click", archiveRecruitment);
-  byId("cancelRecruitmentBtn").addEventListener("click", () => selected ? fillRecruitmentForm(selected) : setEditorVisible(false));
-  byId("addEventBtn").addEventListener("click", () => showEventForm(null));
+  byId("editRecruitmentIdentityBtn")?.addEventListener("click", () => enterIdentityEditMode());
+  byId("cancelRecruitmentBtn").addEventListener("click", () => cancelIdentityEdit());
+  byId("addEventBtn").addEventListener("click", () => {
+    openAccordionSection("lifecycle");
+    showEventForm(null);
+  });
   byId("cancelEventBtn").addEventListener("click", () => { byId("eventForm").hidden = true; });
   byId("eventForm").addEventListener("submit", saveEvent);
   byId("validatePageBtn").addEventListener("click", validatePage);
@@ -1156,6 +1374,7 @@
   byId("recruitmentNext").addEventListener("click", () => { if (listPage * PAGE_SIZE < listTotal) { listPage += 1; loadRecruitments(); } });
 
   window.adminPageRefreshHandler = loadRecruitments;
+  wireExclusiveAccordion();
   const params = new URLSearchParams(window.location.search);
   if (params.get("search")) {
     byId("recruitmentSearch").value = params.get("search");
@@ -1167,10 +1386,12 @@
   renderDraftBinding();
   loadAvailableDrafts();
   byId("lifecycleManualUpdateBtn")?.addEventListener("click", () => {
+    openAccordionSection("actions");
     byId("manualUpdateForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
     byId("manualUpdateTitle")?.focus();
   });
   byId("lifecycleAddEventBtn")?.addEventListener("click", () => {
+    openAccordionSection("lifecycle");
     showEventForm(null);
     focusEventTimeline();
   });
@@ -1178,7 +1399,8 @@
   loadRecruitments().then(async () => {
     if (deepRecruitmentId) {
       try {
-        await selectRecruitment(deepRecruitmentId);
+        await selectRecruitment(deepRecruitmentId, { syncUrl: false });
+        syncRecruitmentUrl(deepRecruitmentId, { replace: true });
       } catch (err) {
         message(err.message || "Could not open recruitment", true);
       }
@@ -1186,4 +1408,30 @@
     await handleEventTimelineHash();
   });
   window.addEventListener("hashchange", handleEventTimelineHash);
+  window.addEventListener("popstate", async () => {
+    const nextParams = new URLSearchParams(window.location.search);
+    const nextId = nextParams.get("recruitment_id") || nextParams.get("id");
+    if (nextId) {
+      if (!selected || String(selected.id) !== String(nextId)) {
+        await selectRecruitment(nextId, { syncUrl: false });
+      }
+      return;
+    }
+    if (selected) {
+      selected = null;
+      events = [];
+      linkedPages = [];
+      linkedUpdates = [];
+      linkedReviews = [];
+      draftBinding = null;
+      setEditorVisible(false);
+      fillRecruitmentForm(null);
+      renderEvents();
+      renderLinks();
+      renderLifecycleLinks();
+      renderDraftBinding();
+      if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
+      await loadRecruitments();
+    }
+  });
 })();

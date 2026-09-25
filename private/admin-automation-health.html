@@ -2,12 +2,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Automation Health | Automation Control Center</title>
+<title>Health | Automation Control Center</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
 <link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
-<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
 <link rel="stylesheet" href="/css/base/tokens.css">
 <link rel="stylesheet" href="/css/admin/dashboard.css?v=9">
 <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
@@ -15,9 +14,9 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=16">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=21">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Automation Health" data-acc-page="health">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Health" data-acc-page="health">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -26,67 +25,133 @@
   </div>
 </div>
 <div class="main acc-main">
-  <header class="acc-workspace-head" aria-label="Health snapshot">
+  <header class="acc-workspace-head" aria-label="Health">
     <div class="acc-workspace-head__copy">
       <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
-      <h1 class="acc-workspace-head__title">Health snapshot</h1>
-      <p class="acc-workspace-head__sub">Automation and source health posture. Full monitoring remains on the Monitoring workspace.</p>
+      <h1 class="acc-workspace-head__title">Health</h1>
+      <p class="acc-workspace-head__sub">System health and runtime readiness. Official source management lives on Monitoring.</p>
     </div>
     <div class="acc-workspace-head__actions">
-      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
-      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
-      
+      <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
       <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
     </div>
   </header>
 
   <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
     <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox">
-      <a class="acc-switcher__option" href="/admin/automation-control-center">Control overview</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/sources">Official sources</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Review snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center">Overview</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitments</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/reviews">Reviews</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Drafts</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue</a>
       <a class="acc-switcher__option" href="/admin/automation-control-center/insights">Insights</a>
-      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/health" aria-current="page">Health snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/health" aria-current="page">Health</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Controls</a>
     </div>
   </nav>
-  <div class="acc-content" id="accContent">
 
-  <section class="acc-kpi-strip" aria-label="Health summary">
-    <article class="acc-kpi"><span>System health</span><strong id="accPageKpiHealth">Unknown</strong></article>
-    <article class="acc-kpi"><span>Healthy sources</span><strong id="accPageKpiHealthy">0</strong></article>
-    <article class="acc-kpi"><span>Offline sources</span><strong id="accPageKpiOffline">0</strong></article>
-    <article class="acc-kpi"><span>Automation</span><strong id="accPageKpiAutomation">Dormant</strong></article>
-  </section>
+  <div class="acc-content acc-content--clean acc-console" id="accContent">
+    <section class="acc-clean-section" id="accMonitoring" aria-labelledby="accHealthOverallHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accHealthOverallHeading">System health</h2>
+      </div>
+      <p class="acc-overall-line">
+        <span class="acc-op-dot is-safe" id="accHealthOverallDot" aria-hidden="true"></span>
+        <strong id="accPageKpiHealth">Not available</strong>
+        <span class="acc-note" id="accHealthOverallExplain">Waiting for backend health data.</span>
+      </p>
+      <div class="acc-metric-row acc-metric-row--compact" aria-label="Health summary">
+        <article><span>Healthy sources</span><strong id="accPageKpiHealthy">0</strong></article>
+        <article><span>Offline sources</span><strong id="accPageKpiOffline">0</strong></article>
+        <article><span>Automation</span><strong id="accPageKpiAutomation">Not available</strong></article>
+      </div>
+    </section>
 
-  <section class="acc-section is-acc-tab-active" id="accMonitoring" data-acc-searchable="monitoring dashboard online offline slow healthy warnings response time health score">
-    <div class="acc-section__head">
-      <div>
-        <p class="acc-section__eyebrow">Observability</p>
-        <h2>Health cards</h2>
+    <section class="acc-clean-section" aria-labelledby="accHealthAppHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accHealthAppHeading">Application</h2>
       </div>
-      <div class="acc-section__actions">
-        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table acc-health-table" aria-label="Application health">
+          <thead>
+            <tr><th>Component</th><th>Status</th><th>Last known</th></tr>
+          </thead>
+          <tbody id="accHealthAppRows">
+            <tr><td colspan="3" class="acc-empty">Not available</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div class="acc-monitor-grid" id="accMonitorGrid"></div>
-  </section>
+    </section>
+
+    <section class="acc-clean-section" aria-labelledby="accHealthRuntimeHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accHealthRuntimeHeading">Automation runtime</h2>
+      </div>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table acc-health-table" aria-label="Automation runtime health">
+          <thead>
+            <tr><th>Component</th><th>Configured</th><th>Effective</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="accHealthRuntimeRows">
+            <tr><td colspan="4" class="acc-empty">Not available</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="acc-clean-section" aria-labelledby="accHealthNotifyHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accHealthNotifyHeading">Notification</h2>
+      </div>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table acc-health-table" aria-label="Notification health">
+          <thead>
+            <tr><th>Component</th><th>Status</th><th>Last known</th></tr>
+          </thead>
+          <tbody id="accHealthNotifyRows">
+            <tr><td colspan="3" class="acc-empty">Not available</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="acc-clean-section" aria-labelledby="accHealthSourcesHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accHealthSourcesHeading">Official sources (snapshot)</h2>
+        <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Manage on Monitoring</a>
+      </div>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table acc-health-table" aria-label="Source health snapshot">
+          <thead>
+            <tr><th>Source</th><th>Health</th><th>Last check</th><th>State</th></tr>
+          </thead>
+          <tbody id="accMonitorGrid">
+            <tr><td colspan="4" class="acc-empty">Not available</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="acc-note">This is a health snapshot only. Add, verify, and enable sources on Monitoring.</p>
+    </section>
+
+    <details class="acc-advanced" id="accHealthAdvanced">
+      <summary>Advanced / Technical details</summary>
+      <div class="acc-advanced__body">
+        <pre class="acc-advanced__flags" id="accHealthAdvancedBody" aria-label="Technical health details">Not available</pre>
+      </div>
+    </details>
   </div>
 </div>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js?v=4"></script>
+<script src="/js/admin-layout.js?v=5"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=8"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=13"></script>
+<script src="/js/admin-automation-control-center.js?v=17"></script>
 </body>
 </html>

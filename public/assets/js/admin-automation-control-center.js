@@ -34,7 +34,7 @@
     accPublishingControls: "/admin/automation-control-center/controls",
     accAudit: "/admin/automation-control-center/logs",
     accSettings: "/admin/automation-control-center/controls",
-    accSources: "/admin/automation-control-center/sources",
+    accSources: "/admin/monitoring",
     accInsights: "/admin/automation-control-center/insights",
     accWorkflow: "/admin/automation-control-center/queue",
     accReview: "/admin/automation-control-center/reviews",
@@ -202,7 +202,373 @@
     renderManualWorkflow();
     renderActiveSources();
     renderRecentPipelineActivity();
+    renderOperatorOverview();
     renderOverviewCards();
+  }
+
+  function na(value) {
+    if (value === undefined || value === null || value === "") return "Not available";
+    return String(value);
+  }
+
+  function toneClass(tone) {
+    const t = String(tone || "off").toLowerCase();
+    if (t === "on" || t === "ready" || t === "green") return "is-on";
+    if (t === "blocked" || t === "lock" || t === "locked") return "is-blocked";
+    if (t === "warn" || t === "warning" || t === "yellow" || t === "pending") return "is-warn";
+    if (t === "error") return "is-error";
+    if (t === "safe" || t === "dormant") return "is-safe";
+    return "is-off";
+  }
+
+  function applyPillTone(el, state) {
+    if (!el) return;
+    el.classList.remove("is-on", "is-off", "is-blocked", "is-warn", "is-error", "is-safe");
+    const normalized = String(state || "OFF").toUpperCase();
+    if (normalized.includes("BLOCK") || normalized.includes("LOCK")) el.classList.add("is-blocked");
+    else if (normalized === "ON" || normalized === "RUNNING" || normalized === "ONLINE" || normalized === "AVAILABLE") el.classList.add("is-on");
+    else if (normalized.includes("DORMANT") || normalized.includes("SAFE")) el.classList.add("is-safe");
+    else if (normalized === "YELLOW" || normalized === "WARNING" || normalized === "PENDING") el.classList.add("is-warn");
+    else if (normalized === "ERROR") el.classList.add("is-error");
+    else el.classList.add("is-off");
+  }
+
+  function formatShortTime(value) {
+    if (!value || value === "Not available") return "Not available";
+    const time = Date.parse(value);
+    if (!Number.isFinite(time)) return String(value);
+    try {
+      return new Date(time).toLocaleString();
+    } catch {
+      return String(value);
+    }
+  }
+
+  function renderOperatorOverview() {
+    if (getAccPageId() !== "overview") return;
+    const op = state.dashboard?.operatorOverview;
+    if (!op) {
+      setText("accOverallState", "Not available");
+      setText("accOverallExplain", "Operator overview data is not available from the backend.");
+      return;
+    }
+
+    const overall = op.overall || {};
+    const strip = op.statusStrip || {};
+    const safety = op.safety || {};
+    const flags = state.dashboard?.flags || {};
+    const runtime = state.dashboard?.runtime || {};
+
+    setText("accOverallState", overall.state || "Not available");
+    setText("accOverallExplain", overall.explanation || "Not available");
+    const overallDot = qs("accOverallDot");
+    if (overallDot) {
+      overallDot.classList.remove("is-safe", "is-off", "is-blocked", "is-on", "is-warn");
+      overallDot.classList.add(toneClass(overall.tone || "safe"));
+    }
+
+    const monitoringItem = strip.monitoring || {};
+    const schedulerItem = strip.scheduler || {};
+    const aiItem = strip.aiDraft || {};
+    const autoPublishItem = strip.autoPublish || {};
+    const telegramItem = strip.telegram || {};
+    const workerItem = strip.worker || {};
+    const gatewayItem = strip.notificationGateway || {};
+    const reviewPipelineOn = flags.RECRUITMENT_PIPELINE_ENABLED === true;
+
+    setText("accTopMonitoringState", monitoringItem.state || "OFF");
+    setText("accTopMonitoringStateMirror", monitoringItem.state || "OFF");
+    setText(
+      "accTopMonitoringExplain",
+      monitoringItem.state === "ON"
+        ? "Official sources monitoring is authorized."
+        : "Official sources are not being monitored automatically."
+    );
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="monitoring"]'), monitoringItem.state);
+
+    const schedulerState = schedulerItem.state || "OFF";
+    setText("accTopSchedulerState", schedulerState);
+    setStateBadge("accSchedulerStatusBadge", schedulerState);
+    setText(
+      "accTopSchedulerExplain",
+      schedulerState === "OFF"
+        ? "No automatic monitoring cycle is running."
+        : "Scheduler flags differ from full OFF; process details are in Scheduler."
+    );
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="scheduler"]'), schedulerState);
+
+    setText("accTopAiState", aiItem.state || "OFF");
+    setText(
+      "accTopAiExplain",
+      aiItem.state === "OFF"
+        ? "AI processing is not running automatically."
+        : aiItem.explanation || "AI draft conversion state from backend flags."
+    );
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="ai"]'), aiItem.state);
+
+    setText("accTopReviewPipelineState", reviewPipelineOn ? "ON" : "OFF");
+    setText(
+      "accTopReviewPipelineExplain",
+      reviewPipelineOn
+        ? "Recruitment pipeline flag is ON."
+        : "Recruitment pipeline is not authorized."
+    );
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="review-pipeline"]'), reviewPipelineOn ? "ON" : "OFF");
+
+    const telegramState = telegramItem.state || "OFF";
+    setText("accTopTelegramState", telegramState);
+    setStateBadge("accTelegramStatusBadge", telegramState);
+    setText("accTopTelegramExplain", telegramState === "ON" ? "Telegram delivery flags are armed." : "Telegram delivery is OFF.");
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="telegram"]'), telegramState);
+
+    const gatewayState = gatewayItem.state || "OFF";
+    setText("accTopGatewayState", gatewayState);
+    setText("accTopGatewayExplain", gatewayState === "ON" ? "Notification gateway is armed." : "Notification gateway is OFF.");
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="gateway"]'), gatewayState);
+
+    const workerState = workerItem.state || "OFF";
+    setText("accTopWorkerState", workerState);
+    setText(
+      "accTopWorkerExplain",
+      workerState === "OFF"
+        ? "Worker is not authorized to run automation jobs."
+        : "Worker availability does not mean automation is authorized."
+    );
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="worker"]'), workerState);
+
+    const autoPublishState = autoPublishItem.state === "BLOCKED" || autoPublishItem.state === "LOCKED"
+      ? "LOCKED"
+      : (autoPublishItem.state || "LOCKED");
+    setText("accTopAutoPublishState", autoPublishState);
+    setStateBadge("accAutoPublishStatusBadge", "LOCKED OFF");
+    setText("accTopAutoPublishExplain", "Human publish is required.");
+    applyPillTone(document.querySelector('.acc-status-tile[data-status="auto-publish"]'), "LOCKED");
+
+    setText(
+      "accSafetyActivation",
+      state.dashboard?.isDormant ? "OFF / DORMANT" : (safety.automationActivation || "OFF")
+    );
+    setText("accSafetyAutoPublish", "LOCKED / HUMAN REQUIRED");
+    setText("accSafetyHumanPublish", "REQUIRED");
+    setText("accSafetyMutation", safety.productionMutation || "BLOCKED");
+    setText("accPublishingModeStatus", "MANUAL REVIEW ONLY");
+    setText("accPublishingModeBadge", "Publishing Mode: MANUAL REVIEW ONLY");
+
+    const actionsHost = qs("accHumanActionList");
+    if (actionsHost) {
+      const actions = buildHumanActionCards(op);
+      if (!actions.length) {
+        actionsHost.innerHTML = `<p class="acc-empty">Nothing requires your action right now.</p>`;
+      } else {
+        actionsHost.innerHTML = actions.map((action) => `
+          <article class="acc-action-card">
+            <div>
+              <strong>${escapeHtml(action.what)}</strong>
+              <span class="acc-action-card__why">${escapeHtml(action.why)}</span>
+            </div>
+            <a href="${escapeHtml(action.href)}" class="header-action-btn" style="text-decoration:none;">${escapeHtml(action.action)}</a>
+          </article>
+        `).join("");
+      }
+    }
+
+    const monitoring = op.monitoring || {};
+    setText("accMonEnabled", monitoring.sourcesEnabled ?? 0);
+    setText("accMonHealthy", monitoring.sourcesHealthy ?? 0);
+    setText("accMonWarning", monitoring.sourcesWarning ?? 0);
+    setText("accMonBlocked", monitoring.sourcesBlocked ?? 0);
+    setText("accMonLastCycle", formatShortTime(monitoring.lastCycle));
+    setText("accMonUpdates", monitoring.updatesDetected ?? 0);
+
+    const sourceRows = qs("accMonitoringSourceRows");
+    if (sourceRows) {
+      const rows = Array.isArray(monitoring.sources) ? monitoring.sources : [];
+      if (!rows.length) {
+        sourceRows.innerHTML = `<tr><td colspan="6" class="acc-empty">No source data returned.</td></tr>`;
+      } else {
+        sourceRows.innerHTML = rows.map((row) => `
+          <tr>
+            <td><a href="${escapeHtml(row.href || "/admin/monitoring")}">${escapeHtml(row.name || "Source")}</a></td>
+            <td>${escapeHtml(na(row.organization))}</td>
+            <td><span class="acc-state ${toneClass(row.tone)}">${escapeHtml(row.status || "OFF")}</span></td>
+            <td>${escapeHtml(formatShortTime(row.lastChecked))}</td>
+            <td>${escapeHtml(formatShortTime(row.lastChange))}</td>
+            <td>${escapeHtml(na(row.reason))}</td>
+          </tr>
+        `).join("");
+      }
+    }
+
+    const updatesHost = qs("accRecentUpdatesList");
+    if (updatesHost) {
+      const updateEvents = (Array.isArray(op.activityTimeline) ? op.activityTimeline : [])
+        .filter((event) => event.component === "Updates" || /update/i.test(event.title || ""))
+        .slice(0, 8);
+      if (!updateEvents.length) {
+        updatesHost.innerHTML = `<li class="acc-empty">No recent updates.</li>`;
+      } else {
+        updatesHost.innerHTML = updateEvents.map((event) => `
+          <li>
+            <strong>${escapeHtml(event.detail || event.title || "Update")}</strong>
+            <span>${escapeHtml(formatShortTime(event.at))} · ${escapeHtml(event.outcome || "")}</span>
+            <a href="${escapeHtml(event.href || "/admin/monitoring/updates")}">Open</a>
+          </li>
+        `).join("");
+      }
+    }
+
+    const drafts = op.draftQueue || {};
+    const workflow = Array.isArray(state.dashboard?.manualWorkflow) ? state.dashboard.manualWorkflow : [];
+    const countById = (id) => {
+      const stage = workflow.find((row) => row.id === id);
+      return stage ? stage.count : null;
+    };
+    setText("accPipeSourceCount", monitoring.sourcesEnabled ?? "—");
+    setText("accPipeUpdateCount", monitoring.updatesDetected ?? countById("detected") ?? 0);
+    setText("accPipeExtractCount", "Not available");
+    setText("accPipeAiCount", "Not available");
+    setText("accPipeMatchCount", drafts.needsReview ?? 0);
+    setText("accPipeDraftCount", drafts.waiting ?? countById("draft") ?? 0);
+    setText("accPipeReviewCount", drafts.needsReview ?? countById("reviewQueue") ?? 0);
+    setText("accPipeApproveCount", drafts.approved ?? countById("manualApproval") ?? 0);
+    setText("accPipeGeneratorCount", drafts.waiting ?? 0);
+    setText("accPipePublishCount", drafts.published ?? countById("manualPublish") ?? 0);
+
+    const ai = op.ai || {};
+    setStateBadge("accAiConversionState", ai.conversion || "OFF");
+    setText("accAiLatestExtraction", na(ai.latestExtraction));
+    setText("accAiLatestConversion", formatShortTime(ai.latestConversion));
+    setText("accAiSuccessful", na(ai.successful));
+    setText("accAiWeak", na(ai.weak));
+    setText("accAiBlocked", na(ai.blocked));
+    setText("accAiNeedsManual", na(ai.needsManualStructure));
+
+    const scheduler = op.scheduler || {};
+    setStateBadge("accSchedulerCardStatus", scheduler.status || "OFF");
+    setText("accSchedulerDetailStatus", scheduler.status || "OFF");
+    setText("accSchedulerLastRun", formatShortTime(scheduler.lastRun));
+    setText("accSchedulerNextRun", scheduler.nextRun || "Not available");
+    const cycles = na(scheduler.cyclesCompleted);
+    const errors = na(scheduler.errors);
+    setText(
+      "accSchedulerCyclesErrors",
+      cycles === "Not available" && errors === "Not available"
+        ? "Not available"
+        : `${cycles} / ${errors}`
+    );
+
+    const telegram = op.telegram || {};
+    setText("accTelegramDeliveryState", telegram.delivery || "OFF");
+    setText("accGatewayState", gatewayState);
+    setText("accTelegramPending", na(telegram.pendingNotifications));
+    setText("accTelegramSent", na(telegram.sent));
+    setText("accTelegramFailed", na(telegram.failed));
+    setText("accTelegramLastError", na(telegram.lastError));
+
+    setStateBadge("accWorkerCardState", workerState);
+    setText("accWorkerDetailStatus", workerState);
+    setText("accWorkerHeartbeat", na(workerItem.lastHeartbeat));
+    setText("accWorkerLastJob", na(workerItem.lastJob));
+    setText("accWorkerLastError", na(workerItem.lastError));
+
+    renderErrorGroups(Array.isArray(op.errorsWarnings) ? op.errorsWarnings : []);
+
+    const advanced = op.advanced || {};
+    setText("accAdvCycleId", na(advanced.lastCycleId));
+    setText("accAdvActivation", safety.activationDecision || advanced.readiness?.decision || runtime.activationDecision || "NO-GO");
+    const flagsEl = qs("accAdvFlags");
+    if (flagsEl) {
+      flagsEl.textContent = JSON.stringify(advanced.flags || flags || {}, null, 2);
+    }
+    const refsHost = qs("accAdvRefs");
+    if (refsHost) {
+      const refs = Array.isArray(advanced.refs) ? advanced.refs : [];
+      if (!refs.length) {
+        refsHost.innerHTML = `<tr><td colspan="6" class="acc-empty">No entity IDs available.</td></tr>`;
+      } else {
+        refsHost.innerHTML = refs.map((ref) => `
+          <tr>
+            <td>${escapeHtml(ref.title || "")}</td>
+            <td>${escapeHtml(ref.recruitmentId != null ? `Recruitment #${ref.recruitmentId}` : "—")}</td>
+            <td>${escapeHtml(ref.updateId != null ? `Update #${ref.updateId}` : "—")}</td>
+            <td>${escapeHtml(ref.reviewId != null ? `Review #${ref.reviewId}` : "—")}</td>
+            <td>${escapeHtml(ref.draftId != null ? `Draft #${ref.draftId}` : "—")}</td>
+            <td>${escapeHtml(ref.event || "—")}</td>
+          </tr>
+        `).join("");
+      }
+    }
+  }
+
+  function buildHumanActionCards(op) {
+    const cards = [];
+    const seen = new Set();
+    const push = (key, card) => {
+      if (seen.has(key)) return;
+      seen.add(key);
+      cards.push(card);
+    };
+
+    const refs = Array.isArray(op?.advanced?.refs) ? op.advanced.refs : [];
+    for (const ref of refs) {
+      if (ref.reviewId != null) {
+        push(`review-${ref.reviewId}`, {
+          what: ref.title || `Review #${ref.reviewId}`,
+          why: "Needs review",
+          action: "Open Review",
+          href: "/admin/recruitment-review-queue"
+        });
+      } else if (ref.draftId != null) {
+        push(`draft-${ref.draftId}`, {
+          what: `Draft #${ref.draftId}`,
+          why: ref.title ? `${ref.title} — awaiting generator / manual publish path` : "Draft waiting",
+          action: "Open Generator",
+          href: `/generator?draftId=${encodeURIComponent(ref.draftId)}`
+        });
+      } else if (ref.updateId != null) {
+        push(`update-${ref.updateId}`, {
+          what: `Update #${ref.updateId}`,
+          why: ref.title ? `${ref.title} — needs review` : "Needs review",
+          action: "Open Review",
+          href: "/admin/monitoring/updates"
+        });
+      }
+    }
+
+    for (const action of Array.isArray(op?.humanActions) ? op.humanActions : []) {
+      push(action.id || action.label, {
+        what: action.label || "Action required",
+        why: "Requires human attention",
+        action: action.cta || "Open",
+        href: action.href || "#"
+      });
+    }
+    return cards.slice(0, 12);
+  }
+
+  function renderErrorGroups(rows) {
+    const groups = { critical: [], warning: [], info: [] };
+    for (const row of rows) {
+      const status = String(row.status || "").toUpperCase();
+      const item = `
+        <li>
+          <strong>${escapeHtml(row.component || "System")}</strong>
+          <span>${escapeHtml(row.message || "")}</span>
+          <em>${escapeHtml(formatShortTime(row.at))}</em>
+          ${row.href ? `<a href="${escapeHtml(row.href)}">Open</a>` : ""}
+        </li>`;
+      if (status === "ERROR" || status === "CRITICAL") groups.critical.push(item);
+      else if (status === "WARNING" || status === "BLOCKED" || status === "YELLOW") groups.warning.push(item);
+      else groups.info.push(item);
+    }
+    const fill = (id, list) => {
+      const host = qs(id);
+      if (!host) return;
+      host.innerHTML = list.length ? list.join("") : `<li class="acc-empty">None</li>`;
+    };
+    fill("accErrorsCritical", groups.critical);
+    fill("accErrorsWarning", groups.warning);
+    fill("accErrorsInfo", groups.info);
   }
 
   function renderOverviewCards() {
@@ -220,10 +586,10 @@
 
   function stateClass(status) {
     const normalized = String(status || "OFF").toUpperCase();
-    if (normalized.includes("LOCK")) return "is-locked";
-    if (normalized === "ON" || normalized === "READY") return "is-ready";
-    if (normalized === "PENDING") return "is-pending";
-    if (normalized === "ERROR") return "is-error";
+    if (normalized.includes("LOCK") || normalized.includes("BLOCK")) return "is-locked";
+    if (normalized === "ON" || normalized === "READY" || normalized === "AVAILABLE" || normalized === "ONLINE" || normalized === "RUNNING" || normalized === "GREEN") return "is-ready";
+    if (normalized === "PENDING" || normalized === "YELLOW" || normalized === "WARNING" || normalized === "DORMANT") return "is-pending";
+    if (normalized === "ERROR" || normalized === "FAILED") return "is-error";
     return "is-off";
   }
 
@@ -255,11 +621,24 @@
     const schedulerStatus = scheduler.status || "OFF";
     const telegramStatus = telegram.status || "OFF";
 
+    const components = Array.isArray(controls.components) ? controls.components : [];
+    const activeCount = components.filter((c) => c && c.locked !== true && c.enabled === true).length;
+    const automationLabel = controls.dormant
+      ? "OFF"
+      : activeCount === 0
+        ? "OFF"
+        : state.dashboard?.runtime?.activationReady
+          ? "ON"
+          : "PARTIAL";
+
     setStateBadge("accSchedulerStatusBadge", schedulerStatus);
     setStateBadge("accTelegramStatusBadge", telegramStatus);
     setStateBadge("accAutoPublishStatusBadge", autoPublish.status || "LOCKED OFF");
     setText("accPublishingModeStatus", publishingMode);
     setText("accPublishingModeBadge", `Publishing Mode: ${publishingMode}`);
+    setStateBadge("accSafetyAutomationState", automationLabel);
+    setText("accSafetyGateState", "ACTIVE");
+    setText("accLockPanelStatus", "LOCKED");
 
     setSwitch("accSchedulerToggle", "accSchedulerToggleLabel", scheduler.enabled === true);
     setText("accSchedulerCurrentStatus", schedulerStatus);
@@ -269,6 +648,174 @@
     setText("accTelegramCurrentStatus", telegramStatus);
     setText("accTelegramConfiguredStatus", telegram.configurationStatus || (telegram.configured ? "Configured" : "Not configured"));
     setStateBadge("accTelegramStateLabel", telegramStatus);
+
+    renderOperatorControlCards(controls);
+  }
+
+  const CONTROL_GROUPS = [
+    { id: "monitoring", label: "Monitoring", ids: ["monitoring"] },
+    { id: "crawler", label: "Live crawler", ids: ["crawler"] },
+    { id: "aiDraft", label: "AI Draft", ids: ["aiDraft"] },
+    { id: "scheduler", label: "Scheduler", ids: ["scheduler"] },
+    { id: "notify", label: "Telegram / Notification", ids: ["notificationGateway", "telegram"] },
+    { id: "worker", label: "Worker", ids: ["worker"] }
+  ];
+
+  function renderOneControlCard(component) {
+    const locked = component.locked === true;
+    const enabled = component.enabled === true;
+    const status = component.status || (enabled ? "ON" : "OFF");
+    const deps = Array.isArray(component.dependencies) && component.dependencies.length
+      ? component.dependencies.join(", ")
+      : "None";
+    const unavailableNote = component.unavailableBecause
+      ? `<p class="acc-note acc-note--warn" role="status">${escapeHtml(component.unavailableBecause)}</p>`
+      : "";
+    const configured = component.configurationStatus
+      ? `<div><dt>Configuration</dt><dd>${escapeHtml(component.configurationStatus)}</dd></div>`
+      : "";
+    const effective = component.armed === true || String(status).toUpperCase() === "ON"
+      ? "Effective"
+      : enabled
+        ? "Configured (not effective)"
+        : "Off";
+    let action = "";
+    if (locked) {
+      action = `<div class="acc-locked-badge" aria-label="Locked"><strong>LOCKED</strong></div>`;
+    } else {
+      const nextOn = !enabled;
+      const label = enabled ? "Turn OFF" : "Turn ON";
+      action = `<button type="button" class="header-action-btn ${enabled ? "header-action-btn--ghost" : "header-action-btn--primary"}" data-control-key="${escapeHtml(component.inputKey || "")}" data-control-next="${nextOn ? "true" : "false"}" data-control-name="${escapeHtml(component.name || "")}">${label}</button>`;
+    }
+    return `
+      <article class="acc-control-card ${locked ? "acc-control-card--locked" : ""}" data-control-id="${escapeHtml(component.id || "")}">
+        <div class="acc-control-card__head">
+          <div>
+            <h3>${escapeHtml(component.name || "")}</h3>
+            <p>${escapeHtml(component.purpose || "")}</p>
+          </div>
+          <strong class="acc-state ${stateClass(status)}" aria-label="Status ${escapeHtml(status)}">${escapeHtml(status)}</strong>
+        </div>
+        <dl class="acc-control-meta">
+          <div><dt>Dependencies</dt><dd>${escapeHtml(deps)}</dd></div>
+          <div><dt>If enabled</dt><dd>${escapeHtml(component.enableEffect || "—")}</dd></div>
+          <div><dt>If disabled</dt><dd>${escapeHtml(component.disableEffect || "—")}</dd></div>
+          <div><dt>Runtime</dt><dd>${escapeHtml(effective)}</dd></div>
+          ${configured}
+        </dl>
+        ${unavailableNote}
+        <div class="acc-control-card__actions">${action}</div>
+      </article>
+    `;
+  }
+
+  function renderOperatorControlCards(controls) {
+    const host = qs("accOperatorControls");
+    if (!host) return;
+    const components = Array.isArray(controls.components) ? controls.components : [];
+    const actionable = components.filter((component) => component && component.id !== "autoPublish");
+    if (!actionable.length) {
+      host.innerHTML = `<p class="acc-empty">Control components unavailable.</p>`;
+      return;
+    }
+
+    const byId = new Map(actionable.map((component) => [component.id, component]));
+    const used = new Set();
+    const sections = [];
+
+    CONTROL_GROUPS.forEach((group) => {
+      const rows = group.ids.map((id) => byId.get(id)).filter(Boolean);
+      rows.forEach((row) => used.add(row.id));
+      if (!rows.length) return;
+      sections.push({ label: group.label, rows });
+    });
+
+    const leftover = actionable.filter((component) => !used.has(component.id));
+    if (leftover.length) sections.push({ label: "Other", rows: leftover });
+
+    host.innerHTML = sections.map((section) => `
+      <section class="acc-control-group" aria-label="${escapeHtml(section.label)}">
+        <h3 class="acc-control-group__title">${escapeHtml(section.label)}</h3>
+        <div class="acc-control-group__grid">
+          ${section.rows.map((component) => renderOneControlCard(component)).join("")}
+        </div>
+      </section>
+    `).join("");
+  }
+
+  async function confirmEnable(title, details) {
+    if (window.AdminUI && typeof window.AdminUI.simpleConfirm === "function") {
+      return window.AdminUI.simpleConfirm({
+        title,
+        details,
+        warnText: "This requires explicit confirmation.",
+        confirmLabel: "Confirm",
+        variant: "danger"
+      });
+    }
+    return window.confirm(`${title}\n\n${details}`);
+  }
+
+  async function toggleControlPayload(payload, confirmTitle, confirmDetails) {
+    const ok = await confirmEnable(confirmTitle, confirmDetails);
+    if (!ok) return;
+    const data = await apiFetch("/api/admin/automation-control-center/controls", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!state.dashboard) state.dashboard = {};
+    state.dashboard.publishingControls = data;
+    if (data && data.flags) {
+      if (!state.dashboard.flags) state.dashboard.flags = {};
+      Object.assign(state.dashboard.flags, data.flags);
+    }
+    renderPublishingControls();
+    await loadSnapshot();
+    renderAll();
+    toastSuccess("Control updated.");
+  }
+
+  async function toggleControl(kind, nextEnabled) {
+    const payload = kind === "scheduler"
+      ? { schedulerEnabled: nextEnabled }
+      : { telegramEnabled: nextEnabled };
+    const title = kind === "scheduler"
+      ? (nextEnabled ? "Turn Scheduler ON?" : "Turn Scheduler OFF?")
+      : (nextEnabled ? "Turn Telegram ON?" : "Turn Telegram OFF?");
+    const details = kind === "scheduler"
+      ? (nextEnabled
+        ? "This arms scheduler activation. Effective cycles still need Monitoring + Live crawler. It will not publish pages automatically."
+        : "This disarms scheduler activation.")
+      : (nextEnabled
+        ? "This arms Telegram delivery. Notification Gateway must already be ON. It will not publish pages."
+        : "This stops Telegram delivery authorization.");
+    await toggleControlPayload(payload, title, details);
+  }
+
+  async function onSchedulerToggle() {
+    const currentlyOn = qs("accSchedulerToggle")?.getAttribute("aria-checked") === "true";
+    await toggleControl("scheduler", !currentlyOn);
+  }
+
+  async function onTelegramToggle() {
+    const currentlyOn = qs("accTelegramToggle")?.getAttribute("aria-checked") === "true";
+    await toggleControl("telegram", !currentlyOn);
+  }
+
+  async function onOperatorControlClick(event) {
+    const button = event.target.closest("[data-control-key]");
+    if (!button) return;
+    const key = button.getAttribute("data-control-key");
+    const next = button.getAttribute("data-control-next") === "true";
+    const name = button.getAttribute("data-control-name") || "Control";
+    if (!key) return;
+    const payload = { [key]: next };
+    const title = next ? `Turn ${name} ON?` : `Turn ${name} OFF?`;
+    const details = next
+      ? `This will set ${key}=true on the existing canonical automation flags. It will not publish pages automatically. Auto Publish remains locked.`
+      : `This will set ${key}=false. Turning OFF is safe and does not bypass other gates.`;
+    await toggleControlPayload(payload, title, details);
   }
 
   function renderManualWorkflow() {
@@ -336,59 +883,6 @@
         <dd>${escapeHtml(recent[key].summary || "-")}<small>${escapeHtml(recent[key].at || "")}</small></dd>
       </div>
     `).join("");
-  }
-
-  async function confirmEnable(title, details) {
-    if (window.AdminUI && typeof window.AdminUI.simpleConfirm === "function") {
-      return window.AdminUI.simpleConfirm({
-        title,
-        details,
-        warnText: "This requires explicit confirmation.",
-        confirmLabel: "Confirm enable",
-        variant: "danger"
-      });
-    }
-    return window.confirm(`${title}\n\n${details}`);
-  }
-
-  async function toggleControl(kind, nextEnabled) {
-    const payload = kind === "scheduler"
-      ? { schedulerEnabled: nextEnabled }
-      : { telegramEnabled: nextEnabled };
-    const data = await apiFetch("/api/admin/automation-control-center/controls", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!state.dashboard) state.dashboard = {};
-    state.dashboard.publishingControls = data;
-    renderPublishingControls();
-    await loadSnapshot();
-    renderAll();
-  }
-
-  async function onSchedulerToggle() {
-    const currentlyOn = qs("accSchedulerToggle")?.getAttribute("aria-checked") === "true";
-    if (!currentlyOn) {
-      const ok = await confirmEnable(
-        "Enable Scheduler?",
-        "Enabling Scheduler will allow automatic monitoring of active official sources."
-      );
-      if (!ok) return;
-    }
-    await toggleControl("scheduler", !currentlyOn);
-  }
-
-  async function onTelegramToggle() {
-    const currentlyOn = qs("accTelegramToggle")?.getAttribute("aria-checked") === "true";
-    if (!currentlyOn) {
-      const ok = await confirmEnable(
-        "Enable Telegram Gateway?",
-        "Telegram notifications may be sent for detected updates/review events."
-      );
-      if (!ok) return;
-    }
-    await toggleControl("telegram", !currentlyOn);
   }
 
   function renderCharts() {
@@ -777,42 +1271,215 @@
     qs("accRecruitmentHistory").innerHTML = `<div class="acc-history-item"><small>Slug</small><strong>${escapeHtml(item.slug || "-")}</strong></div>`;
   }
 
+  function reviewStatusLabel(row) {
+    return String(row?.status || row?.logical_status || "").toLowerCase();
+  }
+
+  function reviewOpenHref(item) {
+    const updateId = item.update_id || item.updateId;
+    if (updateId) {
+      return `/admin/recruitment-review-queue?update_id=${encodeURIComponent(updateId)}`;
+    }
+    if (item.id) {
+      return `/admin/recruitment-review-queue?review_id=${encodeURIComponent(item.id)}`;
+    }
+    return "/admin/recruitment-review-queue";
+  }
+
   function renderReviewList() {
     const host = qs("accReviewList");
     if (!host) return;
-    setText("accReviewCountMeta", `${state.reviews.length} items`);
-    if (!state.reviews.length) {
-      host.innerHTML = `<p class="acc-empty">No pending review items in the current snapshot.</p>`;
+    const rows = Array.isArray(state.reviews) ? state.reviews : [];
+    const matching = rows.filter((row) => reviewStatusLabel(row) === "needs_matching").length;
+    const under = rows.filter((row) => ["pending", "under_review"].includes(reviewStatusLabel(row))).length;
+    const approved = rows.filter((row) => reviewStatusLabel(row) === "approved").length;
+    const frozen = rows.filter((row) => reviewStatusLabel(row) === "frozen").length;
+    const rejected = rows.filter((row) => ["rejected", "dismissed"].includes(reviewStatusLabel(row))).length;
+
+    setText("accPageKpiTotal", rows.length);
+    setText("accReviewKpiMatching", matching);
+    setText("accReviewKpiUnder", under);
+    setText("accReviewKpiApproved", approved);
+    setText("accReviewKpiFrozen", frozen);
+    setText("accReviewKpiRejected", rejected);
+    setText("accReviewCountMeta", `${rows.length} item${rows.length === 1 ? "" : "s"} in snapshot`);
+
+    const actionable = rows.filter((row) =>
+      ["pending", "under_review", "needs_matching", "frozen"].includes(reviewStatusLabel(row))
+    ).slice(0, 12);
+
+    if (!actionable.length) {
+      host.innerHTML = `<tr><td colspan="6" class="acc-empty">Nothing requires your action right now.</td></tr>`;
       return;
     }
-    host.innerHTML = state.reviews.map((item) => `
-      <button type="button" class="acc-list-item" data-review-id="${escapeHtml(item.id)}">
-        <span class="acc-pill">${escapeHtml(item.status || "pending")}</span>
-        <h4>${escapeHtml(item.title || `Review ${item.id}`)}</h4>
-        <p>${escapeHtml(item.event_type || "manual review only")}</p>
-      </button>
-    `).join("");
+
+    host.innerHTML = actionable.map((item) => {
+      const status = item.status || "pending";
+      const recruitment =
+        item.recruitment_title ||
+        item.recruitmentTitle ||
+        (item.recruitment_id || item.recruitmentId
+          ? `Recruitment #${item.recruitment_id || item.recruitmentId}`
+          : "Not linked");
+      const created = item.created_at || item.createdAt || item.updated_at || item.updatedAt || "Not available";
+      return `
+        <tr>
+          <td data-label="Title"><strong>${escapeHtml(item.title || `Review ${item.id}`)}</strong></td>
+          <td data-label="Event">${escapeHtml(item.event_type || item.eventType || "—")}</td>
+          <td data-label="Recruitment">${escapeHtml(recruitment)}</td>
+          <td data-label="Status"><span class="acc-pill">${escapeHtml(status)}</span></td>
+          <td data-label="Created">${escapeHtml(formatShortTime(created))}</td>
+          <td data-label="Action"><a class="header-action-btn" style="text-decoration:none;" href="${escapeHtml(reviewOpenHref(item))}">Open Review</a></td>
+        </tr>
+      `;
+    }).join("");
   }
 
-  function renderReviewDetail(id) {
-    const empty = qs("accReviewEmpty");
-    const detail = qs("accReviewDetail");
-    if (!empty || !detail) return;
-    const item = state.reviews.find((row) => String(row.id) === String(id));
-    if (!item) return;
-    state.selectedReviewId = item.id;
-    qs("accReviewEmpty").hidden = true;
-    qs("accReviewDetail").hidden = false;
-    setText("accReviewDetailMeta", item.title || `Review ${item.id}`);
-    setText("accReviewConfidence", item.confidence || "-");
-    setText("accReviewRisk", item.status || "-");
-    setText("accReviewRecommendation", item.decision || "none");
-    setText("accReviewHistoryRecovery", item.source_url || "No source URL");
-    qs("accValidationReport").innerHTML = `<li>Status: ${escapeHtml(item.status || "pending")}</li>`;
-    qs("accReviewWarnings").innerHTML = `<li>Runtime mode: ${escapeHtml(state.dashboard?.runtime?.activationDecision || "NO-GO")}</li>`;
-    qs("accReviewMissing").innerHTML = `<li>Publishing blocked: ${escapeHtml(state.dashboard?.runtime?.autoPublishBlocked !== false ? "yes" : "no")}</li>`;
-    qs("accPreviousVersion").textContent = JSON.stringify(item.payload || {}, null, 2);
-    qs("accNewVersion").textContent = JSON.stringify(item.assist || item.payload || {}, null, 2);
+  function renderReviewDetail() {
+    /* ACC Reviews is a snapshot only — full decision UI lives on Review Queue. */
+  }
+
+  function healthFlagLabel(on) {
+    return on === true ? "ON" : on === false ? "OFF" : "Not available";
+  }
+
+  function renderHealthTables() {
+    const flags = state.dashboard?.flags || {};
+    const runtime = state.dashboard?.runtime || {};
+    const readiness = state.dashboard?.readiness || {};
+    const controls = state.dashboard?.publishingControls || {};
+    const components = Array.isArray(controls.components) ? controls.components : [];
+    const byId = Object.fromEntries(components.map((c) => [c.id, c]));
+    const gatewayChannels = Array.isArray(state.dashboard?.notificationGateway)
+      ? state.dashboard.notificationGateway
+      : [];
+    const telegramChannel = gatewayChannels.find((row) => row && row.channel === "telegram");
+
+    const appHost = qs("accHealthAppRows");
+    if (appHost) {
+      const enterprise = state.dashboard?.enterprise;
+      const appStatus = state.dashboard ? "Healthy" : "Unavailable";
+      const apiStatus = state.dashboard ? "Healthy" : "Unavailable";
+      const dbStatus = enterprise && enterprise.database
+        ? (enterprise.database.ok === false ? "Error" : "Healthy")
+        : state.dashboard
+          ? "Not available"
+          : "Unavailable";
+      appHost.innerHTML = `
+        <tr><td data-label="Component">App</td><td data-label="Status"><span class="acc-state ${stateClass(appStatus)}">${escapeHtml(appStatus)}</span></td><td data-label="Last known">${escapeHtml(state.dashboard ? "Dashboard snapshot loaded" : "Not available")}</td></tr>
+        <tr><td data-label="Component">API</td><td data-label="Status"><span class="acc-state ${stateClass(apiStatus)}">${escapeHtml(apiStatus)}</span></td><td data-label="Last known">${escapeHtml(state.dashboard ? "ACC APIs responding" : "Not available")}</td></tr>
+        <tr><td data-label="Component">Database</td><td data-label="Status"><span class="acc-state ${stateClass(dbStatus)}">${escapeHtml(dbStatus)}</span></td><td data-label="Last known">${escapeHtml(enterprise?.database?.detail || "Not available")}</td></tr>
+      `;
+    }
+
+    const runtimeHost = qs("accHealthRuntimeRows");
+    if (runtimeHost) {
+      const rows = [
+        {
+          name: "Scheduler",
+          configured: healthFlagLabel(flags.SCHEDULER_ACTIVATION_ENABLED),
+          effective: runtime.schedulerArmed ? "Armed" : "Off",
+          notes: byId.scheduler?.unavailableBecause || readiness.decision || "Not available"
+        },
+        {
+          name: "Worker",
+          configured: healthFlagLabel(flags.WORKER_ACTIVATION_ENABLED),
+          effective: runtime.workerActive ? "Online" : "Off",
+          notes: byId.worker?.unavailableBecause || "Not available"
+        },
+        {
+          name: "Monitoring",
+          configured: healthFlagLabel(flags.PRODUCTION_MONITORING_ENABLED),
+          effective: flags.PRODUCTION_MONITORING_ENABLED && flags.LIVE_CRAWLER_ENABLED ? "Authorized" : "Off",
+          notes: "Official sources managed on /admin/monitoring"
+        },
+        {
+          name: "AI processing",
+          configured: healthFlagLabel(flags.AUTO_DRAFT_ENABLED),
+          effective: byId.aiDraft?.status || healthFlagLabel(flags.AUTO_DRAFT_ENABLED),
+          notes: byId.aiDraft?.unavailableBecause || "Not available"
+        }
+      ];
+      runtimeHost.innerHTML = rows.map((row) => `
+        <tr>
+          <td data-label="Component">${escapeHtml(row.name)}</td>
+          <td data-label="Configured"><span class="acc-state ${stateClass(row.configured)}">${escapeHtml(row.configured)}</span></td>
+          <td data-label="Effective"><span class="acc-state ${stateClass(row.effective)}">${escapeHtml(row.effective)}</span></td>
+          <td data-label="Notes">${escapeHtml(row.notes || "Not available")}</td>
+        </tr>
+      `).join("");
+    }
+
+    const notifyHost = qs("accHealthNotifyRows");
+    if (notifyHost) {
+      const gatewayStatus = healthFlagLabel(flags.NOTIFICATION_GATEWAY_ENABLED);
+      const telegramStatus = runtime.telegramActive
+        ? "ON"
+        : flags.TELEGRAM_DELIVERY_ENABLED
+          ? (byId.telegram?.status || "BLOCKED")
+          : "OFF";
+      notifyHost.innerHTML = `
+        <tr>
+          <td data-label="Component">Gateway</td>
+          <td data-label="Status"><span class="acc-state ${stateClass(gatewayStatus)}">${escapeHtml(gatewayStatus)}</span></td>
+          <td data-label="Last known">${escapeHtml(gatewayChannels.length ? `${gatewayChannels.length} channel(s)` : "Not available")}</td>
+        </tr>
+        <tr>
+          <td data-label="Component">Telegram</td>
+          <td data-label="Status"><span class="acc-state ${stateClass(telegramStatus)}">${escapeHtml(telegramStatus)}</span></td>
+          <td data-label="Last known">${escapeHtml(telegramChannel?.detail || byId.telegram?.unavailableBecause || byId.telegram?.configurationStatus || "Not available")}</td>
+        </tr>
+      `;
+    }
+
+    const advanced = qs("accHealthAdvancedBody");
+    if (advanced) {
+      const payload = {
+        activationDecision: runtime.activationDecision || readiness.decision || "Not available",
+        activationReady: runtime.activationReady === true,
+        blockers: Array.isArray(readiness.blockers) ? readiness.blockers : [],
+        isDormant: state.dashboard?.isDormant === true,
+        autoPublishBlocked: runtime.autoPublishBlocked !== false
+      };
+      advanced.textContent = state.dashboard
+        ? JSON.stringify(payload, null, 2)
+        : "Not available";
+    }
+  }
+
+  function renderMonitoring() {
+    renderHealthTables();
+    const host = qs("accMonitorGrid");
+    if (!host) return;
+    if (host.tagName === "TBODY") {
+      if (!state.sources.length) {
+        host.innerHTML = `<tr><td colspan="4" class="acc-empty">No source health data in the current snapshot.</td></tr>`;
+        return;
+      }
+      host.innerHTML = state.sources.slice(0, 40).map((source) => `
+        <tr>
+          <td data-label="Source"><strong>${escapeHtml(source.name || `Source ${source.id}`)}</strong><div class="acc-muted-meta">${escapeHtml(source.officialDomain || "—")}</div></td>
+          <td data-label="Health"><span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span></td>
+          <td data-label="Last check">${escapeHtml(formatShortTime(source.lastVisit || source.lastCheckedAt || "Not available"))}</td>
+          <td data-label="State">${escapeHtml(source.enabled ? "Enabled" : "Disabled")}</td>
+        </tr>
+      `).join("");
+      return;
+    }
+    host.innerHTML = state.sources.map((source) => `
+      <article class="acc-monitor-card">
+        <div class="acc-monitor-card__head">
+          <div><h3>${escapeHtml(source.name)}</h3><p>${escapeHtml(source.department || "-")}</p></div>
+          <span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span>
+        </div>
+        <div class="acc-monitor-card__stats">
+          <div><span>Official Source</span><strong>${escapeHtml(source.officialDomain || "-")}</strong></div>
+          <div><span>Response Time</span><strong>${escapeHtml(source.responseTime || 0)} ms</strong></div>
+          <div><span>Last Visit</span><strong>${escapeHtml(source.lastVisit || "-")}</strong></div>
+          <div><span>Activation</span><strong>${escapeHtml(source.enabled ? (state.dashboard?.runtime?.workerActive ? "Worker armed" : "Enabled source") : "Disabled")}</strong></div>
+        </div>
+      </article>
+    `).join("");
   }
 
   function renderDraftViewer() {
@@ -857,25 +1524,6 @@
         <td data-label="Updated">${escapeHtml(item.updatedAt || "-")}</td>
         <td data-label="Retry">${escapeHtml(item.retry || "No")}</td>
       </tr>
-    `).join("");
-  }
-
-  function renderMonitoring() {
-    const host = qs("accMonitorGrid");
-    if (!host) return;
-    host.innerHTML = state.sources.map((source) => `
-      <article class="acc-monitor-card">
-        <div class="acc-monitor-card__head">
-          <div><h3>${escapeHtml(source.name)}</h3><p>${escapeHtml(source.department || "-")}</p></div>
-          <span class="acc-pill">${escapeHtml(formatHealthLabel(source.healthStatus))}</span>
-        </div>
-        <div class="acc-monitor-card__stats">
-          <div><span>Official Source</span><strong>${escapeHtml(source.officialDomain || "-")}</strong></div>
-          <div><span>Response Time</span><strong>${escapeHtml(source.responseTime || 0)} ms</strong></div>
-          <div><span>Last Visit</span><strong>${escapeHtml(source.lastVisit || "-")}</strong></div>
-          <div><span>Activation</span><strong>${escapeHtml(source.enabled ? (state.dashboard?.runtime?.workerActive ? "Worker armed" : "Enabled source") : "Disabled")}</strong></div>
-        </div>
-      </article>
     `).join("");
   }
 
@@ -1004,7 +1652,33 @@
       setText("accPageKpiFlags", onFlags);
     }
     if (page === "health") {
-      setText("accPageKpiHealth", state.dashboard ? "Integrated" : "Unavailable");
+      const overall = !state.dashboard
+        ? "Unavailable"
+        : state.dashboard.isDormant
+          ? "Healthy"
+          : runtime.activationReady
+            ? "Healthy"
+            : sourcesOffline > 0
+              ? "Degraded"
+              : "Healthy";
+      setText("accPageKpiHealth", overall);
+      setText(
+        "accHealthOverallExplain",
+        !state.dashboard
+          ? "Backend health data is not available."
+          : state.dashboard.isDormant
+            ? "Automation is dormant and safe. No components are actively cycling."
+            : runtime.activationReady
+              ? "Activation readiness reports ready."
+              : "Runtime is restricted; check Controls for component state."
+      );
+      const dot = qs("accHealthOverallDot");
+      if (dot) {
+        dot.classList.remove("is-safe", "is-warn", "is-error");
+        if (overall === "Unavailable" || overall === "Degraded") dot.classList.add("is-warn");
+        else if (overall === "Error") dot.classList.add("is-error");
+        else dot.classList.add("is-safe");
+      }
       setText("accPageKpiHealthy", sourcesOnline);
       setText("accPageKpiOffline", sourcesOffline);
       setText(
@@ -1026,7 +1700,6 @@
     }
     if (page === "reviews") {
       renderReviewList();
-      if (state.reviews[0]) renderReviewDetail(state.reviews[0].id);
     }
     if (page === "drafts") renderDraftViewer();
     if (page === "queue") renderWorkflow();
@@ -1034,7 +1707,7 @@
     if (page === "health") renderMonitoring();
     if (page === "logs") renderAudit();
     if (page === "controls") renderSettings();
-    if (page === "overview" || page === "insights") renderCharts();
+    if (page === "insights") renderCharts();
   }
 
   function bindEvents() {
@@ -1134,9 +1807,8 @@
       const row = event.target.closest("tr[data-recruitment-id]");
       if (row) renderRecruitmentDetail(Number(row.getAttribute("data-recruitment-id")));
     });
-    qs("accReviewList")?.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-review-id]");
-      if (button) renderReviewDetail(button.getAttribute("data-review-id"));
+    qs("accReviewList")?.addEventListener("click", () => {
+      /* Snapshot rows use Open Review links — no in-page decision UI. */
     });
     qs("accDraftSearch")?.addEventListener("input", renderDraftViewer);
     qs("accPrintDraftBtn")?.addEventListener("click", () => window.print());
@@ -1157,6 +1829,9 @@
     });
     qs("accTelegramToggle")?.addEventListener("click", () => {
       onTelegramToggle().catch((err) => toastError(err.message || "Telegram control failed"));
+    });
+    qs("accOperatorControls")?.addEventListener("click", (event) => {
+      onOperatorControlClick(event).catch((err) => toastError(err.message || "Control update failed"));
     });
   }
 

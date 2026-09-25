@@ -74,7 +74,7 @@ function formatMonitorTime(value) {
 
 function renderSitesTable(data) {
   const host = document.getElementById("sitesTable");
-  if (!host) return;
+  if (!host || host.hidden || host.getAttribute("aria-hidden") === "true") return;
   const list = Array.isArray(data) ? data : getFilteredMonitoringSites();
   if (!list.length) {
     host.innerHTML = sitesSearchQuery.trim()
@@ -135,7 +135,9 @@ function renderSitesTable(data) {
 
 async function loadSites() {
   const host = document.getElementById("sitesTable");
-  if (host) host.innerHTML = '<p class="empty-msg">Loading monitored sites...</p>';
+  if (host && !host.hidden && host.getAttribute("aria-hidden") !== "true") {
+    host.innerHTML = '<p class="empty-msg">Loading monitored sites...</p>';
+  }
   const res = await window.adminSafeFetch("/api/admin/sites");
   if (!res || !res.success || !Array.isArray(res.data)) {
     monitoringSites = [];
@@ -636,6 +638,12 @@ async function clearQueueJobs(triggerBtn) {
 
 document.getElementById("runCheckBtn")?.addEventListener("click", (e) => runManualMonitoringCheck(e.currentTarget));
 document.getElementById("refreshSitesBtn")?.addEventListener("click", (e) => refreshMonitoringAll(e.currentTarget));
+document.getElementById("accRefreshBtn")?.addEventListener("click", (e) => {
+  // Shared Refresh on /admin/monitoring also refreshes ops KPIs/queue/health.
+  if (document.body && document.body.getAttribute("data-mon-page") === "sources") {
+    refreshMonitoringAll(e.currentTarget).catch(() => {});
+  }
+});
 document.getElementById("retryFailedBtn")?.addEventListener("click", (e) => retryFailedQueueJobs(e.currentTarget));
 document.getElementById("clearQueueBtn")?.addEventListener("click", (e) => clearQueueJobs(e.currentTarget));
 document.getElementById("sitesTable")?.addEventListener("click", (e) => {

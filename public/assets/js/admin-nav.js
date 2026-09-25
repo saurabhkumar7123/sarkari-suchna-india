@@ -276,7 +276,7 @@ Editorial Review / Review Queue -> /admin/editorial-review
 Published Pages -> /admin/page-manager
 Automation Control Center -> /admin/automation-control-center
 ACC child pages are internal ACC navigation only (not global sidebar items):
-  /admin/automation-control-center/sources
+  Official Sources → /admin/monitoring (canonical; ACC /sources redirects there)
   /admin/automation-control-center/recruitments
   /admin/automation-control-center/reviews
   /admin/automation-control-center/drafts

@@ -292,15 +292,28 @@
   align-items: flex-end;
 }
 
+/* Default: Review items uses full available content width.
+   Side-by-side only while Detail is open on wide desktops. */
 .rrq-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1101px) {
+  .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
+  }
 }
 
 .rrq-card {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   padding: 14px;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
@@ -311,15 +324,76 @@
 .rrq-table-wrap {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius);
 }
 
+.rrq-card--list .rrq-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.rrq-card--list .rrq-table th:nth-child(1),
+.rrq-card--list .rrq-table td:nth-child(1) {
+  width: 28%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(2),
+.rrq-card--list .rrq-table td:nth-child(2) {
+  width: 9%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(3),
+.rrq-card--list .rrq-table td:nth-child(3) {
+  width: 10%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(4),
+.rrq-card--list .rrq-table td:nth-child(4) {
+  width: 18%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(5),
+.rrq-card--list .rrq-table td:nth-child(5) {
+  width: 9%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(6),
+.rrq-card--list .rrq-table td:nth-child(6) {
+  width: 11%;
+}
+
+.rrq-card--list .rrq-table th:nth-child(7),
+.rrq-card--list .rrq-table td:nth-child(7) {
+  width: 15%;
+}
+
+.rrq-cell-clip {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.rrq-cell-title,
+.rrq-cell-recruitment {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.35;
+}
+
 .rrq-table {
   width: 100%;
-  min-width: 640px;
   border-collapse: collapse;
 }
 
@@ -576,13 +650,27 @@
   background: var(--admin-surface-2);
 }
 
+@media (max-width: 700px) {
+  /* Intentional table scroll on small screens — do not shrink columns unreadably */
+  .rrq-card--list .rrq-table {
+    min-width: 720px;
+    table-layout: auto;
+  }
+
+  .rrq-card--list .rrq-table th:nth-child(n),
+  .rrq-card--list .rrq-table td:nth-child(n) {
+    width: auto;
+  }
+}
+
 @media (max-width: 640px) {
   .rrq-detail-grid,
   .rrq-history-grid {
     grid-template-columns: 1fr;
   }
 
-  .rrq-layout {
+  .rrq-layout,
+  .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
     grid-template-columns: 1fr;
   }
 

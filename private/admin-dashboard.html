@@ -191,35 +191,10 @@
     <div id="dashboardRecentDetections" class="dashboard-expiry-list" aria-live="polite"></div>
   </section>
 
-  <section class="admin-auto-status content-section" id="dashboardAutoStatus" aria-label="Automation safety">
-    <h2>Automation Safety</h2>
-    <p class="manager-hint">Live status only. Open Automation Control to inspect gates. No enable controls on this page.</p>
-    <article class="admin-auto-status__item is-off" id="autoStatusMonitoring">
-      <span>Monitoring</span>
-      <strong class="admin-auto-status__state" id="autoStatusMonitoringValue">—</strong>
-    </article>
-    <article class="admin-auto-status__item is-off" id="autoStatusDraft">
-      <span>AI Draft</span>
-      <strong class="admin-auto-status__state" id="autoStatusDraftValue">—</strong>
-    </article>
-    <article class="admin-auto-status__item is-off" id="autoStatusTelegram">
-      <span>Telegram</span>
-      <strong class="admin-auto-status__state" id="autoStatusTelegramValue">—</strong>
-    </article>
-    <article class="admin-auto-status__item is-locked" id="autoStatusPublish">
-      <span>Auto Publish</span>
-      <strong class="admin-auto-status__state">MANUAL ONLY — DISABLED</strong>
-    </article>
-    <article class="admin-auto-status__item is-off" id="autoStatusCrawler">
-      <span>Crawler</span>
-      <strong class="admin-auto-status__state" id="autoStatusCrawlerValue">—</strong>
-    </article>
-  </section>
-
   <section class="content-section" aria-label="Source health">
     <div class="dashboard-panel-head">
       <h2>Source Health</h2>
-      <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Sources</a>
+      <a href="/admin/monitoring" class="header-action-btn" style="text-decoration:none;">Open Monitoring</a>
     </div>
     <div class="dashboard-today-grid">
       <div class="dashboard-today-card" id="todayBrokenCardSummary"><strong id="dashBrokenSites">—</strong><span>Broken sites</span></div>
@@ -258,26 +233,6 @@
     <div id="dashboardTopTraffic" class="dashboard-traffic-list"></div>
   </section>
 
-  <div class="dashboard-grid">
-    <div class="recent">
-      <h3>Needs Attention (legacy)</h3>
-      <div class="page-item"><span>Failed jobs</span><strong id="attentionFailedJobs">0</strong></div>
-      <div class="page-item"><span>Manual actions</span><strong id="attentionManualItems">0</strong></div>
-      <div class="row-actions" style="margin-top:10px;">
-        <a href="/admin/monitoring/activity">View Failed Jobs</a>
-      </div>
-    </div>
-    <div class="recent">
-      <h3>Quick Actions</h3>
-      <div class="row-actions">
-        <a href="/admin/monitoring" id="quickRunCheckBtn">Run Check</a>
-        <a href="/admin/monitoring/activity" id="quickRetryFailedBtn">Retry Failed Jobs</a>
-        <a href="/admin/csv-upload">Import CSV</a>
-      </div>
-      <div class="page-item" style="margin-top:8px;"><span>Average Processing Time</span><strong id="avgProcessingTime">N/A</strong></div>
-      <div class="page-item"><span>Recent Trend</span><strong id="recentTrend">N/A</strong></div>
-    </div>
-  </div>
   <section class="stats-section" aria-label="Statistics">
     <details class="admin-collapse-section">
       <summary>All statistics &amp; charts</summary>

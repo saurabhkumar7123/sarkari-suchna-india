@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Review Snapshot | Automation Control Center</title>
+<title>Reviews | Automation Control Center</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
@@ -15,9 +15,9 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
-<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=16">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=21">
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Review Snapshot" data-acc-page="reviews">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Automation Control Center,Reviews" data-acc-page="reviews">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
@@ -26,103 +26,84 @@
   </div>
 </div>
 <div class="main acc-main">
-  <header class="acc-workspace-head" aria-label="Review snapshot">
+  <header class="acc-workspace-head" aria-label="Reviews">
     <div class="acc-workspace-head__copy">
       <p class="acc-workspace-head__eyebrow">Automation Control Center</p>
-      <h1 class="acc-workspace-head__title">Review snapshot</h1>
-      <p class="acc-workspace-head__sub">Human-in-the-loop review posture. Full editorial and recruitment review remain on their dedicated pages.</p>
+      <h1 class="acc-workspace-head__title">Reviews</h1>
+      <p class="acc-workspace-head__sub">Updates requiring human review and workflow attention. Full decisions happen in Review Queue.</p>
     </div>
     <div class="acc-workspace-head__actions">
-      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
-      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
-      
+      <a href="/admin/recruitment-review-queue" class="header-action-btn header-action-btn--primary" style="text-decoration:none;">Open Review Queue</a>
       <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
     </div>
   </header>
 
   <nav class="acc-switcher" aria-label="Automation Control Center sections" data-acc-switcher>
     <div class="acc-switcher__menu" id="accSwitcherMenu" role="listbox">
-      <a class="acc-switcher__option" href="/admin/automation-control-center">Control overview</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/sources">Official sources</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitment snapshot</a>
-      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/reviews" aria-current="page">Review snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Draft snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue snapshot</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center">Overview</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/recruitments">Recruitments</a>
+      <a class="acc-switcher__option is-active" href="/admin/automation-control-center/reviews" aria-current="page">Reviews</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/drafts">Drafts</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/queue">Queue</a>
       <a class="acc-switcher__option" href="/admin/automation-control-center/insights">Insights</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health snapshot</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Automation logs</a>
-      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Control flags</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/health">Health</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/logs">Logs</a>
+      <a class="acc-switcher__option" href="/admin/automation-control-center/controls">Controls</a>
     </div>
   </nav>
-  <div class="acc-content" id="accContent">
 
-  <section class="acc-kpi-strip" aria-label="Review summary">
-    <article class="acc-kpi"><span>Pending items</span><strong id="accPageKpiTotal">0</strong></article>
-    <article class="acc-kpi"><span>Manual review only</span><strong>Required</strong></article>
-  </section>
-
-  <section class="acc-section is-acc-tab-active" id="accReview" data-acc-searchable="review center comparison diff validation risk approve reject request changes">
-    <div class="acc-section__head">
-      <div>
-        <p class="acc-section__eyebrow">Human-in-the-loop</p>
-        <h2>Review Center</h2>
+  <div class="acc-content acc-content--clean acc-console" id="accContent">
+    <section class="acc-clean-section" id="accReview" aria-labelledby="accReviewMetricsHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accReviewMetricsHeading">Review queue snapshot</h2>
+        <span class="acc-guardrail" id="accPageKpiTotal" hidden>0</span>
       </div>
-      <div class="acc-section__actions">
-        <a href="/admin/editorial-review" class="header-action-btn" style="text-decoration:none;">Open Editorial Review</a>
+      <div class="acc-metric-row" aria-label="Review metrics">
+        <article><span>Needs matching</span><strong id="accReviewKpiMatching">0</strong></article>
+        <article><span>Under review</span><strong id="accReviewKpiUnder">0</strong></article>
+        <article><span>Approved</span><strong id="accReviewKpiApproved">0</strong></article>
+        <article><span>Frozen</span><strong id="accReviewKpiFrozen">0</strong></article>
+        <article><span>Rejected</span><strong id="accReviewKpiRejected">0</strong></article>
+      </div>
+      <p class="acc-note">Canonical review work remains on <a href="/admin/recruitment-review-queue">/admin/recruitment-review-queue</a>. This page is an operational snapshot only.</p>
+    </section>
+
+    <section class="acc-clean-section acc-clean-section--action" aria-labelledby="accReviewActionHeading">
+      <div class="acc-clean-section__head">
+        <h2 id="accReviewActionHeading">Requires your action</h2>
         <a href="/admin/recruitment-review-queue" class="header-action-btn" style="text-decoration:none;">Open Review Queue</a>
       </div>
-    </div>
-    <div class="acc-three-column">
-      <section class="acc-panel">
-        <div class="acc-panel__head"><h3>Draft List</h3><span id="accReviewCountMeta">0 items</span></div>
-        <div class="acc-review-list" id="accReviewList"></div>
-      </section>
-      <section class="acc-panel acc-panel--span-2">
-        <div class="acc-panel__head"><h3>Side-by-side Comparison</h3><span id="accReviewDetailMeta">Select a draft</span></div>
-        <div id="accReviewEmpty" class="acc-empty">Pick a draft from the left to compare previous and new versions.</div>
-        <div id="accReviewDetail" hidden>
-          <div class="acc-detail-grid">
-            <div><span>Confidence</span><strong id="accReviewConfidence">-</strong></div>
-            <div><span>Risk Level</span><strong id="accReviewRisk">-</strong></div>
-            <div><span>AI Recommendation</span><strong id="accReviewRecommendation">-</strong></div>
-            <div><span>History Recovery</span><strong id="accReviewHistoryRecovery">-</strong></div>
-          </div>
-          <div class="acc-validation-grid">
-            <section><h4>Validation Report</h4><ul id="accValidationReport"></ul></section>
-            <section><h4>Warnings</h4><ul id="accReviewWarnings"></ul></section>
-            <section><h4>Missing Information</h4><ul id="accReviewMissing"></ul></section>
-          </div>
-          <div class="acc-diff-grid">
-            <section>
-              <h4>Previous Version</h4>
-              <div class="acc-code-card" id="accPreviousVersion"></div>
-            </section>
-            <section>
-              <h4>New Version</h4>
-              <div class="acc-code-card" id="accNewVersion"></div>
-            </section>
-          </div>
-          <div class="acc-actions-bar">
-            <button type="button" class="header-action-btn" data-acc-advisory-action="approve">Approve Placeholder</button>
-            <button type="button" class="header-action-btn" data-acc-advisory-action="reject">Reject Placeholder</button>
-            <button type="button" class="header-action-btn" data-acc-advisory-action="request-changes">Request Changes Placeholder</button>
-          </div>
-        </div>
-      </section>
-    </div>
-  </section>
+      <div class="acc-table-wrap">
+        <table class="acc-data-table acc-review-snapshot-table" aria-label="Actionable review items">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Event</th>
+              <th>Recruitment</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="accReviewList">
+            <tr><td colspan="6" class="acc-empty">No pending review items in the current snapshot.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="acc-note" id="accReviewCountMeta">0 items</p>
+    </section>
   </div>
 </div>
 
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=28"></script>
-<script src="/js/admin-shell.js?v=14"></script>
+<script src="/js/admin-nav.js?v=30"></script>
+<script src="/js/admin-shell.js?v=15"></script>
 <script src="/js/admin-idle-session.js?v=1"></script>
 <script src="/js/admin-page-toolbar.js?v=1"></script>
-<script src="/js/admin-layout.js?v=4"></script>
+<script src="/js/admin-layout.js?v=5"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=6"></script>
+<script src="/js/admin-command-palette.js?v=8"></script>
 <script src="/js/admin-ui.js"></script>
-<script src="/js/admin-automation-control-center.js?v=13"></script>
+<script src="/js/admin-automation-control-center.js?v=17"></script>
 </body>
 </html>

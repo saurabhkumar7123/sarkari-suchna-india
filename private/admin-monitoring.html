@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Source Health | Monitoring</title>
+<title>Monitoring | Official Sources</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
 <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
+<link rel="stylesheet" href="/css/admin/automation-control-center.css?v=19">
 <script>
 (function () {
   var map = {
@@ -26,25 +27,29 @@
 })();
 </script>
 </head>
-<body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Source Health" data-mon-page="sources">
+<body class="admin-saas-v2" data-admin-breadcrumbs="Monitoring,Official Sources" data-mon-page="sources" data-acc-page="sources">
 <button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top"></div>
 </div>
 <div class="main">
-  <header class="mon-workspace-head" aria-label="Source Health">
+  <header class="mon-workspace-head" aria-label="Monitoring">
     <div class="mon-workspace-head__copy">
       <p class="mon-workspace-head__eyebrow">Monitoring</p>
-      <h1 class="mon-workspace-head__title">Source Health</h1>
+      <h1 class="mon-workspace-head__title">Official sources &amp; health</h1>
+      <p class="mon-workspace-head__sub">Canonical place to manage official government sources, check health, and run monitoring actions. Automation ON/OFF stays in Automation Control Center → Controls.</p>
     </div>
     <div class="mon-workspace-head__actions">
-      <button type="button" class="header-action-btn header-action-btn--ghost" id="refreshSitesBtn">Refresh</button>
+      <span class="acc-guardrail" id="accRuntimeModeLabel">Runtime: Dormant</span>
+      <span class="acc-guardrail" id="accActivationDecision">Activation: NO-GO</span>
+      <button type="button" class="header-action-btn header-action-btn--ghost" id="accRefreshBtn">Refresh</button>
+      <button type="button" class="header-action-btn header-action-btn--ghost" id="refreshSitesBtn" hidden aria-hidden="true">Refresh ops</button>
     </div>
   </header>
 
   <nav class="mon-switcher" aria-label="Monitoring sections" data-mon-switcher>
     <div class="mon-switcher__menu" id="monSwitcherMenu" role="listbox">
-      <a class="mon-switcher__option is-active" href="/admin/monitoring" aria-current="page">Source Health</a>
+      <a class="mon-switcher__option is-active" href="/admin/monitoring" aria-current="page">Official Sources</a>
       <a class="mon-switcher__option" href="/admin/monitoring/updates">Detected Updates</a>
       <a class="mon-switcher__option" href="/admin/monitoring/activity">Activity</a>
     </div>
@@ -67,7 +72,14 @@
     </nav>
 
     <div class="saas-stats-bar" id="monitoringStats" hidden aria-live="polite"></div>
-    <div class="monitoring-sources-block">
+
+    <!-- 1. Monitoring Status -->
+    <section class="monitoring-sources-block" aria-labelledby="monStatusHeading">
+      <div class="saas-toolbar">
+        <div class="saas-toolbar__title">
+          <h2 id="monStatusHeading">Monitoring status</h2>
+        </div>
+      </div>
       <div class="monitoring-grid">
         <div class="card card-indigo"><h3><span class="card-icon">•</span> Total Sites</h3><p id="totalSites">0</p></div>
         <div class="card card-green"><h3><span class="card-icon">✓</span> Active Sites</h3><p id="activeSites">0</p></div>
@@ -94,23 +106,138 @@
         <button type="button" id="retryFailedBtn">Retry Failed</button>
         <button type="button" id="clearQueueBtn">Clear Queue</button>
       </div>
-      <div class="saas-toolbar">
-        <div class="saas-toolbar__title">
-          <h3>Monitored Sites</h3>
+      <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- 2–3. Official Sources + Source Health / State (registry) -->
+    <section class="acc-kpi-strip" aria-label="Official source summary">
+      <article class="acc-kpi"><span>Total sources</span><strong id="accPageKpiTotal">0</strong></article>
+      <article class="acc-kpi"><span>Healthy</span><strong id="accPageKpiHealthy">0</strong></article>
+      <article class="acc-kpi"><span>Warning / slow</span><strong id="accPageKpiWarning">0</strong></article>
+      <article class="acc-kpi"><span>Offline</span><strong id="accPageKpiOffline">0</strong></article>
+    </section>
+
+    <section class="acc-section is-acc-tab-active" id="accSources" data-acc-searchable="official source manager monitoring url selector priority health purpose verify">
+      <div class="acc-section__head">
+        <div>
+          <p class="acc-section__eyebrow">Registry</p>
+          <h2 id="acc-sources-title">Official Source Manager</h2>
+          <p class="acc-section__sub">Choose the exact government page you want the bot to monitor. Verify before activating. No crawl / discover / force-activate controls.</p>
         </div>
-        <div class="saas-toolbar__controls">
-          <label class="saas-search">
-            <span class="search-icon" aria-hidden="true">🔍</span>
-            <input type="search" id="sitesSearch" placeholder="Search sites..." autocomplete="off">
-            <button type="button" id="sitesSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
-          </label>
+        <div class="acc-section__actions">
+          <button type="button" class="header-action-btn header-action-btn--primary" id="accAddSourceBtn">Add Official Monitoring Source</button>
         </div>
       </div>
-      <div id="monitoringMessage" class="monitoring-message" role="status" aria-live="polite"></div>
-      <div id="sitesTable" class="sites-table-host"></div>
-    </div>
+      <div class="acc-toolbar">
+        <label><span>Search</span><input id="accSourceSearch" type="search" placeholder="Name, domain, URL, purpose, selector"></label>
+        <label><span>Status</span><select id="accSourceEnabledFilter"><option value="">All</option><option value="true">Active</option><option value="false">Disabled</option></select></label>
+        <label><span>Health</span><select id="accSourceHealthFilter"><option value="">All</option><option value="healthy">Healthy</option><option value="warning">Warning</option><option value="offline">Offline</option></select></label>
+      </div>
+      <div class="acc-data-table acc-source-table-wrap">
+        <table aria-label="Official source registry" class="acc-source-table acc-wide-table">
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>Exact monitoring URL</th>
+              <th>Purpose</th>
+              <th>State</th>
+              <th>Health</th>
+              <th>Priority</th>
+              <th>Last checked</th>
+              <th>Failures</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="accSourceRows"></tbody>
+        </table>
+      </div>
+      <div id="accSourceEmpty" class="acc-empty" hidden>No official sources match your current filters.</div>
+      <div class="acc-pager" style="margin-top:0.75rem;">
+        <button type="button" class="header-action-btn" id="accSourcesPrevBtn">Previous</button>
+        <span id="accSourcesPageLabel">Page 1</span>
+        <button type="button" class="header-action-btn" id="accSourcesNextBtn">Next</button>
+      </div>
+    </section>
+
+    <!-- Ops table host kept for monitoring.js KPI/actions wiring; registry is the canonical UI -->
+    <div id="sitesTable" class="sites-table-host" hidden aria-hidden="true"></div>
+    <label class="saas-search" hidden>
+      <input type="search" id="sitesSearch" autocomplete="off">
+      <button type="button" id="sitesSearchClear" class="saas-search-clear is-hidden" aria-label="Clear">×</button>
+    </label>
   </div>
 </div>
+
+<dialog id="accSourceDialog" class="acc-dialog">
+  <form method="dialog" class="acc-dialog__surface" id="accSourceForm">
+    <div class="acc-dialog__head">
+      <h3 id="accSourceDialogTitle">Add Official Monitoring Source</h3>
+      <button type="button" class="acc-dialog__close" id="accCloseSourceDialog" aria-label="Close">×</button>
+    </div>
+    <input id="accSourceId" type="hidden">
+    <p class="acc-source-workflow-hint">
+      <strong>Human-curated onboarding:</strong> You choose the exact official page. The bot monitors only that URL — it does not crawl or discover pages.
+      <br>1) Open official site → 2) Find Recruitment / Notices / Admit Card / Results / Answer Key page → 3) Copy exact URL → 4) Verify → 5) Activate only if GREEN.
+    </p>
+    <div class="acc-dialog__grid">
+      <label><span>Organization / source name</span><input id="accFormSourceName" required maxlength="160" placeholder="e.g. UPPSC"></label>
+      <label><span>Monitoring purpose</span>
+        <select id="accFormPurpose">
+          <option value="">Select purpose</option>
+          <option value="recruitment">Recruitment / Vacancy</option>
+          <option value="notice">Notification / Notice</option>
+          <option value="admit_card">Admit Card</option>
+          <option value="result">Result</option>
+          <option value="answer_key">Answer Key</option>
+          <option value="examination">Examination</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label class="acc-dialog__span-2"><span>Exact Monitoring URL (page the bot will GET)</span>
+        <input id="accFormMonitoringUrl" required maxlength="2000" placeholder="https://agency.gov.in/recruitment/notifications">
+      </label>
+      <div class="acc-dialog__span-2 acc-exact-url-preview" id="accExactUrlPreview" aria-live="polite">Exact URL preview: —</div>
+      <label class="acc-dialog__span-2"><span>CSS Selector (stable notice/list target — not navigation, footer, or body)</span>
+        <input id="accFormSelector" required maxlength="255" placeholder="e.g. marquee a  or  table.notice a" value="">
+      </label>
+      <p class="acc-dialog__span-2 acc-section__sub" style="margin:0;">Prefer an exact list page over a homepage. Do not use <code>body</code> just to pass verification.</p>
+      <label><span>Priority</span><select id="accFormSourcePriority"><option>P0</option><option selected>P1</option><option>P2</option><option>P3</option></select></label>
+      <label><span>Official Domain <small>(derived)</small></span><input id="accFormSourceDomain" maxlength="240" readonly title="Derived from Monitoring URL"></label>
+      <label><span>Health <small>(derived)</small></span><input id="accFormHealthStatus" maxlength="40" readonly title="Derived from broken/active state"></label>
+      <label><span>Active</span>
+        <select id="accFormEnabled">
+          <option value="false" selected>Off — save as draft / disabled</option>
+          <option value="true">On — only after Verify passes</option>
+        </select>
+      </label>
+    </div>
+    <div class="acc-dialog__actions acc-source-form-actions">
+      <button type="button" class="header-action-btn" id="accOpenOfficialSiteBtn">Open official site</button>
+      <button type="button" class="header-action-btn" id="accVerifySourceBtn">Verify URL</button>
+      <button type="submit" class="header-action-btn header-action-btn--primary">Save Source</button>
+      <button type="button" class="header-action-btn header-action-btn--danger" id="accDeleteSourceBtn">Delete</button>
+    </div>
+    <div id="accVerifyReport" class="acc-verify-report" hidden></div>
+    <p class="acc-section__sub" style="margin:0.5rem 0 0;">Official-host, private-host, duplicate, robots/policy, and redirect checks are fail-closed. There is no bypass control.</p>
+  </form>
+</dialog>
+
+<dialog id="accSourceDetailDialog" class="acc-dialog">
+  <div class="acc-dialog__surface">
+    <div class="acc-dialog__head">
+      <h3>Source details</h3>
+      <button type="button" class="acc-dialog__close" id="accCloseSourceDetailDialog" aria-label="Close">×</button>
+    </div>
+    <div id="accSourceDetailBody" class="acc-source-detail"></div>
+    <div class="acc-dialog__actions">
+      <button type="button" class="header-action-btn" id="accDetailEditBtn">Edit</button>
+      <button type="button" class="header-action-btn" id="accDetailVerifyBtn">Verify</button>
+      <button type="button" class="header-action-btn" id="accDetailRunCheckBtn">Run Check</button>
+      <button type="button" class="header-action-btn" id="accDetailToggleBtn">Disable</button>
+    </div>
+  </div>
+</dialog>
+
 <script src="/js/admin-csrf.js"></script>
 <script src="/js/admin-nav.js?v=30"></script>
 <script src="/js/admin-shell.js?v=15"></script>
@@ -118,9 +245,10 @@
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=5"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=7"></script>
+<script src="/js/admin-command-palette.js?v=8"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
-<script src="/js/admin-monitoring.js?v=6"></script>
+<script src="/js/admin-monitoring.js?v=7"></script>
+<script src="/js/admin-automation-control-center.js?v=14"></script>
 </body>
 </html>

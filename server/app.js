@@ -1527,7 +1527,6 @@ app.get(
   }
 );
 const ACC_SECTION_PAGES = Object.freeze({
-  sources: "admin-automation-sources.html",
   recruitments: "admin-automation-recruitments.html",
   reviews: "admin-automation-reviews.html",
   drafts: "admin-automation-drafts.html",
@@ -1547,6 +1546,17 @@ app.get(
   verifyToken,
   (req, res) => {
     return sendPrivatePage(res, "admin-automation-control-center.html");
+  }
+);
+/* Official Sources UI is canonical at /admin/monitoring — keep bookmarks working */
+app.get(
+  [
+    "/admin/automation-control-center/sources",
+    "/admin/automation-control-center/sources/"
+  ],
+  verifyToken,
+  (req, res) => {
+    return res.redirect(302, "/admin/monitoring");
   }
 );
 app.get(

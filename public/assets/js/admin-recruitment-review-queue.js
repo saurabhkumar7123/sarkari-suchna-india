@@ -774,18 +774,20 @@
 
     tbody.innerHTML = items
       .map((item) => {
-        const source = item.source_url
-          ? `<a class="rrq-source-link" href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.source_url)}</a>`
-          : "—";
         const selected = selectedId === item.id ? " is-selected" : "";
+        const recLabel = recruitmentLabel(item);
         return `<tr data-id="${item.id}" class="${selected}">
-          <td>${escapeHtml(item.title || "—")}</td>
+          <td><span class="rrq-cell-title" title="${escapeHtml(item.title || "")}">${escapeHtml(item.title || "—")}</span></td>
           <td><span class="${statusClass(item.status)}">${escapeHtml(item.status || "—")}</span></td>
-          <td>${escapeHtml(item.event_type || "—")}</td>
-          <td>${escapeHtml(recruitmentLabel(item))}</td>
-          <td>${escapeHtml(item.confidence || "—")}</td>
-          <td>${escapeHtml(formatDate(item.created_at))}</td>
-          <td>${source}</td>
+          <td><span class="rrq-cell-clip" title="${escapeHtml(item.event_type || "")}">${escapeHtml(item.event_type || "—")}</span></td>
+          <td><span class="rrq-cell-recruitment" title="${escapeHtml(recLabel)}">${escapeHtml(recLabel)}</span></td>
+          <td><span class="rrq-cell-clip" title="${escapeHtml(item.confidence || "")}">${escapeHtml(item.confidence || "—")}</span></td>
+          <td><span class="rrq-cell-clip" title="${escapeHtml(formatDate(item.created_at))}">${escapeHtml(formatDate(item.created_at))}</span></td>
+          <td>${
+            item.source_url
+              ? `<a class="rrq-source-link rrq-cell-clip" href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(item.source_url)}">${escapeHtml(item.source_url)}</a>`
+              : "—"
+          }</td>
         </tr>`;
       })
       .join("");
