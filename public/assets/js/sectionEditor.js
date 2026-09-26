@@ -396,6 +396,25 @@
     scheduleCompile();
   }
 
+  function openMediaPickerForUrl(mode) {
+    const urlInput = el("secRichLinkUrl");
+    if (!urlInput) return;
+    if (!window.AdminMediaPicker || typeof window.AdminMediaPicker.open !== "function") {
+      window.AdminUI?.toastError?.("Media Library picker unavailable");
+      return;
+    }
+    window.AdminMediaPicker.open({
+      input: urlInput,
+      type: "all",
+      initialTab: mode === "upload" ? "upload" : "library",
+      onSelect: () => {
+        const err = el("secRichLinkUrlError");
+        if (err) err.hidden = true;
+        urlInput.focus();
+      }
+    });
+  }
+
   function initRichLinkModal() {
     const modal = el("secRichLinkModal");
     if (!modal) return;
@@ -409,6 +428,10 @@
         return;
       }
       if (action === "insert") confirmRichLinkModal();
+      if (action === "media-library" || action === "upload-media") {
+        ev.preventDefault();
+        openMediaPickerForUrl(action === "upload-media" ? "upload" : "library");
+      }
     });
 
     const urlInput = el("secRichLinkUrl");
@@ -870,12 +893,36 @@
     };
   }
 
+  function renderMediaPickBtn(forField) {
+    return `<button type="button" class="sec-media-pick-btn" data-media-pick="${escapeHtml(forField)}" title="Select from Media Library">Media</button>`;
+  }
+
+  function openMediaPickerForInput(input, initialTab) {
+    if (!input) return;
+    if (!window.AdminMediaPicker || typeof window.AdminMediaPicker.open !== "function") {
+      window.AdminUI?.toastError?.("Media Library picker unavailable");
+      return;
+    }
+    window.AdminMediaPicker.open({
+      input,
+      type: "all",
+      initialTab: initialTab === "upload" ? "upload" : "library",
+      onSelect: () => {
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+    });
+  }
+
   function renderLinkActionRow(action, linkIndex, actionIndex) {
     const urlInvalid = !isUrlFieldValid(action.url) ? " is-invalid" : "";
     const inner = `
       <div class="sec-link-action" data-link-index="${linkIndex}" data-action-index="${actionIndex}">
         <input type="text" class="sec-input" data-rich-input data-field="link-action-text" placeholder="Button text" value="${escapeHtml(action.buttonText)}">
-        <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-action-url" placeholder="https://..." value="${escapeHtml(action.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
+        <div class="sec-url-with-media">
+          <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-action-url" placeholder="https://..." value="${escapeHtml(action.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
+          ${renderMediaPickBtn("link-action-url")}
+        </div>
         <div class="sec-row-actions">${renderRowActions("sec-row-btn--link-action")}</div>
       </div>`;
     return wrapRichField(inner, `link-action-${linkIndex}-${actionIndex}`, { compact: true });
@@ -915,7 +962,10 @@
             { compact: true }
           )}
           <label class="sec-field-label">URL</label>
-          <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-url" placeholder="https://..." value="${escapeHtml(link.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
+          <div class="sec-url-with-media">
+            <input type="url" class="sec-input sec-input--url${urlInvalid}" data-field="link-url" placeholder="https://..." value="${escapeHtml(link.url)}" aria-invalid="${urlInvalid ? "true" : "false"}">
+            ${renderMediaPickBtn("link-url")}
+          </div>
         </div>
         <div class="sec-link-multi${isMulti ? "" : " is-hidden"}">
           <p class="sec-field-hint">Each row = one button (e.g. Hindi, English)</p>
@@ -1639,6 +1689,17 @@
   }
 
   function handleRootClick(ev) {
+    const mediaPick = ev.target.closest("[data-media-pick]");
+    if (mediaPick) {
+      ev.preventDefault();
+      const wrap = mediaPick.closest(".sec-url-with-media") || mediaPick.parentElement;
+      const input =
+        wrap?.querySelector('input[type="url"], input.sec-input--url') ||
+        mediaPick.previousElementSibling;
+      openMediaPickerForInput(input, "library");
+      return;
+    }
+
     if (ev.target.matches(".sec-rich-btn")) {
       const wrap = ev.target.closest(".sec-rich-field");
       const editable = getRichEditable(wrap);

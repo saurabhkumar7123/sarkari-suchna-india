@@ -11,7 +11,7 @@ const fileController = require("../../controllers/admin/file.controller");
 
 const asyncHandler = require("../../utils/asyncHandler");
 
-// Dashboard: persist PDF/image — storage/uploads/… (see config/multer.js)
+// Dashboard / Media Library: persist PDF/image — storage/uploads/… (see config/multer.js)
 router.post("/pdf", dashboardUploadMulter(upload), asyncHandler(pdfController.uploadPDF));
 
 // Generator: temp file only — JSON errors (incl. 413) for multer; see pdfExtractMulter.middleware.js
@@ -22,8 +22,13 @@ router.post(
 );
 router.get("/pdf/extract/:jobId", asyncHandler(pdfController.getExtractJobStatus));
 
-// 📂 list files (clear path + legacy root)
+// Media Library / file inventory
 router.get("/files", asyncHandler(fileController.getFiles));
+router.get("/media", asyncHandler(fileController.getFiles));
+router.get("/media/detail", asyncHandler(fileController.getFileDetail));
+router.patch("/media", asyncHandler(fileController.updateFileMeta));
+router.delete("/media", asyncHandler(fileController.deleteFile));
+
 router.get(
   "/",
   (req, res, next) => {

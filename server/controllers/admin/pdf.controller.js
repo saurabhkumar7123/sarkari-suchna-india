@@ -14,7 +14,7 @@ const { extractGeneratorPdfText } = require("../../services/pdfGeneratorExtract.
 const pdfUploadDir = path.join(process.cwd(), "storage", "uploads", "pdf");
 const { isPdfMime, isAllowedImageMime } = require("../../config/multer");
 
-const MSG_INVALID_TYPE = "Only PDF, JPG, JPEG and PNG files are allowed";
+const MSG_INVALID_TYPE = "Only PDF, JPG, JPEG, PNG and WebP files are allowed";
 const MSG_INVALID_SIGNATURE = "Uploaded file appears corrupted or invalid";
 
 function uploadError(res, status, message) {
@@ -23,7 +23,7 @@ function uploadError(res, status, message) {
 
 function hasAllowedUploadExtension(fileName, isImage) {
   const name = String(fileName || "").toLowerCase();
-  return isImage ? /\.(png|jpe?g)$/i.test(name) : /\.pdf$/i.test(name);
+  return isImage ? /\.(png|jpe?g|webp)$/i.test(name) : /\.pdf$/i.test(name);
 }
 
 function hasAllowedFileSignature(buffer, isImage) {
@@ -47,7 +47,17 @@ function hasAllowedFileSignature(buffer, isImage) {
     buffer[6] === 0x1a &&
     buffer[7] === 0x0a;
   const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
-  return isPng || isJpeg;
+  const isWebp =
+    buffer.length >= 12 &&
+    buffer[0] === 0x52 &&
+    buffer[1] === 0x49 &&
+    buffer[2] === 0x46 &&
+    buffer[3] === 0x46 &&
+    buffer[8] === 0x57 &&
+    buffer[9] === 0x45 &&
+    buffer[10] === 0x42 &&
+    buffer[11] === 0x50;
+  return isPng || isJpeg || isWebp;
 }
 
 /**
@@ -84,6 +94,22 @@ const uploadPDF = async (req, res) => {
     const filePath = `/${folder}/${fileName}`;
     const absoluteUrl = resolveUrl(filePath);
 
+    const titleRaw = req.body && (req.body.title || req.body.displayName);
+    const title = titleRaw != null ? String(titleRaw).trim().slice(0, 240) : "";
+    try {
+      const mediaService = require("../../services/media.service");
+      await mediaService.setMeta(folder, fileName, {
+        title: title || undefined,
+        originalName: req.file.originalname || fileName,
+        mimeType: req.file.mimetype || null,
+        size: req.file.size || null,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: req.user && (req.user.id || req.user.username || req.user.email) || null
+      });
+    } catch (metaErr) {
+      logger.warn("pdf upload: media meta write failed", { message: metaErr.message });
+    }
+
     logger.info("pdf upload (dashboard)", {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
@@ -97,9 +123,10 @@ const uploadPDF = async (req, res) => {
       fileName,
       path: filePath,
       absoluteUrl,
+      title: title || null,
       // Keep legacy response field for compatibility with existing UI code.
       url: filePath,
-      data: { fileName, path: filePath, absoluteUrl }
+      data: { fileName, path: filePath, absoluteUrl, title: title || null }
     });
   } catch (err) {
     logger.error("pdf upload (dashboard) failed", { message: err.message });

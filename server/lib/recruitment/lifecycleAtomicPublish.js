@@ -18,6 +18,11 @@ const {
   mapEventStageToRecruitmentLifecycleState
 } = require("./productionRuntime/mapEventStageToLifecycleState");
 const { isDownstreamEvent, isAnnouncementEvent, normalizeEventType } = require("./lifecycleSafety");
+const {
+  getAuthoritativeRecruitmentStage,
+  deriveAuthoritativeStageFromEvents,
+  selectAuthoritativeEvent
+} = require("./authoritativeRecruitmentStage");
 
 function parsePositiveId(value) {
   if (value === undefined || value === null || value === "") return null;
@@ -26,6 +31,13 @@ function parsePositiveId(value) {
   return id;
 }
 
+/**
+ * Project Event authority onto compatibility caches:
+ * - recruitments.lifecycle_state (ENUM projection)
+ * - recruitment_extended.current_stage (event-type projection, best-effort)
+ *
+ * Event remains authoritative. These writes are caches only.
+ */
 async function projectRecruitmentStageFromEvent({ recruitmentId, eventType }) {
   const rid = parsePositiveId(recruitmentId);
   const type = normalizeEventType(eventType);
@@ -42,7 +54,57 @@ async function projectRecruitmentStageFromEvent({ recruitmentId, eventType }) {
     const updated = await recruitmentRepository.patchRecruitment(rid, {
       lifecycle_state: lifecycleState
     });
-    return { skipped: false, lifecycle_state: lifecycleState, recruitment: updated };
+
+    let enterpriseProjection = { skipped: true, reason: "not_attempted" };
+    try {
+      const enterpriseRepo = require("../../repositories/enterprise/recruitmentEnterprise.repository");
+      const existing = await enterpriseRepo.getByRecruitmentId(rid, { includeDeleted: true });
+      const previous =
+        existing && existing.current_stage != null ? String(existing.current_stage) : null;
+      await enterpriseRepo.upsertExtended(
+        rid,
+        {
+          previous_stage: previous,
+          current_stage: type,
+          metadata: {
+            ...((existing && existing.metadata) || {}),
+            stageProjection: {
+              source: "authoritative_event",
+              eventType: type,
+              lifecycle_state: lifecycleState,
+              projectedAt: new Date().toISOString()
+            }
+          }
+        },
+        {
+          author: "lifecycle_stage_projection",
+          changeSummary: "Project authoritative event stage onto enterprise cache"
+        }
+      );
+      enterpriseProjection = {
+        skipped: false,
+        current_stage: type,
+        previous_stage: previous
+      };
+    } catch (enterpriseErr) {
+      enterpriseProjection = {
+        skipped: true,
+        reason: enterpriseErr && enterpriseErr.message ? enterpriseErr.message : "enterprise_failed"
+      };
+      logger.warn("atomic-publish: enterprise stage projection skipped", {
+        recruitmentId: rid,
+        message: enterpriseProjection.reason
+      });
+    }
+
+    return {
+      skipped: false,
+      lifecycle_state: lifecycleState,
+      current_stage: type,
+      authority: "event",
+      enterpriseProjection,
+      recruitment: updated
+    };
   } catch (err) {
     logger.warn("atomic-publish: stage projection failed", {
       recruitmentId: rid,
@@ -183,6 +245,20 @@ async function finalizeLifecyclePublish({
     /* author reserved for future audit enrichment */
   }
 
+  result.repairNeeded = result.ok !== true;
+  result.incomplete = result.ok !== true;
+  if (result.repairNeeded) {
+    result.repairHint =
+      "Page write succeeded but lifecycle finalize is incomplete. Verify draft published status, page↔recruitment link, event activation, and stage projection. Do not re-publish blindly.";
+    logger.warn("atomic-publish: repair needed after incomplete finalize", {
+      pageId,
+      draftId,
+      recruitmentId: effectiveRecruitmentId,
+      eventId: eid,
+      errors: result.errors
+    });
+  }
+
   return result;
 }
 
@@ -200,5 +276,8 @@ module.exports = {
   projectRecruitmentStageFromEvent,
   finalizeLifecyclePublish,
   isLifecycleUpdateEvent,
-  isAnnouncementCreateEvent
+  isAnnouncementCreateEvent,
+  getAuthoritativeRecruitmentStage,
+  deriveAuthoritativeStageFromEvents,
+  selectAuthoritativeEvent
 };

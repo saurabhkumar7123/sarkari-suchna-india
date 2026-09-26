@@ -3,7 +3,7 @@
  * Presentation only: existing routes/URLs, no new backend endpoints.
  */
 (function () {
-  const ADMIN_NAV_VERSION = "31";
+  const ADMIN_NAV_VERSION = "32";
 
   const I = {
     dash: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
@@ -122,7 +122,7 @@
     <div class="nav-group-body">
       ${navLink("/admin/sessions", "/admin/sessions", I.sess, "Sessions")}
       ${navLink("/admin/csv-upload", "/admin/csv-upload", I.csv, "CSV Upload")}
-      ${navLink("/upload", "/upload", I.up, "Upload")}
+      ${navLink("/admin/media", "/admin/media", I.up, "Media Library", 'title="Site-hosted PDFs and images" data-nav-alias="media"')}
       ${navLink("/trash", "/trash", I.trash, "Trash")}
       ${navLink("/admin/homepage-management", "/admin/homepage-management", I.home, "Homepage Management")}
     </div>
@@ -274,6 +274,7 @@ Drafts -> /generator#drafts
 Review Center -> /admin/recruitment-review-queue (canonical active nav for RRQ)
 Editorial Review / Review Queue -> /admin/editorial-review
 Published Pages -> /admin/page-manager
+Media Library -> /admin/media (site-hosted PDF/image uploads; legacy /upload redirects here)
 Automation Control Center -> /admin/automation-control-center
 ACC child pages are internal ACC navigation only (not global sidebar items):
   Official Sources → /admin/monitoring (canonical; ACC /sources redirects there)

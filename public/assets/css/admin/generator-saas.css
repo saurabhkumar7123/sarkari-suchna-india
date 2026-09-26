@@ -1,5 +1,5 @@
 /**
- * Generator SaaS polish Ã¢ÂÂ visual layer on top of generator.css.
+ * Generator SaaS polish ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ visual layer on top of generator.css.
  * Scoped to body.generator-saas-v2; features unchanged.
  */
 
@@ -861,7 +861,7 @@ body.generator-saas-v2 .form-accordion > summary::-webkit-details-marker{
 }
 
 body.generator-saas-v2 .form-accordion > summary::after{
-  content:"Ã¢ÂÂ¾";
+  content:"ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¾";
   margin-left:auto;
   font-size:12px;
   color:var(--saas-muted);
@@ -1441,7 +1441,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     opacity:.55;
   }
 
-  /* Expand mode Ã¢ÂÂ grouped topbar on mobile (Page / Editor pills + Done / Collapse) */
+  /* Expand mode ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ grouped topbar on mobile (Page / Editor pills + Done / Collapse) */
   body.generator-saas-v2.generator-fs-mobile-groups.generator-editor-fullscreen .editor-expand-topbar:not([hidden]){
     position:fixed;
     top:0;
@@ -1708,7 +1708,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     gap:4px;
   }
 
-  /* Expand mode Ã¢ÂÂ fixed top row: Preview | Save | Done | SEO | Collapse */
+  /* Expand mode ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ fixed top row: Preview | Save | Done | SEO | Collapse */
   body.generator-saas-v2.generator-editor-fullscreen:not(.generator-fs-mobile-groups) .editor-expand-topbar:not([hidden]){
     position:fixed;
     top:0;
@@ -1813,7 +1813,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     gap:6px;
   }
 
-  /* Section toolbar Ã¢ÂÂ compact on mobile */
+  /* Section toolbar ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ compact on mobile */
   body.generator-saas-v2 .section-editor-toolbar{
     padding:6px 8px;
     gap:4px;
@@ -1877,7 +1877,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     height:28px;
   }
 
-  /* Section card Ã¢ÂÂ inline label + field */
+  /* Section card ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ inline label + field */
   body.generator-saas-v2 .sec-card__expandable{
     display:grid;
     gap:6px;
@@ -1916,7 +1916,7 @@ body.dark.generator-saas-v2 .action-bar.is-sticky-publish{
     font-size:13px;
   }
 
-  /* Dates / links / list rows Ã¢ÂÂ label + value side by side */
+  /* Dates / links / list rows ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ label + value side by side */
   body.generator-saas-v2 .sec-dates-block--date .sec-row{
     grid-template-columns:minmax(52px,32%) minmax(0,1fr) auto;
     gap:4px;
@@ -2434,6 +2434,51 @@ body.generator-saas-v2 .sec-rich-link-modal__error{
   margin:-6px 0 10px;
   font-size:12px;
   color:#b45309;
+}
+
+body.generator-saas-v2 .sec-url-with-media{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+body.generator-saas-v2 .sec-url-with-media .sec-input--url{
+  flex:1 1 12rem;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+body.generator-saas-v2 .sec-media-pick-btn{
+  flex:0 0 auto;
+  appearance:none;
+  border:1px solid var(--admin-border,#e2e8f0);
+  background:var(--admin-surface-2,#f8fafc);
+  color:var(--admin-text,#0f172a);
+  border-radius:6px;
+  padding:6px 10px;
+  font:inherit;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+}
+body.generator-saas-v2 .sec-link-single,
+body.generator-saas-v2 .sec-link-action{
+  min-width:0;
+  max-width:100%;
+}
+body.generator-saas-v2 .sec-media-pick-btn:hover{
+  border-color:color-mix(in srgb,var(--saas-brand,#2563eb) 45%,var(--admin-border,#e2e8f0));
+}
+
+body.generator-saas-v2 .sec-rich-link-modal__media-hint{
+  flex:1 1 100%;
+  font-size:11px;
+  color:var(--admin-muted,#64748b);
 }
 
 body.generator-saas-v2 .sec-rich-link-modal__actions{
@@ -3118,7 +3163,7 @@ body.generator-saas-v2 .sec-dates-block--list{
     overscroll-behavior:contain;
   }
 
-  /* Expand / fullscreen Ã¢ÂÂ edge-to-edge editor on mobile */
+  /* Expand / fullscreen ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ edge-to-edge editor on mobile */
   body.generator-saas-v2.generator-editor-fullscreen .editor-panel{
     padding:calc(48px + env(safe-area-inset-top,0px)) 0 calc(8px + env(safe-area-inset-bottom,0px));
     gap:4px;
@@ -3300,7 +3345,7 @@ body.generator-saas-v2 .sec-dates-block--list{
    Generator UI compact cleanup (presentation only)
    ======================================================================== */
 
-/* Drafts list: default CLOSED Ã¢ÂÂ head toggles panel */
+/* Drafts list: default CLOSED ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ head toggles panel */
 body.generator-saas-v2 .generator-drafts-bar__collapse{
   display:flex;
   align-items:center;
@@ -3477,7 +3522,7 @@ body.generator-saas-v2 .generator-step{
   }
 }
 
-/* Search: compact icon in header side Ã¢ÂÂ expand only on /generator */
+/* Search: compact icon in header side ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ expand only on /generator */
 body.generator-saas-v2 .admin-header .admin-right{
   display:flex;
   align-items:flex-start;
@@ -3589,7 +3634,7 @@ body.generator-saas-v2 .page-search-panel label{
   font-size:10px;
 }
 
-/* /generator#drafts Ã¢ÂÂ remove all page-title search UI (keep draft list filters) */
+/* /generator#drafts ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ remove all page-title search UI (keep draft list filters) */
 body[data-admin-hash="drafts"] .page-search-panel,
 body[data-admin-hash="drafts"] #pageSearchPanel,
 body[data-admin-hash="drafts"] .page-search-toggle,
@@ -3711,7 +3756,7 @@ body.generator-saas-v2 .action-btn__label{
   text-overflow:ellipsis;
 }
 
-/* ÂÂ Section Builder UX improvements (local) ÂÂ */
+/* ÃÂÃÂÃÂÃÂ Section Builder UX improvements (local) ÃÂÃÂÃÂÃÂ */
 body.generator-saas-v2 .section-editor-mode-hint,
 body.generator-saas-v2 .section-editor-raw-hint{
   margin:0 12px 8px;
@@ -3958,7 +4003,7 @@ body.generator-saas-v2 .sec-add-section-modal__btn--ghost:hover{
   }
 }
 
-/* ï¿½ï¿½ Generator UI cleanup polish (local) ï¿½ï¿½ */
+/* ÃÂ¯ÃÂ¿ÃÂ½ÃÂ¯ÃÂ¿ÃÂ½ Generator UI cleanup polish (local) ÃÂ¯ÃÂ¿ÃÂ½ÃÂ¯ÃÂ¿ÃÂ½ */
 body.generator-saas-v2 .content-wrapper > .pdf-extract-panel{
   order:-1;
   margin:0;
@@ -4033,7 +4078,7 @@ body.generator-saas-v2 .section-editor-root{
   }
 }
 
-/*  Workflow cleanup: compact steps + search close + space  */
+/* ÃÂÃÂ Workflow cleanup: compact steps + search close + space ÃÂÃÂ */
 body.generator-saas-v2 .admin-ops-flow{
   display:none !important;
 }

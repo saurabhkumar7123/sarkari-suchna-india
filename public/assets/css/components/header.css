@@ -347,22 +347,25 @@
 }
 
 @media (min-width: 769px) {
+  /* Social: compact / secondary — must not disturb brand centering */
   .social-icons{
-    gap:10px;
+    gap:6px;
   }
 
   .social-icons i{
-    width:38px;
-    height:38px;
-    min-width:38px;
-    min-height:38px;
-    font-size:16px;
-    border-radius:11px;
+    width:26px;
+    height:26px;
+    min-width:26px;
+    min-height:26px;
+    font-size:12px;
+    border-radius:8px;
     box-shadow:none;
+    opacity:0.92;
   }
 
   .social-icons a:hover i{
     filter:brightness(1.06);
+    opacity:1;
     box-shadow:none;
   }
 
@@ -370,26 +373,52 @@
     filter:brightness(0.96);
     box-shadow:none;
   }
+
+  .right-section{
+    right:20px;
+    top:18px;
+    transform:none;
+    gap:8px;
+  }
+
+  .right-section .tools-btn{
+    min-height:32px;
+    padding:6px 11px;
+    font-size:12px;
+    border-radius:9px;
+  }
 }
 
-/* Desktop: brand block — title, 2-line tagline, room for right section */
+/* Desktop: brand block — true viewport horizontal center; slight vertical drop */
 @media (min-width: 769px) {
   .top-banner{
-    min-height:168px;
-    padding:24px 20px;
+    min-height:176px;
+    padding:36px 20px 28px;
     box-shadow:none;
   }
 
+  .top-banner-inner{
+    justify-content:center;
+    padding:0;
+  }
+
+  /* No asymmetric padding — brand center = viewport center */
   .logo-section{
-    padding-right:160px;
-    padding-left:20px;
+    flex:0 1 auto;
+    padding:0;
+    margin:0 auto;
     box-sizing:border-box;
+  }
+
+  .title{
+    text-align:center;
   }
 
   .title .site-brand-title{
     font-size:42px;
     white-space:nowrap;
     text-shadow:none;
+    text-align:center;
   }
 
   .title p{
@@ -398,13 +427,14 @@
     line-height:1.4;
     color:#e2e8f0;
     margin:6px auto 0;
-    max-width:min(560px, calc(100vw - 280px));
+    max-width:min(560px, calc(100vw - 200px));
     display:-webkit-box;
     -webkit-box-orient:vertical;
     -webkit-line-clamp:2;
     white-space:normal;
     overflow:hidden;
     text-overflow:ellipsis;
+    text-align:center;
   }
 }
 
@@ -465,17 +495,15 @@
 
 /* ===============================
    DESKTOP NAVBAR
+   Align Home / Search to .main-container content edges
+   (same column as Small Boxes — tokens.css layout vars)
 =================================*/
 .navbar{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-wrap:nowrap;
-  gap:6px 4px;
-  width:var(--layout-desktop-width, 80%);
-  max-width:var(--layout-desktop-max, 1200px);
-  padding:10px 16px;
-  margin:0 auto;
+  display:block;
+  width:100%;
+  max-width:100%;
+  padding:8px 0;
+  margin:0;
   box-sizing:border-box;
   position:sticky;
   top:0;
@@ -487,48 +515,140 @@
   transition:border-color 0.2s ease;
 }
 
-/* 9 nav items need ~1025px; default 80% bar is too narrow at 1024–1280 */
-@media (min-width: 769px) and (max-width: 1365px) {
+/* Mirrors tokens.css .main-container — left/right = Small Boxes content edges */
+.navbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:var(--layout-desktop-width, 80%);
+  max-width:var(--layout-desktop-max, 1200px);
+  margin:0 auto;
+  padding:0 var(--space-12, 12px);
+  box-sizing:border-box;
+  position:relative;
+}
+
+.navbar-links{
+  display:flex;
+  align-items:center;
+  flex-wrap:nowrap;
+  gap:2px 4px;
+  margin:0;
+  min-width:0;
+  flex:1 1 auto;
+}
+
+.header-search-desktop-btn{
+  /* In-flow at content right edge — does not affect brand (separate top-banner) */
+  position:relative;
+  top:auto;
+  left:auto;
+  right:auto;
+  transform:none;
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:40px;
+  height:40px;
+  min-width:40px;
+  min-height:40px;
+  padding:0;
+  margin:0;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  background:#f8fafc;
+  color:var(--ui-control-icon, #475569);
+  cursor:pointer;
+  flex:0 0 auto;
+  box-shadow:none;
+  transition:background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.header-search-desktop-btn i{
+  font-size:15px;
+  pointer-events:none;
+  margin:0;
+}
+
+.header-search-desktop-btn:hover{
+  background:var(--nav-hover-bg, #eff6ff);
+  border-color:#cbd5e1;
+  color:var(--brand-blue-dark, #1e40af);
+}
+
+.header-search-desktop-btn:focus-visible{
+  outline:2px solid var(--brand-blue, #2563eb);
+  outline-offset:2px;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
   .navbar {
-    width: min(calc(100% - 20px), var(--layout-desktop-max, 1200px));
-    max-width: calc(100% - 20px);
-    gap: 3px;
-    padding: 9px 12px;
+    padding: 7px 0;
+  }
+
+  /* Same tablet column as .main-container (tokens.css) */
+  .navbar-inner {
+    width: var(--layout-tablet-width, 96%);
+    max-width: var(--layout-tablet-max, 100%);
+    padding: 0 var(--space-12, 12px);
+    gap: 8px;
+  }
+
+  .navbar-links {
+    gap: 0 1px;
   }
 
   .navbar .nav-item {
-    padding: 10px 10px;
-    font-size: 13px;
+    padding: 8px 8px;
+    font-size: 14px;
     white-space: nowrap;
     flex: 0 1 auto;
+    min-height: 38px;
   }
 
-  .navbar .nav-item i {
-    margin-right: 5px;
+  .navbar .nav-item::after {
+    left: 8px;
+    right: 8px;
+  }
+
+  .header-search-desktop-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1365px) {
+  .navbar {
+    padding: 8px 0;
+  }
+
+  .navbar-links {
+    gap: 1px 3px;
+  }
+
+  .navbar .nav-item {
+    padding: 8px 11px;
+    font-size: 14.5px;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-height: 40px;
   }
 
   .navbar .nav-item::after {
     left: 10px;
     right: 10px;
   }
-}
 
-@media (min-width: 769px) and (max-width: 1024px) {
-  .navbar {
-    width: calc(100% - 12px);
-    max-width: 100%;
-    gap: 2px;
-    padding: 8px 8px;
-  }
-
-  .navbar .nav-item {
-    padding: 10px 8px;
-    font-size: 12.5px;
-  }
-
-  .navbar .nav-item i {
-    margin-right: 4px;
-    font-size: 0.88em;
+  .header-search-desktop-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
   }
 }
 
@@ -538,31 +658,31 @@
   align-items:center;
   justify-content:center;
   text-decoration:none;
-  padding:10px 14px;
-  min-height:44px;
+  padding:8px 12px;
+  min-height:40px;
   border-radius:10px;
   border:1px solid transparent;
   font-weight:600;
-  font-size:14px;
+  font-size:15px; /* was 13.5px — +1.5px for desktop readability */
   line-height:1.2;
   color:var(--nav-text);
   background:transparent;
   transition:color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   -webkit-tap-highlight-color:transparent;
+  white-space:nowrap;
 }
 
+/* Desktop nav is text-only — hide any leftover icons */
 .navbar .nav-item i{
-  margin-right:6px;
-  font-size:0.95em;
-  opacity:0.9;
+  display:none;
 }
 
 .navbar .nav-item::after{
   content:"";
   position:absolute;
-  left:12px;
-  right:12px;
-  bottom:7px;
+  left:10px;
+  right:10px;
+  bottom:6px;
   height:2px;
   border-radius:1px;
   background:var(--brand-blue);
@@ -591,9 +711,17 @@
   display:none;
 }
 
-.navbar .nav-item.active i{
-  opacity:1;
-  color:var(--nav-active-text);
+/* Font-size overrides after base rule (cascade) */
+@media (min-width: 1025px) and (max-width: 1365px) {
+  .navbar .nav-item {
+    font-size: 14.5px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navbar .nav-item {
+    font-size: 14px;
+  }
 }
 
 /* ===============================
@@ -862,7 +990,7 @@ body.mobile-nav-open .mobile-nav{
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  gap:12px;
+  gap:0;
   min-height:48px;
   padding:12px 14px;
   border-radius:12px;
@@ -884,13 +1012,10 @@ body.mobile-nav-open .mobile-nav{
   touch-action:manipulation;
 }
 
+/* Mobile drawer nav is text-only — hide any leftover nav-item icons */
+#navbar .nav-item > i,
 #navbar .nav-item i{
-  flex:0 0 22px;
-  width:22px;
-  margin-right:0;
-  text-align:center;
-  font-size:16px;
-  color:#64748b;
+  display:none !important;
 }
 
 #navbar .nav-item:hover{
@@ -912,10 +1037,6 @@ body.mobile-nav-open .mobile-nav{
   font-weight:600;
   font-size:15px;
   box-shadow:none;
-}
-
-#navbar .nav-item.active i{
-  color:var(--nav-active-text);
 }
 
 .mobile-legal{

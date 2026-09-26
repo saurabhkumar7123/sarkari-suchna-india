@@ -20,7 +20,9 @@
 
   function categoriesHref(tabKey) {
     if (tabKey === "departments") return "/categories";
-    return `/categories?tab=${encodeURIComponent(tabKey)}`;
+    if (tabKey === "qualifications") return "/categories?tab=qualifications";
+    if (tabKey === "states") return "/categories?tab=states";
+    return "/categories";
   }
 
   function syncUi() {

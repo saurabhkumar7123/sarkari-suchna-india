@@ -12,7 +12,7 @@
   function detectStandalonePageClass() {
     const p = String(window.location.pathname || "").toLowerCase();
     if (p.includes("/generator")) return "generator-page";
-    if (p.includes("/upload")) return "upload-page";
+    if (p.includes("/admin/media") || p.includes("/upload")) return "media-library-page";
     if (p.includes("/trash")) return "trash-page";
     return "";
   }

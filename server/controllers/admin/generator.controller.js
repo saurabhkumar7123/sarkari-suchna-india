@@ -423,11 +423,33 @@ const generatePage = async (req, res) => {
           });
         }
       } catch (guardErr) {
+        // Fail closed for lifecycle updates: never silently skip canonical-page safety.
+        if (isLifecycleUpdateEvent(publishEventType)) {
+          logger.error("generator: same-page publish guard failed closed for lifecycle update", {
+            recruitmentId: publishRecruitmentId,
+            eventType: publishEventType,
+            message: guardErr && guardErr.message ? guardErr.message : String(guardErr)
+          });
+          return res.status(409).json({
+            status: "error",
+            code: "canonical_page_guard_unavailable",
+            message:
+              "Could not verify the one-canonical-page rule for this lifecycle update. Resolve Recruitment ↔ Page linkage before publishing."
+          });
+        }
         if (guardErr && guardErr.statusCode === 409) throw guardErr;
-        logger.warn("generator: same-page publish guard skipped", {
+        logger.warn("generator: same-page publish guard skipped for non-lifecycle publish", {
           message: guardErr && guardErr.message ? guardErr.message : String(guardErr)
         });
       }
+    } else if (isLifecycleUpdateEvent(publishEventType)) {
+      // Downstream update without Recruitment context must not create a second page.
+      return res.status(409).json({
+        status: "error",
+        code: "recruitment_required_for_lifecycle_update",
+        message:
+          "Admit Card / Answer Key / Result / Correction updates require a bound Recruitment so the existing canonical page can be updated. Bind Recruitment first — do not create a dedicated status page."
+      });
     }
 
     conn = await db.getConnection();
@@ -691,11 +713,12 @@ const generatePage = async (req, res) => {
       if (atomicFinalize && atomicFinalize.ok) {
         lifecycleNote = "Lifecycle finalize complete (draft/history, linkage, event, stage).";
       } else if (atomicFinalize && atomicFinalize.errors && atomicFinalize.errors.length) {
-        lifecycleNote = `Page published. Lifecycle finalize incomplete: ${atomicFinalize.errors
+        lifecycleNote = `Page published. Lifecycle finalize incomplete (repair needed): ${atomicFinalize.errors
           .map((e) => e.step)
-          .join(", ")}.`;
-        logger.warn("generator: atomic finalize incomplete", {
+          .join(", ")}. ${atomicFinalize.repairHint || ""}`.trim();
+        logger.warn("generator: atomic finalize incomplete — repair needed", {
           slug,
+          repairNeeded: true,
           errors: atomicFinalize.errors
         });
       }
@@ -766,9 +789,13 @@ const generatePage = async (req, res) => {
         atomicFinalize: atomicFinalize
           ? {
               ok: atomicFinalize.ok,
+              repairNeeded: atomicFinalize.repairNeeded === true,
+              incomplete: atomicFinalize.incomplete === true,
+              repairHint: atomicFinalize.repairHint || null,
               errors: atomicFinalize.errors || []
             }
-          : null
+          : null,
+        repairNeeded: Boolean(atomicFinalize && atomicFinalize.repairNeeded)
       },
       url,
       id: savedPageId,
@@ -778,7 +805,8 @@ const generatePage = async (req, res) => {
       category: String(category || ""),
       warnings: parserWarnings,
       contentAnalysis,
-      lifecycleNote
+      lifecycleNote,
+      repairNeeded: Boolean(atomicFinalize && atomicFinalize.repairNeeded)
     });
   } catch (err) {
     if (conn) {

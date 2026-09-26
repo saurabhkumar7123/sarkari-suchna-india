@@ -40,7 +40,12 @@ const asyncHandler = require("./utils/asyncHandler");
 const { getBaseUrl, getPublicBaseUrl } = require("./utils/baseUrl");
 const { buildHomeBootstrap, buildHomeBootstrapScriptTag } = require("./lib/homeBootstrap");
 const {
-  resolveHomepageBadgeHtmlFromItem,
+  normalizeCategoryTabParam,
+  getCategoryTabMeta,
+  categoriesCanonicalPath,
+  renderCategoriesBrowseHtml
+} = require("./lib/categoriesBrowse");
+const {
   resolveHomeCardBadgeHtmlFromItem
 } = require("./lib/homepageBadges");
 const { buildHomeViewMoreLinkHtml } = require("./lib/homeViewMore");
@@ -464,46 +469,6 @@ function buildRibbonTitleHtml(status) {
   return `<span class="title">${escapeHtml(line)}</span>`;
 }
 
-function breakingNewsLinkAttrsSsr(href) {
-  const s = String(href || "").trim();
-  if (!s || s === "#") return "";
-  if (s.startsWith("/")) return "";
-  if (/^https?:\/\//i.test(s)) return ' target="_blank" rel="noopener noreferrer"';
-  return "";
-}
-
-function renderBreakingNewsHtml(items) {
-  if (!Array.isArray(items) || !items.length) return "";
-
-  const chips = items
-    .map((item) => {
-      const href =
-        item && item.url != null && String(item.url).trim()
-          ? String(item.url).trim()
-          : safePageHref(item);
-      const badge = resolveHomepageBadgeHtmlFromItem(item);
-      const title = escapeHtml(item.title);
-      const ext = breakingNewsLinkAttrsSsr(href);
-      const badgeHtml = badge ? `<span class="breaking-rotator__badges">${badge}</span>` : "";
-      return `<a href="${escapeHtml(href)}" class="breaking-rotator__chip"${ext} title="${title}"><span class="breaking-rotator__chip-inner">${badgeHtml}<span class="breaking-rotator__title">${title}</span></span></a>`;
-    })
-    .join("");
-
-  const count = items.length;
-  const dots = items
-    .slice(0, 5)
-    .map(
-      (_, i) =>
-        `<button type="button" class="breaking-rotator__dot${i === 0 ? " is-active" : ""}" role="tab" aria-selected="${i === 0 ? "true" : "false"}" data-index="${i}" aria-label="Breaking update ${i + 1}"></button>`
-    )
-    .join("");
-  const dotsMore =
-    count > 5 ? `<span class="breaking-rotator__dots-more" hidden aria-hidden="true">+${count - 5}</span>` : "";
-  const controlsClass = count <= 1 ? " breaking-rotator__controls--hidden" : "";
-
-  return `<div class="breaking-rotator" data-breaking-rotator data-count="${count}" aria-live="polite"><div class="breaking-rotator__viewport"><div class="breaking-rotator__track">${chips}</div></div><div class="breaking-rotator__controls${controlsClass}"><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--prev" aria-label="Previous breaking update"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button><div class="breaking-rotator__dots" role="tablist">${dots}${dotsMore}</div><button type="button" class="breaking-rotator__arrow breaking-rotator__arrow--next" aria-label="Next breaking update"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button></div></div>`;
-}
-
 function renderSmallBoxesHtml(items) {
   if (!Array.isArray(items) || !items.length) return "";
   const colors = ["blue", "green", "orange", "purple"];
@@ -609,82 +574,6 @@ function renderPopularStatesHtml(states, opts = {}) {
   </div>
   </div>
 </section>`;
-}
-
-const VALID_CATEGORY_TABS = new Set(["departments", "qualifications", "states"]);
-
-function normalizeCategoryTabParam(raw) {
-  const tab = String(raw || "")
-    .trim()
-    .toLowerCase();
-  return VALID_CATEGORY_TABS.has(tab) ? tab : "departments";
-}
-
-function renderCategoriesPanelPills(items, labelFn) {
-  if (!Array.isArray(items) || !items.length) {
-    return `<p class="categories-browse__empty">No categories available yet.</p>`;
-  }
-  return items
-    .map((item) => {
-      const label = labelFn(item);
-      return `<a href="${escapeHtml(item.href)}" class="popular-categories__pill">${escapeHtml(label)}</a>`;
-    })
-    .join("");
-}
-
-function renderCategoriesBrowseHtml(boards, qualifications, states, activeTabRaw) {
-  const activeTab = normalizeCategoryTabParam(activeTabRaw);
-
-  const departmentItems = Array.isArray(boards) ? boards : [];
-  const qualificationItems = Array.isArray(qualifications) ? qualifications : [];
-  const stateItems = Array.isArray(states) ? states : [];
-
-  const formatBrowseLabel = (item) =>
-    Number(item.count) > 0 ? `${item.label} (${item.count})` : item.label;
-
-  const tabDefs = [
-    {
-      key: "departments",
-      label: "Departments",
-      tabId: "categoriesTabDepartments",
-      panelId: "categoriesBoards",
-      pills: renderCategoriesPanelPills(departmentItems, formatBrowseLabel)
-    },
-    {
-      key: "qualifications",
-      label: "Qualifications",
-      tabId: "categoriesTabQualifications",
-      panelId: "categoriesQualifications",
-      pills: renderCategoriesPanelPills(qualificationItems, formatBrowseLabel)
-    },
-    {
-      key: "states",
-      label: "States",
-      tabId: "categoriesTabStates",
-      panelId: "categoriesStates",
-      pills: renderCategoriesPanelPills(stateItems, formatBrowseLabel)
-    }
-  ];
-
-  const resolvedActive = tabDefs.some((tab) => tab.key === activeTab)
-    ? activeTab
-    : "departments";
-
-  const tabsHtml = tabDefs
-    .map((tab) => {
-      const isActive = tab.key === resolvedActive;
-      return `<button type="button" class="taxonomy-tabs__btn${isActive ? " is-active" : ""}" role="tab" id="${tab.tabId}" data-taxonomy-tab="${escapeHtml(tab.key)}" aria-selected="${isActive ? "true" : "false"}" aria-expanded="${isActive ? "true" : "false"}" aria-controls="${escapeHtml(tab.panelId)}"><span class="taxonomy-tabs__label">${escapeHtml(tab.label)}</span></button>`;
-    })
-    .join("");
-
-  const panelsHtml = tabDefs
-    .map((tab) => {
-      const isActive = tab.key === resolvedActive;
-      return `<section class="popular-categories taxonomy-panel categories-browse__panel section${isActive ? " taxonomy-panel--active" : ""}" id="${escapeHtml(tab.panelId)}" data-taxonomy-panel="${escapeHtml(tab.key)}" role="tabpanel" aria-hidden="${isActive ? "false" : "true"}"><div class="taxonomy-panel__inner"><div class="popular-categories__grid popular-categories__grid--browse">${tab.pills}</div></div></section>`;
-    })
-    .join("");
-
-  return `<div class="taxonomy-discovery categories-browse" id="categoriesBrowse"><div class="taxonomy-tabs" role="tablist" aria-label="Browse job categories">${tabsHtml}</div><div class="taxonomy-panels">${panelsHtml}</div></div>`;
 }
 
 function renderTaxonomyDiscoveryHtml(boards, qualifications, states) {
@@ -881,8 +770,7 @@ async function buildSearchFallbackHtml(req, query) {
 }
 
 async function buildHomepageInitialSections() {
-  const [breakingNews, countdownEvents, smallBoxes, trendingJobs, sectionDefs, taxonomyStats] = await Promise.all([
-    miscService.getBreakingNews().catch(() => []),
+  const [countdownEvents, smallBoxes, trendingJobs, sectionDefs, taxonomyStats] = await Promise.all([
     miscService.getCountdownEvents().catch(() => []),
     miscService.getSmallBoxes().catch(() => []),
     pageService.getTopViews().catch(() => []),
@@ -910,7 +798,7 @@ async function buildHomepageInitialSections() {
   );
 
   const bootstrap = buildHomeBootstrap({
-    breakingNews,
+    breakingNews: [],
     countdownEvents,
     smallBoxes,
     trendingJobs,
@@ -922,7 +810,6 @@ async function buildHomepageInitialSections() {
   });
 
   return {
-    breakingNewsHtml: renderBreakingNewsHtml(breakingNews),
     smallBoxesHtml: renderSmallBoxesHtml(smallBoxes),
     trendingSectionHtml: renderTrendingSectionHtml(trendingJobs),
     popularBoardsHtml: renderPopularBoardsHtml(popularBoards),
@@ -1070,6 +957,7 @@ Disallow: /search?q=
 Disallow: /login
 Disallow: /generator
 Disallow: /upload
+Disallow: /admin/media
 Disallow: /trash
 Disallow: /dashboard
 Disallow: /admin/
@@ -1162,10 +1050,6 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
     let html = String(source)
       .replace('<div id="header"></div>', String(cachedHeader || ""))
       .replace(
-        /<div class="breaking-right" id="breakingNews">[\s\S]*?<\/div>/,
-        `<div class="breaking-right" id="breakingNews">${homeSections.breakingNewsHtml}</div>`
-      )
-      .replace(
         /<div class="small-boxes section" id="smallBoxes">[\s\S]*?<\/div>/,
         `<div class="small-boxes section" id="smallBoxes">${homeSections.smallBoxesHtml}</div>`
       )
@@ -1190,8 +1074,8 @@ app.get(["/", "/index.html"], asyncHandler(async (req, res) => {
         taxonomyPageService.getFooterHtml()
       )
       .replace(
-        '<script src="/js/index.js?v=2" defer></script>',
-        `${homeSections.bootstrapScript}\n<script src="/js/index.js?v=2" defer></script>`
+        '<script src="/js/index.js?v=3" defer></script>',
+        `${homeSections.bootstrapScript}\n<script src="/js/index.js?v=3" defer></script>`
       );
     const baseUrl = getPublicBaseUrl(req);
     html = normalizeSeoUrlsInHtml(html, baseUrl);
@@ -1337,15 +1221,10 @@ const staticPageSeo = {
 };
 
 const categoriesPagePath = path.join(generatedDir, "static", "categories.html");
-const categoriesPageSeo = {
-  title: "Browse Categories | Sarkari Suchna India",
-  description:
-    "Browse government job categories by department, qualification and state on Sarkari Suchna India.",
-  canonicalPath: "/categories"
-};
 
 app.get(["/categories", "/categories.html"], asyncHandler(async (req, res) => {
   const activeTab = normalizeCategoryTabParam(req.query.tab);
+  const tabMeta = getCategoryTabMeta(activeTab);
   const browseLists = await homeStatsService.getBrowseCategoryLists().catch(() => ({
     boards: allBoardHubs().map((hub) => ({
       slug: hub.slug,
@@ -1363,22 +1242,24 @@ app.get(["/categories", "/categories.html"], asyncHandler(async (req, res) => {
     activeTab
   );
   const source = await fileService.readFile(categoriesPagePath, "utf8");
-  const html = String(source).replace(
-    /<div id="categoriesBrowse"[\s\S]*?<\/div>/,
-    browseHtml
-  );
-  const baseUrl = getPublicBaseUrl(req);
-  const canonicalPath = activeTab === "departments" ? "/categories" : `/categories?tab=${activeTab}`;
-  let out = html;
-  if (categoriesPageSeo.title) {
-    out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${categoriesPageSeo.title}</title>`);
-  }
-  if (categoriesPageSeo.description) {
-    out = out.replace(
-      /<meta name="description"[^>]*>/i,
-      `<meta name="description" content="${categoriesPageSeo.description}">`
+  let out = String(source)
+    .replace(/<div id="categoriesBrowse"[\s\S]*?<\/div>/, browseHtml)
+    .replace(
+      /<h1 class="categories-page__title" id="categoriesPageTitle">[\s\S]*?<\/h1>/,
+      `<h1 class="categories-page__title" id="categoriesPageTitle">${escapeHtml(tabMeta.h1)}</h1>`
+    )
+    .replace(
+      /<p class="categories-page__lead"[^>]*>[\s\S]*?<\/p>/,
+      `<p class="categories-page__lead" id="categoriesPageLead">${escapeHtml(tabMeta.lead)}</p>`
     );
-  }
+
+  const baseUrl = getPublicBaseUrl(req);
+  const canonicalPath = categoriesCanonicalPath(activeTab);
+  out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(tabMeta.title)}</title>`);
+  out = out.replace(
+    /<meta name="description"[^>]*>/i,
+    `<meta name="description" content="${escapeHtml(tabMeta.description)}">`
+  );
   const canonicalUrl = baseUrl ? `${baseUrl}${canonicalPath}` : canonicalPath;
   out = out.replace(
     /<link rel="canonical"[^>]*>/i,
@@ -1636,16 +1517,17 @@ app.get(
     return sendPrivatePage(res, "admin-recruitment-runtime-preview.html");
   }
 );
-app.get(
-  ["/admin/seo-diagnostics", "/admin/seo-diagnostics/", "/admin/seo-diagnostics.html"],
-  verifyToken,
-  (req, res) => {
+app.get(["/admin/seo-diagnostics", "/admin/seo-diagnostics/", "/admin/seo-diagnostics.html"], verifyToken, (req, res) => {
     return sendPrivatePage(res, "admin-seo-diagnostics.html");
   }
 );
+app.get(["/admin/media", "/admin/media/", "/admin/media.html"], verifyToken, (req, res) => {
+  return sendPrivatePage(res, "admin-media.html");
+});
 ["dashboard", "generator", "upload", "trash"].forEach((route) => {
   app.get(`/${route}`, verifyToken, (req, res) => {
     if (route === "dashboard") return res.redirect(302, "/admin/dashboard");
+    if (route === "upload") return res.redirect(302, "/admin/media");
     sendPrivatePage(res, `${route}.html`);
   });
 });

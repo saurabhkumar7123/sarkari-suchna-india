@@ -46,6 +46,77 @@ function normalizeStatusForPipeline(input) {
   return cleaned.toLowerCase();
 }
 
+/**
+ * Canonical page↔recruitment ownership for admin UI (Page Manager + Generator).
+ * Uses pages.recruitment_id linkage only — never guesses from title/slug text.
+ */
+async function resolveCanonicalPageRecruitmentOwnership(pageRow) {
+  const rid =
+    pageRow && pageRow.recruitment_id != null ? Number(pageRow.recruitment_id) : null;
+  const eventId =
+    pageRow && pageRow.recruitment_event_id != null
+      ? Number(pageRow.recruitment_event_id)
+      : null;
+  if (!Number.isInteger(rid) || rid <= 0) {
+    return {
+      recruitment_id: null,
+      recruitment_event_id: null,
+      recruitmentTitle: null,
+      recruitmentLifecycleState: null,
+      authoritativeEventType: null,
+      stageAuthority: null,
+      recruitmentLinkage: "unbound",
+      recruitmentBound: false,
+      recruitmentOrphan: false
+    };
+  }
+
+  let recruitmentTitle = null;
+  let recruitmentLifecycleState = null;
+  let authoritativeEventType = null;
+  let stageAuthority = "projection_fallback";
+  let missing = false;
+
+  try {
+    const recruitmentRepository = require("../../repositories/recruitment.repository");
+    const {
+      getAuthoritativeRecruitmentStage
+    } = require("../../lib/recruitment/authoritativeRecruitmentStage");
+    const rec = await recruitmentRepository.getRecruitmentById(rid);
+    if (!rec) {
+      missing = true;
+    } else {
+      recruitmentTitle = rec.title || null;
+      recruitmentLifecycleState = rec.lifecycle_state || null;
+      try {
+        const stage = await getAuthoritativeRecruitmentStage(rid, {
+          lifecycleStateProjection: rec.lifecycle_state || null
+        });
+        authoritativeEventType = stage.eventType || null;
+        stageAuthority = stage.authority || "projection_fallback";
+        recruitmentLifecycleState = stage.lifecycleState || recruitmentLifecycleState;
+      } catch {
+        /* keep projection fields only */
+      }
+    }
+  } catch {
+    missing = true;
+  }
+
+  const linkageStatus = missing ? "orphan" : "bound";
+  return {
+    recruitment_id: rid,
+    recruitment_event_id: Number.isInteger(eventId) && eventId > 0 ? eventId : null,
+    recruitmentTitle: missing ? null : recruitmentTitle,
+    recruitmentLifecycleState: missing ? null : recruitmentLifecycleState,
+    authoritativeEventType: missing ? null : authoritativeEventType,
+    stageAuthority: missing ? null : stageAuthority,
+    recruitmentLinkage: linkageStatus,
+    recruitmentBound: linkageStatus === "bound",
+    recruitmentOrphan: linkageStatus === "orphan"
+  };
+}
+
 const getAllPages = async (req, res) => {
   try {
     let { page = 1, limit = 20, status, category, q, notag, sort } = req.query;
@@ -98,17 +169,44 @@ const getAllPages = async (req, res) => {
           .filter((id) => Number.isInteger(id) && id > 0)
       )
     ];
-    const recruitmentTitles = {};
+    const recruitmentMeta = {};
     if (recruitmentIds.length) {
       try {
         const recruitmentRepository = require("../../repositories/recruitment.repository");
+        const {
+          getAuthoritativeRecruitmentStage
+        } = require("../../lib/recruitment/authoritativeRecruitmentStage");
         await Promise.all(
           recruitmentIds.map(async (id) => {
             try {
               const rec = await recruitmentRepository.getRecruitmentById(id);
-              if (rec) recruitmentTitles[id] = rec.title || null;
+              if (!rec) {
+                recruitmentMeta[id] = { missing: true };
+                return;
+              }
+              let authoritativeEventType = null;
+              let stageAuthority = "projection_fallback";
+              let lifecycleState = rec.lifecycle_state || null;
+              try {
+                const stage = await getAuthoritativeRecruitmentStage(id, {
+                  lifecycleStateProjection: rec.lifecycle_state || null
+                });
+                authoritativeEventType = stage.eventType || null;
+                stageAuthority = stage.authority || "projection_fallback";
+                // Cached projection only — UI must prefer eventType for stage display.
+                lifecycleState = stage.lifecycleState || lifecycleState;
+              } catch {
+                /* keep projection fields only */
+              }
+              recruitmentMeta[id] = {
+                title: rec.title || null,
+                lifecycle_state: lifecycleState,
+                authoritativeEventType,
+                stageAuthority,
+                missing: false
+              };
             } catch {
-              /* ignore */
+              recruitmentMeta[id] = { missing: true };
             }
           })
         );
@@ -116,15 +214,35 @@ const getAllPages = async (req, res) => {
         /* recruitment repo unavailable */
       }
     }
-    const data = rows.map((row) => ({
-      ...row,
-      lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(row)) ?? "",
-      qualityFlags: buildPageQualityFlags(row),
-      recruitmentTitle:
-        row.recruitment_id != null
-          ? recruitmentTitles[Number(row.recruitment_id)] || null
-          : null
-    }));
+    const data = rows.map((row) => {
+      const rid =
+        row.recruitment_id != null ? Number(row.recruitment_id) : null;
+      const meta =
+        Number.isInteger(rid) && rid > 0 ? recruitmentMeta[rid] : null;
+      const recruitmentMissing = Boolean(meta && meta.missing);
+      const recruitmentBound = Boolean(meta && !meta.missing);
+      const linkageStatus = !rid
+        ? "unbound"
+        : recruitmentMissing
+          ? "orphan"
+          : "bound";
+      return {
+        ...row,
+        lastDate: pageService.normalizeLastDate(pageService.pickLastDateColumn(row)) ?? "",
+        qualityFlags: buildPageQualityFlags(row),
+        recruitmentTitle: meta && !meta.missing ? meta.title || null : null,
+        // Projection/cache only — never use page.status/title as stage.
+        recruitmentLifecycleState:
+          meta && !meta.missing ? meta.lifecycle_state || null : null,
+        authoritativeEventType:
+          meta && !meta.missing ? meta.authoritativeEventType || null : null,
+        stageAuthority:
+          meta && !meta.missing ? meta.stageAuthority || null : null,
+        recruitmentLinkage: linkageStatus,
+        recruitmentBound,
+        recruitmentOrphan: linkageStatus === "orphan"
+      };
+    });
 
     const categories = await pageRepository.selectDistinctCategories();
     const statuses = await pageRepository.selectDistinctStatusesAll();
@@ -505,6 +623,7 @@ const getAdminPageBySlug = async (req, res) => {
     if (!p) {
       return res.status(404).json({ success: false, message: "Page not found" });
     }
+    const ownership = await resolveCanonicalPageRecruitmentOwnership(p);
     return res.json({
       success: true,
       data: {
@@ -527,7 +646,17 @@ const getAdminPageBySlug = async (req, res) => {
         breakingOrder: p.breaking_order != null && p.breaking_order !== 0 ? String(p.breaking_order) : "",
         eventTime: formatDatetimeLocal(p.event_time),
         position: p.position || "normal",
-        smallBoxSlot: p.small_box_slot != null ? Number(p.small_box_slot) : null
+        smallBoxSlot: p.small_box_slot != null ? Number(p.small_box_slot) : null,
+        // Canonical ownership — same source as Page Manager (pages.recruitment_id).
+        recruitment_id: ownership.recruitment_id,
+        recruitment_event_id: ownership.recruitment_event_id,
+        recruitmentTitle: ownership.recruitmentTitle,
+        recruitmentLifecycleState: ownership.recruitmentLifecycleState,
+        authoritativeEventType: ownership.authoritativeEventType,
+        stageAuthority: ownership.stageAuthority,
+        recruitmentLinkage: ownership.recruitmentLinkage,
+        recruitmentBound: ownership.recruitmentBound,
+        recruitmentOrphan: ownership.recruitmentOrphan
       }
     });
   } catch (error) {

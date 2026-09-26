@@ -116,7 +116,8 @@
   function updateBulkBar() {
     const bar = byId("recruitmentBulkBar");
     const count = selectedIds.size;
-    if (bar) bar.hidden = false;
+    // Contextual: only show bulk toolbar when at least one row is selected.
+    if (bar) bar.hidden = count === 0;
     const label = byId("bulkSelectedCount");
     if (label) label.textContent = `${count} selected`;
     const selectAll = byId("bulkSelectAll");
@@ -125,6 +126,133 @@
       selectAll.checked = boxes.length > 0 && boxes.every((b) => b.checked);
       selectAll.indeterminate = count > 0 && !selectAll.checked;
     }
+  }
+
+  function getUiMode() {
+    const detail = byId("recruitmentDetailPanel");
+    const detailVisible = detail && !detail.hidden;
+    if (!detailVisible) return "list";
+    const hasId = Boolean(byId("recruitmentId")?.value || selected?.id);
+    if (!hasId) return "create";
+    if (identityEditMode) return "edit";
+    return "view";
+  }
+
+  function truncateTitle(value, max) {
+    const text = String(value || "").trim();
+    if (!text) return "Recruitment";
+    if (text.length <= max) return text;
+    return `${text.slice(0, Math.max(0, max - 1))}…`;
+  }
+
+  function syncUiContext() {
+    const mode = getUiMode();
+    document.body.dataset.romMode = mode;
+    document.body.classList.toggle("rom-mode-list", mode === "list");
+    document.body.classList.toggle("rom-mode-create", mode === "create");
+    document.body.classList.toggle("rom-mode-view", mode === "view");
+    document.body.classList.toggle("rom-mode-edit", mode === "edit");
+
+    const pageTitle = byId("romPageTitle") || document.querySelector(".admin-title");
+    const pageEyebrow = byId("romPageEyebrow");
+    const pageSub = byId("romPageSub");
+    const newBtn = byId("newRecruitmentBtn");
+    const tabs = byId("romDetailTabs");
+    const detailHeader = byId("romDetailHeader");
+    const editBtn = byId("editRecruitmentIdentityBtn");
+    const archiveBtn = byId("archiveRecruitmentBtn");
+    const cancelBtn = byId("cancelRecruitmentBtn");
+    const saveBtn = byId("saveRecruitmentBtn");
+    const formActions = byId("recruitmentIdentityEditActions");
+    const lastUpdated = byId("adminLastUpdated");
+    const closed = selected?.lifecycle_state === "closed";
+    const countText = byId("recruitmentCount")?.textContent || `${listTotal} recruitment${listTotal === 1 ? "" : "s"}`;
+
+    if (formActions) {
+      formActions.hidden = true;
+      formActions.setAttribute("aria-hidden", "true");
+    }
+
+    if (mode === "list") {
+      if (pageEyebrow) {
+        pageEyebrow.hidden = true;
+        pageEyebrow.textContent = "Recruitments";
+      }
+      if (pageTitle) pageTitle.textContent = "Recruitments";
+      if (pageSub) {
+        pageSub.hidden = false;
+        pageSub.textContent = countText;
+      }
+      if (newBtn) newBtn.hidden = false;
+      if (tabs) tabs.hidden = true;
+      if (detailHeader) detailHeader.hidden = true;
+      if (editBtn) editBtn.hidden = true;
+      if (archiveBtn) archiveBtn.hidden = true;
+      if (cancelBtn) cancelBtn.hidden = true;
+      if (saveBtn) saveBtn.hidden = true;
+      if (lastUpdated) lastUpdated.hidden = false;
+      return;
+    }
+
+    if (pageEyebrow) {
+      pageEyebrow.hidden = false;
+      pageEyebrow.textContent = "Recruitments";
+    }
+    if (newBtn) newBtn.hidden = true;
+    if (lastUpdated) lastUpdated.hidden = true;
+    if (detailHeader) detailHeader.hidden = false;
+
+    if (mode === "create") {
+      if (pageTitle) pageTitle.textContent = "New Recruitment";
+      if (pageSub) {
+        pageSub.hidden = false;
+        pageSub.textContent = "Creating a new recruitment — Save or Cancel. Does not publish.";
+      }
+      if (tabs) tabs.hidden = true;
+      if (editBtn) editBtn.hidden = true;
+      if (archiveBtn) archiveBtn.hidden = true;
+      if (cancelBtn) cancelBtn.hidden = false;
+      if (saveBtn) {
+        saveBtn.hidden = false;
+        saveBtn.textContent = "Save";
+      }
+      openAccordionSection("overview");
+      return;
+    }
+
+    const name = selected?.title || byId("romDetailTitle")?.textContent || "Recruitment";
+    if (pageTitle) pageTitle.textContent = truncateTitle(name, 64);
+    if (pageTitle) pageTitle.title = name;
+    if (pageSub) {
+      pageSub.hidden = false;
+      const org = selected?.department || "—";
+      const year = selected?.cycle_year || "—";
+      const status = labelize(selected?.lifecycle_state || "announced");
+      pageSub.textContent = `ID ${selected?.id || "—"} · ${org} · ${year} · ${status}`;
+    }
+
+    if (mode === "view") {
+      if (tabs) tabs.hidden = false;
+      if (editBtn) editBtn.hidden = false;
+      if (archiveBtn) archiveBtn.hidden = closed;
+      if (cancelBtn) cancelBtn.hidden = true;
+      if (saveBtn) saveBtn.hidden = true;
+      return;
+    }
+
+    // edit — identity-only; hide workflow tabs / archive / new
+    if (pageSub) {
+      pageSub.textContent = `Editing existing recruitment · ID ${selected?.id || "—"} — Save or Cancel`;
+    }
+    if (tabs) tabs.hidden = true;
+    if (editBtn) editBtn.hidden = true;
+    if (archiveBtn) archiveBtn.hidden = true;
+    if (cancelBtn) cancelBtn.hidden = false;
+    if (saveBtn) {
+      saveBtn.hidden = false;
+      saveBtn.textContent = "Save";
+    }
+    openAccordionSection("overview");
   }
 
   async function api(url, options) {
@@ -207,9 +335,12 @@
       renderRecruitments(body.data || []);
       const pages = Math.max(1, Math.ceil(listTotal / PAGE_SIZE));
       byId("recruitmentCount").textContent = `${listTotal} recruitment${listTotal === 1 ? "" : "s"}`;
+      const pageSub = byId("romPageSub");
+      if (pageSub && getUiMode() === "list") pageSub.textContent = byId("recruitmentCount").textContent;
       byId("recruitmentPageLabel").textContent = `Page ${listPage} of ${pages}`;
       byId("recruitmentPrev").disabled = listPage <= 1;
       byId("recruitmentNext").disabled = listPage >= pages;
+      if (getUiMode() === "list") syncUiContext();
     } catch (err) {
       message(err.message, true);
     }
@@ -296,22 +427,36 @@
     }
   }
 
+  function syncListDetailChrome(detailVisible) {
+    const layout = document.querySelector(".rom-layout");
+    const listPanel = document.querySelector(".rom-list-panel");
+    if (layout) {
+      layout.classList.toggle("rom-layout--list-only", !detailVisible);
+      layout.classList.toggle("rom-layout--detail-only", detailVisible);
+    }
+    document.body.classList.toggle("rom-recruitment-detail-active", detailVisible);
+    if (listPanel) {
+      listPanel.hidden = detailVisible;
+      listPanel.setAttribute("aria-hidden", detailVisible ? "true" : "false");
+    }
+    syncUiContext();
+  }
+
   function setEditorVisible(visible) {
     const empty = byId("recruitmentEmpty");
     const editor = byId("recruitmentEditor");
     const detail = byId("recruitmentDetailPanel") || document.querySelector(".rom-detail-panel");
-    const layout = document.querySelector(".rom-layout");
     if (empty) {
       empty.hidden = true;
       empty.setAttribute("aria-hidden", "true");
     }
     if (editor) editor.hidden = !visible;
     if (detail) detail.hidden = !visible;
-    if (layout) layout.classList.toggle("rom-layout--list-only", !visible);
+    syncListDetailChrome(visible);
     if (visible) {
       resetAccordionToOverview();
       const header = byId("romDetailHeader");
-      if (header) header.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (header && !header.hidden) header.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
@@ -319,12 +464,23 @@
     return Array.from(document.querySelectorAll("#romAccordionGroup details.rom-acc[data-rom-acc]"));
   }
 
+  function syncDetailTabs(activeName) {
+    const tabs = document.querySelectorAll("#romDetailTabs [data-rom-tab]");
+    tabs.forEach((tab) => {
+      const on = tab.getAttribute("data-rom-tab") === activeName;
+      tab.classList.toggle("is-active", on);
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+
   function openAccordionSection(name) {
     const sections = accordionSections();
     if (!sections.length) return;
+    const target = name || "overview";
     sections.forEach((el) => {
-      el.open = el.getAttribute("data-rom-acc") === name;
+      el.open = el.getAttribute("data-rom-acc") === target;
     });
+    syncDetailTabs(target);
   }
 
   function resetAccordionToOverview() {
@@ -346,30 +502,53 @@
       // Browser toggles open state after this click handler; enforce exclusivity next tick.
       setTimeout(() => {
         if (!section.open) return;
+        const name = section.getAttribute("data-rom-acc") || "overview";
         accordionSections().forEach((el) => {
           if (el !== section) el.open = false;
         });
+        syncDetailTabs(name);
       }, 0);
     });
   }
 
-  function syncRecruitmentUrl(id, { replace } = {}) {
+  function wireDetailTabs() {
+    const nav = byId("romDetailTabs");
+    if (!nav || nav.dataset.wired === "1") return;
+    nav.dataset.wired = "1";
+    nav.addEventListener("click", (event) => {
+      const tab = event.target && event.target.closest ? event.target.closest("[data-rom-tab]") : null;
+      if (!tab || !nav.contains(tab)) return;
+      event.preventDefault();
+      // Workflow tabs belong to VIEW only — not create/edit identity flows.
+      if (getUiMode() !== "view") return;
+      openAccordionSection(tab.getAttribute("data-rom-tab") || "overview");
+    });
+  }
+
+  function syncRecruitmentUrl(id, { replace, mode } = {}) {
     if (syncingUrl) return;
     const url = new URL(window.location.href);
     if (id) {
       url.searchParams.delete("id");
+      url.searchParams.delete("mode");
       url.searchParams.set("recruitment_id", String(id));
+    } else if (mode === "create") {
+      url.searchParams.delete("recruitment_id");
+      url.searchParams.delete("id");
+      url.searchParams.set("mode", "create");
     } else {
       url.searchParams.delete("recruitment_id");
       url.searchParams.delete("id");
+      url.searchParams.delete("mode");
     }
     const next = `${url.pathname}${url.search}${url.hash}`;
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (next === current) return;
     syncingUrl = true;
     try {
-      if (replace) window.history.replaceState({ recruitmentId: id || null }, "", next);
-      else window.history.pushState({ recruitmentId: id || null }, "", next);
+      const state = { recruitmentId: id || null, mode: id ? "view" : (mode || "list") };
+      if (replace) window.history.replaceState(state, "", next);
+      else window.history.pushState(state, "", next);
     } finally {
       syncingUrl = false;
     }
@@ -419,6 +598,7 @@
     draftBinding = null;
     setEditorVisible(false);
     fillRecruitmentForm(null);
+    setIdentityEditMode(false);
     renderEvents();
     renderLinks();
     renderLifecycleLinks();
@@ -692,7 +872,7 @@
 
     if (form) {
       form.classList.toggle("rom-form--readonly", !identityEditMode);
-      form.dataset.identityMode = identityEditMode ? "edit" : "view";
+      form.dataset.identityMode = identityEditMode ? (isCreate ? "create" : "edit") : "view";
     }
 
     IDENTITY_FIELD_IDS.forEach((id) => {
@@ -705,15 +885,7 @@
       }
     });
 
-    const editBtn = byId("editRecruitmentIdentityBtn");
-    const actions = byId("recruitmentIdentityEditActions");
-    if (editBtn) {
-      // Existing records: Edit only in view mode. Create flow stays in edit mode (no Edit button).
-      editBtn.hidden = isCreate || identityEditMode;
-    }
-    if (actions) {
-      actions.hidden = !identityEditMode;
-    }
+    syncUiContext();
   }
 
   function enterIdentityEditMode() {
@@ -721,6 +893,7 @@
       setIdentityEditMode(true);
       return;
     }
+    openAccordionSection("overview");
     setIdentityEditMode(true);
     byId("recruitmentTitle")?.focus();
   }
@@ -743,12 +916,11 @@
     byId("recruitmentAdvertisement").value = row?.advertisement_no || "";
     byId("recruitmentCycleYear").value = row?.cycle_year || "";
     byId("recruitmentLifecycle").value = row?.lifecycle_state || "announced";
-    byId("recruitmentFormTitle").textContent = row?.id ? "Recruitment Identity" : "New Recruitment";
-    byId("archiveRecruitmentBtn").hidden = !row?.id || row.lifecycle_state === "closed";
+    byId("recruitmentFormTitle").textContent = row?.id ? "Recruitment details" : "New Recruitment";
     const purpose = byId("recruitmentFormPurpose");
     if (purpose) {
       purpose.textContent = row?.id
-        ? "Admin identity for this recruitment record. Click Edit to change fields. Lifecycle updates use Manual Update in Actions — same permanent page/slug."
+        ? "Read-only identity for this recruitment. Click Edit to change fields. Lifecycle updates use Manual Update in Actions — same permanent page/slug."
         : "Create a recruitment record when this vacancy does not already exist. Creating a record does not publish.";
     }
     const overview = byId("recruitmentLifecycleOverview");
@@ -1073,7 +1245,7 @@
             const reviewId = row.id != null ? row.id : row.review_id;
             const titleFull = row.title || row.update_title || "—";
             return `<tr>
-            <td><a href="/admin/recruitment-review-queue"><span class="rom-rec-id">Review ID: ${escapeHtml(reviewId != null ? reviewId : "—")}</span></a><br><small>${escapeHtml(labelize(row.event_type || "Review"))}</small></td>
+            <td><span class="rom-rec-id">Review ID: ${escapeHtml(reviewId != null ? reviewId : "—")}</span><br><small>${escapeHtml(labelize(row.event_type || "Review"))}</small></td>
             <td><span class="rrq-status is-${escapeHtml(String(row.status || "").toLowerCase())}">${escapeHtml(
               row.status || "—"
             )}</span></td>
@@ -1130,6 +1302,8 @@
   }
 
   function newRecruitment() {
+    // Create flow is list-only — never start from an open existing recruitment detail.
+    if (selected?.id) return;
     selected = null;
     events = [];
     linkedPages = [];
@@ -1144,7 +1318,7 @@
     renderLifecycleLinks();
     renderDraftBinding();
     if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
-    syncRecruitmentUrl(null, { replace: true });
+    syncRecruitmentUrl(null, { replace: false, mode: "create" });
     byId("recruitmentTitle").focus();
   }
 
@@ -1185,7 +1359,21 @@
   }
 
   async function archiveRecruitment() {
-    if (!selected || !window.confirm(`Archive "${selected.title}"?`)) return;
+    if (!selected?.id) return;
+    const title = selected.title || `Recruitment ID: ${selected.id}`;
+    let confirmed = false;
+    if (window.AdminUI?.simpleConfirm) {
+      confirmed = await window.AdminUI.simpleConfirm({
+        title: "Archive recruitment?",
+        warnText: "Are you sure you want to archive this recruitment?",
+        details: `"${title}" will be marked archived/closed. Existing events and page links are retained. You can restore later via Bulk Restore.`,
+        confirmLabel: "Archive",
+        variant: "danger"
+      });
+    } else {
+      confirmed = window.confirm(`Archive recruitment?\n\n"${title}" will be archived. Existing events and page links will be retained.`);
+    }
+    if (!confirmed) return;
     try {
       await api(`/api/admin/recruitments/${selected.id}`, { method: "PUT", body: { lifecycle_state: "closed" } });
       message("Recruitment archived successfully. Existing events and page links were retained.");
@@ -1375,6 +1563,8 @@
 
   window.adminPageRefreshHandler = loadRecruitments;
   wireExclusiveAccordion();
+  wireDetailTabs();
+  syncListDetailChrome(false);
   const params = new URLSearchParams(window.location.search);
   if (params.get("search")) {
     byId("recruitmentSearch").value = params.get("search");
@@ -1396,6 +1586,7 @@
     focusEventTimeline();
   });
   const deepRecruitmentId = params.get("recruitment_id") || params.get("id");
+  const createModeRequested = String(params.get("mode") || "").toLowerCase() === "create";
   loadRecruitments().then(async () => {
     if (deepRecruitmentId) {
       try {
@@ -1404,6 +1595,9 @@
       } catch (err) {
         message(err.message || "Could not open recruitment", true);
       }
+    } else if (createModeRequested) {
+      newRecruitment();
+      syncRecruitmentUrl(null, { replace: true, mode: "create" });
     }
     await handleEventTimelineHash();
   });
@@ -1411,13 +1605,21 @@
   window.addEventListener("popstate", async () => {
     const nextParams = new URLSearchParams(window.location.search);
     const nextId = nextParams.get("recruitment_id") || nextParams.get("id");
+    const nextCreate = String(nextParams.get("mode") || "").toLowerCase() === "create";
     if (nextId) {
       if (!selected || String(selected.id) !== String(nextId)) {
         await selectRecruitment(nextId, { syncUrl: false });
+      } else {
+        setIdentityEditMode(false);
+        syncUiContext();
       }
       return;
     }
-    if (selected) {
+    if (nextCreate) {
+      if (getUiMode() !== "create") newRecruitment();
+      return;
+    }
+    if (selected || getUiMode() !== "list") {
       selected = null;
       events = [];
       linkedPages = [];
@@ -1426,12 +1628,14 @@
       draftBinding = null;
       setEditorVisible(false);
       fillRecruitmentForm(null);
+      setIdentityEditMode(false);
       renderEvents();
       renderLinks();
       renderLifecycleLinks();
       renderDraftBinding();
       if (window.AdminSharedPreview) window.AdminSharedPreview.clear();
       await loadRecruitments();
+      syncUiContext();
     }
   });
 })();

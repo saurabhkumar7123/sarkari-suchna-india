@@ -7,6 +7,11 @@
  * ONE RECRUITMENT → ONE CANONICAL PUBLIC PAGE (pages.slug).
  * Admit Card / Answer Key / Result / Other MUST update that page.
  * Dedicated status pages are NEVER the default target.
+ *
+ * LIVE PATH RULE:
+ * resolvePublishPolicy() NEVER returns DEDICATED_STATUS_PAGE.
+ * That enum value is retired from the operator path and retained only
+ * so older stored/advisory reads do not crash.
  */
 
 const {
@@ -52,6 +57,7 @@ function resolvePublishPolicy(eventType) {
       autoPublish: false,
       humanChoosesTarget: true,
       oneCanonicalPage: true,
+      dedicatedStatusPageAllowed: false,
       note:
         "First Notification/new-vacancy publish may CREATE the single canonical public page. Later stages must UPDATE it."
     });
@@ -66,6 +72,7 @@ function resolvePublishPolicy(eventType) {
       autoPublish: false,
       humanChoosesTarget: true,
       oneCanonicalPage: true,
+      dedicatedStatusPageAllowed: false,
       note:
         "Update the existing canonical vacancy page (same pages.slug). Do not create a dedicated Admit Card / Result / Answer Key page."
     });
@@ -79,12 +86,19 @@ function resolvePublishPolicy(eventType) {
     autoPublish: false,
     humanChoosesTarget: true,
     oneCanonicalPage: true,
+    dedicatedStatusPageAllowed: false,
     note: "Unknown event — human decides; still one Recruitment → one canonical page."
   });
+}
+
+/** True only for the retired enum token — never a live publish target. */
+function isDedicatedStatusPageTarget(target) {
+  return String(target || "") === PUBLISH_TARGETS.DEDICATED_STATUS_PAGE;
 }
 
 module.exports = {
   PUBLISH_TARGETS,
   STATUS_BY_EVENT,
-  resolvePublishPolicy
+  resolvePublishPolicy,
+  isDedicatedStatusPageTarget
 };

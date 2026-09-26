@@ -22,7 +22,11 @@ const CATEGORIES = [
   "authentication",
   "feature_flags",
   "errors",
-  "general"
+  "general",
+  // Monitoring / ACC operational audit (file + DB when present)
+  "dry_run",
+  "monitoring",
+  "controls"
 ];
 
 async function isReady() {

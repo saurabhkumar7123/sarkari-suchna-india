@@ -1,0 +1,375 @@
+/**
+ * Admin Media Picker — viewport-level overlay / right drawer.
+ * Loaded as external CSS (CSP blocks injected <style> tags).
+ * Pattern aligned with sec-rich-link-modal + admin-confirm overlays.
+ */
+
+#adminMediaPickerOverlay.amp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100030;
+  display: none;
+  align-items: stretch;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  /* Never participate in document flow */
+  pointer-events: auto;
+}
+
+#adminMediaPickerOverlay.amp-overlay.is-open {
+  display: flex;
+}
+
+#adminMediaPickerOverlay.amp-overlay[hidden] {
+  display: none !important;
+}
+
+body.amp-picker-open {
+  overflow: hidden;
+}
+
+/* Keep generator layout stable — no width squeeze when picker opens */
+body.amp-picker-open .main-container,
+body.amp-picker-open #standaloneAdminShell,
+body.amp-picker-open .standalone-admin-content {
+  /* Do not add width reductions / transforms */
+}
+
+.amp-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  max-width: 100%;
+  height: 100%;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background: var(--admin-surface, #fff);
+  color: var(--admin-text, #0f172a);
+  border-left: 1px solid var(--admin-border, #e2e8f0);
+  box-shadow: -16px 0 40px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: ampDrawerIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Keep drawer fully inside viewport (avoid subpixel overflow) */
+  flex: 0 0 auto;
+}
+
+@keyframes ampDrawerIn {
+  from {
+    opacity: 0.6;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.amp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--admin-border, #e2e8f0);
+}
+
+.amp-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--admin-text, #0f172a);
+}
+
+.amp-close {
+  appearance: none;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--admin-muted, #64748b);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.amp-close:hover {
+  background: var(--admin-surface-2, #f1f5f9);
+  color: var(--admin-text, #0f172a);
+}
+
+.amp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.85rem 1rem 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.amp-hint {
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--admin-muted, #64748b);
+}
+
+.amp-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.amp-tab {
+  appearance: none;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: inherit;
+}
+
+.amp-tab.is-active {
+  background: color-mix(in srgb, var(--admin-accent, #2563eb) 12%, transparent);
+  border-color: color-mix(in srgb, var(--admin-accent, #2563eb) 45%, var(--admin-border, #e2e8f0));
+  color: var(--admin-accent, #2563eb);
+}
+
+.amp-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.65rem;
+}
+
+.amp-toolbar input,
+.amp-toolbar select {
+  flex: 1 1 8rem;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  background: var(--admin-surface-2, #f8fafc);
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.amp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.amp-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--admin-border, #e2e8f0);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.amp-item:last-child {
+  border-bottom: 0;
+}
+
+.amp-item:hover,
+.amp-item:focus-visible {
+  background: color-mix(in srgb, var(--admin-accent, #2563eb) 8%, transparent);
+  outline: none;
+}
+
+.amp-item__meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.amp-item strong {
+  display: block;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.amp-item span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--admin-muted, #64748b);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.amp-item__type {
+  display: inline-block;
+  margin-right: 0.25rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.amp-empty {
+  padding: 1.1rem 0.85rem;
+  text-align: center;
+  color: var(--admin-muted, #64748b);
+  font-size: 0.85rem;
+  list-style: none;
+}
+
+.amp-upload label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0.4rem 0 0.25rem;
+  color: var(--admin-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.amp-upload input[type="text"],
+.amp-upload input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--admin-surface, #fff);
+  color: inherit;
+}
+
+.amp-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.amp-btn {
+  appearance: none;
+  border: 1px solid var(--admin-border, #e2e8f0);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.amp-btn--primary {
+  background: var(--admin-accent, #2563eb);
+  border-color: var(--admin-accent, #2563eb);
+  color: #fff;
+}
+
+.amp-status {
+  font-size: 0.82rem;
+  margin: 0.45rem 0 0;
+  color: var(--admin-text-secondary, #475569);
+}
+
+.amp-status.is-error {
+  color: #b91c1c;
+}
+
+body.dark #adminMediaPickerOverlay.amp-overlay,
+body.admin-saas-v2.dark #adminMediaPickerOverlay.amp-overlay {
+  background: rgba(2, 6, 23, 0.55);
+}
+
+body.dark .amp-panel,
+body.admin-saas-v2.dark .amp-panel {
+  background: #1e293b;
+  border-left-color: #334155;
+  color: #f1f5f9;
+  box-shadow: -16px 0 40px rgba(0, 0, 0, 0.45);
+}
+
+body.dark .amp-head,
+body.admin-saas-v2.dark .amp-head {
+  border-bottom-color: #334155;
+}
+
+body.dark .amp-toolbar input,
+body.dark .amp-toolbar select,
+body.dark .amp-upload input[type="text"],
+body.dark .amp-upload input[type="file"],
+body.admin-saas-v2.dark .amp-toolbar input,
+body.admin-saas-v2.dark .amp-toolbar select,
+body.admin-saas-v2.dark .amp-upload input[type="text"],
+body.admin-saas-v2.dark .amp-upload input[type="file"] {
+  background: #0f172a;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+/* Mobile / narrow: near full-screen sheet, no horizontal overflow */
+@media (max-width: 768px) {
+  #adminMediaPickerOverlay.amp-overlay.is-open {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .amp-panel {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+    animation: ampSheetIn 0.2s ease;
+  }
+
+  @keyframes ampSheetIn {
+    from {
+      opacity: 0.5;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .amp-item {
+    flex-wrap: wrap;
+  }
+
+  .amp-item .amp-btn {
+    width: 100%;
+  }
+}
+
+/* Desktop wide: keep drawer capped so Generator stays visible behind dim */
+@media (min-width: 1280px) {
+  .amp-panel {
+    width: min(420px, 34vw);
+  }
+}

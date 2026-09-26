@@ -28,14 +28,13 @@
 <link rel="stylesheet" href="/css/base/interactions.css">
 
 <!-- COMPONENTS -->
-<link rel="stylesheet" href="/css/components/header.css?v=18">
+<link rel="stylesheet" href="/css/components/header.css?v=22">
 <link rel="stylesheet" href="/css/components/footer.css?v=4">
 <link rel="stylesheet" href="/css/components/buttons.css">
 
 <!-- PAGE -->
-<link rel="stylesheet" href="/css/pages/home.css?v=82">
+<link rel="stylesheet" href="/css/pages/home.css?v=83">
 <link rel="stylesheet" href="/css/components/search-overlay.css?v=5">
-<link rel="stylesheet" href="/css/pages/finder.css?v=17">
 <link rel="stylesheet" href="/css/pages/about-site.css?v=3">
 
 <!-- EFFECT -->
@@ -79,18 +78,6 @@
 </div>
 
 <div class="main-container">
-<!-- 🔥 Breaking News -->
-<div class="breaking section breaking-news">
-  <div class="breaking-left" aria-label="Breaking news">
-    <i class="fa-solid fa-bullhorn breaking-left__icon" aria-hidden="true"></i>
-    <span class="breaking-left__label">Breaking News</span>
-  </div>
-
-  <div class="breaking-right" id="breakingNews">
-    <!-- Dynamic breaking news yaha aayega -->
-  </div>
-</div>
-
 <div class="home-content-start-gap">
   <div
     class="site-updated-indicator site-updated-indicator--home-start"
@@ -112,41 +99,6 @@
  
  <div class="countdown-box section is-hidden" id="countdownBox" role="region" aria-live="polite" aria-label="Event countdown">
   <ul class="countdown-list" id="countdownList"></ul>
-</div>
-       
-   <div
-     id="openFinder"
-     class="finder-banner"
-     role="button"
-     tabindex="0"
-     aria-haspopup="dialog"
-     aria-controls="jobFinderModal"
-     aria-expanded="false"
-     aria-label="Open Job Finder"
-   >
-
-<div class="finder-left">
-<i class="fa-solid fa-filter" aria-hidden="true"></i>
-</div>
-
-<div class="finder-text">
-
-<span class="finder-banner-title">
- Job Finder
-</span>
-
-<span class="finder-sub">
-  <span class="finder-tag">Qualification</span>
-  <span class="finder-tag">Department</span>
-  <span class="finder-tag">State</span>
-</span>
-
-</div>
-
-<div class="finder-cta">
-Find Jobs <i class="fa-solid fa-angle-right"></i>
-</div>
-
 </div>
 
 <div class="taxonomy-discovery section" id="taxonomyDiscovery">
@@ -171,24 +123,16 @@ Find Jobs <i class="fa-solid fa-angle-right"></i>
 </main>
 
 <div id="footer"></div>
-
-<!-- Job Finder modal: direct child of body so position:fixed matches viewport (no transformed ancestors) -->
-<div id="jobFinderModal" class="finder-modal" aria-hidden="true">
-  <div class="finder-box" id="jobFinderBox" role="dialog" aria-modal="true" aria-labelledby="finderDialogTitle"></div>
-</div>
  
 <script src="/assets/js/vendor/dompurify.min.js" defer></script>
 <script src="/js/search.js" defer></script>
 <script src="/js/header.js" defer></script>
-<script src="/js/job-finder-url.js" defer></script>
-<script src="/js/finder.js?v=5" defer></script>
 <script src="/js/about-site.js" defer></script>
 <script src="/js/footer.js" defer></script>
 <script src="/js/animation.js" defer></script>
-<script src="/js/breaking-rotator.js" defer></script>
 <script src="/js/taxonomy-tabs.js?v=8" defer></script>
 <script src="/js/home-view-more.js" defer></script>
-<script src="/js/index.js?v=2" defer></script>
+<script src="/js/index.js?v=3" defer></script>
 
 </body>
 </html>

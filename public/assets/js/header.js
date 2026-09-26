@@ -719,7 +719,7 @@ document.addEventListener(
       return;
     }
 
-    const searchNav = e.target.closest("a.nav-search-open");
+    const searchNav = e.target.closest(".nav-search-open");
     if (searchNav) {
       e.preventDefault();
       openSearch();

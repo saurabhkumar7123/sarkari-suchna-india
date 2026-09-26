@@ -6,7 +6,7 @@ const logger = require("../utils/logger");
 const { MAX_UPLOAD_MB, MAX_UPLOAD_BYTES } = require("../config/uploadLimits");
 
 const MSG_FILE_TOO_LARGE = `File exceeds maximum upload size (${MAX_UPLOAD_MB} MB)`;
-const MSG_INVALID_TYPE = "Only PDF, JPG, JPEG and PNG files are allowed";
+const MSG_INVALID_TYPE = "Only PDF, JPG, JPEG, PNG and WebP files are allowed";
 
 function isMulterLimitSize(err) {
   return (
@@ -55,7 +55,7 @@ function dashboardUploadMulter(upload) {
       }
 
       const msg = String(err.message || "");
-      if (msg.includes("Only PDF") || msg.includes("PNG")) {
+      if (msg.includes("Only PDF") || msg.includes("PNG") || msg.includes("WebP")) {
         return jsonUploadError(res, 400, MSG_INVALID_TYPE, {
           code: err.code || "INVALID_FILE_TYPE"
         });

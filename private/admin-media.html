@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Media Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/assets/image/logo/favicon.svg">
+<link rel="icon" type="image/png" href="/assets/image/logo/favicon.png">
+<link rel="apple-touch-icon" href="/assets/image/logo/favicon.png">
+<link rel="stylesheet" href="/css/base/tokens.css">
+<link rel="stylesheet" href="/css/admin/dashboard.css?v=9">
+<link rel="stylesheet" href="/css/admin/admin-enhancements.css">
+<link rel="stylesheet" href="/css/admin/admin-saas-shell.css?v=4">
+<link rel="stylesheet" href="/css/admin/admin-sidebar.css?v=26">
+<link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
+<link rel="stylesheet" href="/css/admin/admin-design-system.css?v=24">
+<link rel="stylesheet" href="/css/admin/admin-confirm.css?v=3">
+<link rel="stylesheet" href="/css/admin/admin-workspace-polish.css?v=5">
+<link rel="stylesheet" href="/css/admin/media-library.css?v=1">
+</head>
+<body class="admin-saas-v2 media-library-page" data-admin-breadcrumbs="Content,Media Library">
+<button type="button" class="toggle-btn" id="sidebarToggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><span class="toggle-btn__icon" aria-hidden="true">☰</span><span class="toggle-btn__label">Menu</span></button>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-top"></div>
+</div>
+<div class="main">
+  <div class="admin-header">
+    <div class="admin-left">
+      <p class="admin-page-head__eyebrow">Content</p>
+      <div class="admin-title">Media Library</div>
+    </div>
+    <div class="admin-header-actions media-list-only">
+      <button type="button" class="header-action-btn" id="mediaUploadOpenBtn">Upload Media</button>
+      <button type="button" class="header-action-btn header-action-btn--ghost" id="mediaRefreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <section class="media-library" aria-label="Media Library">
+    <p class="manager-hint media-list-only">
+      Site-hosted PDFs and images for Generator and pages.
+      Official source URLs stay in Monitoring — this is manual Admin media only.
+    </p>
+
+    <div class="ml-layout ml-layout--list-only" id="mediaLayout">
+      <section class="ml-card ml-card--list media-list-only" id="mediaListPanel">
+        <div class="ml-toolbar">
+          <label class="ml-search">
+            <span class="visually-hidden">Search</span>
+            <input type="search" id="mediaSearch" placeholder="Search name or title" autocomplete="off">
+          </label>
+          <label>
+            Type
+            <select id="mediaTypeFilter">
+              <option value="all">All</option>
+              <option value="pdf">PDF</option>
+              <option value="image">Images</option>
+            </select>
+          </label>
+          <span id="mediaListMeta" class="ml-list-meta"></span>
+        </div>
+
+        <div id="mediaUploadPanel" class="ml-upload-panel" hidden>
+          <form id="mediaUploadForm" class="ml-upload-form">
+            <input type="file" id="mediaFileInput" name="pdf" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*" required hidden>
+            <label for="mediaFileInput" class="ml-drop-zone" id="mediaDropZone">
+              <span class="ml-drop-title">Click or drag file</span>
+              <span class="ml-drop-sub">PDF, JPG, PNG, WebP · max 10 MB</span>
+            </label>
+            <div class="ml-upload-row">
+              <input type="text" id="mediaTitleInput" name="title" placeholder="Optional display title" maxlength="240" autocomplete="off">
+              <span id="mediaSelectedName" class="ml-selected-name">No file selected</span>
+              <button type="submit" class="header-action-btn" id="mediaUploadSubmit">Upload</button>
+              <button type="button" class="header-action-btn header-action-btn--ghost" id="mediaUploadCancel">Cancel</button>
+            </div>
+            <p id="mediaUploadStatus" class="ml-status" aria-live="polite"></p>
+            <div id="mediaUploadProgress" class="ml-progress" hidden>
+              <div class="ml-progress-bar"><span id="mediaUploadProgressFill"></span></div>
+            </div>
+          </form>
+        </div>
+
+        <p id="mediaListMessage" class="ml-status" hidden role="status"></p>
+
+        <div class="ml-table-wrap">
+          <table class="ml-table" aria-label="Uploaded media">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mediaTableBody">
+              <tr><td colspan="5" class="ml-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="ml-card ml-card--detail" id="mediaDetailPanel" hidden>
+        <div class="ml-detail-head">
+          <h2>Media detail</h2>
+          <button type="button" class="header-action-btn header-action-btn--ghost" id="mediaBackBtn">← Back to Media Library</button>
+        </div>
+        <p id="mediaDetailMessage" class="ml-status" hidden role="status"></p>
+        <div id="mediaDetailBody" class="ml-detail-body"></div>
+      </section>
+    </div>
+  </section>
+</div>
+
+<script src="/js/admin-csrf.js"></script>
+<script src="/js/admin-nav.js?v=32"></script>
+<script src="/js/admin-shell.js?v=15"></script>
+<script src="/js/admin-idle-session.js?v=1"></script>
+<script src="/js/admin-page-toolbar.js?v=1"></script>
+<script src="/js/admin-layout.js?v=5"></script>
+<script src="/js/admin-notifications.js?v=2"></script>
+<script src="/js/admin-command-palette.js?v=8"></script>
+<script src="/js/admin-ui.js?v=5"></script>
+<script src="/js/admin-media.js?v=1"></script>
+</body>
+</html>

@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="/css/base/tokens.css">
   <link rel="stylesheet" href="/css/admin/dashboard.css?v=9">
   <link rel="stylesheet" href="/css/admin/generator.css?v=25">
-  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=37">
+  <link rel="stylesheet" href="/css/admin/generator-saas.css?v=38">
   <link rel="stylesheet" href="/css/admin/workspace-shared.css?v=1">
   <link rel="stylesheet" href="/css/admin/generator-workspace.css?v=3">
   <link rel="stylesheet" href="/css/admin/admin-enhancements.css">
@@ -31,13 +31,14 @@
   <link rel="stylesheet" href="/css/admin/admin-saas-theme.css?v=6">
 <link rel="stylesheet" href="/css/admin/admin-design-system.css?v=27">
   <link rel="stylesheet" href="/css/admin/admin-standalone-layout.css?v=6">
+  <link rel="stylesheet" href="/css/admin/media-picker.css?v=2">
 </head>
 
 <body class="standalone-admin-page generator-page generator-saas-v2 admin-saas-v2" data-admin-layout="standalone" data-admin-breadcrumbs="Content,Generator">
   <div class="admin-header">
   <div class="admin-left">
     <h1>Generator</h1>
-    <p>Create and edit content. Preview without saving a draft → check/edit → Manual Publish. Parked drafts are optional.</p>
+    <p>Preview → edit → Manual Publish. Parked drafts are optional.</p>
   </div>
   <div class="admin-right">
     <section class="page-search-panel is-collapsed" id="pageSearchPanel" aria-label="Search existing page">
@@ -434,6 +435,11 @@
         <input type="text" id="secRichLinkLabel" class="sec-rich-link-modal__input" placeholder="e.g. Apply Online" autocomplete="off">
         <label class="sec-rich-link-modal__label" for="secRichLinkUrl">URL</label>
         <input type="url" id="secRichLinkUrl" class="sec-rich-link-modal__input sec-rich-link-modal__input--url" placeholder="https://example.com/apply" autocomplete="off" inputmode="url">
+        <div class="sec-rich-link-modal__media" role="group" aria-label="Attach media">
+          <button type="button" class="sec-rich-link-modal__btn sec-rich-link-modal__btn--ghost" id="secRichLinkMediaLibraryBtn" data-rich-link-action="media-library">Select From Media Library</button>
+          <button type="button" class="sec-rich-link-modal__btn sec-rich-link-modal__btn--ghost" id="secRichLinkUploadMediaBtn" data-rich-link-action="upload-media">Upload New Media</button>
+          <span class="sec-rich-link-modal__media-hint">Or paste Existing URL (official source / external)</span>
+        </div>
         <p id="secRichLinkUrlError" class="sec-rich-link-modal__error" hidden>Please enter a valid URL (https://...)</p>
         <div class="sec-rich-link-modal__actions">
           <button type="button" class="sec-rich-link-modal__btn sec-rich-link-modal__btn--ghost" data-rich-link-action="cancel">Cancel</button>
@@ -492,7 +498,7 @@
 
 <script src="/assets/js/vendor/dompurify.min.js"></script>
 <script src="/js/admin-csrf.js"></script>
-<script src="/js/admin-nav.js?v=31"></script>
+<script src="/js/admin-nav.js?v=32"></script>
 <script src="/js/admin-shell.js?v=17"></script>
 <script src="/js/admin-workflow-ia.js?v=4"></script>
 <script src="/js/admin-generator-drafts.js?v=9"></script>
@@ -500,15 +506,16 @@
 <script src="/js/admin-page-toolbar.js?v=1"></script>
 <script src="/js/admin-layout.js?v=6"></script>
 <script src="/js/admin-notifications.js?v=2"></script>
-<script src="/js/admin-command-palette.js?v=7"></script>
+<script src="/js/admin-command-palette.js?v=8"></script>
 <script src="/js/admin-ui.js"></script>
 <script src="/js/admin-workspace-ui.js?v=1"></script>
 <script src="/js/admin-seo-checklist.js"></script>
 <script src="/js/admin-generator-ui.js?v=7"></script>
+<script src="/js/admin-media-picker.js?v=2"></script>
 <script src="/js/generator-mobile.js?v=8"></script>
 <script src="/js/jobSectionStructure.js"></script>
 <script src="/js/sectionEditorModel.js?v=9"></script>
-<script src="/js/sectionEditor.js?v=17"></script>
+<script src="/js/sectionEditor.js?v=19"></script>
 <script src="/js/generator.js?v=19"></script>
 <script src="/js/generator-workspace-core.js?v=1"></script>
 <script src="/js/generator-workspace.js?v=3"></script>

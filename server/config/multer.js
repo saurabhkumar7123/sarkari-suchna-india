@@ -1,6 +1,7 @@
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const { MAX_UPLOAD_BYTES } = require("./uploadLimits");
 
 const storageRoot = path.join(process.cwd(), "storage");
@@ -10,9 +11,10 @@ const allowedTypes = new Set([
   "application/x-pdf",
   "image/jpeg",
   "image/jpg",
-  "image/png"
+  "image/png",
+  "image/webp"
 ]);
-const allowedExt = [".pdf", ".jpg", ".jpeg", ".png"];
+const allowedExt = [".pdf", ".jpg", ".jpeg", ".png", ".webp"];
 
 function isPdfMime(mimetype) {
   const m = String(mimetype || "").toLowerCase();
@@ -21,7 +23,36 @@ function isPdfMime(mimetype) {
 
 function isAllowedImageMime(mimetype) {
   const m = String(mimetype || "").toLowerCase();
-  return m === "image/jpeg" || m === "image/jpg" || m === "image/png";
+  return m === "image/jpeg" || m === "image/jpg" || m === "image/png" || m === "image/webp";
+}
+
+function buildSafeStoredName(originalname, destDir) {
+  const now = new Date();
+  const indian = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const day = String(indian.getDate()).padStart(2, "0");
+  const month = String(indian.getMonth() + 1).padStart(2, "0");
+  const year = indian.getFullYear();
+  const hours = String(indian.getHours()).padStart(2, "0");
+  const minutes = String(indian.getMinutes()).padStart(2, "0");
+  const seconds = String(indian.getSeconds()).padStart(2, "0");
+  const formattedDate = day + month + year + hours + minutes + seconds;
+
+  const rawBase = path.basename(String(originalname || "file"));
+  const ext = path.extname(rawBase).toLowerCase();
+  const stem = path.basename(rawBase, ext).replace(/[^a-z0-9._-]/gi, "_").replace(/_+/g, "_") || "file";
+  const safeExt = allowedExt.includes(ext) ? ext : "";
+  const unique = crypto.randomBytes(3).toString("hex");
+
+  let candidate = `${formattedDate}-${stem}${safeExt}`;
+  let attempt = 0;
+  while (fs.existsSync(path.join(destDir, candidate)) && attempt < 20) {
+    attempt += 1;
+    candidate = `${formattedDate}-${unique}${attempt > 1 ? `-${attempt}` : ""}-${stem}${safeExt}`;
+  }
+  if (fs.existsSync(path.join(destDir, candidate))) {
+    candidate = `${formattedDate}-${crypto.randomBytes(6).toString("hex")}-${stem}${safeExt}`;
+  }
+  return candidate;
 }
 
 const storage = multer.diskStorage({
@@ -42,23 +73,19 @@ const storage = multer.diskStorage({
   },
 
   filename: function (req, file, cb) {
-    const now = new Date();
-
-    const indian = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-
-    const day = String(indian.getDate()).padStart(2, "0");
-    const month = String(indian.getMonth() + 1).padStart(2, "0");
-    const year = indian.getFullYear();
-
-    const hours = String(indian.getHours()).padStart(2, "0");
-    const minutes = String(indian.getMinutes()).padStart(2, "0");
-    const seconds = String(indian.getSeconds()).padStart(2, "0");
-
-    const formattedDate = day + month + year + hours + minutes + seconds;
-
-    const safeName = file.originalname.replace(/[^a-z0-9.]/gi, "_");
-
-    cb(null, formattedDate + "-" + safeName);
+    let destDir;
+    if (isPdfMime(file.mimetype)) {
+      destDir = path.join(storageRoot, "uploads", "pdf");
+    } else if (isAllowedImageMime(file.mimetype)) {
+      destDir = path.join(storageRoot, "uploads", "images");
+    } else {
+      destDir = path.join(storageRoot, "temp");
+    }
+    try {
+      cb(null, buildSafeStoredName(file.originalname, destDir));
+    } catch (err) {
+      cb(err);
+    }
   }
 });
 
@@ -75,7 +102,7 @@ const upload = multer({
     if (allowedTypes.has(mime) && allowedExt.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Only PDF, JPG, JPEG and PNG files are allowed"), false);
+      cb(new Error("Only PDF, JPG, JPEG, PNG and WebP files are allowed"), false);
     }
   }
 });
@@ -85,3 +112,4 @@ module.exports.allowedTypes = allowedTypes;
 module.exports.allowedExt = allowedExt;
 module.exports.isPdfMime = isPdfMime;
 module.exports.isAllowedImageMime = isAllowedImageMime;
+module.exports.buildSafeStoredName = buildSafeStoredName;

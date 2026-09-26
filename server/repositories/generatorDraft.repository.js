@@ -3,7 +3,7 @@
 const db = require("../config/db");
 
 const LIST_COLUMNS_BASE =
-  "id, title, slug_hint, status, published_slug, published_page_id, created_at, updated_at, published_at";
+  "id, title, slug_hint, payload, status, published_slug, published_page_id, created_at, updated_at, published_at";
 
 async function tableExists() {
   try {
@@ -144,7 +144,16 @@ async function listDrafts(opts = {}) {
      LIMIT ?`,
     [...params, limit]
   );
-  return rows;
+  return (rows || []).map((row) => {
+    if (row && row.payload && typeof row.payload === "string") {
+      try {
+        row.payload = JSON.parse(row.payload);
+      } catch {
+        row.payload = {};
+      }
+    }
+    return row;
+  });
 }
 
 async function findUnpublishedDraftByUpdateId(updateId) {

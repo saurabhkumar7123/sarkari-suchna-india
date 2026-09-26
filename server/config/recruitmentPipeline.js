@@ -2,7 +2,9 @@
 
 /**
  * Recruitment pipeline feature flag (Phase 24).
- * Defaults to false. Missing or invalid env values fail safe to false.
+ * Defaults to false. Missing or invalid values fail safe to false.
+ * When durable control plane file exists, it is the shared source of truth
+ * (same rule as other automation capabilities). Env is bootstrap fallback only.
  */
 
 const ENV_KEY = "RECRUITMENT_PIPELINE_ENABLED";
@@ -27,7 +29,12 @@ function parseEnvFlag(rawValue) {
 }
 
 function isRecruitmentPipelineEnabled() {
-  return parseEnvFlag(process.env[ENV_KEY]);
+  try {
+    const { getDurableCapability } = require("./automationControlPlane");
+    return getDurableCapability(ENV_KEY) === true;
+  } catch {
+    return parseEnvFlag(process.env[ENV_KEY]);
+  }
 }
 
 module.exports = {
