@@ -9,6 +9,7 @@
   let selectedId = null;
   let selectedItem = null;
   let focusedUpdateId = null;
+  let syncingUrl = false;
   /** In-progress YES/NO while status is still needs_matching — restored from URL/sessionStorage. */
   let matchingBranch = null;
   let matchingBranchForId = null;
@@ -112,11 +113,72 @@
       const next = `${window.location.pathname}${nextSearch}${window.location.hash || ""}`;
       const current = `${window.location.pathname}${window.location.search}${window.location.hash || ""}`;
       if (next !== current) {
-        window.history.replaceState({}, "", next);
+        window.history.replaceState({ reviewId: selectedId || null }, "", next);
       }
     } catch {
       /* ignore */
     }
+  }
+
+  /**
+   * Recruitment-style exclusive list/detail chrome.
+   * Detail open → hide list + list-only controls; list → hide detail.
+   */
+  function syncListDetailChrome(detailVisible) {
+    const layout = document.querySelector(".rrq-layout");
+    const listPanel = document.querySelector(".rrq-card--list");
+    if (layout) {
+      layout.classList.toggle("rrq-layout--list-only", !detailVisible);
+      layout.classList.toggle("rrq-layout--detail-only", detailVisible);
+    }
+    document.body.classList.toggle("rrq-detail-active", detailVisible);
+    document.body.dataset.rrqMode = detailVisible ? "detail" : "list";
+    if (listPanel) {
+      listPanel.hidden = detailVisible;
+      listPanel.setAttribute("aria-hidden", detailVisible ? "true" : "false");
+    }
+  }
+
+  function syncReviewUrl(reviewId, { replace, updateId } = {}) {
+    if (syncingUrl) return;
+    try {
+      const url = new URL(window.location.href);
+      if (reviewId) {
+        url.searchParams.delete("review_id");
+        url.searchParams.set("id", String(reviewId));
+        if (updateId) {
+          url.searchParams.set("update_id", String(updateId));
+        }
+      } else {
+        url.searchParams.delete("id");
+        url.searchParams.delete("review_id");
+        url.searchParams.delete("update_id");
+        focusedUpdateId = null;
+      }
+      const next = `${url.pathname}${url.search}${url.hash}`;
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (next === current) return;
+      syncingUrl = true;
+      try {
+        const state = { reviewId: reviewId || null };
+        if (replace) window.history.replaceState(state, "", next);
+        else window.history.pushState(state, "", next);
+      } finally {
+        syncingUrl = false;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function closeReviewDetail({ replaceUrl } = {}) {
+    const priorId = selectedId;
+    selectedId = null;
+    selectedItem = null;
+    clearMatchIntentArtifacts(priorId);
+    renderDetail(null);
+    syncReviewUrl(null, { replace: Boolean(replaceUrl) });
+    loadList();
   }
 
   function persistMatchIntent(reviewId, intent) {
@@ -1299,7 +1361,11 @@
     const detailMessage = document.getElementById("rrqDetailMessage");
 
     if (deep.reviewId) {
-      await loadDetail(deep.reviewId);
+      await loadDetail(deep.reviewId, { syncUrl: false });
+      syncReviewUrl(deep.reviewId, {
+        replace: true,
+        updateId: deep.updateId || undefined
+      });
       setMessage(
         detailMessage,
         `Opened review ID: ${deep.reviewId}${deep.updateId ? ` for update ID: ${deep.updateId}` : ""}.`,
@@ -1326,6 +1392,12 @@
     }
 
     renderDetail(ensure.body.data);
+    if (ensure.body.data && ensure.body.data.id) {
+      syncReviewUrl(ensure.body.data.id, {
+        replace: true,
+        updateId: deep.updateId || undefined
+      });
+    }
     const created = Boolean(ensure.body.created);
     setMessage(
       detailMessage,
@@ -1430,6 +1502,7 @@
 
     if (!item) {
       panel.hidden = true;
+      syncListDetailChrome(false);
       syncManualPublishLink(null);
       syncActionAvailability(null);
       renderWorkflowGuidance(null);
@@ -1438,6 +1511,7 @@
     }
 
     panel.hidden = false;
+    syncListDetailChrome(true);
     const matchResult = item.match_result || {};
     const assist = item.assist || null;
     const meta = document.getElementById("rrqDetailMeta");
@@ -1559,7 +1633,7 @@
     }
   }
 
-  async function loadDetail(id) {
+  async function loadDetail(id, { syncUrl } = {}) {
     const detailMessage = document.getElementById("rrqDetailMessage");
     setMessage(detailMessage, "");
     const result = await apiRequest(`${API_BASE}/${id}`);
@@ -1572,6 +1646,13 @@
       return;
     }
     renderDetail(result.body.data);
+    if (syncUrl !== false) {
+      const updateId = resolveUpdateId(result.body.data);
+      syncReviewUrl(result.body.data.id, {
+        replace: false,
+        updateId: updateId || focusedUpdateId || undefined
+      });
+    }
     await loadList();
   }
 
@@ -1705,18 +1786,27 @@
   });
 
   document.getElementById("rrqCloseDetail")?.addEventListener("click", () => {
-    const priorId = selectedId;
-    selectedId = null;
-    selectedItem = null;
-    clearMatchIntentArtifacts(priorId);
-    renderDetail(null);
-    loadList();
+    closeReviewDetail({ replaceUrl: true });
   });
 
-  window.addEventListener("popstate", () => {
-    if (!selectedItem) return;
-    restoreMatchIntentForItem(selectedItem);
-    syncActionAvailability(selectedItem);
+  window.addEventListener("popstate", async () => {
+    const deep = readDeepLinkFromUrl();
+    if (deep.reviewId) {
+      if (!selectedId || String(selectedId) !== String(deep.reviewId)) {
+        await loadDetail(deep.reviewId, { syncUrl: false });
+      } else if (selectedItem) {
+        restoreMatchIntentForItem(selectedItem);
+        syncActionAvailability(selectedItem);
+      }
+      return;
+    }
+    if (selectedItem || selectedId) {
+      selectedId = null;
+      selectedItem = null;
+      renderDetail(null);
+      await loadList();
+      return;
+    }
   });
 
   document.getElementById("rrqCandidateBody")?.addEventListener("click", (event) => {
@@ -1780,6 +1870,7 @@
 
   applyStatusFromUrl();
   syncStatusChips();
+  syncListDetailChrome(false);
   (async function initReviewCenter() {
     await openFocusedReviewFromUrl();
     await loadList();

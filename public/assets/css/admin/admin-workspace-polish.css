@@ -754,7 +754,7 @@ body.admin-saas-v2 .main:has(.rrq-layout) .rrq-filters select {
   font-size: 0.86rem;
 }
 
-/* List full-width when detail closed; two-column when open */
+/* List full-width when detail closed; exclusive detail when open (no side-by-side) */
 body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) !important;
@@ -764,10 +764,21 @@ body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout {
   min-width: 0;
 }
 
-@media (min-width: 1101px) {
-  body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
-    grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr) !important;
-  }
+body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout.rrq-layout--detail-only {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout.rrq-layout--detail-only .rrq-card--list,
+body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout.rrq-layout--detail-only .rrq-card--list[hidden] {
+  display: none !important;
+}
+
+body.admin-saas-v2.rrq-detail-active .rrq-help,
+body.admin-saas-v2.rrq-detail-active .rrq-filter-legend,
+body.admin-saas-v2.rrq-detail-active #rrqStatusChips,
+body.admin-saas-v2.rrq-detail-active #rrqFilters,
+body.admin-saas-v2.rrq-detail-active #rrqListMessage {
+  display: none !important;
 }
 
 body.admin-saas-v2 .main:has(.rrq-layout) .rrq-card {
@@ -935,7 +946,7 @@ body.admin-saas-v2 .main:has(.rrq-layout) .header-action-btn {
 
 @media (max-width: 1100px) {
   body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout,
-  body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
+  body.admin-saas-v2 .main:has(.rrq-layout) .rrq-layout.rrq-layout--detail-only {
     grid-template-columns: 1fr !important;
   }
 }

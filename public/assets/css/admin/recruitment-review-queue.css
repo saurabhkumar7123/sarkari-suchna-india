@@ -293,7 +293,7 @@
 }
 
 /* Default: Review items uses full available content width.
-   Side-by-side only while Detail is open on wide desktops. */
+   Detail opens as exclusive full workspace (Recruitments list/detail pattern). */
 .rrq-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -304,10 +304,35 @@
   min-width: 0;
 }
 
-@media (min-width: 1101px) {
-  .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
-    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.95fr);
-  }
+.rrq-layout.rrq-layout--list-only {
+  grid-template-columns: 1fr;
+}
+
+.rrq-layout.rrq-layout--list-only .rrq-card--detail[hidden] {
+  display: none !important;
+}
+
+.rrq-layout.rrq-layout--detail-only {
+  grid-template-columns: 1fr;
+}
+
+.rrq-layout.rrq-layout--detail-only .rrq-card--list,
+.rrq-layout.rrq-layout--detail-only .rrq-card--list[hidden] {
+  display: none !important;
+}
+
+/* List-only chrome: help, filters, status chips — hide while reviewing one item */
+body.rrq-detail-active .rrq-help,
+body.rrq-detail-active .rrq-filter-legend,
+body.rrq-detail-active #rrqStatusChips,
+body.rrq-detail-active #rrqFilters,
+body.rrq-detail-active #rrqListMessage,
+body.rrq-detail-active .adm-wf {
+  display: none !important;
+}
+
+body.rrq-detail-active .rrq-card--detail {
+  min-height: min(70vh, 840px);
 }
 
 .rrq-card {
@@ -670,7 +695,8 @@
   }
 
   .rrq-layout,
-  .rrq-layout:has(#rrqDetailPanel:not([hidden])) {
+  .rrq-layout.rrq-layout--detail-only,
+  .rrq-layout.rrq-layout--list-only {
     grid-template-columns: 1fr;
   }
 
